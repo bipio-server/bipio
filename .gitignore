@@ -1,0 +1,5 @@
+/nbproject/private/
+node_modules
+config/default.json
+config/staging.json
+config/production.json

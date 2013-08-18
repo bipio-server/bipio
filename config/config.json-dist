@@ -1,0 +1,87 @@
+{
+    "domain_public": "localhost:5000",
+    "website_public": "http://localhost",
+    "cdn_public": "http://localhost/static/img/cdn",
+    "proto_public": "http://",
+    "server": {
+        "port": 5000,
+        "forks": 1
+    },
+    "proxy": {
+        "http_port": 5500,
+        "forks": 1
+    },
+    "mailer": {
+        "host": "localhost",
+        "port": 25
+    },
+    "dbMongo": {
+        "host": "localhost",
+        "dbname": "bipio"
+    },
+    "storeRedis": {
+        "host": "localhost",
+        "port": 6379,
+        "password": "xxx",
+        "dbname": 0
+    },
+    "rabbit": {
+        "auth": {
+            "username": "admin",
+            "password": "password"
+        },
+        "exchanges": {
+            "bastion_generic": {
+                "queue_default": {
+                    "name": "queue_bastion",
+                    "config": {
+                        "durable": true,
+                        "autoDelete": false
+                    }
+                },
+                "route_default": "default",
+                "cfg": {
+                    "type": "direct",
+                    "durable": true,
+                    "autoDelete": false
+                }
+            },
+            "bastion_jobs": {
+                "queue_default": {
+                    "name": "queue_jobs",
+                    "config": {
+                        "durable": true,
+                        "autoDelete": false
+                    }
+                },
+                "route_default": "default",
+                "cfg": {
+                    "type": "direct",
+                    "durable": true,
+                    "autoDelete": false
+                }
+            },
+            "bastion_ctl": {
+                "queue_default": {
+                    "name": "queue_bastion_ctl",
+                    "config": {
+                        "durable": true,
+                        "autoDelete": true
+                    }
+                },
+                "route_default": "default",
+                "cfg": {
+                    "type": "fanout",
+                    "durable": false,
+                    "autoDelete": false
+                }
+            }
+        },
+        "defaultExchange": "public_inbound"
+    },
+    "cdn": "/static/img",
+    "k": {
+    },
+    "pods": {
+    }
+}
