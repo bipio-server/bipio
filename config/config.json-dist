@@ -7,23 +7,11 @@
         "port": 5000,
         "forks": 1
     },
-    "proxy": {
-        "http_port": 5500,
-        "forks": 1
-    },
     "mailer": {
         "host": "localhost",
         "port": 25
     },
     "dbMongo": {
-        "host": "localhost",
-        "dbname": "bipio"
-    },
-    "storeRedis": {
-        "host": "localhost",
-        "port": 6379,
-        "password": "xxx",
-        "dbname": 0
     },
     "rabbit": {
         "auth": {
@@ -79,7 +67,7 @@
         },
         "defaultExchange": "public_inbound"
     },
-    "cdn": "/static/img",
+    "cdn": "/static/cdn",
     "k": {
     },
     "pods": {

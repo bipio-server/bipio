@@ -67,8 +67,7 @@ Domain.entitySchema = {
                     ok = (!isBipDomain && this.type != 'vanity');
                 }
                     
-                next(ok);
-                    
+                next(ok);                   
             },
             msg : "Can not overwrite a protected Domain"
         },        
