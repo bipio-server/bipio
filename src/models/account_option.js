@@ -133,7 +133,7 @@ AccountOption.uniqueKeys = ['owner_id'],
             renderable: true,
             writable: true,
             validate : [ {
-                validator : function(val, next) {
+                validator : function(val, next) {                   
                     next(this.getAccountInfo().user.domains.test(val));
                 },
                 msg : 'Domain Not Found'
@@ -146,7 +146,6 @@ AccountOption.uniqueKeys = ['owner_id'],
             set : endLifeParse,
             validate : [{
                 validator : function(val, next) {
-                    console.log(val);
                     next(
                         (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
                         ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
@@ -231,7 +230,6 @@ AccountOption.preSave = function(accountInfo, oldModel) {
 
     if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || (this.avatar != oldModel.avatar && /^http/.test(this.avatar) )) {
         if (this.avatar) {
-            console.log(this.avatar);
             this._dao.getAvRemote(this.owner_id, this.avatar, true, function(err, result) {
                 console.log(err);
             });

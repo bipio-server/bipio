@@ -12,11 +12,14 @@
         "port": 25
     },
     "dbMongo": {
+        "connect" : "localhost/bipio"
     },
     "rabbit": {
+        "host" : "localhost",
+        "vhost" : "",
         "auth": {
-            "username": "admin",
-            "password": "password"
+            "username": "guest",
+            "password": "guest"
         },
         "exchanges": {
             "bastion_generic": {
@@ -67,7 +70,8 @@
         },
         "defaultExchange": "public_inbound"
     },
-    "cdn": "/static/cdn",
+    "datadir" : "/data",
+    "cdn": "/data/cdn",
     "k": {
     },
     "pods": {

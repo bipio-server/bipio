@@ -28,24 +28,22 @@
  *
  */
 var app,
-    util            = require('util'),
-    cluster         = require('cluster'),
-    express         = require('express'),
+util            = require('util'),
+cluster         = require('cluster'),
+express         = require('express'),
 
-    winston         = require('winston'),
-    async           = require('async'),
-    mongoose        = require('mongoose'),
-    redis           = require('redis'),
-    fs              = require('fs'),
-    helper          = require('./lib/helper'),
-    passport        = require('passport');
+winston         = require('winston'),
+async           = require('async'),
+mongoose        = require('mongoose'),
+redis           = require('redis'),
+fs              = require('fs'),
+helper          = require('./lib/helper'),
+passport        = require('passport');
 
 var defs            = require('../config/defs'),
-    envConfig       = require('config'),
-    CFG_SERVER      = envConfig.server,
-    CFG_DB_MONGO    = envConfig.dbMongo,
-    CFG_STORE_REDIS = envConfig.storeRedis,
-    workerId;
+envConfig       = require('config'),
+CFG_SERVER      = envConfig.server,
+workerId;
 
 // @todo cleanup global config
 GLOBAL.CFG_CDN         = envConfig.cdn;
@@ -108,7 +106,7 @@ function xmlBodyParser(req, res, next) {
         req.rawBody += chunk;
     });
     req.on('end', function(){
-      next();
+        next();
     });
 }
 
@@ -130,7 +128,9 @@ app.configure(function() {
     });
     app.use(express.methodOverride());
     app.use(express.cookieParser());
-    app.use(express.session({ secret: 'kalk#$Ocp2-103LCA:Sdfkj20p84' }));
+    app.use(express.session({
+        secret: 'kalk#$Ocp2-103LCA:Sdfkj20p84'
+    }));
     app.use(passport.initialize());
     app.use(passport.session());
     app.use('jsonp callback', true );
@@ -142,6 +142,9 @@ app.defs = defs;
 app.helper = helper;
 app.logmessage = logmessage;
 
+// export app everywhere
+module.exports.app = app;
+
 // we want to set up connections only on "workers, not on cluster/master
 // this is the cluster setup
 if (cluster.isMaster) {
@@ -152,66 +155,20 @@ if (cluster.isMaster) {
     }
 } else {
     workerId = cluster.worker.workerID;
-    // and we want to do this in parallel, but make sure we do it before continuing with starting server..
-    async.parallel(
-    {
-        mongoConnection: function(cb2) {
-            // if mongo configuration is there...
-            if (CFG_DB_MONGO) {
-                //var mongoURI = 'mongodb://' + CFG_DB_MONGO.username + ':' + CFG_DB_MONGO.password + '@' + CFG_DB_MONGO.host + ':' + CFG_DB_MONGO.port + '/' + CFG_DB_MONGO.dbname;
-                //var mongoURI = 'mongodb://' + CFG_DB_MONGO.username + ':' + CFG_DB_MONGO.password + '@' + CFG_DB_MONGO.host + '/' + CFG_DB_MONGO.dbname;
-                var mongoURI = 'mongodb://' + CFG_DB_MONGO.host + '/' + CFG_DB_MONGO.dbname;
-                logmessage('MongoDB config: ' + mongoURI);
-                //var mongoClient = mongoose.createConnection(mongoURI);
-                var mongoClient = mongoose.connect(mongoURI);
-                // mongoClient = mongoose.connect('mongodb://localhost/' + CFG_DB_MONGO.db);
-                cb2(null, mongoClient);
-            } else {
-                cb2(null, null);
-            }
+    helper.tldtools.init(
+        function() {
+            app.logmessage('TLD UP')
         },
-        redisConnection: function(cb3) {
-            // if redis configuration is there...
-            if (CFG_STORE_REDIS) {
-                var redisClient = redis.createClient(CFG_STORE_REDIS.port, CFG_STORE_REDIS.host);
-                redisClient.auth(CFG_STORE_REDIS.password, function() {
-                    redisClient.select(CFG_STORE_REDIS.dbname, function(err,res) {
-                        logmessage('Redis config: ' + redisClient.host + ':' + redisClient.port + ' @ ' + redisClient.selected_db + ' with ' + redisClient.auth_pass);
-                        cb3(null, redisClient);
-                    });
-                });
-            } else {
-                cb3(null, null);
-            }
+        function(body) {
+            app.logmessage('TLD Cache fail - ' + body, 'error')
         }
-
-    },
-    /**
-         * init done!
-         */
-    function(err, results) {
-        app.mongoClient = results.mongoConnection;
-        app.redisClient = results.redisConnection;
-
-        helper.tldtools.init(
-            function() {
-                app.logmessage('TLD UP')
-            },
-            function(body) {
-                app.logmessage('TLD Cache fail - ' + body, 'error')
-            }
-        );
-
-        // here load rest-api so we don't clutter this piece of code more
-        require('./api-rest');
-
-        app.listen(port, function() {
-            app.logmessage('Listening on :' + port + ' in "' + app.settings.env + '" mode...');
-            return 0;
-        });
-    }
     );
-}
 
-// export app everywhere
-module.exports.app = app;
+    // here load rest-api so we don't clutter this piece of code more
+    require('./api-rest');
+
+    app.listen(port, function() {
+        app.logmessage('Listening on :' + port + ' in "' + app.settings.env + '" mode...');
+        return 0;
+    });
+}

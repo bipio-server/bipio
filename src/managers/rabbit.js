@@ -33,11 +33,14 @@ function Rabbit(cfg, next) {
     this.queues = [];
     this.cfg = cfg;
     var opt = {
-        host: 'localhost',
-        vhost: "/" + process.env.NODE_ENV,
+        host: cfg.host,        
         login: cfg.auth.username,
         password : cfg.auth.password
     };
+
+    if ('' !== cfg.vhost) {
+        opt.vhost = cfg.vhost;
+    }
 
     this.amqpConn = amqp.createConnection(opt,
     {
@@ -80,6 +83,11 @@ function Rabbit(cfg, next) {
     this.amqpConn.on('connect', function() {
         app.logmessage('RabbitMQ Connected');
     });
+
+    this.amqpConn.on('error', function(err) {
+        app.logmessage('RabbitMQ ' + err, 'error');
+        
+    })
 
     this.amqpConn.connect();
 }

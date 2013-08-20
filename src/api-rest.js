@@ -26,18 +26,18 @@ var util        = require('util'),
     express     = require('express'),
     helper      = require('./lib/helper'),
     DaoMongo    = require('./managers/dao-mongo').DaoMongo,
-    Bastion    = require('./managers/bastion').Bastion,
-    CacheRedis  = require('./managers/cache-redis').CacheRedis,
-    //    tldtools    = require('tldtools'),
+    Bastion    = require('./managers/bastion'),
     uuid            = require('node-uuid'),
     utils = require('express/node_modules/connect/lib/utils'),
-    cdn      = require('./lib/cdn');
+    cdn      = require('./lib/cdn'),
+    modelPublicFilter,
+    dao = new DaoMongo(app.envConfig.dbMongo.connect, app.logmessage, function(err, dao) {
+        modelPublicFilter = dao.getModelPublicFilters();
+    }),
+    // restful models
+    restResources = ['bip', 'channel', 'domain', 'account_option'],    
+    bastion     = new Bastion(dao);
 
-var cache       = new CacheRedis(app.envConfig.storeRedis, app.redisClient, app.logmessage, app.defs.DEFAULT_CACHE_EXPIRE_SECS);
-
-var dao         = new DaoMongo(app.envConfig.dbMongo, app.mongoClient, app.logmessage, cache);
-var modelPublicFilter = dao.getModelPublicFilters();
-var bastion     = new Bastion(dao);
 app.bastion = bastion;
 
 function filterModel(filterLen, modelPublicFilters, modelStruct) {
@@ -132,7 +132,7 @@ var restResponse = function(res) {
          * Post filter. Don't expose attributes that aren't in the public filter
          * list.
          */
-        if (null != modelName) {
+        if (null != modelName && results) {
             if (results instanceof Array) {
                 realResult = [];
                 for (key in results) {
@@ -188,8 +188,7 @@ function getReferer(req) {
     }
 }
 
-// models exposed via rest
-var restResources = ['bip', 'channel', 'domain', 'account_option'];
+
 
 function decorateAccountInfo(remoteUser) {
     var accountInfo = {
@@ -225,7 +224,6 @@ var restAction = function(req, res) {
 
     if (undefined != owner_id && helper.indexOf(restResources, resourceName) != -1) {
         if (rMethod == 'POST' || rMethod == 'PUT') {
-
             // hack for bips, inject a referer note if no note has been sent
             if (resourceName == 'bip') {
                 var referer = getReferer(req);
@@ -289,15 +287,15 @@ var restAction = function(req, res) {
                 
                 req.params.id = undefined;
             }
-                       
-            if (undefined != req.params.id) {
+
+            if (undefined !== req.params.id) {
                 if (resourceName == 'channel' && (req.params.id == 'actions' || req.params.id == 'emitters' )) {
                     dao.listChannelActions(req.params.id, accountInfo, restResponse(res));
-                } else {
+                } else {      
                     var model = dao.modelFactory(resourceName, {}, accountInfo);
                     dao.get(model, req.params.id, accountInfo, restResponse(res));                   
                 }
-            } else {
+            } else {               
                 var page_size = 10,
                 page = 1,
                 order_by = 'recent';

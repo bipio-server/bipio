@@ -34,18 +34,30 @@ time        = require('time'),
 crypto      = require('crypto'),
 clone       = require('clone');
 
-function DaoMongo(cfg, conn, log, cache) {
-    if (!cfg || !conn || !log) {
-        throw new Error("Config and connection vars,  and log function are required.");
-    }
+function DaoMongo(connectStr, log, next) {
 
-    // @todo winston migrate
-    //    app.logmessage('Binding DAO and Models...');
-    this.config = cfg;
-    this.connection = conn;
+    var self = this;
+
+    log('MongoDB config: ' + connectStr);
+    
+    var options = {
+      server : {},
+      replset : {}
+    };
+
+    options.server.socketOptions = options.replset.socketOptions = { keepAlive: 1 };
+    mongoose.connection.on('error', function(err) {
+        console.log('MongoDB unconnectable via :' + connectStr);
+        console.log(err);
+        if (next) {
+            next(err);
+        }
+    });
+   
+    mongoose.connect(connectStr, options);
+
     this.log = log;
     this.models = { };
-    this.cache = cache;
     this._env = null;
     // protocol + base url
     this._baseUrl = CFG.proto_public + CFG.domain_public;
@@ -53,33 +65,35 @@ function DaoMongo(cfg, conn, log, cache) {
     this.cdn = cdn;
     this._modelPrototype = require('../models/prototype.js').BipModel;
 
-    var modelSrc = {
-        // mapper
-        'bip' : require('../models/bip').Bip,
-        'bip_share' : require('../models/bip_share').BipShare,
-        'bip_log' : require('../models/bip_log').BipLog,
-        'channel' : require('../models/channel').Channel,
-        'domain' : require('../models/domain').Domain,
-        // 'hub' : require('../models/hub').Hub,
+    mongoose.connection.on('open', function() {
+        log('MongoDB Connected');
+        var modelSrc = {
+            // mapper
+            'bip' : require('../models/bip').Bip,
+            'bip_share' : require('../models/bip_share').BipShare,
+            'bip_log' : require('../models/bip_log').BipLog,
+            'channel' : require('../models/channel').Channel,
+            'domain' : require('../models/domain').Domain,
+            // 'hub' : require('../models/hub').Hub,
 
-        'transform_default' : require('../models/transform_default').TransformDefault,
+            'transform_default' : require('../models/transform_default').TransformDefault,
 
-        // account
-        'account' : require('../models/account').Account,
-        'account_auth' : require('../models/account_auth').AccountAuth,
-        'account_option' : require('../models/account_option').AccountOption,
+            // account
+            'account' : require('../models/account').Account,
+            'account_auth' : require('../models/account_auth').AccountAuth,
+            'account_option' : require('../models/account_option').AccountOption,
 
-        'stats_account' : require('../models/stats_account').StatsAccount,
-        'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork
-    }
+            'stats_account' : require('../models/stats_account').StatsAccount,
+            'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork
+        }
 
-    for (var key in modelSrc) {
-        this.registerModel(modelSrc[key]);
-    // @todo winston migrate
-    //        app.logmessage('Model [' + key + '] registered');
-    }
-
-    
+        for (var key in modelSrc) {
+            self.registerModel(modelSrc[key]);
+        }
+        if (next) {
+            next(false, self);
+        }
+    });
 }
 
 DaoMongo.prototype.getBaseUrl = function() {
@@ -293,11 +307,6 @@ DaoMongo.prototype.create = function(model, callback, accountInfo, daoPostSave) 
             // populate from mongo model into our model, and build a representation
             model.populate(mongoModel, accountInfo);
 
-            if (self.cache) {
-                self.cache.putItem(model);                   // cache item
-                self.cache.delItems(model.getClass());       // clear all items cache
-            }
-
             model.postSave(accountInfo, function(err, modelName, retModel, code) {
                 callback(err, modelName, retModel, code );
                 // depending on the model, we can inject post-saves which are
@@ -434,11 +443,6 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
                     // populate from mongo model into our model, and build a representation
                     model.populate(result, accountInfo);
 
-                    if (self.cache) {
-                        self.cache.putItem(model);                   // cache item
-                        self.cache.delItems(model.getClass());       // clear all items cache
-                    }
-
                     model.postSave(accountInfo, function(err, modelName, retModel, code) {
                         next(err, modelName, retModel, code );
                     });
@@ -457,49 +461,33 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
 
 DaoMongo.prototype.get = function(model, modelId, accountInfo, callback) {
     var self = this;
-    if (this.cache) {
-        this.cache.getItem(model, modelId, function(cachedErr, cachedResult) {   // get from cache
-            cachedResult = null;
-            if (cachedErr || !cachedResult) {
-                var TargetMongoModelClass = mongoose.model(model.getEntityName());
+    
+    var TargetMongoModelClass = mongoose.model(model.getEntityName());
 
-                var findObject = self.getObjectIdFilter({
-                    id : modelId
-                }, accountInfo);
+    var findObject = self.getObjectIdFilter({
+        id : modelId
+    }, accountInfo);
 
-                TargetMongoModelClass.findOne(findObject, function (err, result) {
-                    var loadedModel;
-                    if (err) {
-                        self.log('Error: get(): ' + err);
-                        if (callback) {
-                            callback(false, null);
-                            return null;
-                        }
-                    }
-
-                    if (result) {
-                        // hydrate model
-                        model.populate(result, accountInfo);
-                    }
-
-                    if (null != result && self.cache) {
-                    //                        self.cache.putItemByClass(loadedModel, model);     // put to cache
-                    }
-
-                    if (callback) {
-                        // cast results in its result object
-                        callback(false, model.getEntityName(), model);
-                    }
-                    return model;
-                });
-            } else {
-                if (callback) {
-                    callback(false, cachedResult);
-                }
-                return cachedResult;
+    TargetMongoModelClass.findOne(findObject, function (err, result) {
+        var loadedModel;
+        if (err) {
+            self.log('Error: get(): ' + err);
+            if (callback) {
+                callback(false, null);
+                return null;
             }
-        });
-    }
+        }
+
+        if (result) {
+            // hydrate model
+            model.populate(result, accountInfo);
+        }
+
+        if (callback) {
+            // cast results in its result object
+            callback(false, model.getEntityName(), result ? model : result);
+        }
+    });
 };
 
 DaoMongo.prototype.remove = function(model, modelId, accountInfo, callback) {
@@ -520,9 +508,6 @@ DaoMongo.prototype.remove = function(model, modelId, accountInfo, callback) {
                 callback(false, null);
                 return null;
             }
-        } else if (self.cache) {
-            self.cache.delItem(model, modelId);      // del item from cache
-            self.cache.delItems(model);             // clear all items cache
         }
 
         if (callback) {
@@ -545,9 +530,6 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
                 next(false, null);
                 return null;
             }
-        } else if (self.cache) {
-        //            self.cache.delItem(model, modelId);      // del item from cache
-        //            self.cache.delItems(model);             // clear all items cache
         }
 
         if (next) {
@@ -584,78 +566,66 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         'alphabetical' : 'name'
     }
 
-    if (this.cache) {
-        this.cache.getItems(cacheKey, function(cachedErr, cachedResult) {   // get from cache
-            if (true || cachedErr || !cachedResult) {
-                var model = self.mongooseFactory(modelName);
-                var query = model.find( mongoFilter );
 
-                // @todo this is expensive, filter out keys which are not
-                // indexed
-                if (undefined != filter) {
-                    for (key in filter) {
-                        query = query.where(key).regex(new RegExp(filter[key], 'i'));
-                    }
-                }
+    var model = self.mongooseFactory(modelName);
+    var query = model.find( mongoFilter );
 
-                // count
-                query.count(function(err, count) {
-                    if (err) {
-                        self.log('Error: list(): ' + err);
-                        if (callback) {
-                            callback(false, err);
-                        }
-                    } else {
-                        if (page_size && page) {
-                            query = query.limit(page_size).skip( (page - 1)  * page_size );
-                        }
-
-                        if (sortMap[orderBy]) {
-                            query = query.sort(sortMap[orderBy] + ' -test');                           
-                        }
-
-                        query.execFind(function (err, results) {
-                            var model;
-                            if (err) {
-                                self.log('Error: list(): ' + err);
-                                if (callback) {
-                                    callback(false, err);
-                                }
-                            } else {
-                                // convert to models
-                                realResult = [];
-                                for (key in results) {
-                                    model = self.modelFactory(modelName, results[key], accountInfo);
-                                    //model.decorate();
-                                    realResult.push(model);
-                                }
-
-                                var resultStruct = {
-                                    'page' : page,
-                                    'page_size' : page_size,
-                                    'num_pages' : (Math.ceil( count / page_size )),
-                                    'order_by' : orderBy,
-                                    'total' : count,
-                                    'data' : realResult
-                                }
-
-                                if (self.cache) {
-                                    self.cache.putItems(cacheKey, resultStruct);            // cache all items
-                                }
-                                if (callback) {
-                                    callback(false, modelName, resultStruct );
-                                }
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (callback) {
-                    callback(false, modelName, cachedResult);
-                }
-            }
-        });
+    // @todo this is expensive, filter out keys which are not
+    // indexed
+    if (undefined != filter) {
+        for (key in filter) {
+            query = query.where(key).regex(new RegExp(filter[key], 'i'));
+        }
     }
+
+    // count
+    query.count(function(err, count) {
+        if (err) {
+            self.log('Error: list(): ' + err);
+            if (callback) {
+                callback(false, err);
+            }
+        } else {
+            if (page_size && page) {
+                query = query.limit(page_size).skip( (page - 1)  * page_size );
+            }
+
+            if (sortMap[orderBy]) {
+                query = query.sort(sortMap[orderBy] + ' -test');                           
+            }
+
+            query.execFind(function (err, results) {
+                var model;
+                if (err) {
+                    self.log('Error: list(): ' + err);
+                    if (callback) {
+                        callback(false, err);
+                    }
+                } else {
+                    // convert to models
+                    realResult = [];
+                    for (key in results) {
+                        model = self.modelFactory(modelName, results[key], accountInfo);
+                        //model.decorate();
+                        realResult.push(model);
+                    }
+
+                    var resultStruct = {
+                        'page' : page,
+                        'page_size' : page_size,
+                        'num_pages' : (Math.ceil( count / page_size )),
+                        'order_by' : orderBy,
+                        'total' : count,
+                        'data' : realResult
+                    }
+
+                    if (callback) {
+                        callback(false, modelName, resultStruct );
+                    }
+                }
+            });
+        }
+    });
 };
 
 /**
@@ -752,7 +722,7 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
 
     var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
 
-    if (undefined !== accountInfo) {
+    if (!tainted || (tainted && undefined !== accountInfo)) {
         model.populate(initProperties, accountInfo);
     }
 
@@ -910,7 +880,6 @@ DaoMongo.prototype.checkAuth = function(username, password, type, cb, asOwnerId,
                                         this.parallel());
                                 },
                                 function collateResults(err, auth, options, domains, channels) {
-
                                     if (null == auth || null == options) {
                                         err = true;
                                         resultModel = null;

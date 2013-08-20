@@ -22,28 +22,32 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var inquirer = require("inquirer"),
-    fs = require('fs'),
-    crypto = require('crypto'),
-    sparseFile = __dirname + '/../config/config.json-dist',
-    mongoose = require('mongoose');
+fs = require('fs'),
+path = require('path'),
+crypto = require('crypto'),
+sparseFile = __dirname + '/../config/config.json-dist',
+mongoose = require('mongoose');
 
 // load sparse config
 var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
-    appEnv = process.env.NODE_ENV,
-    targetConfig = __dirname + '/../config/' + appEnv + '.json';
+appEnv = process.env.NODE_ENV;
 
 if (appEnv === 'development' || !appEnv) {
     appEnv = 'default';
 }
 
+var targetConfig = path.resolve(__dirname, '../config/' + appEnv + '.json');
+
 function writeConfig() {
     fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 4), function(err) {
         if (err) {
             console.log(err);
-            process.exit(0);        
+            process.exit(0);
         } else {
-            console.log("\n\nConfig written to : " + targetConfig);
-            console.log("To start bipio server : node ./src/server.js\n");
+            console.log("\nConfig written to : " + targetConfig + "\n");
+            console.log("IMPORTANT : Ensure to remember your API password\n");
+            console.log("RabbitMQ may need additional configuration.  Check the 'rabbit' section in the config file.\n");
+            console.log("To start bipio server : node ./src/server.js - the REST API will be listening at http://" + sparseConfig.domain_public + "\n");
             console.log('See docs at https://github.com/bipio-server/bipio for more information.');
             process.exit(0);
         }
@@ -57,15 +61,16 @@ var credentials = {
 };
 
 function domainSelect() {
+    var valDefault = sparseConfig.domain_public;
     var domainSelect = {
         type : 'input',
         name : 'defaultDomain',
-        message : 'Hostname (FQDN). default "localhost" :'
+        message : 'Hostname (FQDN). default "' + valDefault + '" :'
     }
-    
+
     inquirer.prompt(domainSelect, function(answer) {
         if ('' === answer.defaultDomain) {
-            answer.defaultDomain = 'localhost';
+            answer.defaultDomain = valDefault;
         }
         sparseConfig.domain_public = answer.defaultDomain;
         portSelect();
@@ -73,22 +78,21 @@ function domainSelect() {
 }
 
 function portSelect() {
+    var valDefault = sparseConfig.server.port;
     var portSelect = {
         type : 'input',
         name : 'defaultPort',
-        message : 'TCP Port #. default "5000" :'
+        message : 'API TCP Port. default "' + valDefault + '" :'
     }
-    
+
     inquirer.prompt(portSelect, function(answer) {
         if ('' === answer.defaultPort) {
-            answer.defaultPort = 5000;
+            answer.defaultPort = valDefault;
         }
         sparseConfig.server.port = answer.defaultPort;
         aesSetup();
     });
 }
-
-
 
 function aesSetup() {
     var aesWarn = {
@@ -130,7 +134,7 @@ function userSetup() {
 
         credentials.username = answer.username.replace("\s_+", '');
 
-        crypto.randomBytes(24, function(ex, buf) {
+        crypto.randomBytes(16, function(ex, buf) {
             var token = buf.toString('hex');
 
             var userInstallPW = {
@@ -149,10 +153,13 @@ function userSetup() {
                 var userInstallEmail = {
                     type : 'input',
                     name : 'email',
-                    message : 'Administrator email :'
+                    message : 'Administrator email (default "root@localhost") :'
                 }
 
                 inquirer.prompt(userInstallEmail, function(answer) {
+                    if ('' === answer.email) {
+                        answer.email = 'root@localhost';
+                    }
                     credentials.email = answer.email;
 
                     // install user.
@@ -165,78 +172,87 @@ function userSetup() {
 
 function _createAccount(dao, next) {
     var account = dao.modelFactory(
-        'account', 
-        { 
-            name : credentials.username, 
-            admin : true,
+        'account',
+        {
+            name : credentials.username,
+            is_admin : true,
             email_account : credentials.email
-        }
-    );
-    dao.create(account, function(err, result) {
+        });
+
+    dao.create(account, function(err, modelName, result) {        
         if (err) {
             console.log(err);
             process.exit(0);
         } else {
-            _createAuth(dao, result.id, next);
+            _createAuth(
+                dao,
+                {
+                    user : {
+                        id : result.id
+                    }
+                },
+                next);
         }
 
     });
 }
 
-function _createAuth(dao, ownerId, next) {
+function _createAuth(dao, accountInfo, next) {
     // create auth
     var accountAuth = dao.modelFactory(
         'account_auth',
         {
             username : credentials.username,
             password : credentials.password,
-            type : 'token',
-            owner_id : ownerId
-        }
-    );
-    dao.create(accountAuth, function(err, result) {
+            type : 'token'
+        }, accountInfo);
+
+    dao.create(accountAuth, function(err, modelName, result) {
         if (err) {
             console.log(err);
             process.exit(0);
         } else {
-            _createDomain(dao,ownerId, next);
+            _createDomain(dao, accountInfo, next);
         }
-    });    
+    });
 }
 
-function _createDomain(dao, ownerId, next) {
+function _createDomain(dao, accountInfo, next) {
     // create auth
     var domain = dao.modelFactory(
         'domain',
         {
-            name : credentials.username + '.' + sparseConfig.domain_public,
+            name : (credentials.username + '.' + sparseConfig.domain_public).replace(/:.*$/, ''),
             type : 'custom',
-            available : true,
-            owner_id : ownerId
-        }
-    );    
-        
-    dao.create(domain, function(err, result) {
+            available : true
+        }, accountInfo);
+
+    dao.create(domain, function(err, modelName, result) {
         // skip name lookup errors
         if (err && err.code !== 'ENOTFOUND') {
             console.log(err);
             process.exit(0);
         } else {
-            _createOptions(dao, result.id, ownerId, next);
+            // pseudo accountInfo structure
+            accountInfo.user.domains = {
+                test : function() {
+                    return true
+                }
+            };
+            _createOptions(dao, result.id, accountInfo, next);
         }
-    });    
+    });
 }
 
-function _createOptions(dao, domainId, ownerId, next) {
-     // create auth
+function _createOptions(dao, domainId, accountInfo, next) {
+    // create auth
     var accountOptions = dao.modelFactory(
         'account_option',
         {
-            bip_domain_id : domainId,
-            owner_id : ownerId
-        }
-    );
-    dao.create(accountOptions, function(err, result) {
+            bip_domain_id : domainId
+        }, accountInfo);
+
+    dao.create(accountOptions, function(err, modelName, result) {
         if (err) {
             console.log(err);
             process.exit(0);
@@ -245,8 +261,6 @@ function _createOptions(dao, domainId, ownerId, next) {
         }
     });
 }
-
-
 
 /**
  * Things we want to configure
@@ -257,31 +271,37 @@ function _createOptions(dao, domainId, ownerId, next) {
  * default domain name :optional port
  */
 function auxServers() {
+    var valDefault = sparseConfig.dbMongo.connect;
     var serverSetupMongo = {
         type : 'input',
         name : 'mongoConnectString',
-        message : 'Mongo connect string (see http://docs.mongodb.org/manual/reference/connection-string) :'
+        message : 'Mongo connect string (see http://docs.mongodb.org/manual/reference/connection-string). Default "' + valDefault + '" :'
     };
 
     inquirer.prompt(serverSetupMongo, function(answer) {
+        if ('' === answer.mongoConnectString) {
+            answer.mongoConnectString = valDefault;
+        }
         sparseConfig.dbMongo.connect = (/^mongodb:\/\//.test(answer.mongoConnectString) ? '' : 'mongodb://') + answer.mongoConnectString;
 
         // try connecting
         console.log('trying ' + sparseConfig.dbMongo.connect + ' Ctrl-C to quit');
         GLOBAL.CFG = sparseConfig;
-        var mongoClient = mongoose.connect(sparseConfig.dbMongo.connect);
-        mongoose.connection.on('error', function(err) {
-            console.log('MongoDB unconnectable via :' + sparseConfig.dbMongo.connect);
-            console.log(err);
-            auxServers(next);
-        });
 
-        mongoose.connection.on('open', function() {
-            var DaoMongo = require(__dirname + '/../src/managers/dao-mongo').DaoMongo;
-            var dao = new DaoMongo({}, mongoClient, console.log, null);
-            _createAccount(dao, writeConfig);
-
-        });
+        var DaoMongo = require(__dirname + '/../src/managers/dao-mongo').DaoMongo;
+        new DaoMongo(
+            sparseConfig.dbMongo.connect,
+            console.log,
+            function(err, dao) {
+                if (err) {
+                    console.log('MongoDB unconnectable via :' + sparseConfig.dbMongo.connect);
+                    console.log(err);
+                    auxServers(next);
+                } else {
+                    _createAccount(dao, writeConfig);
+                }
+            }
+        );
     });
 }
 
