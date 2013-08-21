@@ -7,18 +7,20 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
 
-Bipio is a content transformation API that marries [digraphs](http://en.wikipedia.org/wiki/Directed_graph)
-to [AOP](http://en.wikipedia.org/wiki/Aspect-oriented_programming), where each node in a graph
-is responsible for performing a discrete unit of work.  It is ideal for integrating "cloud" API's, in a robust and flexible way.
+Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph)-based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">[pipelining]</a>
+API talking RESTful JSON, where each node in a graph is responsible for performing a discrete unit of work, such as integrating "cloud" API's or other web based RPC's.
+
+The graph structures (bips) allow the operator to configure a transform between exports and imports across adjacent nodes.
+They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing, message escalation... that sort of thing.
+
+Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes (channels).  Channels perform a discrete
+unit of work and emit a predictable result, they can be arranged on a bip's hub in meaningful ways.
 
 These graphs (called 'bips') can be given public facing endpoints over HTTP or SMTP which can trigger content for processing.  For example,
-it could collect simple logs, or model an integrated workflow, or be a rules based email service pushing one message to all your connected
-social networks and blogs.
+it could collect simple logs, model an integrated workflow, or be a rules based email service pushing one message to all your connected
+social networks and blogs, amongst others.
 
-Bips are configured by defining a graph pipeline ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes (channels).  Channels perform a discrete
-unit of work and emit a predictable result, they are 'concerns' in the AOP sense and can be arranged on a bip's hub in meaningful ways.
-The graph structure of a bip allows the user opportunity to configure a transform between exports and imports across adjacent nodes.
-Hubs can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing, message escalation... that sort of thing.
+![concept](https://bip.io/static/img/docs/bip_concept.png)
 
 Bips can be triggered intermittently (via 'emitter' channels) or process/answer requests over HTTP/SMTP dynamically.
 
@@ -45,7 +47,7 @@ to your account can be triggered and/or channels with data sources can be dynami
 The server is currently distributed [headless](http://en.wikipedia.org/wiki/Headless_system).  Sign in to [bipio](https://bip.io)
 to mount your local install from your browser.
 
-(**Please bear with me while the Architecture section is clarified)
+(**Please bare with me while the Architecture section is clarified)
 
 ## Installation
 
