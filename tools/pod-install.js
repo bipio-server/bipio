@@ -27,7 +27,8 @@
  */
 var program = require('commander'),
 fs = require('fs'),
-os = require('os');
+os = require('os'),
+helper = require('../src/lib/helper');
 
 program
     .version('0.0.1')
@@ -53,8 +54,13 @@ if (program.add) {
     mode = 'remove';
     podName = program.remove;
 }
-
-pod = require('bip-pod-' + podName);
+try {
+    pod = require('bip-pod-' + podName);
+} catch (Err) {
+    console.log(Err.toString());
+    console.log('Trying literal module name...');
+    pod = require(podName)
+}
 
 var appEnv = process.env.NODE_ENV;
 if (appEnv === 'development' || !appEnv) {
@@ -71,12 +77,14 @@ if (pod && pod._name) {
 
     if (currentConfig) {
         var imgDir = __dirname + '/../data/cdn/img/pods';
-        if (!fs.existsSync(imgDir)) {
+        if (!fs.existsSync(imgDir)) {            
             helper.mkdir_p(imgDir);
+
             // just block the process.
-            require('sleep').sleep(1);
+            require('sleep').sleep(2);
+                        console.log(' created ' + imgDir);
         }
-        
+        process.exit(0);
         var actionDone = false;
         if (mode === 'add' && !currentConfig.pods[pod._name]) {
             currentConfig.pods[pod._name] = config;
