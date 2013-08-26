@@ -37,7 +37,7 @@ function Bastion(dao, noConsume, cb) {
     if (!cb && !noConsume) {
         cb = this.consumeLoop()
     }
-    this._dao = null;
+    this._dao = dao;
     this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : cb);
     return this;
 }

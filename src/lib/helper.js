@@ -401,6 +401,48 @@ var helper = {
     getRegActionUUID : function() {
         return this.regActionUUID;
     },
+    
+    
+    AESCrypt : function(value) {
+        var key, keyVersion,
+            iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
+        // get latest key
+        for (keyVersion in CFG.k) {
+            key = CFG.k[keyVersion];
+        }
+
+        var cipher = crypto.createCipheriv('aes-256-cbc', key, iv),
+            crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64');
+
+        cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64');
+        // @todo encrypted objects not equating correctly
+        if (value !== this.AESDecrypt(cryptEncoded, true)) {        
+            throw new Error('Cipher Failure');
+        }
+
+        return cryptEncoded;
+    },
+    
+    AESDecrypt : function(cryptedStr, autoPadding) {
+        var crypted = new Buffer(cryptedStr, 'base64').toString('utf-8');
+        var keyVersion = crypted.substr(0, 1),
+            iv = crypted.substr(1, 16),
+            key = CFG.k[keyVersion],
+            cypher = crypted.substr(17);
+
+        var decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+
+        if (!autoPadding) {
+            autoPadding = false;
+        }
+
+        decipher.setAutoPadding(autoPadding);
+
+        var decrypted = decipher.update(cypher, 'base64', 'ascii');
+
+        return decrypted + decipher.final('ascii');
+    }
+    
 }
 
 //

@@ -70,7 +70,6 @@ function endLifeParse(end_life) {
     }
 
     if (end_life.time !== '0' && end_life.time !== 0 && end_life.time !== '') {
-        console.log('... is ' + end_life.time);
         d = new Date(Date.parse(end_life.time));
         if (d.getTime() != 0) {
             // @todo looks like a bug in datejs, no seconds for getTime?
@@ -130,7 +129,6 @@ Bip.entitySchema = {
         writable: true,
         validate : [ {
             validator : function(val, next) {
-                console.log(this);
                 next(this.type === 'trigger' ? true :
                     this.getAccountInfo().user.domains.test(val)
                 );
@@ -550,6 +548,11 @@ Bip.preSave = function(accountInfo) {
         'hub' :  accountInfo.getSetting('bip_hub'),
         'icon' : ''
     };
+    
+    if (this.domain_id === '') {
+        this.domain_id = undefined;
+    }
+   
     app.helper.copyProperties(props, this, false);
 
     //this._tz = accountInfo.user.settings.timezone;
@@ -599,9 +602,7 @@ Bip.postSave = function(accountInfo, cb, isNew) {
             } else {
                 from = getAction(accountInfo, key);
             }
-console.log(this.hub); 
-console.log(key);
-console.log(this.hub[key].transforms);
+
             if (this.hub[key].transforms && Object.keys(this.hub[key].transforms).length > 0) {
                 for (var txChannelId in this.hub[key].transforms) {
                     if (this.hub[key].transforms.hasOwnProperty(txChannelId)) {

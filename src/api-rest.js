@@ -20,6 +20,11 @@
  *
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
+/**
+ *
+ * ExpressJS REST API front-end
+ *
+ */
 app = module.parent.exports.app;
 
 var util        = require('util'),
@@ -38,6 +43,7 @@ var util        = require('util'),
     restResources = ['bip', 'channel', 'domain', 'account_option'],    
     bastion     = new Bastion(dao);
 
+// make message system available to app
 app.bastion = bastion;
 
 function filterModel(filterLen, modelPublicFilters, modelStruct) {
@@ -53,7 +59,8 @@ function filterModel(filterLen, modelPublicFilters, modelStruct) {
 
 /**
  * takes a result JSON struct and filters out whatever is not in a public
- * filter for the supplied model
+ * filter for the supplied model. Public filter means readable flag is 'true' in the
+ * rest exposed model
  */
 function publicFilter(modelName, modelStruct) {
     var result = {}, filterLen, modelLen,
@@ -188,40 +195,18 @@ function getReferer(req) {
     }
 }
 
-
-
-function decorateAccountInfo(remoteUser) {
-    var accountInfo = {
-        'user' : remoteUser,
-        getSetting : function(setting) {
-            return this.user.settings.getValue(setting);
-        },
-        getDefaultDomain: function() {
-            return this.user.domains.get(this.user.defaultDomainId);
-        },
-        getDefaultDomainStr : function(incProto) {
-            var defaultDomain = this.getDefaultDomain();
-            var proto = (incProto) ? CFG.proto_public : '';
-            return proto + defaultDomain.name;
-        },
-        getName : function() {
-            return this.user.name;
-        }
-    }
-    return accountInfo;
-}
-
 /**
  * Generic RESTful handler for restResources
  */
 var restAction = function(req, res) {
     var rMethod = req.method,
-    accountInfo = decorateAccountInfo(req.remoteUser),
-    owner_id = req.remoteUser.id,
+    accountInfo = req.remoteUser,
+    owner_id = accountInfo.getId(),
     resourceName = req.params.resource_name,
     subResourceId = req.params.subresource_id,
     postSave;
 
+    // User is authenticated and the requested model is marked as restful?
     if (undefined != owner_id && helper.indexOf(restResources, resourceName) != -1) {
         if (rMethod == 'POST' || rMethod == 'PUT') {
             // hack for bips, inject a referer note if no note has been sent
@@ -280,7 +265,8 @@ var restAction = function(req, res) {
         } else if (rMethod == 'GET') {
             var filter = {};
             
-            // @todo a little kludging for bip logs.  do something nicer later
+            // @todo a little kludging for bip logs.  It's not rest but need to
+            // inherit listing characteristics
             if ('bip' === resourceName && 'logs' === subResourceId) {
                 filter.bip_id = req.params.id;
                 resourceName = 'bip_log';
@@ -291,8 +277,8 @@ var restAction = function(req, res) {
             if (undefined !== req.params.id) {
                 if (resourceName == 'channel' && (req.params.id == 'actions' || req.params.id == 'emitters' )) {
                     dao.listChannelActions(req.params.id, accountInfo, restResponse(res));
-                } else {      
-                    var model = dao.modelFactory(resourceName, {}, accountInfo);
+                } else {
+                    var model = dao.modelFactory(resourceName, {}, accountInfo);                    
                     dao.get(model, req.params.id, accountInfo, restResponse(res));                   
                 }
             } else {               
@@ -326,7 +312,6 @@ var restAction = function(req, res) {
                         }
                     }
                 }
-
                 dao.list(resourceName, accountInfo, page_size, page, order_by, filter, restResponse(res));
             }
         }
@@ -366,8 +351,7 @@ app.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req,
     model_subdomain = req.params.model_subdomain;
     res.contentType(app.defs.CONTENTTYPE_JSON);
 
-    accountInfo = decorateAccountInfo(req.remoteUser),
-    dao.describe(model, model_subdomain, restResponse(res), accountInfo);
+    dao.describe(model, model_subdomain, restResponse(res), req.remoteUser);
 });
 
 function channelRender(ownerId, channelId, req, res, responseWrapper) {
@@ -411,7 +395,7 @@ app.all('/rpc/render/channel/:channel_id/:renderer', function(req, res) {
             res.send(403);
         } else {
             var filter = {
-                owner_id: accountResult.id,
+                owner_id: accountResult.user.id,
                 id : req.params.channel_id
             };
 
@@ -420,7 +404,7 @@ app.all('/rpc/render/channel/:channel_id/:renderer', function(req, res) {
                     console.log(err);
                     res.send(404);
                 } else {
-                    req.remoteUser = decorateAccountInfo(accountResult);
+                    req.remoteUser = accountResult;
                     var channel = dao.modelFactory('channel', result),
                         action = channel.getPodTokens(),
                         pod = dao.pod(action.pod),
@@ -492,7 +476,7 @@ app.all('/rpc/pod/:pod/:action/:method/:channel_id?', function(req, res) {
                 console.log(err);
                 res.send(403);
             } else {
-                req.remoteUser = decorateAccountInfo(accountResult);
+                req.remoteUser = accountResult;
 
                 if (channelId) {
                     var filter = {
@@ -520,13 +504,6 @@ app.all('/rpc/pod/:pod/:action/:method/:channel_id?', function(req, res) {
         res.send(404);
     }
 });
-
-/*
-app.get('/t', function(req, res) {
-    dao.triggerAll();
-    res.send(200, {});
-});
-*/
 
 // RPC Catchall
 app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', restAuthWrapper, function(req, res) {
@@ -577,14 +554,13 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
                 to = req.query.to;
 
             if (from && to) {
-                var accountInfo = decorateAccountInfo(req.remoteUser);
-                dao.getTransformHint(accountInfo, from, to, restResponse(res));
+                dao.getTransformHint(req.remoteUser, from, to, restResponse(res));
             } else {
                 response = 400;
                 res.send(response);
             }
         } else if (method == 'share' && resourceId) {
-            var accountInfo = decorateAccountInfo(req.remoteUser);
+            var accountInfo = req.remoteUser;
 
             if (resourceId === 'list') {
                 var page_size = 10,
@@ -633,7 +609,7 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
                 }
             }
         } else if (method == 'unshare' && resourceId) {
-            var accountInfo = decorateAccountInfo(req.remoteUser),
+            var accountInfo = req.remoteUser,
                 filter = {
                     'owner_id' : accountInfo.user.id,
                     'id' : resourceId
@@ -643,7 +619,7 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
 
         // alias into account options.  Returns RESTful account_options resource
         } else if (method == 'set_default' && resourceId) {
-            var accountInfo = decorateAccountInfo(req.remoteUser),
+            var accountInfo = req.remoteUser,
                 filter = {
                     'owner_id' : accountInfo.user.id
                 };
@@ -664,7 +640,7 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
         // confirms a domain has been properly configured.  If currently
         // set as !_available, then enables it.
         if (method == 'confirm') {
-            var accountInfo = decorateAccountInfo(req.remoteUser);
+            var accountInfo = req.remoteUser;
             var filter = {
                 'owner_id' : accountInfo.user.id,
                 'id' : resourceId
@@ -715,8 +691,8 @@ function bipAuthWrapper(req, res, cb) {
             // reject always
             bipBasicFail(req, res);
         } else {
-            var ownerId = accountResult.id,
-                domainId = accountResult.activeDomainId,
+            var ownerId = accountResult.getId(),
+                domainId = accountResult.getActiveDomain(),
                 filter = {
                     'name' : bipName,
                     'type' : 'http',
@@ -724,7 +700,6 @@ function bipAuthWrapper(req, res, cb) {
                     'owner_id' : ownerId,
                     'domain_id' : domainId
                 };
-
             dao.find('bip', filter, function(err, result) {
                 var username,password;
                 if (!err && result) {
@@ -776,7 +751,6 @@ app.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
     },
     bipName = req.params.bip_name,
     domain = helper.getDomain(req.headers.host, true);
-
     client = {
                     'id' : txId,
                     'host' : req.header('x-forwarded-for') || req.connection.remoteAddress,
@@ -793,10 +767,9 @@ app.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
         files = cdn.normedMeta('express', txId, req.files);
     }
 
-
     container._clientInfo = client;
 
-    //function fireBip(files) {
+    (function(req, res, bipName, domain, client, container, files) {
         bastion.domainBipUnpack(
             bipName,
             domain,
@@ -845,7 +818,7 @@ app.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
                         restReponse = false;
                     }
 
-                    bastion.bipFire(bip, contentType, encoding, exports, client, contentParts, files);
+                    bastion.bipFire(bip, client.contentType, client.encoding, exports, client, contentParts, files);
                 }
 
                 if (restReponse) {
@@ -854,5 +827,5 @@ app.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
             },
             statusMap
         );
-    //}(files);
+    })(req, res, bipName, domain, client, container, files);
 });

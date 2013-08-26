@@ -77,14 +77,14 @@ if (pod && pod._name) {
 
     if (currentConfig) {
         var imgDir = __dirname + '/../data/cdn/img/pods';
-        if (!fs.existsSync(imgDir)) {            
+        if (!fs.existsSync(imgDir)) {
             helper.mkdir_p(imgDir);
 
             // just block the process.
             require('sleep').sleep(2);
                         console.log(' created ' + imgDir);
         }
-        process.exit(0);
+
         var actionDone = false;
         if (mode === 'add' && !currentConfig.pods[pod._name]) {
             currentConfig.pods[pod._name] = config;
@@ -111,9 +111,10 @@ if (pod && pod._name) {
             if (mode !== 'remove') {
                 console.log('Upgrading Cluster on ' + os.hostname());
                 var dao = require(__dirname + '/../src/bootstrap'),
-                    Bastion = require(process.cwd() + '/src/managers/bastion').Bastion;
-                    app = dao.app,                    
+                    Bastion = require(process.cwd() + '/src/managers/bastion');
+                    app = dao.app,
                     podContext = dao.pod(pod._name);
+
 
                 var bastion = new Bastion(
                     dao,
@@ -122,7 +123,8 @@ if (pod && pod._name) {
                         if (readyQueue == 'queue_jobs') {
                             app.logmessage('Queue is up [queue_jobs]');
                             app.bastion = bastion;
-                
+
+
                             // get all users
                             dao.findFilter('account', {}, function(err, accounts) {
                                 if (err) {
@@ -138,14 +140,12 @@ if (pod && pod._name) {
                                                 if (err) {
                                                     app.logmessage(result, 'error');
                                                 } else {
-                                                    console.log('installed for ' + account.id);
+                                                    console.log('installed ' + result + ' into ' + account.id);
                                                 }
 
-                                                /*
-                                                if (j === (accounts.length - 1)) {
+                                                if (j === accounts.length) {
                                                     process.exit(0);
                                                 }
-                                                */
                                             });
                                         }
                                     } else {
@@ -155,6 +155,7 @@ if (pod && pod._name) {
                                     }
                                 }
                             });
+
                         }
                     });
             }

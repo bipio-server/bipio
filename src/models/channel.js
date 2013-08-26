@@ -48,6 +48,7 @@ function applyAction(channelAction) {
             this.config = pods[podAction.pod].importGetDefaults(podAction.action);
         }
     }
+
     return channelAction;
 }
 
@@ -290,22 +291,34 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     var transformedImports = this._transform(adjacentExports, transforms, client),
     podTokens = this.getPodTokens(),
     podName = podTokens.name;
-
+    
     // invoke method
     client.owner_id = this.owner_id;
     if (pods[podName].isOAuth()) {
-        pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
+        pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {            
             if (!err && oAuthToken) {
-                client._oauth_token = oAuthToken;
-                client._oauth_token_secret = tokenSecret;
-                client._oauth_profile = authProfile;
-                pods[podName].invoke(podTokens.action, self, transformedImports, client, contentParts, next);
+                var sysImports = {
+                    client : client,
+                    auth : {
+                        oauth : {
+                            token : oAuthToken,
+                            secret : tokenSecret,
+                            profile : authProfile
+                        }
+                    }
+                };
+                //client._oauth_token = oAuthToken;
+                //client._oauth_token_secret = tokenSecret;
+                //client._oauth_profile = authProfile;
+                pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
             }
         });
     } else {
-        pods[podName].invoke(podTokens.action, this, transformedImports, client, contentParts, next);
+        pods[podName].invoke(podTokens.action, this, transformedImports, { client : client }, contentParts, next);
     }
 }
+
+
 
 Channel.pod = function(podName) {
     var ret;

@@ -39,7 +39,7 @@ function DaoMongo(connectStr, log, next) {
     var self = this;
 
     log('MongoDB config: ' + connectStr);
-    
+
     var options = {
       server : {},
       replset : {}
@@ -53,7 +53,7 @@ function DaoMongo(connectStr, log, next) {
             next(err);
         }
     });
-   
+
     mongoose.connect(connectStr, options);
 
     this.log = log;
@@ -65,31 +65,33 @@ function DaoMongo(connectStr, log, next) {
     this.cdn = cdn;
     this._modelPrototype = require('../models/prototype.js').BipModel;
 
+    var modelSrc = {
+        // mapper
+        'bip' : require('../models/bip').Bip,
+        'bip_share' : require('../models/bip_share').BipShare,
+        'bip_log' : require('../models/bip_log').BipLog,
+        'channel' : require('../models/channel').Channel,
+        'domain' : require('../models/domain').Domain,
+        // 'hub' : require('../models/hub').Hub,
+
+        'transform_default' : require('../models/transform_default').TransformDefault,
+
+        // account
+        'account' : require('../models/account').Account,
+        'account_auth' : require('../models/account_auth').AccountAuth,
+        'account_option' : require('../models/account_option').AccountOption,
+
+        'stats_account' : require('../models/stats_account').StatsAccount,
+        'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork
+    }
+
+    for (var key in modelSrc) {
+        self.registerModel(modelSrc[key]);
+    }
+
     mongoose.connection.on('open', function() {
         log('MongoDB Connected');
-        var modelSrc = {
-            // mapper
-            'bip' : require('../models/bip').Bip,
-            'bip_share' : require('../models/bip_share').BipShare,
-            'bip_log' : require('../models/bip_log').BipLog,
-            'channel' : require('../models/channel').Channel,
-            'domain' : require('../models/domain').Domain,
-            // 'hub' : require('../models/hub').Hub,
 
-            'transform_default' : require('../models/transform_default').TransformDefault,
-
-            // account
-            'account' : require('../models/account').Account,
-            'account_auth' : require('../models/account_auth').AccountAuth,
-            'account_option' : require('../models/account_option').AccountOption,
-
-            'stats_account' : require('../models/stats_account').StatsAccount,
-            'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork
-        }
-
-        for (var key in modelSrc) {
-            self.registerModel(modelSrc[key]);
-        }
         if (next) {
             next(false, self);
         }
@@ -253,7 +255,7 @@ DaoMongo.prototype.create = function(model, callback, accountInfo, daoPostSave) 
 
         mongoModel.save(function(err) {
             if (err) {
-                console.log(err);
+                app.logmessage(err, 'error');
                 if (callback) {
                     // conflict? Then load the record and return the payload
                     // with an error response
@@ -306,7 +308,6 @@ DaoMongo.prototype.create = function(model, callback, accountInfo, daoPostSave) 
 
             // populate from mongo model into our model, and build a representation
             model.populate(mongoModel, accountInfo);
-
             model.postSave(accountInfo, function(err, modelName, retModel, code) {
                 callback(err, modelName, retModel, code );
                 // depending on the model, we can inject post-saves which are
@@ -461,7 +462,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
 
 DaoMongo.prototype.get = function(model, modelId, accountInfo, callback) {
     var self = this;
-    
+
     var TargetMongoModelClass = mongoose.model(model.getEntityName());
 
     var findObject = self.getObjectIdFilter({
@@ -591,7 +592,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
             }
 
             if (sortMap[orderBy]) {
-                query = query.sort(sortMap[orderBy] + ' -test');                           
+                query = query.sort(sortMap[orderBy] + ' -test');
             }
 
             query.execFind(function (err, results) {
@@ -801,6 +802,33 @@ DaoMongo.prototype.buildProperties = function(struct, idStruct) {
 }
 
 // ---------------------- USERS
+function AccountInfo(account) {
+    this.user = account;
+}
+
+AccountInfo.prototype = {
+    getSetting : function(setting) {
+        return this.user.settings.getValue(setting);
+    },
+    getId : function() {
+        return this.user.id;
+    },
+    getActiveDomain : function() {
+        return this.user.activeDomainId;  
+    },
+    getDefaultDomain: function() {
+        return this.user.domains.get(this.user.defaultDomainId);
+    },
+    getDefaultDomainStr : function(incProto) {
+        var defaultDomain = this.getDefaultDomain();
+        var proto = (incProto) ? CFG.proto_public : '';
+        return proto + defaultDomain.name;
+    },
+    getName : function() {
+        return this.user.name;
+    }
+};
+
 /**
  *
  */
@@ -942,7 +970,9 @@ DaoMongo.prototype.checkAuth = function(username, password, type, cb, asOwnerId,
                                         resultModel.settings.api_token = model.getPassword();
                                         resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(username + ':' + model.getPassword()).toString('base64'));
                                     }
-                                    cb(err, resultModel);
+
+                                    var accountInfo = new AccountInfo(resultModel);
+                                    cb(err, accountInfo);
                                 });
                         } else {
                             result = null;
@@ -1031,16 +1061,16 @@ DaoMongo.prototype.pauseBip = function(props, cb, pause, transactionId) {
         MongoModel.update( filter, {
             'paused' : pause
         } ).exec();
-    
+
         jobPacket.transaction_id = transactionId;
         jobPacket.code = 'bip_paused';
 
     } else {
         jobPacket.code = 'bip_paused_manual';
     }
-    
+
     app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
-    
+
 };
 
 
@@ -1061,7 +1091,7 @@ DaoMongo.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, cb)
             targetModel.bip_end_life = result.end_life;
             targetModel.bip_hub = result.hub;
             targetModel.bip_type = result.type;
-            
+
             // update into account options
             self.update(
                 'account_option',
@@ -1699,13 +1729,13 @@ DaoMongo.prototype._jobAttachUserAvatarIcon = function(payload, next) {
             console.log(response);
         }
     }
-    
+
     // don't care if the file exists or not, just suck it down.
     cdn.httpFileSnarf(avPath, dstFile, function(err, resp) {
         var convertArgs = [ dstFile, '-resize', '125x125' ];
 
         // if avPath isn't a jpeg, convert it
-        if (! /(jpg|jpeg)$/i.test(dstFile)  ) {            
+        if (! /(jpg|jpeg)$/i.test(dstFile)  ) {
             var newDst = dstFile.split('.');
             newDst.pop();
             newDst = newDst.join('.') + '.jpg';
@@ -1718,7 +1748,7 @@ DaoMongo.prototype._jobAttachUserAvatarIcon = function(payload, next) {
             } else {
                 next(false, payload);
             }
-        });        
+        });
     });
 }
 
@@ -1930,7 +1960,7 @@ DaoMongo.prototype.describe = function(model, subdomain, next, accountInfo) {
                 authChecks.push(
                     function(podName) {
                         return function(cb) {
-                            return pods[podName].authStatus( accountInfo.user.id, podName, cb );
+                            return pods[podName].authStatus( accountInfo.getId(), podName, cb );
                         }
                     }(key) // self exec
                     );
