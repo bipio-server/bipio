@@ -17,7 +17,7 @@ to the connecting client, ideal for rapid prototyping, A/B testing, message esca
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes (channels).  Channels perform a discrete
 unit of work and emit a predictable result, they can be arranged on a bip's hub in meaningful ways.  Channels are largely decoupled from the graph resolution platform
 in self contained collections called Pods.  Feel free to roll your own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
-then jump in an [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
+then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
 
 Bips can be given public facing endpoints over HTTP or SMTP which can trigger content for processing.  For example,
 a Bip could collect simple logs, model an integrated workflow, or be a rules based email service pushing one message to all your connected
