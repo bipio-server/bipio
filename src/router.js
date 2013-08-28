@@ -22,7 +22,7 @@
  */
 /**
  *
- * ExpressJS REST API front-end
+ * ExpressJS REST API front-end routing wrapper
  *
  */
 app = module.parent.exports.app;
@@ -36,7 +36,7 @@ var util        = require('util'),
     utils = require('express/node_modules/connect/lib/utils'),
     cdn      = require('./lib/cdn'),
     modelPublicFilter,
-    dao = new DaoMongo(app.envConfig.dbMongo.connect, app.logmessage, function(err, dao) {
+    dao = new DaoMongo(CFG.dbMongo.connect, app.logmessage, function(err, dao) {
         modelPublicFilter = dao.getModelPublicFilters();
     }),
     // restful models
@@ -125,7 +125,7 @@ function restAuthWrapper(req, res, cb) {
  */
 var restResponse = function(res) {
     return function(error, modelName, results, code, options) {
-        var contentType = app.defs.CONTENTTYPE_JSON;
+        var contentType = DEFS.CONTENTTYPE_JSON;
 
         if (options) {
             if (options.content_type) {
@@ -173,7 +173,7 @@ var restResponse = function(res) {
             res.redirect(results._redirect);
             return;
         }
-        if (contentType == app.defs.CONTENTTYPE_JSON) {
+        if (contentType == DEFS.CONTENTTYPE_JSON) {
             res.jsonp(!code ? '200' : code, payload);
         } else {
             res.send(!code ? '200' : code, payload);
@@ -343,13 +343,10 @@ app.del( '/rest/:resource_name/:id', restAuthWrapper, restAction);
 
 // ---------------- RPC --------------------------------------------------------
 
-/**
- * Noauth required
-*/
 app.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req, res) {
     var model = req.params.model,
     model_subdomain = req.params.model_subdomain;
-    res.contentType(app.defs.CONTENTTYPE_JSON);
+    res.contentType(DEFS.CONTENTTYPE_JSON);
 
     dao.describe(model, model_subdomain, restResponse(res), req.remoteUser);
 });
@@ -508,7 +505,7 @@ app.all('/rpc/pod/:pod/:action/:method/:channel_id?', function(req, res) {
 // RPC Catchall
 app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', restAuthWrapper, function(req, res) {
 
-    res.contentType(app.defs.CONTENTTYPE_JSON);
+    res.contentType(DEFS.CONTENTTYPE_JSON);
     var response = {};
     var methodDomain = req.params.method_domain;
     var method = req.params.method_name;

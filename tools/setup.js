@@ -30,7 +30,11 @@ mongoose = require('mongoose');
 
 // load sparse config
 var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
-appEnv = process.env.NODE_ENV;
+    appEnv = process.env.NODE_ENV;
+
+crypto.randomBytes(48, function(ex, buf) {
+    sparseConfig.server.sessionSecret = buf.toString('hex');
+});
 
 if (appEnv === 'development' || !appEnv) {
     appEnv = 'default';
@@ -179,7 +183,7 @@ function _createAccount(dao, next) {
             email_account : credentials.email
         });
 
-    dao.create(account, function(err, modelName, result) {        
+    dao.create(account, function(err, modelName, result) {
         if (err) {
             console.log(err);
             process.exit(0);

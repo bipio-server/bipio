@@ -28,36 +28,38 @@
  * michael@cloudspark.com.au
  *
  */
+// includes
 var app,
-util            = require('util'),
-cluster         = require('cluster'),
-express         = require('express'),
+    util            = require('util'),
+    cluster         = require('cluster'),
+    express         = require('express'),
 
-winston         = require('winston'),
-async           = require('async'),
-mongoose        = require('mongoose'),
-redis           = require('redis'),
-fs              = require('fs'),
-helper          = require('./lib/helper'),
-passport        = require('passport');
+    winston         = require('winston'),
+    async           = require('async'),
+    mongoose        = require('mongoose'),
+    fs              = require('fs'),
+    helper          = require('./lib/helper'),
+    path            = require('path'),
+    passport        = require('passport'),
+    app             = express();
+    connectUtils    = require('express/node_modules/connect/lib/utils');
 
+// variables
 var defs            = require('../config/defs'),
-envConfig       = require('config'),
-CFG_SERVER      = envConfig.server,
-workerId;
+    envConfig       = require('config'),
+    workerId;
 
-// @todo cleanup global config
-GLOBAL.CFG_CDN         = envConfig.cdn;
+// globals
+GLOBAL.CFG_CDN = envConfig.cdn;
 GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
-GLOBAL.SERVER_ROOT = process.cwd();
+GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 
-var port            = process.env.PORT || CFG_SERVER.port,
-forks           = process.env.NODE_ENV == 'development' ? 1 : require('os').cpus().length;
 
-// basically a wrapper around logger
-var logmessage = function(message, loglevel) {
-    message = '#' + (workerId ? workerId : 'MASTER') + ': ' + message;
+// attach general helpers to the app
+app.helper = helper;
+app.logmessage = function(message, loglevel) {
+    message = '#WORKER' + (workerId ? workerId : 'MASTER') + ': ' + message;
     if (winston) {
         winston.log(loglevel || 'info', message);
     } else {
@@ -65,7 +67,7 @@ var logmessage = function(message, loglevel) {
     }
 }
 
-// our catcher for log messages
+// exception catchall
 process.addListener('uncaughtException', function (err, stack) {
     var message = 'Caught exception: ' + err + '\n' + err.stack;
     if (app && app.logmessage) {
@@ -75,15 +77,11 @@ process.addListener('uncaughtException', function (err, stack) {
     }
 });
 
-// creating and configuring server
-var app = express();
-var utils = require('express/node_modules/connect/lib/utils');
-
 /**
  * express bodyparser looks broken or too strict.
  */
 function xmlBodyParser(req, res, next) {
-    var enc = utils.mime(req);
+    var enc = connectUtils.mime(req);
     if (req._body) return next();
     req.body = req.body || {};
 
@@ -97,12 +95,12 @@ function xmlBodyParser(req, res, next) {
 
     // flag as parsed
     req._body = true;
-    
+
     // parse
     var buf = '';
     req.setEncoding('utf8');
     req.rawBody = '';
-    
+
     req.on('data', function(chunk) {
         req.rawBody += chunk;
     });
@@ -111,10 +109,11 @@ function xmlBodyParser(req, res, next) {
     });
 }
 
+// express preflight
 app.configure(function() {
     app.use(xmlBodyParser);
     app.use(express.bodyParser());
-    
+
     // respond with an error if body parser failed
     app.use(function(err, req, res, next) {
         console.log(err);
@@ -129,28 +128,27 @@ app.configure(function() {
     });
     app.use(express.methodOverride());
     app.use(express.cookieParser());
+
+    // required for some oauth provders
     app.use(express.session({
-        secret: 'kalk#$Ocp2-103LCA:Sdfkj20p84'
+        secret: envConfig.server.sessionSecret
     }));
+
     app.use(passport.initialize());
     app.use(passport.session());
     app.use('jsonp callback', true );
 });
 
-// let's load app with more stuff and export it
-app.envConfig = envConfig;
-app.defs = defs;
-app.helper = helper;
-app.logmessage = logmessage;
-
 // export app everywhere
 module.exports.app = app;
 
-// we want to set up connections only on "workers, not on cluster/master
-// this is the cluster setup
 if (cluster.isMaster) {
+    // when user hasn't explicitly configured a cluster size, use 1 process per cpu
+    var forks = envConfig.server.forks ? envConfig.server.forks : require('os').cpus().length;
+
     app.logmessage('Node v' + process.versions.node);
     app.logmessage('Starting ' + forks + ' fork(s)');
+
     for (var i = 0; i < forks; i++) {
         var worker = cluster.fork();
     }
@@ -165,11 +163,10 @@ if (cluster.isMaster) {
         }
     );
 
-    // here load rest-api so we don't clutter this piece of code more
-    require('./api-rest');
+    require('./router');
 
-    app.listen(port, function() {
-        app.logmessage('Listening on :' + port + ' in "' + app.settings.env + '" mode...');
+    app.listen(envConfig.server.port, function() {
+        app.logmessage('Listening on :' + envConfig.server.port + ' in "' + app.settings.env + '" mode...');
         return 0;
     });
 }

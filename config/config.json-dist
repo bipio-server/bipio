@@ -5,6 +5,7 @@
     "proto_public": "http://",
     "server": {
         "port": 5000,
+        "sessionSecret" : "",
         "forks": 1
     },
     "mailer": {
