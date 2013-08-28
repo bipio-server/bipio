@@ -21,8 +21,8 @@ then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/
 
 Bips can be given public facing endpoints over HTTP or SMTP which can trigger content for processing.  For example,
 a Bip could collect simple logs, model an integrated workflow, or be a rules based email service pushing one message to all your connected
-social networks and blogs, amongst others.  Certain types of channels, called 'emitters' can fire Bips periodically for polling content, synchronizing files
-or scheduling messages.
+social networks and blogs, amongst others.  Certain types of channels, called 'emitters' can fire Bips periodically for polling content, synchronizing files,
+notifying you of important events, automatically generating content or simply scheduling messages.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
