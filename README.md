@@ -36,9 +36,9 @@ to mount your local install from your browser.
 Requirements
 -
 
-  - [Node.js >= 0.10.15](http://nodejs.org) **delivery agent**
+  - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
   - [MongoDB Server](http://www.mongodb.org) **data store**
-  - [RabbitMQ](http://www.rabbitmq.com) **message delivery**
+  - [RabbitMQ](http://www.rabbitmq.com) **message delivery (multiprocess pipeline)**
 
 SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bipio-contrib/haraka](https://github.com/bipio-server/bipio-contrib).
 
