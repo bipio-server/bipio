@@ -10,10 +10,8 @@ var defs = {
     RESPONSE_INPROCESS          : 'IN_PROCESS',
     RESPONSE_ERROR              : 'ERROR',
 
-    DEFAULT_CACHE_EXPIRE_SECS   : 10*60,
-    
-    DATA_DIR : '/data',
-    
+    DEFAULT_CACHE_EXPIRE_SECS   : 10*60,    
+
     ERR_CONSTRAINT : 'errConstraint',
     
     SIG_RESTART : 'bounce',

@@ -22,59 +22,61 @@
  */
 /**
  *
- * REST API Server bootstrap
+ * Application and DAO bootstrap for standalone scripts
  *
  * michael@cloudspark.com.au
  *
  */
+// includes
 var app = {},
-util            = require('util'),
-winston         = require('winston'),
-async           = require('async'),
-mongoose        = require('mongoose'),
-helper      = require('./lib/helper');
+    util            = require('util'),
+    winston         = require('winston'),
+    helper          = require('./lib/helper'),
+    path            = require('path'),
+    defs            = require('../config/defs'),
+    envConfig       = require('config');
 
-var defs            = require('../config/defs'),
-envConfig       = require('config'),
-CFG_SERVER      = envConfig.server,
-CFG_DB_MONGO    = envConfig.dbMongo,
-CFG_STORE_REDIS = envConfig.storeRedis;
+// globals
+GLOBAL.CFG_CDN = envConfig.cdn;
+GLOBAL.CFG = envConfig;
+GLOBAL.DEFS = defs;
+GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 
-// basically a wrapper around logger
-var logmessage = function(message, severity, meta) {
-    message = '#' + (process.env.NODE_WORKER_ID ? process.env.NODE_WORKER_ID : 'M') + ': ' + message;
+// attach general helpers to the app
+app.helper = helper;
+
+// out of band messaging
+app.bastion = bastion;
+
+// logger
+app.logmessage = function(message, loglevel) {
     if (winston) {
-        severity = severity || 'info';
-        winston.log(severity, message, meta);
+        winston.log(loglevel || 'info', message);
     } else {
         console.log(message);
     }
 }
 
-app.envConfig = envConfig;
-app.defs = defs;
-app.helper = helper;
-app.logmessage = logmessage;
-module.exports.app = app;
-GLOBAL.app = app;
-
-// @todo cleanup global config
-GLOBAL.CFG_CDN         = envConfig.cdn;
-GLOBAL.CFG = envConfig;
-GLOBAL.DEFS = defs;
-GLOBAL.SERVER_ROOT = process.cwd();
-
-var DaoMongo = require(process.cwd() + '/src/managers/dao-mongo').DaoMongo;
-var dao         = new DaoMongo(envConfig.dbMongo.connect, logmessage, function(err, dao) {
-    process.addListener('uncaughtException', function (err, stack) {
-        var message = 'Caught exception: ' + err + '\n' + err.stack;
-        if (app && app.logmessage) {
-            app.logmessage(message);
-        } else {
-            console.log(message);
-        }
-    });
+// exception catchall
+process.addListener('uncaughtException', function (err, stack) {
+    var message = 'Caught exception: ' + err + '\n' + err.stack;
+    if (app && app.logmessage) {
+        app.logmessage(message);
+    } else {
+        console.log(message);
+    }
 });
+
+var DaoMongo    = require('./managers/dao-mongo').DaoMongo,
+    Bastion    = require('./managers/bastion'),
+
+    dao = new DaoMongo(envConfig.dbMongo.connect, app.logmessage, function(err, dao) {
+        if (err) {
+            console.log(err);
+            process.exit(0);
+        }
+    }),
+    bastion     = new Bastion(dao);
 
 module.exports = dao;
 module.exports.app = app;

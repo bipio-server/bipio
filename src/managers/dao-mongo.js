@@ -684,7 +684,8 @@ DaoMongo.prototype.getModelPrototype = function() {
  * Returns a populated Object of properties
  * <script type="text/javascript">alert('XSS!');</script>
  */
-DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
+DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {   
+    
     var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
     writable = true;
     // get properties
@@ -933,6 +934,10 @@ DaoMongo.prototype.checkAuth = function(username, password, type, cb, asOwnerId,
                                             if (domains[idx].type == 'vanity') {
                                                 resultModel.defaultDomainId = domains[idx].id;
                                             }
+                                        }
+
+                                        if (undefined === resultModel.defaultDomainId) {
+                                            resultModel.defaultDomainId = "";
                                         }
 
                                         // attach authenticating domain context

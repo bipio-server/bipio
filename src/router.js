@@ -422,6 +422,12 @@ app.all('/rpc/render/channel/:channel_id/:renderer', function(req, res) {
     });
 });
 
+app.all('/t', restAuthWrapper, function(req, res) {
+    dao.triggerAll();
+    res.send(200);
+    
+});
+
 /**
  * Account Auth RPC, sets up oAuth for the selected pod, if the pod supports oAuth
  */

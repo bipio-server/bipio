@@ -274,7 +274,7 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
 
         }
     } else {
-        resolvedImports = adjacentExports.local;
+        resolvedImports = adjacentExports;
     }
 
     return resolvedImports;
@@ -291,7 +291,13 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     var transformedImports = this._transform(adjacentExports, transforms, client),
     podTokens = this.getPodTokens(),
     podName = podTokens.name;
-    
+
+console.log('adjacent exports :');
+console.log(adjacentExports);
+console.log('transformed');
+console.log(transformedImports);
+console.log('---');
+
     // invoke method
     client.owner_id = this.owner_id;
     if (pods[podName].isOAuth()) {
@@ -369,10 +375,11 @@ Channel.getEmitterList = function() {
  *
  */
 Channel.postSave = function(accountInfo, next, isNew) {
-    var tTokens = this.action.split('.');
-    var pod = tTokens[0], action = tTokens[1];
+    var tTokens = this.action.split('.'),
+        podName = tTokens[0], action = tTokens[1],
+        self = this;
 
-    if (undefined == pod || undefined == action) {
+    if (undefined == podName || undefined == action) {
         // throw a constraint crit
         console.log('crit: Channel [' + this.id + '] Init post save but no action?');
         throw DEFS.ERR_CONSTRAINT;
@@ -381,7 +388,27 @@ Channel.postSave = function(accountInfo, next, isNew) {
 
     // channels behave a little differently, they can have postponed availability
     // after creation, which the pod actions themselves might want to dictate.
-    pods[pod].setup(action, this, accountInfo, next);
+    if (pods[podName].isOAuth()) {
+        // attach the users credentials for any potential oAuth based channel setup
+        (function(channel, podName, action, accountInfo, next) {
+            pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {            
+                if (!err && oAuthToken) {
+                    var auth = {
+                        oauth : {
+                            token : oAuthToken,
+                            secret : tokenSecret,
+                            profile : authProfile
+                        }
+                    };
+                    pods[podName].setup(action, channel, accountInfo, auth, next);
+                }
+            });
+        })(this, podName, action, accountInfo, next);
+    } else {
+        pods[podName].setup(action, this, accountInfo, next);
+    }
+    
+    
     if (isNew) {   
         app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'channels_total' } );
     }
