@@ -1,7 +1,7 @@
 {
     "author":       "Michael Pearson (http://www.cloudspark.com.au)",
     "name":         "bipio",
-    "version":      "0.0.4",
+    "version":      "0.0.5",
     "scripts": {
         
         "start": "supervisor src/server.js"
@@ -11,7 +11,7 @@
     "homepage":     [ "https://bip.io" ],
     "repository":   {
         "type":     "git",
-        "url":      "https://github.com/cloudspark/bipio-server"
+        "url":      "https://github.com/bipio-server/bipio"
     },
 
     "engines": {

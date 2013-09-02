@@ -291,13 +291,13 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     var transformedImports = this._transform(adjacentExports, transforms, client),
     podTokens = this.getPodTokens(),
     podName = podTokens.name;
-
+/*
 console.log('adjacent exports :');
 console.log(adjacentExports);
 console.log('transformed');
 console.log(transformedImports);
 console.log('---');
-
+*/
     // invoke method
     client.owner_id = this.owner_id;
     if (pods[podName].isOAuth()) {
@@ -455,6 +455,15 @@ Channel.getPodTokens = function() {
         }
     }
     return ret;
+}
+
+Channel.getPods = function(name) {
+    if (name && pods[name]) {
+        return pods[name];
+    } else {
+        return pods;
+    }
+    
 }
 
 // We try to inject defaults into channel configs to avoid patching documents
