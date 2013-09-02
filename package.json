@@ -10,7 +10,7 @@
     "homepage":     [ "https://bip.io" ],
     "repository":   {
         "type":     "git",
-        "url":      "https://github.com/cloudspark/bip"
+        "url":      "https://github.com/cloudspark/bipio-server"
     },
 
     "engines": {
