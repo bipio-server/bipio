@@ -441,6 +441,10 @@ var helper = {
         var decrypted = decipher.update(cypher, 'base64', 'ascii');
 
         return decrypted + decipher.final('ascii');
+    },
+    
+    isTrue : function(input) {
+        return (true === input || /1|yes|y|true/g.test(input));        
     }
     
 }

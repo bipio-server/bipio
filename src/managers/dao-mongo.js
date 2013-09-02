@@ -555,7 +555,7 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
  * @param function callback completed callback
  */
 DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orderBy, filter,  callback) {
-    var owner_id = accountInfo.user.id;
+    var owner_id = accountInfo ? accountInfo.user.id : undefined;
     var self = this, cacheKey = 'slist_' + modelName + '_' + owner_id + '_' + page + '_' + page_size;
     var mongoFilter = {
         'owner_id' : owner_id
@@ -569,7 +569,8 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
 
 
     var model = self.mongooseFactory(modelName);
-    var query = model.find( mongoFilter );
+
+    var query = model.find( mongoFilter.owner_id ? mongoFilter : null );
 
     // @todo this is expensive, filter out keys which are not
     // indexed
@@ -584,7 +585,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         if (err) {
             self.log('Error: list(): ' + err);
             if (callback) {
-                callback(false, err);
+                callback(err, err);
             }
         } else {
             if (page_size && page) {
@@ -684,8 +685,8 @@ DaoMongo.prototype.getModelPrototype = function() {
  * Returns a populated Object of properties
  * <script type="text/javascript">alert('XSS!');</script>
  */
-DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {   
-    
+DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
+
     var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
     writable = true;
     // get properties
@@ -815,7 +816,7 @@ AccountInfo.prototype = {
         return this.user.id;
     },
     getActiveDomain : function() {
-        return this.user.activeDomainId;  
+        return this.user.activeDomainId;
     },
     getDefaultDomain: function() {
         return this.user.domains.get(this.user.defaultDomainId);
@@ -1251,7 +1252,6 @@ DaoMongo.prototype.generateHubStats = function(next) {
                     accountId = results[i].id;
                     step(
                         function loadNetwork() {
-                            //console.log('processing ' + results[i].id)
                             self.findFilter(
                                 'channel',
                                 {
@@ -1277,7 +1277,7 @@ DaoMongo.prototype.generateHubStats = function(next) {
                                 from,
                                 to,
                                 chordKey = '',
-                                //chordKeyPod = '',
+
                                 networkData = {};
 
                                 // translate channel id's into actions
@@ -1330,6 +1330,7 @@ DaoMongo.prototype.generateHubStats = function(next) {
                                 }
 
                                 numProcessed++;
+
                                 // write
                                 if (Object.keys(networkData).length > 0) {
                                     self.setNetworkChordStat(
@@ -1359,11 +1360,12 @@ DaoMongo.prototype.generateHubStats = function(next) {
                                             }
                                         }
                                         );
+                                } else {
+                                    next(false, 'NO ACTIVITY')
                                 }
                             } else {
                                 next(true, err);
                             }
-
                         }
                         );
                 }

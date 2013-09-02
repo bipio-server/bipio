@@ -26,9 +26,9 @@
  * have it installed.
  */
 var program = require('commander'),
-fs = require('fs'),
-os = require('os'),
-helper = require('../src/lib/helper');
+    fs = require('fs'),
+    os = require('os'),
+    helper = require('../src/lib/helper');
 
 program
     .version('0.0.1')
@@ -114,6 +114,8 @@ if (pod && pod._name) {
                     Bastion = require(process.cwd() + '/src/managers/bastion');
                     app = dao.app,
                     podContext = dao.pod(pod._name);
+
+                module.exports.app = app;
 
 
                 var bastion = new Bastion(

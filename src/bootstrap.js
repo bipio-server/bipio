@@ -42,6 +42,9 @@ GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 
+// export app everywhere
+GLOBAL.app = app;
+
 // attach general helpers to the app
 app.helper = helper;
 

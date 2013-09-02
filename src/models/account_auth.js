@@ -118,7 +118,7 @@ function cryptSaveObj(value) {
 AccountAuth.id = '';
 AccountAuth.username = '';
 AccountAuth.owner_id = '';
-// enum 'login_primary', 'login_sub', 'token', 'token_invite', 'oauth', 'api_token'
+// enum 'login_primary', 'login_sub', 'token', 'token_invite', 'oauth', 'oauth_app', 'api_token'
 AccountAuth.type = '';
 AccountAuth.password = '';
 
