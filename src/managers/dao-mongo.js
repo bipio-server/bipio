@@ -1700,9 +1700,8 @@ DaoMongo.prototype.getAvRemote = function(ownerId, avUrl, blocking, cb) {
     fileName = ownerId + '.' + ext,
     // via {username}.bip.io/profile/av
     // or website bip.io/static/cdn/av/{owner_id}.png
-    dDir = process.cwd() + DEFS.DATA_DIR + '/cdn/img/av/';
+    dDir = DATA_DIR + '/cdn/img/av/';
     filePath = dDir + fileName;
-
 
     jobPayload = {
         owner_id : ownerId,

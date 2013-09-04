@@ -103,9 +103,8 @@ function cryptSave(value) {
     if (this.type == 'login_primary' || this.type == 'login_sub') {
         app.logmessage('Trying to write login primary to account_auth [' + this.id + ']', 'error');
         throw new Error('Bad Type');
-    } else {
+    } else if (this.type !== 'token_invite') {
         crypted = AESCrypt(value);
-        
     }
     
     return crypted;   
