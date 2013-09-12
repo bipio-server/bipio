@@ -383,43 +383,44 @@ function channelRender(ownerId, channelId, req, res, responseWrapper) {
 /**
  * DomainAuth channel renderer
  */
-app.all('/rpc/render/channel/:channel_id/:renderer', function(req, res) {
+app.all('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
     var domain = helper.getDomain(req.headers.host, true);
+    (function(domain, req, res) {
+        dao.domainAuth(domain, true, function(err, accountResult) {
+            if (err || !accountResult) {
+                console.log(err);
+                res.send(403);
+            } else {
+                var filter = {
+                    owner_id: accountResult.user.id,
+                    id : req.params.channel_id
+                };
 
-    dao.domainAuth(domain, true, function(err, accountResult) {
-        if (err || !accountResult) {
-            console.log(err);
-            res.send(403);
-        } else {
-            var filter = {
-                owner_id: accountResult.user.id,
-                id : req.params.channel_id
-            };
+                dao.find('channel', filter, function(err, result) {
+                    if (err || !result) {
+                        console.log(err);
+                        res.send(404);
+                    } else {
+                        req.remoteUser = accountResult;
+                        var channel = dao.modelFactory('channel', result),
+                            action = channel.getPodTokens(),
+                            pod = dao.pod(action.pod),
+                            schema = action.getSchema(),
+                            renderer = req.params.renderer;
 
-            dao.find('channel', filter, function(err, result) {
-                if (err || !result) {
-                    console.log(err);
-                    res.send(404);
-                } else {
-                    req.remoteUser = accountResult;
-                    var channel = dao.modelFactory('channel', result),
-                        action = channel.getPodTokens(),
-                        pod = dao.pod(action.pod),
-                        schema = action.getSchema(),
-                        renderer = req.params.renderer;
-
-                    pod.rpc(
-                        action.action,
-                        renderer,
-                        req.query,
-                        req,
-                        (schema.renderers[renderer] && schema.renderers[renderer].type == 'stream') ? res : restResponse(res),
-                        channel
-                    );
-                }
-            });
-        }
-    });
+                        pod.rpc(
+                            action.action,
+                            renderer,
+                            req.query,
+                            req,
+                            (schema.renderers[renderer] && schema.renderers[renderer].type == 'stream') ? res : restResponse(res),
+                            channel
+                        );
+                    }
+                });
+            }
+        });
+    })(domain, req, res);
 });
 
 app.all('/t', restAuthWrapper, function(req, res) {

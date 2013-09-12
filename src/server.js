@@ -130,9 +130,9 @@ app.configure(function() {
     app.use(express.cookieParser());
 
     // required for some oauth provders
-    app.use(express.session({
-        secret: envConfig.server.sessionSecret
-    }));
+    //app.use(express.session({
+//        secret: envConfig.server.sessionSecret
+//    }));
 
     app.use(passport.initialize());
     app.use(passport.session());
