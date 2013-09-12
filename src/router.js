@@ -580,7 +580,7 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
                     page = parseInt(req.query.page);
                 }
 
-                dao.list('bip_share', accountInfo, page_size, page, order_by, {}, restResponse(res));
+                dao.list('bip_share', undefined, page_size, page, order_by, {}, restResponse(res));
             } else {
                 if (subResourceId && 'test' === subResourceId) {
                     var filter = {
