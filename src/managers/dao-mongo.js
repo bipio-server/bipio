@@ -41,8 +41,8 @@ function DaoMongo(connectStr, log, next) {
     log('MongoDB config: ' + connectStr);
 
     var options = {
-      server : {},
-      replset : {}
+        server : {},
+        replset : {}
     };
 
     options.server.socketOptions = options.replset.socketOptions = { keepAlive: 1 };
@@ -168,7 +168,7 @@ DaoMongo.prototype.registerModel = function(modelClass) {
     for (key in validators) {
         container[modelName]['schema'].path(key).validate(validators[key][0], validators[key][1]);
     }
-*/
+     */
     container[modelName]['class'] = modelClass;
     mongoose.model(modelClass.entityName, container[modelName]['schema']);
     return container;
@@ -281,11 +281,11 @@ DaoMongo.prototype.create = function(model, callback, accountInfo, daoPostSave) 
                             } else {
                                 model.populate(result, accountInfo);
                                 callback(
-                                    self.errorParse(err, model),
-                                    model.getEntityName(),
-                                    model,
-                                    self.errorMap(err)
-                                    );
+                                self.errorParse(err, model),
+                                model.getEntityName(),
+                                model,
+                                self.errorMap(err)
+                            );
                             }
                         });
                     } else {
@@ -334,7 +334,7 @@ DaoMongo.prototype.create = function(model, callback, accountInfo, daoPostSave) 
 function getObjectClass(obj) {
     if (obj && obj.constructor && obj.constructor.toString) {
         var arr = obj.constructor.toString().match(
-            /function\s*(\w+)/);
+        /function\s*(\w+)/);
 
         if (arr && arr.length == 2) {
             return arr[1];
@@ -416,11 +416,11 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
                                     } else {
                                         model.populate(result, accountInfo);
                                         next(
-                                            self.errorParse(err, model),
-                                            model.getEntityName(),
-                                            model,
-                                            self.errorMap(err)
-                                            );
+                                        self.errorParse(err, model),
+                                        model.getEntityName(),
+                                        model,
+                                        self.errorMap(err)
+                                    );
                                     }
                                 });
                             } else {
@@ -845,155 +845,155 @@ DaoMongo.prototype.checkAuth = function(username, password, type, cb, asOwnerId,
     }
 
     this.find(
-        'account',
-        filter,
-        function(err, acctResult) {
-            if (!err && (null != acctResult)) {
+    'account',
+    filter,
+    function(err, acctResult) {
+        if (!err && (null != acctResult)) {
 
-                var filter = {
-                    'owner_id' : acctResult.id,
-                    'type' : type
-                }
+            var filter = {
+                'owner_id' : acctResult.id,
+                'type' : type
+            }
 
-                self.find('account_auth', filter, function(isErr, result) {
-                    var resultModel = null;
-                    if (!isErr && null != result) {
-                        var authModel = self.modelFactory('account_auth', result);
+            self.find('account_auth', filter, function(isErr, result) {
+                var resultModel = null;
+                if (!isErr && null != result) {
+                    var authModel = self.modelFactory('account_auth', result);
 
-                        if (asOwnerId || authModel.cmpPassword(password)) {
-                            authModel.username = username;
-                            isErr = false;
-                            // session usable abstract model of the account
-                            resultModel = {
-                                id : acctResult.id,
-                                name : acctResult.name,
-                                username : username,
-                                is_admin: acctResult.is_admin,
-                                settings: {
-                                    api_token: null
-                                }
+                    if (asOwnerId || authModel.cmpPassword(password)) {
+                        authModel.username = username;
+                        isErr = false;
+                        // session usable abstract model of the account
+                        resultModel = {
+                            id : acctResult.id,
+                            name : acctResult.name,
+                            username : username,
+                            is_admin: acctResult.is_admin,
+                            settings: {
+                                api_token: null
                             }
+                        }
 
-                            // finally, try to pull out the users auth token and account options
-                            step(
-                                function loadAcctInfo() {
-                                    self.find(
-                                        'account_auth',
-                                        {
-                                            'owner_id' : acctResult.id,
-                                            'type' : 'token'
-                                        },
-                                        this.parallel()
-                                        );
+                        // finally, try to pull out the users auth token and account options
+                        step(
+                        function loadAcctInfo() {
+                            self.find(
+                            'account_auth',
+                            {
+                                'owner_id' : acctResult.id,
+                                'type' : 'token'
+                            },
+                            this.parallel()
+                        );
 
-                                    self.find(
-                                        'account_option',
-                                        {
-                                            'owner_id' : acctResult.id
-                                        },
-                                        this.parallel());
+                            self.find(
+                            'account_option',
+                            {
+                                'owner_id' : acctResult.id
+                            },
+                            this.parallel());
 
-                                    // get domains (for bip/channel representations
-                                    self.findFilter(
-                                        'domain',
-                                        {
-                                            'owner_id' : acctResult.id
-                                        },
-                                        this.parallel());
+                            // get domains (for bip/channel representations
+                            self.findFilter(
+                            'domain',
+                            {
+                                'owner_id' : acctResult.id
+                            },
+                            this.parallel());
 
-                                    // get channels (for id lookups)
-                                    self.findFilter(
-                                        'channel',
-                                        {
-                                            'owner_id' : acctResult.id
-                                        },
-                                        this.parallel());
-                                },
-                                function collateResults(err, auth, options, domains, channels) {
-                                    if (null == auth || null == options) {
-                                        err = true;
-                                        resultModel = null;
-                                    } else {
+                            // get channels (for id lookups)
+                            self.findFilter(
+                            'channel',
+                            {
+                                'owner_id' : acctResult.id
+                            },
+                            this.parallel());
+                        },
+                        function collateResults(err, auth, options, domains, channels) {
+                            if (null == auth || null == options) {
+                                err = true;
+                                resultModel = null;
+                            } else {
 
-                                        var domainModels = {
-                                            domains : {},
-                                            set: function(model) {
-                                                this.domains[model.id] = model;
-                                            },
-                                            get: function( id ) {
-                                                return this.domains[id];
-                                            },
-                                            test: function(id) {
-                                                return (undefined != this.domains[id]);
-                                            }
-                                        };
+                                var domainModels = {
+                                    domains : {},
+                                    set: function(model) {
+                                        this.domains[model.id] = model;
+                                    },
+                                    get: function( id ) {
+                                        return this.domains[id];
+                                    },
+                                    test: function(id) {
+                                        return (undefined != this.domains[id]);
+                                    }
+                                };
 
-                                        for (idx in domains ) {
-                                            domainModels.set(self.modelFactory('domain', domains[idx]));
-                                            // set default domain.  system allocated 'vanity' domains
-                                            // will respond to RPC calls etc.
-                                            if (domains[idx].type == 'vanity') {
-                                                resultModel.defaultDomainId = domains[idx].id;
-                                            }
-                                        }
+                                for (idx in domains ) {
+                                    domainModels.set(self.modelFactory('domain', domains[idx]));
+                                    // set default domain.  system allocated 'vanity' domains
+                                    // will respond to RPC calls etc.
+                                    if (domains[idx].type == 'vanity') {
+                                        resultModel.defaultDomainId = domains[idx].id;
+                                    }
+                                }
 
-                                        if (undefined === resultModel.defaultDomainId) {
-                                            resultModel.defaultDomainId = "";
-                                        }
+                                if (undefined === resultModel.defaultDomainId) {
+                                    resultModel.defaultDomainId = "";
+                                }
 
-                                        // attach authenticating domain context
-                                        if (undefined == activeDomainId) {
-                                            resultModel.activeDomainId = resultModel.defaultDomainId;
-                                        } else {
-                                            resultModel.activeDomainId = activeDomainId;
-                                        }
+                                // attach authenticating domain context
+                                if (undefined == activeDomainId) {
+                                    resultModel.activeDomainId = resultModel.defaultDomainId;
+                                } else {
+                                    resultModel.activeDomainId = activeDomainId;
+                                }
 
-                                        // there may be quite a few channels, but this
-                                        // still seems a little cheaper
-                                        var channelModels = {
-                                            channels : {},
-                                            set: function(model) {
-                                                this.channels[model.id] = model;
-                                            },
-                                            get: function( id ) {
-                                                return this.channels[id];
-                                            },
-                                            test: function(id) {
-                                                return (undefined != this.channels[id]);
-                                            }
-
-                                        };
-
-                                        for (idx in channels ) {
-                                            channelModels.set(self.modelFactory('channel', channels[idx]));
-                                        }
-
-                                        resultModel.domains = domainModels;
-                                        resultModel.channels = channelModels;
-                                        resultModel.settings = options;
-
-                                        var model = self.modelFactory('account_auth', auth);
-                                        resultModel.settings.api_token = model.getPassword();
-                                        resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(username + ':' + model.getPassword()).toString('base64'));
+                                // there may be quite a few channels, but this
+                                // still seems a little cheaper
+                                var channelModels = {
+                                    channels : {},
+                                    set: function(model) {
+                                        this.channels[model.id] = model;
+                                    },
+                                    get: function( id ) {
+                                        return this.channels[id];
+                                    },
+                                    test: function(id) {
+                                        return (undefined != this.channels[id]);
                                     }
 
-                                    var accountInfo = new AccountInfo(resultModel);
-                                    cb(err, accountInfo);
-                                });
-                        } else {
-                            result = null;
-                        }
-                    }
+                                };
 
-                    if (null == resultModel || null == result) {
-                        cb(true, resultModel);
+                                for (idx in channels ) {
+                                    channelModels.set(self.modelFactory('channel', channels[idx]));
+                                }
+
+                                resultModel.domains = domainModels;
+                                resultModel.channels = channelModels;
+                                resultModel.settings = options;
+
+                                var model = self.modelFactory('account_auth', auth);
+                                resultModel.settings.api_token = model.getPassword();
+                                resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(username + ':' + model.getPassword()).toString('base64'));
+                            }
+
+                            var accountInfo = new AccountInfo(resultModel);
+                            cb(err, accountInfo);
+                        });
+                    } else {
+                        result = null;
                     }
-                });
+                }
+
+                if (null == resultModel || null == result) {
+                    cb(true, resultModel);
+                }
+            });
             //            }
-            } else {
-                cb(true, null);
-            }
-        });
+        } else {
+            cb(true, null);
+        }
+    });
 }
 
 /**
@@ -1100,12 +1100,12 @@ DaoMongo.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, cb)
 
             // update into account options
             self.update(
-                'account_option',
-                targetModel.id,
-                targetModel,
-                cb,
-                accountInfo
-            );
+            'account_option',
+            targetModel.id,
+            targetModel,
+            cb,
+            accountInfo
+        );
         }
     });
 };
@@ -1228,7 +1228,7 @@ DaoMongo.prototype.shareBip = function(bip, cb) {
             }
         }
     }
-    );
+);
 }
 
 
@@ -1249,91 +1249,91 @@ DaoMongo.prototype.generateHubStats = function(next) {
             } else {
                 var numProcessed = 0, numResults = results.length;
                 for (var i = 0; i < numResults; i++) {
-                    accountId = results[i].id;
-                    step(
-                        function loadNetwork() {
-                            self.findFilter(
-                                'channel',
-                                {
-                                    'owner_id' : accountId
-                                },
-                                this.parallel()
+                    (function(accountId) {
+                        step(
+                            function loadNetwork() {
+                                self.findFilter(
+                                    'channel',
+                                    {
+                                        'owner_id' : accountId
+                                    },
+                                    this.parallel()
                                 );
 
-                            self.findFilter(
-                                'bip',
-                                {
-                                    'owner_id' : accountId
-                                },
-                                this.parallel()
+                                self.findFilter(
+                                    'bip',
+                                    {
+                                        'owner_id' : accountId
+                                    },
+                                    this.parallel()
                                 );
-                        },
+                            },
 
-                        function done(err, channels, bips) {
-                            if (!err) {
-                                var channelMap = {},
-                                j,
-                                bip,
-                                from,
-                                to,
-                                chordKey = '',
+                            function done(err, channels, bips) {
+                                if (!err) {
+                                    var channelMap = {},
+                                    j,
+                                    bip,
+                                    from,
+                                    to,
+                                    chordKey = '',
 
-                                networkData = {};
+                                    networkData = {};
 
-                                // translate channel id's into actions
-                                for (j = 0; j < channels.length; j++) {
-                                    if (!channelMap[channels[j].id]) {
-                                        channelMap[channels[j].id] = channels[j].action;
-                                    }
-                                }
-
-                                delete channels;
-
-                                for (j = 0; j < bips.length; j++) {
-                                    bip = bips[j];
-                                    for (var key in bip.hub) {
-                                        if (bip.hub.hasOwnProperty(key)) {
-                                            if (key === 'source') {
-                                                from = bip.type === 'trigger' ?
-                                                channelMap[bip.config.channel_id] :
-                                                'bip.' + bip.type;
-                                            } else {
-                                                from = channelMap[key]
-                                            }
-
-                                            // skip bad hubs or deleted channels that
-                                            // are yet to resolve.
-                                            if (from) {
-                                                for (var k = 0; k < bip.hub[key].edges.length; k++) {
-                                                    to = channelMap[bip.hub[key].edges[k]];
-                                                    if (to) {
-                                                        // truly nasty.
-                                                        chordKey = (from + ';' + to).replace(new RegExp('\\.', 'g'), '#');
-                                                        //chordKey = .replace('.', '_');
-
-                                                        //chordKeyPod = from.split('.')[0] + '-' + to.split('.')[0];
-                                                        if (!networkData[chordKey]) {
-                                                            networkData[chordKey] = 0;
-                                                        }
-                                                        networkData[chordKey]++;
-
-                                                        if (!globalStats[chordKey]) {
-                                                            globalStats[chordKey] = 0;
-                                                        }
-                                                        globalStats[chordKey]++;
-                                                    }
-                                                }
-                                            }
-
+                                    // translate channel id's into actions
+                                    for (j = 0; j < channels.length; j++) {
+                                        if (!channelMap[channels[j].id]) {
+                                            channelMap[channels[j].id] = channels[j].action;
                                         }
                                     }
-                                }
 
-                                numProcessed++;
+                                    delete channels;
 
-                                // write
-                                if (Object.keys(networkData).length > 0) {
-                                    self.setNetworkChordStat(
+                                    for (j = 0; j < bips.length; j++) {
+                                        bip = bips[j];
+                                        for (var key in bip.hub) {
+                                            if (bip.hub.hasOwnProperty(key)) {
+                                                if (key === 'source') {
+                                                    from = bip.type === 'trigger' ?
+                                                        channelMap[bip.config.channel_id] :
+                                                        'bip.' + bip.type;
+                                                } else {
+                                                    from = channelMap[key]
+                                                }
+
+                                                // skip bad hubs or deleted channels that
+                                                // are yet to resolve.
+                                                if (from) {
+                                                    for (var k = 0; k < bip.hub[key].edges.length; k++) {
+                                                        to = channelMap[bip.hub[key].edges[k]];
+                                                        if (to) {
+                                                            // truly nasty.
+                                                            chordKey = (from + ';' + to).replace(new RegExp('\\.', 'g'), '#');
+                                                            //chordKey = .replace('.', '_');
+
+                                                            //chordKeyPod = from.split('.')[0] + '-' + to.split('.')[0];
+                                                            if (!networkData[chordKey]) {
+                                                                networkData[chordKey] = 0;
+                                                            }
+                                                            networkData[chordKey]++;
+
+                                                            if (!globalStats[chordKey]) {
+                                                                globalStats[chordKey] = 0;
+                                                            }
+                                                            globalStats[chordKey]++;
+                                                        }
+                                                    }
+                                                }
+
+                                            }
+                                        }
+                                    }
+
+                                    numProcessed++;
+
+                                    // write
+                                    if (Object.keys(networkData).length > 0) {
+                                        self.setNetworkChordStat(
                                         accountId,
                                         {
                                             data : networkData
@@ -1345,32 +1345,33 @@ DaoMongo.prototype.generateHubStats = function(next) {
                                                 app.logmessage('Processed ' + numProcessed + ' accounts');
                                                 app.logmessage('Writing System Entry ');
                                                 self.setNetworkChordStat(
-                                                    'system',
-                                                    {
-                                                        data : globalStats
-                                                    },
-                                                    function(err) {
-                                                        if (err) {
-                                                            next(err, err);
-                                                        } else {
-                                                            next(false, 'ok');
-                                                        }
+                                                'system',
+                                                {
+                                                    data : globalStats
+                                                },
+                                                function(err) {
+                                                    if (err) {
+                                                        next(err, err);
+                                                    } else {
+                                                        next(false, 'ok');
                                                     }
-                                                    );
+                                                }
+                                            );
                                             }
                                         }
-                                        );
+                                    );
+                                    } else {
+                                        next(false, 'NO ACTIVITY')
+                                    }
                                 } else {
-                                    next(false, 'NO ACTIVITY')
+                                    next(true, err);
                                 }
-                            } else {
-                                next(true, err);
-                            }
-                        }
+                            }                    
                         );
+                    })(results[i].id);
                 }
 
-            /*
+                /*
                 while (done >= results.length) {
 
                 }
@@ -1386,11 +1387,11 @@ DaoMongo.prototype.generateHubStats = function(next) {
                         }
                     }
                 );
-                        */
+                 */
             }
         }
     });
-/*
+    /*
     this.findFilter('bips', {}, function(err, results) {
         if (err) {
             next(err);
@@ -1421,7 +1422,7 @@ DaoMongo.prototype.generateHubStats = function(next) {
             }
         }
     });
-    */
+     */
 }
 
 /**
@@ -1430,10 +1431,10 @@ DaoMongo.prototype.generateHubStats = function(next) {
 DaoMongo.prototype.getTransformHint = function(accountInfo, from, to, next) {
     var filter = {
         $or : [ {
-            owner_id : accountInfo.user.id
-        }, {
-            owner_id : 'system'
-        } ],
+                owner_id : accountInfo.user.id
+            }, {
+                owner_id : 'system'
+            } ],
         from_channel : from,
         to_channel : to
     };
@@ -1588,7 +1589,7 @@ DaoMongo.prototype.bipLog = function(payload) {
         }
     });
 }
-*/
+ */
 /**
  *
  * Given a referer, attempts to call out to the site and discover a usable
@@ -1804,10 +1805,10 @@ DaoMongo.prototype.expireAll = function(cb) {
         var ownerPref = {},
         numResults,
         nowTime = Math.floor(
-            new time.Date().
+        new time.Date().
             setTimezone('UTC').
             getTime() / 1000
-            );
+    );
 
         if (!err && results) {
             numResults = results.length;
@@ -1820,10 +1821,10 @@ DaoMongo.prototype.expireAll = function(cb) {
             self.mongooseFactory('bip').find({
                 paused : false
             } ).
-            where('end_life.time').
-            gt(0).
-            lt(nowTime).
-            exec(function(err, results) {
+                where('end_life.time').
+                gt(0).
+                lt(nowTime).
+                exec(function(err, results) {
                 var numResults, result, pref, offsetSeconds;
                 if (!err && results) {
                     numResults = results.length;
@@ -1842,7 +1843,7 @@ DaoMongo.prototype.expireAll = function(cb) {
                                     console.log(result.id + ' paused');
                                 }
                             });
-                        // self.updateColumn = function(modelName, id, props, next) {
+                            // self.updateColumn = function(modelName, id, props, next) {
                         } else if ('delete' === pref['mode']) {
                             console.log(result.id + ' deleting');
                             result.remove(function(err, result) {
@@ -1964,12 +1965,12 @@ DaoMongo.prototype.describe = function(model, subdomain, next, accountInfo) {
             // prep the oAuthChecks array for a parallel datasource check
             if (resp[key].auth.type != 'none') {
                 authChecks.push(
-                    function(podName) {
-                        return function(cb) {
-                            return pods[podName].authStatus( accountInfo.getId(), podName, cb );
-                        }
-                    }(key) // self exec
-                    );
+                function(podName) {
+                    return function(cb) {
+                        return pods[podName].authStatus( accountInfo.getId(), podName, cb );
+                    }
+                }(key) // self exec
+            );
             }
         }
 
@@ -1995,7 +1996,7 @@ DaoMongo.prototype.describe = function(model, subdomain, next, accountInfo) {
             next(false, null, resp);
         }
 
-    // describe bip type exports
+        // describe bip type exports
     } else if (model == 'bip') {
         modelClass = this.modelFactory(model);
         next(false, null, modelClass.exports);
