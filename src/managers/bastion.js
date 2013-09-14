@@ -219,7 +219,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
  * rabbit for consumption by a Bastion worker.
  *
  */
-Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, container, cb, cbParameterMap) {
+Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, client, cb, cbParameterMap) {
     var self = this;
     var filter = {
         'type' : type,
@@ -250,15 +250,15 @@ Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, container,
             } else {
                 for (var i = 0; i < numResults; i++) {
                     bipResult = bipResults[i];
-                    if (container._clientInfo && bipResult.binder.length > 0) {
+                    if (client && bipResult.binder.length > 0) {
                         if (bipResult.binder[0] == 'first') {
                             firstBinder = true;
                         }
 
                         if (!firstBinder) {
                             if (
-                                !helper.inArray(bipResult.binder, container._clientInfo.remote_ip) &&
-                                !(container._clientInfo.remote_sender && helper.inArray(bipResult.binder, container._clientInfo.remote_sender)) ) {
+                                !helper.inArray(bipResult.binder, client.remote_ip) &&
+                                !(client.remote_sender && helper.inArray(bipResult.binder, client.remote_sender)) ) {
                                 cb(cbParameterMap.fail, "Not Authorized");
                                 return;
                             }
@@ -295,7 +295,7 @@ Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, container,
                     if (pause) {
                         
                         // @todo apply bip_expire_behaviour from user prefs
-                        self._dao.pauseBip(bipResult, cb(cbParameterMap.fail, err), true, container._clientInfo.txId);
+                        self._dao.pauseBip(bipResult, cb(cbParameterMap.fail, err), true, client.txId);
                     } else {
                         // add bip metadata to the container
                         cb(
@@ -320,9 +320,9 @@ Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, container,
                         if (firstBinder) {
                             var bindTo;
                             if (bipResult.type == 'smtp') {
-                                bindTo = container._clientInfo.remote_sender;
+                                bindTo = client.remote_sender;
                             } else {
-                                bindTo = container._clientInfo.remote_ip;
+                                bindTo = client.remote_ip;
                             }
 
                             // just incase
@@ -343,7 +343,7 @@ Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, container,
 /**
  * Bips fired via a name/domain/type (http or smtp for example)
  */
-Bastion.prototype.domainBipUnpack = function(name, domain, container, type, cb, cbParameterMap) {
+Bastion.prototype.domainBipUnpack = function(name, domain, client, type, cb, cbParameterMap) {
     var self = this, filter, pause = false;
     // find user id by incoming domain
     this._dao.find('domain', {
@@ -352,7 +352,7 @@ Bastion.prototype.domainBipUnpack = function(name, domain, container, type, cb, 
         if (err || !result) {
             cb(cbParameterMap.fail, err);
         } else {
-            self.bipUnpack(type, name, result.owner_id, result.id, container, cb, cbParameterMap);
+            self.bipUnpack(type, name, result.owner_id, result.id, client, cb, cbParameterMap);
         }
     });
 }

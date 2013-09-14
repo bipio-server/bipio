@@ -323,7 +323,63 @@ console.log('---');
         pods[podName].invoke(podTokens.action, this, transformedImports, { client : client }, contentParts, next);
     }
 }
+Channel.rpc = function(renderer, query, client, req, res) {
+    var self = this,
+        podTokens = this.getPodTokens();
+        
+    if (pods[podTokens.name].isOAuth()) {
+        (function(podName, action, renderer, query, client, req, res) {
+            pods[podName].oAuthGetToken(self.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {            
+                var podTokens = self.getPodTokens();
 
+                if (!err && oAuthToken) {                 
+                    var sysImports = {
+                        client : client,
+                        auth : {
+                            oauth : {
+                                token : oAuthToken,
+                                secret : tokenSecret,
+                                profile : authProfile
+                            }
+                        }
+                    };
+
+                    pods[podName].rpc(
+                        action,
+                        renderer,
+                        sysImports,
+                        query,
+                        self,
+                        req,
+                        res                   
+                    );
+
+                } else if (err) {
+                    app.logmessage(err, 'error');
+                    res.send(403);
+                } else if (!oAuthToken) {
+                    res.send(403, {
+                        error : 'No OAuth Token bound for this Channel'
+                    });
+                }
+            });
+        })(podTokens.name, podTokens.action, renderer, query, client, req, res);
+    } else {
+        var sysImports = {
+            client : client,
+            auth : {}
+        };
+        pods[podTokens.name].rpc(
+            podTokens.action,
+            renderer,
+            sysImports,
+            req.query,
+            this,
+            req,
+            res
+        );
+    }
+}
 
 
 Channel.pod = function(podName) {

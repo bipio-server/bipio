@@ -1,7 +1,7 @@
 {
     "author":       "Michael Pearson (http://www.cloudspark.com.au)",
     "name":         "bipio",
-    "version":      "0.0.5",
+    "version":      "0.0.6",
     "scripts": {
         
         "start": "supervisor src/server.js"

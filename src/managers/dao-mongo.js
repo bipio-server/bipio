@@ -755,33 +755,21 @@ DaoMongo.prototype.mongooseFactory = function(modelName) {
 /**
  * @todo cache
  */
-DaoMongo.prototype.find = function(modelName, filter, callback) {
+DaoMongo.prototype.find = function(modelName, filter, next) {
     this.mongooseFactory(modelName).findOne(filter, function (err, result) {
         if (err) {
-            console.log('Error: get(): ' + err);
-            if (callback) {
-                callback(true, null);
-            }
+            app.logmessage('Error: find(): ' + err);
         }
-        if (callback) {
-            // cast results in its result object
-            callback(false, result);
-        }
+        next(err, result);
     });
 };
 
-DaoMongo.prototype.findFilter = function(modelName, filter, callback) {
+DaoMongo.prototype.findFilter = function(modelName, filter, next) {
     this.mongooseFactory(modelName).find(filter, function (err, result) {
         if (err) {
-            console.log('Error: get(): ' + err);
-            if (callback) {
-                callback(true, null);
-            }
+            app.logmessage('Error: findFilter(): ' + err);
         }
-        if (callback) {
-            // cast results in its result object
-            callback(false, result);
-        }
+        next(err, result);        
     });
 };
 
@@ -1366,7 +1354,7 @@ DaoMongo.prototype.generateHubStats = function(next) {
                                 } else {
                                     next(true, err);
                                 }
-                            }                    
+                            }
                         );
                     })(results[i].id);
                 }
