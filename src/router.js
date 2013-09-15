@@ -637,7 +637,7 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
 
                     dao.find('bip', filter, function(err, result) {
                         if (err || !result) {
-                            console.log(err);
+                            app.logmessage(err, 'error');
                             res.send(404);
                         } else {
                             dao.shareBip(dao.modelFactory('bip', result, accountInfo, true), restResponse(res));
@@ -652,7 +652,7 @@ app.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', res
                     'id' : resourceId
                 };
 
-            dao.removeFilter('bip_share', filter, restResponse(res));
+            dao.unshareBip(resourceId, accountInfo, restResponse(res));
 
         // alias into account options.  Returns RESTful account_options resource
         } else if (method == 'set_default' && resourceId) {
@@ -720,54 +720,58 @@ function bipBasicFail(req, res) {
  * HTTP auth on this endpoint unless the bip is explicitly 'none'
  */
 function bipAuthWrapper(req, res, cb) {
-    var bipName = req.params.bip_name,
-        domain = helper.getDomain(req.headers.host, true);
+    (function(domain, req, res) {
+        var bipName = req.params.bip_name;
+        dao.domainAuth(domain, true, function(err, accountResult) {            
+            if (err || !accountResult) {
+                // reject always
+                bipBasicFail(req, res);
+            } else {
+                // attach user
+                req.remoteUser = accountResult;
+                var ownerId = accountResult.getId(),
+                    domainId = accountResult.getActiveDomain(),
+                    filter = {
+                        'name' : bipName,
+                        'type' : 'http',
+                        'paused' : false,
+                        'owner_id' : ownerId,
+                        'domain_id' : domainId
+                    };
 
-    dao.domainAuth(domain, true, function(err, accountResult) {
-        if (err || !accountResult) {
-            // reject always
-            bipBasicFail(req, res);
-        } else {
-            var ownerId = accountResult.getId(),
-                domainId = accountResult.getActiveDomain(),
-                filter = {
-                    'name' : bipName,
-                    'type' : 'http',
-                    'paused' : false,
-                    'owner_id' : ownerId,
-                    'domain_id' : domainId
-                };
-            dao.find('bip', filter, function(err, result) {
-                var username,password;
-                if (!err && result) {
-                    if (result.config.auth == 'none') {
-                        cb(false, true);
-                    } else if (result.config.auth == 'token') {
-                        // account token auth
-                        express.basicAuth(function(user, pass, cb){
-                            dao.checkAuth(user, pass, 'token', cb);
-                        })(req, res, cb);
-                    } else if (result.config.auth == 'basic') {
-                        express.basicAuth(function(username, password, cb){
-                            cb(
-                                false,
-                                (result.config.username && result.config.username == username
-                                 &&
-                                 result.config.password && result.config.password == password)
-                            );
-                        })(req, res, cb);
+                dao.find('bip', filter, function(err, result) {
+                    var username,password;
+                    if (!err && result) {
+                        if (result.config.auth == 'none') {
+                            cb(false, true);
+                        } else if (result.config.auth == 'token') {
+                            // account token auth
+                            express.basicAuth(function(user, pass, cb){
+                                dao.checkAuth(user, pass, 'token', cb);
+                            })(req, res, cb);
+
+                        } else if (result.config.auth == 'basic') {
+                            express.basicAuth(function(username, password, cb){
+                                cb(
+                                    false,
+                                    (result.config.username && result.config.username == username
+                                     &&
+                                     result.config.password && result.config.password == password)
+                                );
+                            })(req, res, cb);
+                        } else {
+                            // reject always
+                            bipBasicFail(req, res);
+                        }
                     } else {
-                        // reject always
-                        bipBasicFail(req, res);
+                       // reject always
+                       restResponse(res)(true, null, 404);
+                       //error, modelName, results, code, options
                     }
-                } else {
-                   // reject always
-                   restResponse(res)(true, null, 404);
-                   //error, modelName, results, code, options
-                }
-            });
-        }
-    });
+                });
+            }
+        });
+    })(helper.getDomain(req.headers.host, true), req, res);
 }
 
 
@@ -794,11 +798,11 @@ app.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
     }
 
     (function(req, res, bipName, domain, client, files) {
-        bastion.domainBipUnpack(
-            bipName,
-            domain,
-            client,
-            'http',
+        bastion.bipUnpack(
+            'http', 
+            bipName, 
+            req.remoteUser, 
+            client, 
             function(status, message, bip) {
                 var exports = {
                     'local' : {}
@@ -842,14 +846,13 @@ app.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
                         restReponse = false;
                     }
 
-                    bastion.bipFire(bip, client.contentType, client.encoding, exports, client, contentParts, files);
+                    bastion.bipFire(bip, exports, client, contentParts, files);
                 }
 
                 if (restReponse) {
-                    restResponse(res)( status == statusMap.fail, undefined, message, status);
+                    restResponse(res)( status === statusMap.fail, undefined, message, status);
                 }
-            },
-            statusMap
-        );
+            }, 
+            statusMap);
     })(req, res, bipName, domain, client, files);
 });

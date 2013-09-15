@@ -494,7 +494,9 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, callback) {
 DaoMongo.prototype.remove = function(model, modelId, accountInfo, callback) {
     var self = this;
 
-    var MongoClass = mongoose.model(model.getEntityName());
+    var modelName = (helper.isString(model) ? model : model.getEntityName());
+
+    var MongoClass = mongoose.model(modelName);
 
     var findObject = self.getObjectIdFilter({
         id : modelId
@@ -512,7 +514,7 @@ DaoMongo.prototype.remove = function(model, modelId, accountInfo, callback) {
         }
 
         if (callback) {
-            callback(false, model.getEntityName(), {
+            callback(false, modelName, {
                 'status' : 'OK'
             });
         }
@@ -769,7 +771,7 @@ DaoMongo.prototype.findFilter = function(modelName, filter, next) {
         if (err) {
             app.logmessage('Error: findFilter(): ' + err);
         }
-        next(err, result);        
+        next(err, result);
     });
 };
 
@@ -1032,6 +1034,26 @@ DaoMongo.prototype.userNotify = function(payload, next) {
 }
 
 // --------------------------------- Bip helpers
+DaoMongo.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
+    this.remove('bip', props.id, accountInfo, function(err, result) {
+        if (err) {
+            app.logmessage(err, 'error');
+        } else {
+            var jobPacket = {
+                owner_id : props.owner_id,
+                bip_id : props.id
+            };
+
+            if (transactionId ) {
+                jobPacket.transaction_id = transactionId;
+                jobPacket.code = 'bip_deleted_auto';
+            } else {
+                jobPacket.code = 'bip_deleted_manual';
+            }
+            app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+        }
+    })
+}
 
 DaoMongo.prototype.pauseBip = function(props, cb, pause, transactionId) {
     // default pause (true == unpause)
@@ -1039,25 +1061,24 @@ DaoMongo.prototype.pauseBip = function(props, cb, pause, transactionId) {
         pause = true;
     }
 
+    var model = this.modelFactory('bip', props);
+    var MongoModel = this.mongooseFactory(model.getEntityName());
+    var idx = model.getEntityIndex();
+
+    var filter = {};
+    filter[idx] = model.getIdValue()
+    MongoModel.update( filter, {
+        'paused' : pause
+    } ).exec();
+
     var jobPacket = {
         owner_id : props.owner_id,
         bip_id : props.id
     };
 
     if (transactionId ) {
-        var model = this.modelFactory('bip', props);
-
-        var MongoModel = this.mongooseFactory(model.getEntityName());
-        var idx = model.getEntityIndex();
-
-        var filter = {};
-        filter[idx] = model.getIdValue()
-        MongoModel.update( filter, {
-            'paused' : pause
-        } ).exec();
-
         jobPacket.transaction_id = transactionId;
-        jobPacket.code = 'bip_paused';
+        jobPacket.code = 'bip_paused_auto';
 
     } else {
         jobPacket.code = 'bip_paused_manual';
@@ -1206,6 +1227,14 @@ DaoMongo.prototype.shareBip = function(bip, cb) {
         } else {
             if (!result) {
                 self.create(model, cb, bip.accountInfo);
+
+                var jobPacket = {
+                    owner_id : bip.owner_id,
+                    bip_id : bip.id,
+                    code : 'bip_share'
+                };
+
+                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
                 app.bastion.createJob(DEFS.JOB_USER_STAT, {
                     owner_id : bip.owner_id,
                     type : 'share_total'
@@ -1215,8 +1244,39 @@ DaoMongo.prototype.shareBip = function(bip, cb) {
                 self.update(modelName, result.id, bipShare , cb, bip.accountInfo);
             }
         }
-    }
-);
+    });
+}
+
+DaoMongo.prototype.unshareBip = function(id, accountInfo, cb) {
+    var self = this;
+    (function(id, accountInfo, cb) {
+        var filter = {
+            'owner_id' : accountInfo.user.id,
+            'id' : id
+        };        
+        self.findFilter('bip_share', filter, function(err, result) {
+            if (err || !result) {
+                cb(self.errorParse(err), null, null, self.errorMap(err) );
+            } else {
+                (function(shareModel, cb) {
+                    self.removeFilter('bip_share', { id : shareModel.id }, function(err) {                       
+                        if (!err) {
+                            var jobPacket = {
+                                owner_id : shareModel.owner_id,
+                                bip_id : shareModel.bip_id,
+                                code : 'bip_unshare'
+                            };
+
+                            app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+                            cb(false, undefined, 'OK', 200);
+                        } else {
+                            cb(self.errorParse(err), 'bip_share', {}, self.errorMap(err));    
+                        }
+                    });
+                })(result[0], cb);
+            }            
+        });
+    })(id, accountInfo, cb);
 }
 
 

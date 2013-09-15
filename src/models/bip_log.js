@@ -30,10 +30,13 @@ BipLog = Object.create(BipLogModel);
 
 BipLog.codes = {
     'bip_create' : 'Created',
-    'bip_delete' : 'Deleted',
+    'bip_deleted_auto' : 'Expired (Deleted)',
+    'bip_deleted_manual' : 'Deleted',
     'bip_recieve' : 'Message Received',
-    'bip_paused' : 'Expired (Paused)',
-    'bip_paused_manual' : 'Manually Paused'
+    'bip_paused_auto' : 'Expired (Paused)',
+    'bip_paused_manual' : 'Manually Paused',
+    'bip_share' : 'Config Shared',
+    'bip_unshare' : 'Config Un-Shared'
 }
 
 BipLog.entityName = 'bip_log';
@@ -61,7 +64,13 @@ BipLog.entitySchema = {
     code : {
         type: String,
         renderable: true,
-        writable: false
+        writable: false,
+        set : function(code) {
+            if (BipLog.codes[code]) {
+                this.message = BipLog.codes[code];
+            }
+            return code;            
+        }
     },
     source : { // action source
         type: String,
@@ -84,13 +93,5 @@ BipLog.entitySchema = {
         writable: false
     }    
 };
-
-/*
-BipLog.compoundKeyContraints = {
-    owner_id : 1,
-    bip_id : 1,
-    transaction_id : 1
-};
-*/
 
 module.exports.BipLog = BipLog;

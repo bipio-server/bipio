@@ -213,13 +213,14 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 /**
  * tries to retrieve a bip by name + domain and determines if active.
  *
- * If the bip has expired by time/impressions, then pauses the bip.
+ * If the bip has expired by time/impressions, then applies account level
+ * default behavior for expiry (pause or delete)
  *
  * This interface is primarily used by the protocol proxy before forwarding onto
  * rabbit for consumption by a Bastion worker.
  *
  */
-Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, client, cb, cbParameterMap) {
+Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbParameterMap) {
     var self = this;
     var filter = {
         'type' : type,
@@ -230,131 +231,137 @@ Bastion.prototype.bipUnpack = function(type, name, ownerId, domainId, client, cb
         filter.name = name;
     }
 
+    var ownerId = accountInfo.getId();
     if (ownerId) {
         filter.owner_id = ownerId;
     }
 
+    var domainId = accountInfo.getActiveDomain();
     if (domainId) {
         filter.domain_id = domainId;
     }
 
-    this._dao.findFilter('bip',
-        filter,
-        function(err, bipResults) {
-            var firstBinder = false,
-                bipResult,
-                numResults = bipResults.length;
+    (function(accountInfo, client, filter) {
+        self._dao.findFilter('bip',
+            filter,
+            function(err, bipResults) {
+                var firstBinder = false,
+                    bipResult,
+                    numResults = bipResults.length;
 
-            if (err || numResults == 0) {
-                cb(cbParameterMap.fail, err);
-            } else {
-                for (var i = 0; i < numResults; i++) {
-                    bipResult = bipResults[i];
-                    if (client && bipResult.binder.length > 0) {
-                        if (bipResult.binder[0] == 'first') {
-                            firstBinder = true;
-                        }
-
-                        if (!firstBinder) {
-                            if (
-                                !helper.inArray(bipResult.binder, client.remote_ip) &&
-                                !(client.remote_sender && helper.inArray(bipResult.binder, client.remote_sender)) ) {
-                                cb(cbParameterMap.fail, "Not Authorized");
-                                return;
+                if (err || numResults == 0) {
+                    cb(cbParameterMap.fail, err);
+                } else {
+                    for (var i = 0; i < numResults; i++) {
+                        bipResult = bipResults[i];
+                        if (client && bipResult.binder.length > 0) {
+                            if (bipResult.binder[0] == 'first') {
+                                firstBinder = true;
                             }
-                        }
-                    }
 
-                    if (bipResult.end_life) {
-                        var endTime = parseInt(bipResult.end_life.time * 1),
-                        endImp =  parseInt(bipResult.end_life.imp * 1),
-                        now, pause = false;
-
-                        if (endTime > 0) {
-                            now = Math.floor(new Date().getTime() / 1000);
-                            // if its an integer, then treat as a timestamp
-                            if (!isNaN(endTime)) {
-                                // expired? then pause
-                                if (now >= endTime) {
-                                    // pause this bip
-                                    console.log('pause');
-                                    pause = true;
+                            if (!firstBinder) {
+                                if (
+                                    !helper.inArray(bipResult.binder, client.remote_ip) &&
+                                    !(client.remote_sender && helper.inArray(bipResult.binder, client.remote_sender)) ) {
+                                    cb(cbParameterMap.fail, "Not Authorized");
+                                    return;
                                 }
                             }
                         }
 
-                        if (endImp > 0) {
-                            // @todo check impressions
-                            if (bipResult._imp_actual && bipResult._imp_actual >= endImp) {
-                                console.log('pause imp');
-                                pause = true;
+                        if (bipResult.end_life) {
+                            var endTime = parseInt(bipResult.end_life.time * 1),
+                            endImp =  parseInt(bipResult.end_life.imp * 1),
+                            now, expired = false;
+
+                            if (endTime > 0) {
+                                now = Math.floor(new Date().getTime() / 1000);
+                                // if its an integer, then treat as a timestamp
+                                if (!isNaN(endTime)) {
+                                    // expired? then pause
+                                    if (now >= endTime) {
+                                        // pause this bip
+                                        expired = true;
+                                    }
+                                }
+                            }
+
+                            if (endImp > 0) {
+                                if (bipResult._imp_actual && bipResult._imp_actual >= endImp) {
+                                    expired = true;
+                                }
                             }
                         }
-                    }
 
-                    if (pause) {
-                        
-                        // @todo apply bip_expire_behaviour from user prefs
-                        self._dao.pauseBip(bipResult, cb(cbParameterMap.fail, err), true, client.txId);
-                    } else {
-                        // add bip metadata to the container
-                        cb(
-                            cbParameterMap.success,
-                            {
-                                'status' : 'OK'
-                            },
-                            // we don't need the whole bip packet.
-                            {
-                                id : bipResult.id,
-                                hub : bipResult.hub,
-                                owner_id : bipResult.owner_id,
-                                config : bipResult.config,
-                                name : bipResult.name,
-                                type : bipResult.type
-                        });
-
-                        // update accumulator
-                        self._dao.accumulate('bip', bipResult, '_imp_actual');
-
-                        // if this bip is waiting for a binding, then set it
-                        if (firstBinder) {
-                            var bindTo;
-                            if (bipResult.type == 'smtp') {
-                                bindTo = client.remote_sender;
+                        if (expired) {
+                            if ('delete' === accountInfo.user.settings.bip_expire_behaviour) {
+                                self._dao.deleteBip(bipResult, accountInfo, cb(cbParameterMap.fail, err), client.id);
                             } else {
-                                bindTo = client.remote_ip;
+                                self._dao.pauseBip(bipResult, cb(cbParameterMap.fail, err), true, client.id);
                             }
-
-                            // just incase
-                            bindTo = helper.sanitize(bindTo).xss();
-
-                            self._dao.updateColumn('bip', bipResult.id, [ bindTo ], function(err, result) {
-                                if (err) {
-                                    console.log(err);
-                                }
+                        } else {
+                            // add bip metadata to the container
+                            cb(
+                                cbParameterMap.success,
+                                {
+                                    'status' : 'OK'
+                                },
+                                // we don't need the whole bip packet.
+                                {
+                                    id : bipResult.id,
+                                    hub : bipResult.hub,
+                                    owner_id : bipResult.owner_id,
+                                    config : bipResult.config,
+                                    name : bipResult.name,
+                                    type : bipResult.type
                             });
+
+                            // update accumulator
+                            self._dao.accumulate('bip', bipResult, '_imp_actual');
+
+                            // if this bip is waiting for a binding, then set it
+                            if (firstBinder) {
+                                var bindTo;
+                                if (bipResult.type == 'smtp') {
+                                    bindTo = client.remote_sender;
+                                } else {
+                                    bindTo = client.remote_ip;
+                                }
+
+                                // just incase
+                                bindTo = helper.sanitize(bindTo).xss();
+
+                                self._dao.updateColumn('bip', bipResult.id, [ bindTo ], function(err, result) {
+                                    if (err) {
+                                        console.log(err);
+                                    }
+                                });
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+    })(accountInfo, client, filter);   
 }
 
 /**
  * Bips fired via a name/domain/type (http or smtp for example)
  */
 Bastion.prototype.domainBipUnpack = function(name, domain, client, type, cb, cbParameterMap) {
-    var self = this, filter, pause = false;
+    var self = this;
     // find user id by incoming domain
-    this._dao.find('domain', {
-        'name' : domain
-    }, function(err, result) {
-        if (err || !result) {
-            cb(cbParameterMap.fail, err);
-        } else {
-            self.bipUnpack(type, name, result.owner_id, result.id, client, cb, cbParameterMap);
-        }
-    });
+    (function(name, domain, client, type) {
+        self._dao.find('domain', {
+            'name' : domain
+        }, function(err, result) {
+            if (err || !result) {
+                cb(cbParameterMap.fail, err);
+            } else {           
+                self.bipUnpack(type, name, result.owner_id, result.id, client, cb, cbParameterMap);
+            }
+        });
+    })(name, domain, client, type);
+    
 }
 
 /**
@@ -366,7 +373,7 @@ Bastion.prototype.domainBipUnpack = function(name, domain, client, type, cb, cbP
  * @todo _bip and _client should be read-only objects
  * 
  */
-Bastion.prototype.bipFire = function(bip, content_type, encoding, exports, client, content_parts, files) {
+Bastion.prototype.bipFire = function(bip, content_type, client, content_parts, files) {
     if (files) {
         content_parts._files = files;
     }
@@ -374,13 +381,12 @@ Bastion.prototype.bipFire = function(bip, content_type, encoding, exports, clien
     for (var i = 0; i < content_parts._files.length; i++) {       
         statSize += sprintf('%.4f', (content_parts._files[i].size / (1024 * 1024)) );
     }
-    
 
     app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : bip.owner_id, type : 'traffic_inbound_mb', inc : statSize } );
     app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : bip.owner_id, type : 'delivered_bip_inbound' } );
 
     // distribute the undirected graph out to channel workers
-    return this.channelDistribute(bip, 'source', content_type, encoding, exports, client, content_parts);
+    return this.channelDistribute(bip, 'source', client.content_type, client.encoding, exports, client, content_parts);
 
 }
 
