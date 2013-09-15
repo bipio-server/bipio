@@ -835,155 +835,157 @@ DaoMongo.prototype.checkAuth = function(username, password, type, cb, asOwnerId,
     }
 
     this.find(
-    'account',
-    filter,
-    function(err, acctResult) {
-        if (!err && (null != acctResult)) {
+        'account',
+        filter,
+        function(err, acctResult) {
+            if (!err && (null != acctResult)) {
 
-            var filter = {
-                'owner_id' : acctResult.id,
-                'type' : type
-            }
+                var filter = {
+                    'owner_id' : acctResult.id,
+                    'type' : type
+                }
 
-            self.find('account_auth', filter, function(isErr, result) {
-                var resultModel = null;
-                if (!isErr && null != result) {
-                    var authModel = self.modelFactory('account_auth', result);
+                self.find('account_auth', filter, function(isErr, result) {
+                    var resultModel = null;
+                    if (!isErr && null != result) {
+                        var authModel = self.modelFactory('account_auth', result);
 
-                    if (asOwnerId || authModel.cmpPassword(password)) {
-                        authModel.username = username;
-                        isErr = false;
-                        // session usable abstract model of the account
-                        resultModel = {
-                            id : acctResult.id,
-                            name : acctResult.name,
-                            username : username,
-                            is_admin: acctResult.is_admin,
-                            settings: {
-                                api_token: null
+                        if (asOwnerId || authModel.cmpPassword(password)) {
+                            authModel.username = username;
+                            isErr = false;
+                            // session usable abstract model of the account
+                            resultModel = {
+                                id : acctResult.id,
+                                name : acctResult.name,
+                                username : username,
+                                is_admin: acctResult.is_admin,
+                                settings: {
+                                    api_token: null
+                                }
                             }
+
+                            // finally, try to pull out the users auth token and account options
+                            step(
+                                function loadAcctInfo() {
+                                    self.find(
+                                        'account_auth',
+                                        {
+                                            'owner_id' : acctResult.id,
+                                            'type' : 'token'
+                                        },
+                                        this.parallel()
+                                    );
+
+                                    self.find(
+                                    'account_option',
+                                    {
+                                        'owner_id' : acctResult.id
+                                    },
+                                    this.parallel());
+
+                                    // get domains (for bip/channel representations
+                                    self.findFilter(
+                                    'domain',
+                                    {
+                                        'owner_id' : acctResult.id
+                                    },
+                                    this.parallel());
+
+                                    // get channels (for id lookups)
+                                    self.findFilter(
+                                    'channel',
+                                    {
+                                        'owner_id' : acctResult.id
+                                    },
+                                    this.parallel());
+                                },
+                                function collateResults(err, auth, options, domains, channels) {
+                                    if (null == auth || null == options) {
+                                        err = true;
+                                        resultModel = null;
+                                    } else {
+
+                                        var domainModels = {
+                                            domains : {},
+                                            set: function(model) {
+                                                this.domains[model.id] = model;
+                                            },
+                                            get: function( id ) {
+                                                return this.domains[id];
+                                            },
+                                            test: function(id) {
+                                                return (undefined != this.domains[id]);
+                                            }
+                                        };
+
+                                        for (idx in domains ) {
+                                            domainModels.set(self.modelFactory('domain', domains[idx]));
+                                            // set default domain.  system allocated 'vanity' domains
+                                            // will respond to RPC calls etc.
+                                            if (domains[idx].type == 'vanity') {
+                                                resultModel.defaultDomainId = domains[idx].id;
+                                            }
+                                        }
+
+                                        if (undefined === resultModel.defaultDomainId) {
+                                            resultModel.defaultDomainId = "";
+                                        }
+
+                                        // attach authenticating domain context
+                                        if (undefined == activeDomainId) {
+                                            resultModel.activeDomainId = resultModel.defaultDomainId;
+                                        } else {
+                                            resultModel.activeDomainId = activeDomainId;
+                                        }
+
+                                        // there may be quite a few channels, but this
+                                        // still seems a little cheaper
+                                        var channelModels = {
+                                            channels : {},
+                                            set: function(model) {
+                                                this.channels[model.id] = model;
+                                            },
+                                            get: function( id ) {
+                                                return this.channels[id];
+                                            },
+                                            test: function(id) {
+                                                return (undefined != this.channels[id]);
+                                            }
+
+                                        };
+
+                                        for (idx in channels ) {
+                                            channelModels.set(self.modelFactory('channel', channels[idx]));
+                                        }
+
+                                        resultModel.domains = domainModels;
+                                        resultModel.channels = channelModels;
+                                        resultModel.settings = options;
+
+                                        var model = self.modelFactory('account_auth', auth);
+                                        resultModel.settings.api_token = model.getPassword();
+                                        resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(username + ':' + model.getPassword()).toString('base64'));
+                                    }
+
+                                    var accountInfo = new AccountInfo(resultModel);
+                                    cb(err, accountInfo);
+                                }
+                            );
+                        } else {
+                            result = null;
                         }
-
-                        // finally, try to pull out the users auth token and account options
-                        step(
-                        function loadAcctInfo() {
-                            self.find(
-                            'account_auth',
-                            {
-                                'owner_id' : acctResult.id,
-                                'type' : 'token'
-                            },
-                            this.parallel()
-                        );
-
-                            self.find(
-                            'account_option',
-                            {
-                                'owner_id' : acctResult.id
-                            },
-                            this.parallel());
-
-                            // get domains (for bip/channel representations
-                            self.findFilter(
-                            'domain',
-                            {
-                                'owner_id' : acctResult.id
-                            },
-                            this.parallel());
-
-                            // get channels (for id lookups)
-                            self.findFilter(
-                            'channel',
-                            {
-                                'owner_id' : acctResult.id
-                            },
-                            this.parallel());
-                        },
-                        function collateResults(err, auth, options, domains, channels) {
-                            if (null == auth || null == options) {
-                                err = true;
-                                resultModel = null;
-                            } else {
-
-                                var domainModels = {
-                                    domains : {},
-                                    set: function(model) {
-                                        this.domains[model.id] = model;
-                                    },
-                                    get: function( id ) {
-                                        return this.domains[id];
-                                    },
-                                    test: function(id) {
-                                        return (undefined != this.domains[id]);
-                                    }
-                                };
-
-                                for (idx in domains ) {
-                                    domainModels.set(self.modelFactory('domain', domains[idx]));
-                                    // set default domain.  system allocated 'vanity' domains
-                                    // will respond to RPC calls etc.
-                                    if (domains[idx].type == 'vanity') {
-                                        resultModel.defaultDomainId = domains[idx].id;
-                                    }
-                                }
-
-                                if (undefined === resultModel.defaultDomainId) {
-                                    resultModel.defaultDomainId = "";
-                                }
-
-                                // attach authenticating domain context
-                                if (undefined == activeDomainId) {
-                                    resultModel.activeDomainId = resultModel.defaultDomainId;
-                                } else {
-                                    resultModel.activeDomainId = activeDomainId;
-                                }
-
-                                // there may be quite a few channels, but this
-                                // still seems a little cheaper
-                                var channelModels = {
-                                    channels : {},
-                                    set: function(model) {
-                                        this.channels[model.id] = model;
-                                    },
-                                    get: function( id ) {
-                                        return this.channels[id];
-                                    },
-                                    test: function(id) {
-                                        return (undefined != this.channels[id]);
-                                    }
-
-                                };
-
-                                for (idx in channels ) {
-                                    channelModels.set(self.modelFactory('channel', channels[idx]));
-                                }
-
-                                resultModel.domains = domainModels;
-                                resultModel.channels = channelModels;
-                                resultModel.settings = options;
-
-                                var model = self.modelFactory('account_auth', auth);
-                                resultModel.settings.api_token = model.getPassword();
-                                resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(username + ':' + model.getPassword()).toString('base64'));
-                            }
-
-                            var accountInfo = new AccountInfo(resultModel);
-                            cb(err, accountInfo);
-                        });
-                    } else {
-                        result = null;
                     }
-                }
 
-                if (null == resultModel || null == result) {
-                    cb(true, resultModel);
-                }
-            });
-            //            }
-        } else {
-            cb(true, null);
+                    if (null == resultModel || null == result) {
+                        cb(true, resultModel);
+                    }
+                });
+                //            }
+            } else {
+                cb(true, null);
+            }
         }
-    });
+    );
 }
 
 /**

@@ -756,7 +756,8 @@ function bipAuthWrapper(req, res, cb) {
                                     false,
                                     (result.config.username && result.config.username == username
                                      &&
-                                     result.config.password && result.config.password == password)
+                                     result.config.password && result.config.password == password) ?
+                                     accountResult : null
                                 );
                             })(req, res, cb);
                         } else {
