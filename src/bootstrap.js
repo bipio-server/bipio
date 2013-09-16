@@ -27,6 +27,10 @@
  * michael@cloudspark.com.au
  *
  */
+
+// always look to local config
+process.env.NODE_CONFIG_DIR = __dirname + '/../config';
+
 // includes
 var app = {},
     util            = require('util'),
@@ -35,7 +39,7 @@ var app = {},
     path            = require('path'),
     defs            = require('../config/defs'),
     envConfig       = require('config');
-
+    
 // globals
 GLOBAL.CFG_CDN = envConfig.cdn;
 GLOBAL.CFG = envConfig;

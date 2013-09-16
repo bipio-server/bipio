@@ -31,10 +31,12 @@ var BipModel = require('./prototype.js').BipModel,
     helper = require('../lib/helper');
 
 // register pods
-var pods = {};
-for (var podName in CFG.pods) {
-    pods[podName] = require('bip-pod-' + podName);
-    app.logmessage('Pod: ' + podName + ' UP');
+if (!process.HEADLESS) {
+    var pods = {};
+    for (var podName in CFG.pods) {
+        pods[podName] = require('bip-pod-' + podName);
+        app.logmessage('Pod: ' + podName + ' UP');
+    }
 }
 
 /**
