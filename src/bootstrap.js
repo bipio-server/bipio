@@ -52,9 +52,6 @@ GLOBAL.app = app;
 // attach general helpers to the app
 app.helper = helper;
 
-// out of band messaging
-app.bastion = bastion;
-
 // logger
 app.logmessage = function(message, loglevel) {
     if (winston) {
@@ -84,6 +81,9 @@ var DaoMongo    = require('./managers/dao-mongo').DaoMongo,
         }
     }),
     bastion     = new Bastion(dao);
+
+// out of band messaging
+app.bastion = bastion;
 
 module.exports = dao;
 module.exports.app = app;

@@ -345,26 +345,6 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
 }
 
 /**
- * Bips fired via a name/domain/type (http or smtp for example)
- */
-Bastion.prototype.domainBipUnpack = function(name, domain, client, type, cb, cbParameterMap) {
-    var self = this;
-    // find user id by incoming domain
-    (function(name, domain, client, type) {
-        self._dao.find('domain', {
-            'name' : domain
-        }, function(err, result) {
-            if (err || !result) {
-                cb(cbParameterMap.fail, err);
-            } else {           
-                self.bipUnpack(type, name, result.owner_id, result.id, client, cb, cbParameterMap);
-            }
-        });
-    })(name, domain, client, type);
-    
-}
-
-/**
  * Given a bip and some content, begins the delivery process
  * 
  * bip and client also exist in exports as _bip and _client respectively, we
