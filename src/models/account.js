@@ -40,8 +40,8 @@ Account.compoundKeyContraints = {
 
 Account.entityName = 'account';
 Account.entitySchema = {
-    id: { type: String, renderable: true, writable: false },
-    username: { type: String, renderable: true, writable: false },
+    id: { type: String, renderable: true, writable: false, index: true },
+    username: { type: String, renderable: true, writable: false, index: true },
     name: { type: String, renderable: true, writable: true },
     is_admin: { type: Boolean, renderable: false, writable: false },
     email_account: { type: String, renderable: true, writable: false }

@@ -30,11 +30,13 @@ AccountOption.uniqueKeys = ['owner_id'],
     AccountOption.entitySchema = {
         id: {
             type: String,
+            index: true,
             renderable: true,
             writable: false
         },
         owner_id : {
             type: String,
+            index: true,
             renderable: false,
             writable: false
         },

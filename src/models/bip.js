@@ -111,6 +111,7 @@ Bip.entityName = 'bip';
 Bip.entitySchema = {
     id: {
         type: String,
+        index: true,
         renderable: true,
         writable: false
     },
@@ -125,6 +126,7 @@ Bip.entitySchema = {
     },
     domain_id: {
         type: String,
+        index : true,
         renderable: true,
         writable: true,
         validate : [ {
@@ -376,6 +378,7 @@ Bip.entitySchema = {
     },
     owner_id : {
         type: String,
+        index: true,
         renderable: false,
         writable: false
     },

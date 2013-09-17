@@ -30,11 +30,13 @@ Domain.entityName = 'domain';
 Domain.entitySchema = {
     id: {
         type: String, 
+        index : true,
         renderable: true, 
         writable: false
     },
     owner_id : {
         type: String, 
+        index : true,
         renderable: false, 
         writable: false
     },
@@ -53,7 +55,8 @@ Domain.entitySchema = {
     name: {
         type: String,
         renderable: true,
-        writable: true,
+        index : true,
+        writable: true,        
         validate : [
         {
             validator : function(val, next) {

@@ -72,12 +72,14 @@ Channel.entityName = 'channel';
 Channel.entitySchema = {
     id: {
         type: String,
+        index: true,
         renderable: true,
         writable: false
     },
 
     owner_id : {
         type: String,
+        index: true,
         renderable: false,
         writable: false
     },

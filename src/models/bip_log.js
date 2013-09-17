@@ -49,11 +49,13 @@ BipLog.entitySchema = {
     owner_id : {
         type: String, 
         renderable: false, 
+        index: true,
         writable: false
     },
     bip_id : {
         type: String,
         renderable: false,
+        index: true,
         writable: false
     },
     transaction_id : {

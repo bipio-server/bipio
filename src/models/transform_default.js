@@ -39,21 +39,25 @@ TransformDefault.entityName = 'transform_default';
 TransformDefault.entitySchema = {
     id: {
         type: String, 
+        index: true,
         renderable: false, 
         writable: false
     },
     owner_id : { // owner_id 'system' = system determined map
         type: String, 
+        index: true,
         renderable: false, 
         writable: false
     },
     from_channel: { // channel action (pod.action)
         type: String, 
+        index: true,
         renderable: true, 
         writable: false
     },
     to_channel: { // channel action (pod.action)
         type: String, 
+        index: true,
         renderable: true, 
         writable: false
     },

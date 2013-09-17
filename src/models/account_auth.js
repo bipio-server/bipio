@@ -129,11 +129,13 @@ AccountAuth.entityName = 'account_auth';
 AccountAuth.entitySchema = {
     id: {
         type: String,
+        index: true,
         renderable: true,
         writable: false
     },
     type: {
         type: String,
+        index: true,
         renderable: true,
         writable: false
     },    
@@ -150,6 +152,7 @@ AccountAuth.entitySchema = {
     },
     owner_id : {
         type: String,
+        index: true,
         renderable: true,
         writable: false
     },
