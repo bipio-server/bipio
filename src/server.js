@@ -145,21 +145,22 @@ module.exports.app = app;
 if (cluster.isMaster) {
     // when user hasn't explicitly configured a cluster size, use 1 process per cpu
     var forks = envConfig.server.forks ? envConfig.server.forks : require('os').cpus().length;
-
+    app.logmessage('BIPIO:STARTED:' + new Date());
     app.logmessage('Node v' + process.versions.node);
     app.logmessage('Starting ' + forks + ' fork(s)');
 
     for (var i = 0; i < forks; i++) {
         var worker = cluster.fork();
     }
-} else {
+} else {    
     workerId = cluster.worker.workerID;
+    app.logmessage('BIPIO:STARTED:' + new Date());
     helper.tldtools.init(
         function() {
-            app.logmessage('TLD UP')
+            app.logmessage('TLD:UP');
         },
         function(body) {
-            app.logmessage('TLD Cache fail - ' + body, 'error')
+            app.logmessage('TLD:Cache fail - ' + body, 'error')
         }
     );
 

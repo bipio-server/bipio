@@ -90,7 +90,7 @@ function DaoMongo(connectStr, log, next) {
     }
 
     mongoose.connection.on('open', function() {
-        log('MongoDB Connected');
+        app.logmessage('DAO:MONGODB:Connected');
 
         if (next) {
             next(false, self);
@@ -594,8 +594,10 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
                 query = query.limit(page_size).skip( (page - 1)  * page_size );
             }
 
-            if (sortMap[orderBy]) {
-                query = query.sort(sortMap[orderBy] + ' -test');
+            if (sortMap[orderBy] || orderBy) {
+                var s = {};
+                s[sortMap[orderBy] ? sortMap[orderBy] : orderBy] = (orderBy === 'alphabetical' ? 'asc' : 'desc');
+                query = query.sort(s);
             }
 
             query.execFind(function (err, results) {
