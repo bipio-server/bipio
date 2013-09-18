@@ -30,17 +30,32 @@
 var Rabbit = require('./rabbit'),
     sprintf = require('sprintf').sprintf,
     uuid    = require('node-uuid'),
-    helper = require('../lib/helper');
+    helper = require('../lib/helper'),
+    events = require('events'),
+    eventEmitter = new events.EventEmitter();
+
 //    msgpack = require('msgpack');
 
 function Bastion(dao, noConsume, cb) {
+    var self = this;
+    events.EventEmitter.call(this);
+
     if (!cb && !noConsume) {
         cb = this.consumeLoop()
     }
     this._dao = dao;
-    this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : cb);
+
+    var eventWrapper = function(readyQueue) {
+        self.emit('readyQueue', readyQueue);        
+        cb(readyQueue);
+    };
+    
+    this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
     return this;
 }
+
+Bastion.prototype.__proto__ = events.EventEmitter.prototype;
+
 
 Bastion.prototype.getQueue = function(queueName) {
     if (undefined == queueName) {
@@ -68,7 +83,7 @@ Bastion.prototype.jobRunnerAlert = function(err, message) {
 // @todo we have to assume the queue system is a DMZ for now :|
 Bastion.prototype.jobRunner = function(jobPacket) {
     var self = this;
-    app.logmessage('Bastion Packet Received.  Job [' + jobPacket.name + ']', 'info');
+    app.logmessage('BASTION:REC:NAME:' + jobPacket.name, 'info');
     if (jobPacket.name) {
         if (jobPacket.name == DEFS.JOB_ATTACH_REFERER_ICON) {
             this._dao._jobAttachBipRefererIcon( jobPacket.data, this.jobRunnerAlert );
@@ -204,7 +219,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
         } else if (jobPacket.name == DEFS.JOB_BIP_ACTIVITY) {            
             this._dao.bipLog(jobPacket.data);
         } else {
-            app.logmessage('MALFORMED PACKET', 'error');
+            app.logmessage('BASTION:MALFORMED PACKET', 'error');
             console.log(jobPacket);
         }
     }
@@ -394,7 +409,7 @@ Bastion.prototype.channelDistribute = function(bip, channel_id, content_type, en
             'content_parts' : content_parts
         }
 
-        app.logmessage('Bastion Channel Distribute [' + channel_id + ']');
+        app.logmessage('BASTION:FWD:TX:' + client.id + ':CID:' + channel_id);
 
         // send to rabbit
         //this._queue.producePublic(msgpack.pack(channelInvokePacket));
@@ -409,8 +424,8 @@ Bastion.prototype.channelProcess = function(struct) {
     var self = this;
 
     // unpack the bip and deliver
-    app.logmessage('Bastion Packet Received. Transaction ID [' + struct.client.id + ']', 'info');
-    app.logmessage('Bastion Channel Process Start [' + struct.client.id + ']->[' + struct.channel_id + ']', 'info');
+    app.logmessage('BASTION:PROC:TX:' + struct.client.id, 'info'); // transaction started
+    app.logmessage('BASTION:FWD:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
 
     if (undefined != struct.bip) {
 
@@ -425,7 +440,7 @@ Bastion.prototype.channelProcess = function(struct) {
             filter,
             function(err, result) {
                 if (err || !result) {
-                    app.logmessage('Bastion CRITICAL Couldnt load channel ' + struct.channel_id, 'warning');
+                    app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
                 } else {
                     var channel = self._dao.modelFactory('channel', result),
                         transforms = {};
@@ -491,7 +506,7 @@ Bastion.prototype.consumeLoop = function() {
 
         if (consumer) {
             q.subscribe(consumer);
-            app.logmessage('[' + queueConsume + '] consumer attached');
+            app.logmessage('BASTION:' + queueConsume + ':consumer attached');
         }
     }
 }

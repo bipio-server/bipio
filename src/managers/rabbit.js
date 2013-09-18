@@ -60,7 +60,7 @@ function Rabbit(cfg, next) {
                         var exchange = this;
                         //app.logmessage('Exchange [' + this.name + '] is UP');
                         // @todo winston migration
-                        app.logmessage('X[' + this.name + ']UP');
+                        app.logmessage('RABBIT:X:' + this.name + ':UP');
                         var xStruct = cfg.exchanges[this.name];
 
                         // create default queue for this exchange
@@ -71,7 +71,7 @@ function Rabbit(cfg, next) {
                                 this.bind(exchange, xStruct.route_default);
                                 // @todo winston migration
                                 // app.logmessage('Queue [' + this.name + '] is UP');
-                                app.logmessage((undefined !== next ? '[PUBSUB]' : '[PUB]') + 'Q[' + this.name + ']UP' );
+                                app.logmessage('RABBIT:Q:' + (undefined !== next ? 'PUBSUB' : 'PUB') + this.name + ':UP' );
                                 if (next) {
                                     next(this.name);
                                 }
@@ -81,11 +81,11 @@ function Rabbit(cfg, next) {
         });
 
     this.amqpConn.on('connect', function() {
-        app.logmessage('RabbitMQ Connected');
+        app.logmessage('RABBIT:Connected');
     });
 
     this.amqpConn.on('error', function(err) {
-        app.logmessage('RabbitMQ ' + err, 'error');
+        app.logmessage('RABBIT:' + err, 'error');
         
     })
 
@@ -100,7 +100,7 @@ Rabbit.prototype.producePublic = function(payload) {
     this.produce('bastion_generic', 'default', payload);
 }
 
-Rabbit.prototype.produceJob = function(payload, cb) {
+Rabbit.prototype.produceJob = function(payload, cb) {    
     this.produce('bastion_jobs', 'default', payload, cb);
 }
 

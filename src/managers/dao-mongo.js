@@ -1828,12 +1828,12 @@ DaoMongo.prototype.triggerAll = function(cb) {
             // @todo this is some ghetto shit. Hope we can get these triggers off fast enough.
             for (var i = 0; i < numResults; i++) {
                 // fire off a bip trigger job to rabbit
-                app.logmessage('Triggering [' + results[i].id + ']');
+                app.logmessage('DAO:Trigger:' + results[i].id);
                 app.bastion.createJob( DEFS.JOB_BIP_TRIGGER,results[i], function() {
                     numProcessed++;
-                    app.logmessage('Trigger [' + results[i].id + '] Complete');
+                    app.logmessage('DAO:Trigger:' + results[i].id + ':Complete');
                     if (numProcessed == numResults) {
-                        cb(false, numProcessed + ' Triggers Fired');
+                        cb(false, 'DAO:Trigger:' + numProcessed + ' Triggers Fired');
                     }
                 });
             }

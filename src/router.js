@@ -775,7 +775,6 @@ function bipAuthWrapper(req, res, cb) {
     })(helper.getDomain(req.headers.host, true), req, res);
 }
 
-
 /**
  * Pass through HTTP Bips
  */

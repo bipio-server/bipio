@@ -35,7 +35,7 @@ if (!process.HEADLESS) {
     var pods = {};
     for (var podName in CFG.pods) {
         pods[podName] = require('bip-pod-' + podName);
-        app.logmessage('Pod: ' + podName + ' UP');
+        app.logmessage('POD:' + podName + ':UP');
     }
 }
 
