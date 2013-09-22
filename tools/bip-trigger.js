@@ -24,18 +24,19 @@
 /**
  * Triggers unpaused trigger bips.
  */
-var dao = require(__dirname + '/../src/bootstrap');
-    dao.app.bastion.on('readyQueue', function(readyQueue) {
-        if (readyQueue == 'queue_jobs') {
-            app.logmessage('BIP-TRIGGER:Trigger Queue Discovered:queue_jobs');
-            dao.triggerAll(function(err, msg) {
-                if (err) {
-                    app.logmessage('BIP-TRIGGER:' + err + ' ' + msg);
-                } else {
-                    app.logmessage(msg);
-                    app.logmessage('BIP-TRIGGER:DONE');
-                }
-                process.exit(0);
-            });                
-        }
-    });
+process.HEADLESS = true;
+var bootstrap = require(__dirname + '/../src/bootstrap');
+bootstrap.app.bastion.on('readyQueue', function(readyQueue) {
+    if (readyQueue == 'queue_jobs') {
+        app.logmessage('BIP-TRIGGER:Trigger Queue Discovered:queue_jobs');
+        bootstrap.app.dao.triggerAll(function(err, msg) {
+            if (err) {
+                app.logmessage('BIP-TRIGGER:' + err + ' ' + msg);
+            } else {
+                app.logmessage(msg);
+                app.logmessage('BIP-TRIGGER:DONE');
+            }
+            process.exit(0);
+        });
+    }
+});

@@ -166,6 +166,10 @@ function userSetup() {
                     }
                     credentials.email = answer.email;
 
+                    if ('testing' === appEnv) {
+                        sparseConfig.testing_user = credentials;
+                    }
+
                     // install user.
                     auxServers();
                 });
@@ -179,6 +183,7 @@ function _createAccount(dao, next) {
         'account',
         {
             name : credentials.username,
+            username : credentials.username,
             is_admin : true,
             email_account : credentials.email
         });
@@ -253,7 +258,14 @@ function _createOptions(dao, domainId, accountInfo, next) {
     var accountOptions = dao.modelFactory(
         'account_option',
         {
-            bip_domain_id : domainId
+            bip_type : 'http',
+            bip_domain_id : domainId,
+            bip_end_life : {
+                imp : 0,
+                time : 0
+            },
+            bip_expire_behaviour: 'pause',
+            timezone : 'America/New_York' // @todo get from system, configurable
         }, accountInfo);
 
     dao.create(accountOptions, function(err, modelName, result) {
@@ -292,20 +304,20 @@ function auxServers() {
         console.log('trying ' + sparseConfig.dbMongo.connect + ' Ctrl-C to quit');
         GLOBAL.CFG = sparseConfig;
 
-        var DaoMongo = require(__dirname + '/../src/managers/dao-mongo').DaoMongo;
-        new DaoMongo(
-            sparseConfig.dbMongo.connect,
-            console.log,
-            function(err, dao) {
-                if (err) {
-                    console.log('MongoDB unconnectable via :' + sparseConfig.dbMongo.connect);
-                    console.log(err);
-                    auxServers(next);
-                } else {
-                    _createAccount(dao, writeConfig);
-                }
-            }
-        );
+        var Dao = require(__dirname + '/../src/managers/dao');        
+        var dao = new Dao(sparseConfig.dbMongo,  function(message) {
+            console.log(message);
+        });
+        
+        dao.on('ready', function(dao) {
+            _createAccount(dao, writeConfig);
+        });
+        
+        dao.on('error', function() {
+            console.log('MongoDB unconnectable via :' + sparseConfig.dbMongo.connect);
+            console.log(err);
+            auxServers(next);
+        });
     });
 }
 

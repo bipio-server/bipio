@@ -144,6 +144,16 @@ var helper = {
 
         return ret;
     },
+    
+    randCharStr : function(length) {
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-',
+            ret = '';
+      
+        for( var i = 0; i < length; i++ ) {
+            ret += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return ret;            
+    },
 
     validator : function() {
         return validator.check;

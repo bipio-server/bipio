@@ -29,61 +29,97 @@ Domain.uniqueKeys = ['name'];
 Domain.entityName = 'domain';
 Domain.entitySchema = {
     id: {
-        type: String, 
+        type: String,
         index : true,
-        renderable: true, 
+        renderable: true,
         writable: false
     },
     owner_id : {
-        type: String, 
+        type: String,
         index : true,
-        renderable: false, 
+        renderable: false,
         writable: false
     },
     type: {
-        type: String, 
-        renderable: false, 
-        writable: false, 
+        type: String,
+        renderable: false,
+        writable: false,
         "default" : "custom"
     },
     _available: {
-        type: Boolean, 
-        renderable: true, 
-        writable: false, 
+        type: Boolean,
+        renderable: true,
+        writable: false,
         "default" : false
     },
     name: {
         type: String,
         renderable: true,
         index : true,
-        writable: true,        
+        writable: true,
         validate : [
         {
             validator : function(val, next) {
-                var ok = false;
-                var isBipDomain = Domain.isBipDomain(val);
-                    
-                if (this.type == 'custom') {
-                    ok = !isBipDomain;
-                } else {
-                    // we want to lock vanity domains as unwritable
-                    ok = (!isBipDomain && this.type != 'vanity');
+                var ok = /[\w\d]+\.[a-zA-Z]{2,}$/.test(val);
+                if (ok) {
+                    var isLocal = Domain.isLocal(val);
+
+                    if (this.type == 'custom') {
+                        ok = !isLocal;
+                    } else {
+                        // lock vanity domains as unwritable
+                        ok = (!isLocal && this.type != 'vanity');
+                    }
                 }
-                    
-                next(ok);                   
+                next(ok);
             },
             msg : "Can not overwrite a protected Domain"
-        },        
+        },
         ]
     }
 };
 
-Domain.isBipDomain = function(val) {
-    return /bip.io$/ig.test(val);
+// is a local domain
+Domain.isLocal = function(domain) {
+    var local = GLOBAL.CFG.domain_public.split(':').shift(),
+        reg = new RegExp(local + '$');
+    return reg.test(domain);
 }
+
+/**
+ *
+ *
+ */
+Domain.setAvailable = function(available, next) {
+    var self = this;
+    self._available = available;
+
+    if (self.id) {
+        this._dao.updateColumn(
+            'domain',
+            self.id,
+            {
+                '_available' : available
+            },
+            function(err, result) {
+                if (err) {
+                    console.log(err);
+                }
+                next(err, 'domain', self, 200);
+            }
+        );
+    } else {
+        next(false, 'domain', self, 200);
+    }
+};
 
 Domain.verify = function(accountInfo, next) {
     var self = this, dao = this._dao;
+    if (/.?localhost$/.test(self.name)) {
+        self.setAvailable(true, next);
+        return;
+    }
+
     step(
         function domainVerify() {
             dns.resolveMx(
@@ -96,7 +132,8 @@ Domain.verify = function(accountInfo, next) {
                     );
         },
         function collateResults(err, MXAddr, CNAMEAddr) {
-            if (!MXAddr && !CNAMEAddr && null != err) {                
+            self._available = false;
+            if (!MXAddr && !CNAMEAddr && null != err) {
                 if (err.errno == 'ENOTFOUND' || err.errno == 'ENODATA') {
                     next(err, 'domain', self, 202);
                 } else {
@@ -106,7 +143,7 @@ Domain.verify = function(accountInfo, next) {
                 var acctDomain = accountInfo.getDefaultDomain().name;
                 var ok = false;
 
-                if (MXAddr && MXAddr.length > 0) {              
+                if (MXAddr && MXAddr.length > 0) {
                     for (var i = 0; i < MXAddr.length; i++) {
                         if (MXAddr[i].exchange && MXAddr[i].exchange == acctDomain) {
                             ok = true;
@@ -119,30 +156,23 @@ Domain.verify = function(accountInfo, next) {
                         ok = true;
                     }
                 }
-                
+
                 if (ok) {
-                    self._available = true;
-                    dao.updateColumn('domain', self.id, { '_available' : true }, function(err, result) {
-                        if (err) {
-                            console.log(err);
-                        }
-                        next(err, 'domain', self, 200);
-                    });
-                    
+                    self.setAvailable(true, next);
                 } else {
-                    // accepted
-                    next(err, 'domain', self, 202);                    
-                }                
+                    // accepted - domain exists but is not bound to local application
+                    next(err, 'domain', self, 202);
+                }
             }
-        }    
-    );    
+        }
+    );
 }
 
 // domains behave a little differently, they can have postponed availability
 // after creation as we verify the domain is properly configured
-Domain.postSave = function(accountInfo, next) {    
+Domain.postSave = function(accountInfo, next) {
     var self = this, dao = this._dao;
-    if (!this.isBipDomain(this.name)) {
+    if (!this.isLocal(this.name)) {
         this.verify(accountInfo, next);
     } else {
         next(false, 'domain', self, 200);
@@ -156,7 +186,7 @@ Domain.repr = function() {
 Domain.entitySetters = {
     'name' : function(name) {
         return name.toLowerCase();
-        
+
     }
 };
 

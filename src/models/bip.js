@@ -25,6 +25,7 @@ djs = require('datejs'),
 BipModel = require('./prototype.js').BipModel,
 Bip = Object.create(BipModel);
 
+// setters
 /**
  *
  */
@@ -43,20 +44,6 @@ function generate_random_base() {
     }
 
     return '.' + ret + '_';
-}
-
-/**
- * If no name has been supplied when setting a type, and the name is empty,
- * then we generate a timestamp uuid
- */
-function generate_endpoint(endpoint_type) {
-    // empty name? then generate one
-    if (undefined == this.name || this.name == '') {
-        var uuidInt = new Date().getTime();
-        // change base
-        this.name = baseConverter.decToGeneric(uuidInt, generate_random_base());
-    }
-    return endpoint_type;
 }
 
 /**
@@ -95,7 +82,7 @@ Bip.repr = function(accountInfo) {
         domainName = accountInfo.user.domains.get(this.domain_id).repr();
 
     // inject the port for dev
-    if (app.settings.env == 'development') {
+    if (process.env.NODE_ENV == 'development') {
         domainName += ':' + CFG.server.port;
     }
 
@@ -118,11 +105,13 @@ Bip.entitySchema = {
     name: {
         type: String,
         renderable: true,
-        writable: true,
-        validate : [{
+        writable: true,        
+        validate : [
+            {
                 'validator' : BipModel.validators.max_64,
                 'msg' : "64 characters max"
-        }]
+            }
+        ]
     },
     domain_id: {
         type: String,
@@ -136,7 +125,8 @@ Bip.entitySchema = {
                 );
             },
             msg : 'Domain Not Found'
-        }]
+            }
+        ]
     },
     type: {
         type: String,
@@ -149,7 +139,22 @@ Bip.entitySchema = {
                 },
                 msg : 'Expected "smtp", "http" or "trigger"'
             }
-        ]
+        ],
+        set : function(type) {
+            // empty name? then generate one
+            if (undefined == this.name || this.name == '') {
+                var uuidInt = new Date().getTime();
+                // change base
+                this.name = baseConverter.decToGeneric(uuidInt, generate_random_base());
+            }
+
+            // scrub name
+            if ('trigger' !== type) {
+                this.name = this.name.replace(/\s/g, '-');
+                this.name = this.name.replace(/[^a-zA-Z0-9-_]/g, '');
+            }
+            return type;
+        }
     },
     config: {
         type: Object,
@@ -157,70 +162,58 @@ Bip.entitySchema = {
         writable: true,
         "default" : {},
         validate : [{
-                validator : function(val, next) {
-                    var ok = false;
+            validator : function(val, next) {
+                var ok = false;
+                if (!val) {
+                    next(ok);
+                    return;
+                }
 
-                    // ------------------------------
-                    if (this.type == 'trigger') {
-                        /*
-                        var cronOK = false, channelOK = false;
-                        try {
-                            new cron(val.interval);
-                            cronOK = true;
-                        } catch (ex) {
-                            console.log(ex);
-                        }
+                // ------------------------------
+                if (this.type == 'trigger') {
+                    ok = false;
+                    var cid = val.channel_id,
+                        userChannels = this.getAccountInfo().user.channels,
+                        channel = userChannels.get(cid),
+                        podTokens;
 
-                        if (cronOK) {
-                            var cid = val.channel_id;
-                            userChannels = this.getAccountInfo().user.channels;
-                            channelOK = userChannels.test(cid) && userChannels.get(cid)._emitter;
-                        }
+                    if (channel) {
+                        podTokens = channel.getPodTokens();
 
-                        ok = (cronOK && channelOK);*/
+                        ok = userChannels.test(cid) && podTokens.isTrigger();
+                    }
 
-                        ok = true;
-                        /*
-                        var cid = val.channel_id,
-                            userChannels = this.getAccountInfo().user.channels,
-                            channel = userChannels.get(cid),
-                            podTokens;
+                // ------------------------------
+                } else if (this.type == 'http') {
 
-                        if (channel) {
-                            podTokens = channel.getPodTokens();
-
-                            ok = userChannels.test(cid) && podTokens.isTrigger();
-                        }*/
-
-                    // ------------------------------
-                    } else if (this.type == 'http') {
-
-                        if (val.auth && /^(none|token|basic)$/.test(val.auth)) {
-                            if (val.auth == 'basic') {
-                                ok = val.username && val.password;
-                            } else {
-                                // none and token don't require extra config
-                                ok = true;
-                            }
-                        }
-
-                        if (val.exports && app.helper.isArray(val.exports)) {
+                    if (val.auth && /^(none|token|basic)$/.test(val.auth)) {
+                        if (val.auth == 'basic') {
+                            ok = val.username && val.password;
+                        } else {
+                            // none and token don't require extra config
                             ok = true;
-                            for (var i = 0; i < val.exports.length; i++) {
-                                // @todo make sure inputs has been sanitized
-                                ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
-                                if (!ok) {
-                                    break;
-                                }
+                        }
+                    }
+
+                    if (val.exports && app.helper.isArray(val.exports)) {
+                        ok = true;
+                        for (var i = 0; i < val.exports.length; i++) {
+                            // @todo make sure inputs has been sanitized
+                            ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
+                            if (!ok) {
+                                break;
                             }
                         }
-
-                    // ------------------------------
-                    } else if (this.type == 'smtp') {
+                    } else if (!val.exports) {
                         ok = true;
                     }
 
-                    next(ok);
+                // ------------------------------
+                } else if (this.type == 'smtp') {
+                    ok = true;
+                }
+
+                next(ok);
             },
             msg : 'Bad Config'
         }]
@@ -232,8 +225,7 @@ Bip.entitySchema = {
         validate : [
             {
                 // not a very good validator, but will do for know.
-                // @todo ensure edge > vertex > edge doesn't exist. linked list,
-                // tortoise+hare is fine.'
+                // @todo ensure edge > vertex > edge doesn't exist
                 validator : function(hub, next) {
                     var numEdges, edges = {}, edge, loop = false;
                     for (key in hub) {
@@ -260,15 +252,15 @@ Bip.entitySchema = {
 
                     next(!loop);
                 },
-                msg : "Routing Loop Detected"
+                msg : "Loop Detected"
             },
+
             {
                 validator : function(val, next) {
                     var ok = false,
-                    userChannels = this.getAccountInfo().user.channels,
-                    numEdges,
-                    transforms;
-
+                        userChannels = this.getAccountInfo().user.channels,
+                        numEdges,
+                        transforms;
                     // check channels + transforms make sense
                     if (undefined != val.source) {
 
@@ -285,30 +277,30 @@ Bip.entitySchema = {
                             }
                         }
 */
-                        for (var channelSource in val) {
-                            // check channel exists
-                            ok = (channelSource == 'source' || userChannels.test(channelSource));
 
-                            if (ok) {
-                                // check edges point to channels for this account
-                                numEdges = val[channelSource].edges.length;
-                                if (numEdges > 0) {
-                                    for (var e = 0; e < numEdges; e++) {
-                                        ok = userChannels.test(val[channelSource].edges[e]);
-                                        if (!ok) {
-                                            break;
+                        for (var cid in val) {
+                            if (val.hasOwnProperty(cid)) {
+                            // check channel exists
+                                ok = (cid == 'source' || userChannels.test(cid));
+                                if (ok) {
+                                    // check edges point to channels for this account
+                                    numEdges = val[cid].edges.length;
+                                    if (numEdges > 0) {
+                                        for (var e = 0; e < numEdges; e++) {
+                                            ok = userChannels.test(val[cid].edges[e]);
+                                            if (!ok) {
+                                                break;
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-
-                            if (!ok) {
-                                break;
+                                if (!ok) {
+                                    break;
+                                }
                             }
                         }
                     }
-
                     next(ok);
                 },
                 msg : 'Bad Channel in Hub'
@@ -345,16 +337,19 @@ Bip.entitySchema = {
         type: Boolean,
         renderable: true,
         writable: true,
-        "default" : false,
+        'default' : false,
         set : function(newValue) {
+            return newValue;
+            /*
             if (false === this.paused && newValue) {
-                Bip.getDao().pauseBip(this, null, newValue, null);               
+                Bip.getDao().pauseBip(this, null, newValue, null);
             }
-            return newValue;            
+            return newValue;
+            */
         },
         validate : [{
-                'validator' : BipModel.validators.bool_int,
-                'msg' : 'Expected "1" or "0"'
+                'validator' : BipModel.validators.bool_any,
+                'msg' : 'Expected 1,0,true,false'
         }]
     },
     binder: {
@@ -362,14 +357,6 @@ Bip.entitySchema = {
         renderable: true,
         writable: true
     },
-    /*
-    anonymize: {
-        type: Boolean,
-        renderable: true,
-        writable: true,
-        "default" : true
-    },
-    */
     icon : {
         type: String,
         renderable: true,
@@ -398,11 +385,6 @@ Bip.entitySchema = {
         renderable : false,
         writable : false
     }
-};
-
-Bip.entitySetters = {
-    'type' : generate_endpoint
-//    'hub' : transformRemap
 };
 
 Bip.compoundKeyContraints = {
@@ -533,14 +515,9 @@ Bip.exports = {
 
 
 /**
- * For any omitted attributes, use account defaults.  Also apply transforms.
- *
- * Its done here rather than via entitySetters, as mongoose loses this class'
- * scope
- *
+ * For any omitted attributes, use account defaults
  */
 Bip.preSave = function(accountInfo) {
-    // var accountInfo = this.getAccountInfo();
     var props = {
         'domain_id' : accountInfo.getSetting('bip_domain_id'),
 //        '_tz' : accountInfo.user.settings.timezone,
@@ -551,52 +528,28 @@ Bip.preSave = function(accountInfo) {
         'hub' :  accountInfo.getSetting('bip_hub'),
         'icon' : ''
     };
-    
+
     if (this.domain_id === '') {
         this.domain_id = undefined;
     }
-   
+
     app.helper.copyProperties(props, this, false);
-
-    //this._tz = accountInfo.user.settings.timezone;
-
-    // if default, then try to fill the transform based on
-    // the bip type and the target channel type
-    var localExports = this.exports.getExports(this.type);
-    for (channelSource in this.hub) {
-        for (channelTransform in this.hub[channelSource].transforms) {
-            if (this.hub[channelSource].transforms[channelTransform] == 'default') {
-                //
-                /*
-                var transformDefaults = this.getAccountInfo().user.channels
-                .get(channelTransform)
-                .getTransformDefault('bip.' + this.type);
-
-                // if not default transform has been defined for this bip type,
-                // then we setup a 1:1 passthrough
-                if (transformDefaults) {
-                    this.hub[channelSource].transforms[channelTransform] = transformDefaults;
-                }
-                */
-            }
-        }
-    }
 
     return;
 };
 
-Bip.postSave = function(accountInfo, cb, isNew) {
-    function getAction(accountInfo, channelId) {
-        return accountInfo.user.channels.get(channelId).action;
-    }
+function getAction(accountInfo, channelId) {
+    return accountInfo.user.channels.get(channelId).action;
+}
 
+Bip.postSave = function(accountInfo, next, isNew) {
     // set user default transforms
     var from, to, payload, fromMatch, transforms = {}, dirty = false;
-    
+
     for (var key in this.hub) {
         if (this.hub.hasOwnProperty(key)) {
             fromMatch = new RegExp(key, 'gi');
-            if (key === 'source') {                
+            if (key === 'source') {
                 if (this.type === 'trigger' && this.config.channel_id) {
                     from = getAction(accountInfo, this.config.channel_id);
                 } else {
@@ -616,13 +569,13 @@ Bip.postSave = function(accountInfo, cb, isNew) {
                             for(var txKey in this.hub[key].transforms[txChannelId]) {
                                 if (this.hub[key].transforms[txChannelId].hasOwnProperty(txKey)) {
                                     this.hub[key].transforms[txChannelId][txKey].replace(fromMatch, from);
-                                    
+
                                     // strip any remaining uuid's.  Only supporting adjacent transform helpers
                                     // for now.
                                     this.hub[key].transforms[txChannelId][txKey].replace(app.helper.getRegActionUUID(), '');
                                 }
                             }
-                            
+
                             // default transform payload
                             payload = {
                                 from_channel : from,
@@ -641,11 +594,11 @@ Bip.postSave = function(accountInfo, cb, isNew) {
 
     // create metric updates jobs
     if (isNew) {
-        app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'bips_total' } );        
+        app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'bips_total' } );
         app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, { bip_id : this.id, owner_id : accountInfo.user.id, code : 'bip_create' } );
     }
 
-    cb(false, this.getEntityName(), this);
+    next(false, this.getEntityName(), this);
 };
 
 module.exports.Bip = Bip;

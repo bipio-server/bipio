@@ -30,42 +30,6 @@
 var BipModel = require('./prototype.js').BipModel,
     helper = require('../lib/helper');
 
-// register pods
-if (!process.HEADLESS) {
-    var pods = {};
-    for (var podName in CFG.pods) {
-        pods[podName] = require('bip-pod-' + podName);
-        app.logmessage('POD:' + podName + ':UP');
-    }
-}
-
-/**
- * @todo - channel actions should not be changeable after the initial create
- *
- */
-function applyAction(channelAction) {
-    if (validAction(channelAction)) {
-        var podAction = Channel.getPodTokens(channelAction);
-        if (podAction.ok()) {
-            this.config = pods[podAction.pod].importGetDefaults(podAction.action);
-        }
-    }
-
-    return channelAction;
-}
-
-
-function validAction(value) {
-    var ok = false;
-    ok = (undefined != value && value != '' && value != 0);
-    if (ok) {
-        var tTokens = value.split('.');
-        var pod = tTokens[0], podAction = tTokens[1];
-        ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
-    }
-    return ok;
-}
-
 var Channel = Object.create(BipModel);
 
 Channel.entityName = 'channel';
@@ -107,7 +71,16 @@ Channel.entitySchema = {
         renderable: true,
         required : true,
         writable: true,
-        set : applyAction,
+        set : function(action) {
+            if (validAction(action)) {
+                var podAction = Channel.getPodTokens(action);
+                if (podAction.ok()) {
+                    this.config = pods[podAction.pod].importGetDefaults(podAction.action);
+                }
+            }
+
+            return action;
+        },
         "default" : "",
 
         validate : [
@@ -143,13 +116,12 @@ Channel.entitySchema = {
         required : true,
         writable: true,
         "default" : {},
-        validate : [
-        {
-            validator : BipModel.validators.notempty,
-            msg : "Cannot be empty"
-        },
+        validate : [        
         {
             validator : function(val, next) {
+                next(true);
+                return;
+                
                 var ok = false;
                 if (validAction(this.action)) {
                     // validate the config for this action
@@ -191,6 +163,17 @@ Channel.compoundKeyContraints = {
     "name" : 1,
     "action" : 1
 };
+
+function validAction(value) {
+    var ok = false;
+    ok = (undefined != value && value != '' && value != 0);
+    if (ok) {
+        var tTokens = value.split('.');
+        var pod = tTokens[0], podAction = tTokens[1];
+        ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
+    }
+    return ok;
+}
 
 // Pod Binder
 Channel.staticChildInit = function() {
@@ -359,7 +342,7 @@ Channel.rpc = function(renderer, query, client, req, res) {
                     );
 
                 } else if (err) {
-                    app.logmessage(err, 'error');
+                    GLOBAL.app.logmessage(err, 'error');
                     res.send(403);
                 } else if (!oAuthToken) {
                     res.send(403, {
@@ -470,7 +453,7 @@ Channel.postSave = function(accountInfo, next, isNew) {
     
     
     if (isNew) {   
-        app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'channels_total' } );
+        GLOBAL.app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'channels_total' } );
     }
 }
 
@@ -522,8 +505,7 @@ Channel.getPods = function(name) {
         return pods[name];
     } else {
         return pods;
-    }
-    
+    }   
 }
 
 // We try to inject defaults into channel configs to avoid patching documents
@@ -572,22 +554,7 @@ Channel.getTransformDefault = function(transformSource) {
     return transform;
 }
 
-/**
- * Channel representation
- */
-Channel.repr = function(accountInfo) {
-    var repr = '';
-    var action = this.getPodTokens();
 
-    if (action.ok()) {
-        repr = pods[action.pod].repr(action.action, this);
-        this.attachRenderer(accountInfo);
-    }
-
-
-
-    return repr;
-}
 
 Channel.getRendererUrl = function(renderer, accountInfo) {
     var action = this.getPodTokens(),
@@ -597,7 +564,6 @@ Channel.getRendererUrl = function(renderer, accountInfo) {
     if (action.ok()) {
         rStruct = action.getSchema('renderers');
         if (rStruct[renderer]) {
-            //ret = this._dao.getBaseUrl() + '/rpc/render/channel/' + this.getIdValue() + '/' + renderer;
             ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/' + renderer;
         }
     }
@@ -622,6 +588,34 @@ Channel.attachRenderer = function(accountInfo) {
 
 Channel.href = function() {
     return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
+}
+
+/**
+ * Channel representation
+ */
+Channel.repr = function(accountInfo) {
+    var repr = '';
+    var action = this.getPodTokens();
+
+    if (action.ok()) {
+        repr = pods[action.pod].repr(action.action, this);
+        this.attachRenderer(accountInfo);
+    }
+
+
+
+    return repr;
+}
+
+// register pods
+if (!process.HEADLESS) {
+    var pods = {};
+    for (var podName in CFG.pods) {
+        if (CFG.pods.hasOwnProperty(podName) && podName !== 'testing') {
+            pods[podName] = require('bip-pod-' + podName);
+            GLOBAL.app.logmessage('POD:' + podName + ':UP');
+        }
+    }
 }
 
 module.exports.Channel = Channel;

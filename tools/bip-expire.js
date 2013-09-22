@@ -24,7 +24,9 @@
 /**
  * Expires bips which have reached their end-life by time
  */
-require('../src/bootstrap').expireAll(function(err, msg) {
+process.HEADLESS = true;
+var bootstrap = require(__dirname + '/../src/bootstrap');
+    bootstrap.app.dao.expireAll(function(err, msg) {
     if (err) {
         console.log('ERROR:' + err);
         console.log(msg);

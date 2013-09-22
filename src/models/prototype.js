@@ -23,28 +23,28 @@
 /**
  *
  * BipModel is our local representation of a persistent model
- * 
+ *
  */
 var clone = require('clone'),
     helper      = require('../lib/helper');
-    
+
 var BipModel = {
     entityIndex: 'id',
     entityExpiration: 60*5,
     entityCreated: 'created',
-    
+
     entitySetters: {},
     // validators : field : function(value, cb) {} // where cb(true) or cb(false)
     // entityValidators: {},
-    
+
     accountInfo : null,
     /*
     getValidators: function() {
         return this.entityValidators;
-    },   
+    },
     */
     compoundKeyContraints: undefined,
-    
+
     // list of unique keys
     uniqueKeys: [],
 
@@ -72,16 +72,16 @@ var BipModel = {
 
         this.staticChildInit();
     },
-    
+
     // @todo create a proper inheritence chain
     staticChildInit : function() {
-        
+
     },
 
     // instance constructor
     init: function(accountInfo) {
         this.accountInfo = accountInfo;
-        
+
         return this;
     },
 
@@ -102,11 +102,11 @@ var BipModel = {
     },
 
     repr: function() {
-      return '';  
+      return '';
     },
 
     decorate : function() {
-        
+
     },
 
     setValue: function(key, value) {
@@ -115,7 +115,7 @@ var BipModel = {
 
     /**
      * populates this object with src, for matching properties
-     * 
+     *
      * trusts tainted sources
      */
     populate: function(src, accountInfo) {
@@ -128,12 +128,12 @@ var BipModel = {
     },
 
     toObj : function() {
-        return helper.copyProperties(this, {}, true, this.getPropNamesAsArray());        
+        return helper.copyProperties(this, {}, true, this.getPropNamesAsArray());
     },
 
     toMongoModel: function(mongoModel) {
-        var model = helper.copyProperties(this, mongoModel, true);        
-        var self = this;        
+        var model = helper.copyProperties(this, mongoModel, true);
+        var self = this;
         model.getAccountInfo = function() {
             return self.getAccountInfo();
         }
@@ -142,14 +142,14 @@ var BipModel = {
     },
 
     // called after successfully saving the object
-    postSave: function(accountInfo, cb) {        
+    postSave: function(accountInfo, cb) {
         cb(false, this.getEntityName(), this);
     },
 
     // called prior to save
     preSave: function() {
-        
-    },    
+
+    },
 
     getIdValue: function() {
         return this.id;
@@ -166,7 +166,7 @@ var BipModel = {
     getEntityName: function() {
         return this.entityName
     },
-    
+
     getEntityIndex: function() {
         return this.entityIndex;
     },
@@ -191,7 +191,7 @@ var BipModel = {
                 this.propNamesAsArray.push(key);
             }
         }
-        
+
         return this.propNamesAsArray;
     },
 
@@ -223,38 +223,59 @@ var BipModel = {
 
     getClass: function() {
         return this;
+    },
+
+    getValidators : function(attr) {
+        var validators;
+        if (this.entitySchema[attr] && this.entitySchema[attr].validate) {
+            validators = this.entitySchema[attr].validate;
+        }
+        return validators;
     }
 }
 
 BipModel.validators = {
     'notempty' : function(val, next) {
-        next(undefined != val && val != '' && null != val);        
+        next(undefined != val && val != '' && null != val);
     },
     'len_64' : function(val, next) {
-        next(val.length <= 64);        
+        next(!val || val.length <= 64);
     },
     'len_32' : function(val, next) {
-        next(val.length <= 32);        
+        next(!val || val.length <= 32);
     },
     'max_32' : function(val, next) {
-        next(val.length <= 32);        
+        next(!val || val.length <= 32);
     },
     'max_64' : function(val, next) {
-        next(val.length <= 64);
+        next(!val || val.length <= 64);
     },
     'max_text' : function(val, next) {
-        next(val.length <= 1024);
+        next(!val || val.length <= 1024);
     },
     'bool_int' : function(val, next) {
         next(val == 0 || val == 1);
     },
+    'bool_any' : function(val, next) {
+        var bools = [
+            1,
+            0,
+            '1',
+            '0',
+            true,
+            false,
+            'true',
+            'false'
+        ];
+        next(-1 !== bools.indexOf(val));
+    },
     //
     'accountModelDomain' : function(val, next) {
-        var filter = { 
+        var filter = {
             id : this.domain_id,
             owner_id : this.owner_id
         };
-        
+
         this.getDao().find('domain', filter, function(err, result) {
             next(!err);
         });
@@ -262,8 +283,8 @@ BipModel.validators = {
     // validates email format and whether the domian looks to be valid
     'email' : function(val, next) {
         var validFormat = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i.test(val);
-        var domainTokens = tldtools.extract('mailto:' + val);       
-        next(validFormat && domainTokens.inspect.useful() );        
+        var domainTokens = tldtools.extract('mailto:' + val);
+        next(validFormat && domainTokens.inspect.useful() );
     }
 }
 

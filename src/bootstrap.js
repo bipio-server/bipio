@@ -1,6 +1,6 @@
 /**
  *
- * The Bipio API Server
+ * The Bipio API Server.  Application Bootstrap
  *
  * @author Michael Pearson <michael@cloudspark.com.au>
  * Copyright (c) 2010-2013 CloudSpark pty ltd http://www.cloudspark.com.au
@@ -20,44 +20,42 @@
  *
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
-/**
- *
- * Application and DAO bootstrap for standalone scripts
- *
- * michael@cloudspark.com.au
- *
- */
 
 // always look to local config
 process.env.NODE_CONFIG_DIR = __dirname + '/../config';
 
 // includes
-var app = {},
+var app = {
+        workerId : ':PID:' + process.pid
+    },
     util            = require('util'),
     winston         = require('winston'),
-    helper          = require('./lib/helper'),
+    helper          = require('./lib/helper'),    
     path            = require('path'),
     defs            = require('../config/defs'),
     envConfig       = require('config');
-    
+
 // globals
+GLOBAL.app = app;
 GLOBAL.CFG_CDN = envConfig.cdn;
 GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
-
-// export app everywhere
-GLOBAL.app = app;
+GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + envConfig.datadir;
 
 // attach general helpers to the app
 app.helper = helper;
 
 // logger
 app.logmessage = function(message, loglevel) {
+    message = (app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':' + message;
     if (winston) {
         winston.log(loglevel || 'info', message);
     } else {
         console.log(message);
+    }
+    if ('error' === loglevel) {
+        console.trace(message);
     }
 }
 
@@ -71,19 +69,9 @@ process.addListener('uncaughtException', function (err, stack) {
     }
 });
 
-var DaoMongo    = require('./managers/dao-mongo').DaoMongo,
-    Bastion    = require('./managers/bastion'),
+var dao = new require('./managers/dao'),
+    bastion = new require('./managers/bastion');
 
-    dao = new DaoMongo(envConfig.dbMongo.connect, app.logmessage, function(err, dao) {
-        if (err) {
-            console.log(err);
-            process.exit(0);
-        }
-    }),
-    bastion     = new Bastion(dao);
-
-// out of band messaging
-app.bastion = bastion;
-
-module.exports = dao;
 module.exports.app = app;
+module.exports.app.dao = new dao(CFG.dbMongo, app.logmessage);
+module.exports.app.bastion = new bastion(module.exports.app.dao);

@@ -28,54 +28,14 @@
  * michael@cloudspark.com.au
  *
  */
-// includes
-var app,
-    util            = require('util'),
+var bootstrap = require(__dirname + '/bootstrap'),
+    app = bootstrap.app,
     cluster         = require('cluster'),
     express         = require('express'),
-
-    winston         = require('winston'),
-    async           = require('async'),
-    mongoose        = require('mongoose'),
-    fs              = require('fs'),
     helper          = require('./lib/helper'),
-    path            = require('path'),
     passport        = require('passport'),
-    app             = express();
+    restapi         = express();
     connectUtils    = require('express/node_modules/connect/lib/utils');
-
-// variables
-var defs            = require('../config/defs'),
-    envConfig       = require('config'),
-    workerId;
-
-// globals
-GLOBAL.CFG_CDN = envConfig.cdn;
-GLOBAL.CFG = envConfig;
-GLOBAL.DEFS = defs;
-GLOBAL.SERVER_ROOT = path.resolve(__dirname + '/..');
-GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + envConfig.datadir;
-
-// attach general helpers to the app
-app.helper = helper;
-app.logmessage = function(message, loglevel) {
-    message = '#WORKER' + (workerId ? workerId : 'MASTER') + ': ' + message;
-    if (winston) {
-        winston.log(loglevel || 'info', message);
-    } else {
-        console.log(message);
-    }
-}
-
-// exception catchall
-process.addListener('uncaughtException', function (err, stack) {
-    var message = 'Caught exception: ' + err + '\n' + err.stack;
-    if (app && app.logmessage) {
-        app.logmessage(message);
-    } else {
-        console.log(message);
-    }
-});
 
 /**
  * express bodyparser looks broken or too strict.
@@ -110,15 +70,15 @@ function xmlBodyParser(req, res, next) {
 }
 
 // express preflight
-app.configure(function() {
-    app.use(xmlBodyParser);
-    app.use(express.bodyParser());
+restapi.configure(function() {
+    restapi.use(xmlBodyParser);
+    restapi.use(express.bodyParser());
 
     // respond with an error if body parser failed
-    app.use(function(err, req, res, next) {
+    restapi.use(function(err, req, res, next) {
         console.log(err);
         if (err.status == 400) {
-            app.logmessage(err, 'error');
+            restapi.logmessage(err, 'error');
             res.send(err.status, {
                 message : 'Invalid JSON. ' + err
             });
@@ -126,17 +86,17 @@ app.configure(function() {
             next(err, req, res, next);
         }
     });
-    app.use(express.methodOverride());
-    app.use(express.cookieParser());
+    restapi.use(express.methodOverride());
+    restapi.use(express.cookieParser());
 
     // required for some oauth provders
-    //app.use(express.session({
-//        secret: envConfig.server.sessionSecret
-//    }));
+    restapi.use(express.session({
+        secret: GLOBAL.CFG.server.sessionSecret
+    }));
 
-    app.use(passport.initialize());
-    app.use(passport.session());
-    app.use('jsonp callback', true );
+    restapi.use(passport.initialize());
+    restapi.use(passport.session());
+    restapi.use('jsonp callback', true );
 });
 
 // export app everywhere
@@ -144,7 +104,7 @@ module.exports.app = app;
 
 if (cluster.isMaster) {
     // when user hasn't explicitly configured a cluster size, use 1 process per cpu
-    var forks = envConfig.server.forks ? envConfig.server.forks : require('os').cpus().length;
+    var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
     app.logmessage('BIPIO:STARTED:' + new Date());
     app.logmessage('Node v' + process.versions.node);
     app.logmessage('Starting ' + forks + ' fork(s)');
@@ -164,10 +124,10 @@ if (cluster.isMaster) {
         }
     );
 
-    require('./router');
-
-    app.listen(envConfig.server.port, function() {
-        app.logmessage('Listening on :' + envConfig.server.port + ' in "' + app.settings.env + '" mode...');
-        return 0;
+    app.dao.on('ready', function(dao) {
+        require('./router').init(restapi, dao);
+        restapi.listen(GLOBAL.CFG.server.port, function() {
+            app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
+        });        
     });
 }

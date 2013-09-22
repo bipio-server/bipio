@@ -1,7 +1,6 @@
-TESTS = tests/*.js tests/managers/*.js
+#TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
+TESTS = tests/*.js tests/managers/*.js  tests/models/bip.js
 REPORTER = dot
-
-
 
 install:
 	npm install
@@ -14,8 +13,11 @@ install:
 clean:
 	rm ./config/*.json
 
+# node-inspector ::
+# --debug
+# --debug-brk
 test:
-	@NODE_ENV=test ./node_modules/.bin/mocha \
+	@NODE_ENV=testing ./node_modules/.bin/mocha \
 		--reporter $(REPORTER) \
 		--timeout 600 \
 		$(TESTS)

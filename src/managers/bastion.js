@@ -142,6 +142,8 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                                             }
                                             if (!err) {
                                                 if (exports) {
+                                                    self._dao.accumulate('bip', imports._bip, '_imp_actual');
+                                                    
                                                     // translate trigger exports
                                                     // into bip #source hub key.
                                                     var v = { 'source' : exports };

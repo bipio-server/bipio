@@ -25,7 +25,8 @@
  * AMQP Transport wrapper
  *
  */
-var amqp = require('amqp');
+var amqp = require('amqp'),
+    app = GLOBAL.app;
 
 function Rabbit(cfg, next) {
     var self = this;
@@ -85,15 +86,17 @@ function Rabbit(cfg, next) {
     });
 
     this.amqpConn.on('error', function(err) {
-        app.logmessage('RABBIT:' + err, 'error');
-        
-    })
+        app.logmessage('RABBIT:' + err, 'error');        
+    });
 
     this.amqpConn.connect();
 }
 
 Rabbit.prototype.produce = function(xName, route, payload, cb) {   
-    this.exchanges[xName].publish(route, JSON.stringify(payload), {}, cb);
+    // this.exchanges[xName].publish(route, JSON.stringify(payload), {}, cb);
+
+    // amqp has stopped giving us 'ack' now!?!?!??
+    this.exchanges[xName].publish(route, JSON.stringify(payload), {});    
 }
 
 Rabbit.prototype.producePublic = function(payload) {

@@ -38,7 +38,7 @@ AccountOption.uniqueKeys = ['owner_id'],
             type: String,
             index: true,
             renderable: false,
-            writable: false
+            writable: false            
         },
 
         bip_hub: {
@@ -86,7 +86,7 @@ AccountOption.uniqueKeys = ['owner_id'],
                     transforms;
 
                     // check channels + transforms make sense
-                    if (undefined != val.source) {
+                    if (val && undefined != val.source) {
 
                         // http can have dynamic exports, so inject them
                         if (this.type == 'http' && this.config.exports) {
@@ -122,6 +122,8 @@ AccountOption.uniqueKeys = ['owner_id'],
                                 break;
                             }
                         }
+                    } else {
+                        ok = true;
                     }
 
                     next(ok);
@@ -134,66 +136,91 @@ AccountOption.uniqueKeys = ['owner_id'],
             type: String,
             renderable: true,
             writable: true,
-            validate : [ {
-                validator : function(val, next) {                   
-                    next(this.getAccountInfo().user.domains.test(val));
+            validate : [ 
+                {
+                    validator : BipModel.validators.notempty,
+                    msg : "Cannot be empty"
                 },
-                msg : 'Domain Not Found'
-            }]
+                {
+                    validator : function(val, next) {                   
+                        next(this.getAccountInfo().user.domains.test(val));
+                    },
+                    msg : 'Domain Not Found'
+                }
+            ]
         },
         bip_end_life: {
             type: Object,
             renderable: true,
             writable: true,
+            "default" : {
+                imp : 0,
+                time : 0
+            },
             set : endLifeParse,
-            validate : [{
-                validator : function(val, next) {
-                    next(
-                        (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
-                        ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
-                        0 !== new Date(Date.parse(val.time)).getTime()
-                        );
+            validate : [
+                {
+                    validator : BipModel.validators.notempty,
+                    msg : "Cannot be empty"
                 },
-                msg : 'Bad Expiry Structure'
-            }]
+                {
+                    validator : function(val, next) {
+                        next(
+                            val && (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
+                            ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
+                            0 !== new Date(Date.parse(val.time)).getTime()
+                            );
+                    },
+                    msg : 'Bad Expiry Structure'
+                }
+            ]
         },
         bip_type: {
             type: String,
             renderable: true,
             writable: true,
+            "default" : "http",
             validate : [
-            {
-                validator : function(val, next) {
-                    next( /^(smtp|http|trigger)$/i.test(val) );
+                {
+                    validator : BipModel.validators.notempty,
+                    msg : "Cannot be empty"
                 },
-                msg : 'Expected "smtp", "http" or "trigger"'
-            }
+                {
+                    validator : function(val, next) {
+                        next( /^(smtp|http|trigger)$/i.test(val) );
+                    },
+                    msg : 'Expected "smtp", "http" or "trigger"'
+                }
             ]
         },
-        /*
-        bip_anonymize: {
-            type: Boolean,
-            renderable: true,
-            writable: true
-        },
-        */
         bip_expire_behaviour: {
             type: String,
             renderable: true,
             writable: true,
+            "default" : "pause",
             validate : [
-            {
-                validator : function(val, next) {
-                    next( /^(pause|delete)$/i.test(val) );
+                {
+                    validator : BipModel.validators.notempty,
+                    msg : "Cannot be empty"
                 },
-                msg : 'Expected pause" or "delete"'
-            }
+                {
+                    validator : function(val, next) {
+                        next( /^(pause|delete)$/i.test(val) );
+                    },
+                    msg : 'Expected pause" or "delete"'
+                }
             ]
         },
         timezone: {
             type: String,
             renderable: true,
-            writable: true
+            writable: true,
+            validate : [
+                {
+                    validator : BipModel.validators.notempty,
+                    msg : "Cannot be empty"
+                }
+            ]
         },
         avatar: {
             type: String,
