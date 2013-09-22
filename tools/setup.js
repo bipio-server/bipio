@@ -125,15 +125,16 @@ function aesSetup() {
  * Get default username
  */
 function userSetup() {
+    var defaultUsername =  ('testing' === appEnv) ? 'testing' : 'admin';
     var userInstall = {
         type : 'input',
         name : 'username',
-        message : 'API Username (HTTP Basic Auth Username, default "admin") :'
+        message : 'API Username (HTTP Basic Auth Username, default "' + defaultUsername + '") :'
     }
 
     inquirer.prompt(userInstall, function(answer) {
         if ('' === answer.username) {
-            answer.username = 'admin';
+            answer.username = defaultUsername;
         }
 
         credentials.username = answer.username.replace("\s_+", '');
@@ -226,7 +227,7 @@ function _createAuth(dao, accountInfo, next) {
     });
 }
 
-function _createDomain(dao, accountInfo, next) {
+function _createDomain(dao, accountInfo, next) {    
     // create auth
     var domain = dao.modelFactory(
         'domain',
@@ -242,6 +243,9 @@ function _createDomain(dao, accountInfo, next) {
             console.log(err);
             process.exit(0);
         } else {
+            // upgrade to vanity
+            dao.updateColumn('domain', { id : result.id}, { type : 'vanity'});
+            
             // pseudo accountInfo structure
             accountInfo.user.domains = {
                 test : function() {
@@ -287,7 +291,7 @@ function _createOptions(dao, domainId, accountInfo, next) {
  * default domain name :optional port
  */
 function auxServers() {
-    var valDefault = sparseConfig.dbMongo.connect;
+    var valDefault = sparseConfig.dbMongo.connect + (('testing' === appEnv) ? '_testing' : '');   
     var serverSetupMongo = {
         type : 'input',
         name : 'mongoConnectString',

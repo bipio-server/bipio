@@ -1,5 +1,4 @@
-#TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
-TESTS = tests/*.js tests/managers/*.js  tests/models/bip.js
+TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
 REPORTER = dot
 
 install:
@@ -9,6 +8,9 @@ install:
 	mkdir -p data/cdn/img/icofactory
 	mkdir -p data/cdn/img/pods	
 	./tools/setup.js
+
+test-install:
+	@NODE_ENV=testing ./tools/setup.js
 
 clean:
 	rm ./config/*.json
