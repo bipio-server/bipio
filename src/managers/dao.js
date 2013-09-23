@@ -35,7 +35,7 @@ function Dao(config, log, next) {
 
     // protocol + base url
     this._baseUrl = CFG.proto_public + CFG.domain_public;
-    this.cdn = cdn; 
+    this.cdn = cdn;
     this._modelPrototype = require('../models/prototype.js').BipModel;
 
     var modelSrc = {
@@ -62,7 +62,7 @@ function Dao(config, log, next) {
     for (var key in modelSrc) {
         this.registerModel(modelSrc[key]);
     }
-    
+
 }
 
 util.inherits(Dao, DaoMongo);
@@ -100,6 +100,122 @@ AccountInfo.prototype = {
     }
 };
 
+Dao.prototype.getAccountStruct = function(authModel, next) {
+    var self = this,
+        resultModel = { // session usable abstract model of the account
+            id : authModel.owner_id,
+            name : authModel.name,
+            username : authModel.username,
+            is_admin: authModel.is_admin,
+            settings: {
+                api_token: null
+            }
+        };
+
+    // finally, try to pull out the users auth token and account options
+    step(
+        function loadAcctInfo() {
+            self.find(
+                'account_auth',
+                {
+                    'owner_id' : authModel.owner_id,
+                    'type' : 'token'
+                },
+                this.parallel()
+            );
+
+            self.find(
+            'account_option',
+            {
+                'owner_id' : authModel.owner_id
+            },
+            this.parallel());
+
+            // get domains (for bip/channel representations
+            self.findFilter(
+            'domain',
+            {
+                'owner_id' : authModel.owner_id
+            },
+            this.parallel());
+
+            // get channels (for id lookups)
+            self.findFilter(
+            'channel',
+            {
+                'owner_id' : authModel.owner_id
+            },
+            this.parallel());
+        },
+        function collateResults(err, auth, options, domains, channels) {
+          
+            if (err || null == auth || null == options) {
+                err = true;
+                resultModel = null;
+            } else {
+
+                var domainModels = {
+                    domains : {},
+                    set: function(model) {
+                        this.domains[model.id] = model;
+                    },
+                    get: function( id ) {
+                        return this.domains[id];
+                    },
+                    test: function(id) {
+                        return (undefined != this.domains[id]);
+                    }
+                };
+
+                for (idx in domains ) {
+                    domainModels.set(self.modelFactory('domain', domains[idx]));
+                    // set default domain.  system allocated 'vanity' domains
+                    // will respond to RPC calls etc.
+                    if (domains[idx].type == 'vanity') {
+                        resultModel.defaultDomainId = domains[idx].id;
+                    }
+                }
+
+                if (undefined === resultModel.defaultDomainId) {
+                    resultModel.defaultDomainId = "";
+                }
+
+                // there may be quite a few channels, but this
+                // still seems a little cheaper
+                var channelModels = {
+                    channels : {},
+                    set: function(model) {
+                        this.channels[model.id] = model;
+                    },
+                    get: function( id ) {
+                        return this.channels[id];
+                    },
+                    test: function(id) {
+                        return (undefined != this.channels[id]);
+                    }
+
+                };
+
+                for (idx in channels ) {
+                    channelModels.set(self.modelFactory('channel', channels[idx]));
+                }
+
+                resultModel.domains = domainModels;
+                resultModel.channels = channelModels;
+                resultModel.settings = options;
+
+                var model = self.modelFactory('account_auth', auth);
+                resultModel.settings.api_token = model.getPassword();
+                resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(authModel.username + ':' + model.getPassword()).toString('base64'));
+            }
+
+            var accountInfo = new AccountInfo(resultModel);
+            
+            next(err, accountInfo);
+        }
+    );
+}
+
 /**
  *
  */
@@ -128,138 +244,27 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
                     var resultModel = null;
                     if (!isErr && null != result) {
                         var authModel = self.modelFactory('account_auth', result);
-
                         if (asOwnerId || authModel.cmpPassword(password)) {
+
                             authModel.username = username;
-                            isErr = false;
-                            // session usable abstract model of the account
-                            resultModel = {
-                                id : acctResult.id,
-                                name : acctResult.name,
-                                username : username,
-                                is_admin: acctResult.is_admin,
-                                settings: {
-                                    api_token: null
+                            authModel.name = acctResult.name;
+                            authModel.is_admin = acctResult.is_admin;
+                            
+                            self.getAccountStruct(authModel, function(err, accountInfo) {                                
+                                if (undefined == activeDomainId) {
+                                    accountInfo.activeDomainId = accountInfo.defaultDomainId;
+                                } else {
+                                    accountInfo.activeDomainId = activeDomainId;
                                 }
-                            }
-
-                            // finally, try to pull out the users auth token and account options
-                            step(
-                                function loadAcctInfo() {
-                                    self.find(
-                                        'account_auth',
-                                        {
-                                            'owner_id' : acctResult.id,
-                                            'type' : 'token'
-                                        },
-                                        this.parallel()
-                                    );
-
-                                    self.find(
-                                    'account_option',
-                                    {
-                                        'owner_id' : acctResult.id
-                                    },
-                                    this.parallel());
-
-                                    // get domains (for bip/channel representations
-                                    self.findFilter(
-                                    'domain',
-                                    {
-                                        'owner_id' : acctResult.id
-                                    },
-                                    this.parallel());
-
-                                    // get channels (for id lookups)
-                                    self.findFilter(
-                                    'channel',
-                                    {
-                                        'owner_id' : acctResult.id
-                                    },
-                                    this.parallel());
-                                },
-                                function collateResults(err, auth, options, domains, channels) {
-                                    if (null == auth || null == options) {
-                                        err = true;
-                                        resultModel = null;
-                                    } else {
-
-                                        var domainModels = {
-                                            domains : {},
-                                            set: function(model) {
-                                                this.domains[model.id] = model;
-                                            },
-                                            get: function( id ) {
-                                                return this.domains[id];
-                                            },
-                                            test: function(id) {
-                                                return (undefined != this.domains[id]);
-                                            }
-                                        };
-
-                                        for (idx in domains ) {
-                                            domainModels.set(self.modelFactory('domain', domains[idx]));
-                                            // set default domain.  system allocated 'vanity' domains
-                                            // will respond to RPC calls etc.
-                                            if (domains[idx].type == 'vanity') {
-                                                resultModel.defaultDomainId = domains[idx].id;
-                                            }
-                                        }
-
-                                        if (undefined === resultModel.defaultDomainId) {
-                                            resultModel.defaultDomainId = "";
-                                        }
-
-                                        // attach authenticating domain context
-                                        if (undefined == activeDomainId) {
-                                            resultModel.activeDomainId = resultModel.defaultDomainId;
-                                        } else {
-                                            resultModel.activeDomainId = activeDomainId;
-                                        }
-
-                                        // there may be quite a few channels, but this
-                                        // still seems a little cheaper
-                                        var channelModels = {
-                                            channels : {},
-                                            set: function(model) {
-                                                this.channels[model.id] = model;
-                                            },
-                                            get: function( id ) {
-                                                return this.channels[id];
-                                            },
-                                            test: function(id) {
-                                                return (undefined != this.channels[id]);
-                                            }
-
-                                        };
-
-                                        for (idx in channels ) {
-                                            channelModels.set(self.modelFactory('channel', channels[idx]));
-                                        }
-
-                                        resultModel.domains = domainModels;
-                                        resultModel.channels = channelModels;
-                                        resultModel.settings = options;
-
-                                        var model = self.modelFactory('account_auth', auth);
-                                        resultModel.settings.api_token = model.getPassword();
-                                        resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(username + ':' + model.getPassword()).toString('base64'));
-                                    }
-
-                                    var accountInfo = new AccountInfo(resultModel);
-                                    cb(err, accountInfo);
-                                }
-                            );
+                                cb(false, accountInfo);                                
+                            });
                         } else {
-                            result = null;
+                            cb(true, resultModel);
                         }
-                    }
-
-                    if (null == resultModel || null == result) {
+                    } else {
                         cb(true, resultModel);
                     }
                 });
-                //            }
             } else {
                 cb(true, null);
             }
@@ -345,11 +350,11 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
         pause = true;
     }
 
-    var model = this.modelFactory('bip', props);    
+    var model = this.modelFactory('bip', props);
     this.update(
-        'bip', 
-        model.getIdValue(), 
-        {        
+        'bip',
+        model.getIdValue(),
+        {
             'paused' : pause
         },
         function(err) {
@@ -367,8 +372,8 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
                     jobPacket.code = 'bip_paused_manual';
                 }
 
-                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);            
-            }            
+                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+            }
         }
     );
 };
@@ -494,7 +499,7 @@ Dao.prototype.shareBip = function(bip, cb) {
         owner_id : bip.owner_id,
         owner_name : bip.accountInfo.user.name
     };
-    
+
 
     bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
 
@@ -538,13 +543,13 @@ Dao.prototype.unshareBip = function(id, accountInfo, cb) {
         var filter = {
             'owner_id' : accountInfo.user.id,
             'id' : id
-        };        
+        };
         self.findFilter('bip_share', filter, function(err, result) {
             if (err || !result) {
                 cb(self.errorParse(err), null, null, self.errorMap(err) );
             } else {
                 (function(shareModel, cb) {
-                    self.removeFilter('bip_share', { id : shareModel.id }, function(err) {                       
+                    self.removeFilter('bip_share', { id : shareModel.id }, function(err) {
                         if (!err) {
                             var jobPacket = {
                                 owner_id : shareModel.owner_id,
@@ -555,11 +560,11 @@ Dao.prototype.unshareBip = function(id, accountInfo, cb) {
                             app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
                             cb(false, undefined, 'OK', 200);
                         } else {
-                            cb(self.errorParse(err), 'bip_share', {}, self.errorMap(err));    
+                            cb(self.errorParse(err), 'bip_share', {}, self.errorMap(err));
                         }
                     });
                 })(result[0], cb);
-            }            
+            }
         });
     })(id, accountInfo, cb);
 }
@@ -586,7 +591,6 @@ Dao.prototype.getTransformHint = function(accountInfo, from, to, next) {
             next(err, null);
         } else {
             if (results) {
-                console.log(results);
                 results.sort(function(a, b) {
                     if (a.owner_id > b.owner_id) {
                         return 1;
@@ -716,14 +720,14 @@ Dao.prototype.triggerAll = function(cb) {
     };
 
     this.findFilter('bip', filter, function(err, results) {
-        if (!err && results) {            
+        if (!err && results) {
             numResults = results.length;
             numProcessed = 0;
             // @todo this is some ghetto shit. Hope we can get these triggers off fast enough.
             for (var i = 0; i < numResults; i++) {
                 // fire off a bip trigger job to rabbit
                 app.logmessage('DAO:Trigger:' + results[i].id);
-                (function(trigger, numResults, numProcessed, next) {                    
+                (function(trigger, numResults, numProcessed, next) {
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger);
                     numProcessed++;
                     app.logmessage('DAO:Trigger:' + trigger.id);
@@ -733,9 +737,9 @@ Dao.prototype.triggerAll = function(cb) {
                             next(false, 'DAO:Trigger:' + numProcessed + ' Triggers Fired');
                         }, 100);
                     }
-                    
+
                     /*
-                    app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger, function() {                   
+                    app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger, function() {
                         numProcessed++;
                         app.logmessage('DAO:Trigger:' + trigger.id + ':Complete');
                         if (numProcessed == numResults) {
@@ -743,7 +747,7 @@ Dao.prototype.triggerAll = function(cb) {
                         }
                     });
                     */
-                })(results[i], numResults, numProcessed, cb);                
+                })(results[i], numResults, numProcessed, cb);
             }
         } else {
             cb(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
@@ -763,7 +767,7 @@ Dao.prototype.expireBip = function(bip, prefs, next) {
             paused : true
         }, function(err) {
             if (err) {
-                self._log(err, 'error');                
+                self._log(err, 'error');
             } else {
                 self._log(bip.id + ' paused');
             }
@@ -828,8 +832,8 @@ Dao.prototype.expireAll = function(next) {
                         {
                             'end_life.imp' : {
                                 '$gt' : 0
-                            }   
-                        }                        
+                            }
+                        }
                     ]
                 },
                 function(err, results) {
@@ -838,7 +842,7 @@ Dao.prototype.expireAll = function(next) {
                         numResults = results.length;
                         for (var i = 0; i < numResults; i++) {
                             self.expireBip(
-                                results[i], 
+                                results[i],
                                 ownerPref[results[i].owner_id],
                                 next
                             );
@@ -848,51 +852,6 @@ Dao.prototype.expireAll = function(next) {
                     }
                 }
             );
-            
-            /*
-            self.mongooseFactory('bip').find({
-                paused : false
-            } ).
-                where('end_life.time').
-                gt(0).
-                lt(nowTime).
-                exec(function(err, results) {
-                
-                
-                var numResults, result, pref, offsetSeconds;
-                if (!err && results) {
-                    numResults = results.length;
-                    for (var i = 0; i < numResults; i++) {
-                        result = results[i];
-                        pref = ownerPref[result.owner_id];
-                        if ('pause' === pref['mode']) {
-                            console.log(result.id + ' pausing');
-                            self.updateColumn('bip', result.id, {
-                                paused : true
-                            }, function(err) {
-                                if (err) {
-                                    console.log('ERROR');
-                                    cb(true, result);
-                                } else {
-                                    console.log(result.id + ' paused');
-                                }
-                            });
-                            // self.updateColumn = function(modelName, id, props, next) {
-                        } else if ('delete' === pref['mode']) {
-                            console.log(result.id + ' deleting');
-                            result.remove(function(err, result) {
-                                if (err) {
-                                    cb(true, result);
-                                } else {
-                                    console.log(result.id + ' deleted');
-                                }
-                            });
-                        }
-                    }
-                }
-                cb(false, '');
-            });
-                */
         } else {
             cb(false, '');
         }
@@ -924,7 +883,7 @@ DaoMongo.prototype.listChannelActions = function(type, accountInfo, callback) {
         },
         owner_id : owner_id
     };
-    
+
     this.find('channel', filter, function (err, results) {
         var model;
         if (err) {

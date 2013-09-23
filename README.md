@@ -44,14 +44,6 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
   - [Haraka](https://github.com/baudehlo/Haraka)
 
-Architecture
--
- The API server listens on (default) tcp:5000 where it runs a RESTful server.  Your
-username, when appended to the server hostname, becomes the entry point through which public bips attached
-to your account can be triggered and/or channels with data sources can be dynamically rendered.
-
-(**Please bare with me while the Architecture section is clarified)
-
 ## Installation
 
     npm install bipio

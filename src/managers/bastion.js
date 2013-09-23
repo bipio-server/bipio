@@ -228,6 +228,23 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 }
 
 /**
+ * Bips fired via a name/domain/type (http or smtp for example)
+ */
+Bastion.prototype.domainBipUnpack = function(name, domain, container, type, cb, cbParameterMap) {
+    var self = this, filter, pause = false;
+    // find user id by incoming domain
+    this._dao.find('domain', {
+        'name' : domain
+    }, function(err, result) {
+        if (err || !result) {
+            cb(cbParameterMap.fail, err);
+        } else {
+            self.bipUnpack(type, name, result.owner_id, result.id, container, cb, cbParameterMap);
+        }
+    });
+}
+
+/**
  * tries to retrieve a bip by name + domain and determines if active.
  *
  * If the bip has expired by time/impressions, then applies account level

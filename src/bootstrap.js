@@ -54,7 +54,8 @@ app.logmessage = function(message, loglevel) {
     } else {
         console.log(message);
     }
-    if ('error' === loglevel) {
+
+    if ('error' === loglevel && 'development' ===  process.env.NODE_ENV) {
         console.trace(message);
     }
 }
