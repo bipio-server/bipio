@@ -244,7 +244,7 @@ function _createDomain(dao, accountInfo, next) {
             process.exit(0);
         } else {
             // upgrade to vanity
-            dao.updateColumn('domain', { id : result.id}, { type : 'vanity'});
+            //dao.updateColumn('domain', { id : result.id}, { type : 'vanity'});
             
             // pseudo accountInfo structure
             accountInfo.user.domains = {
