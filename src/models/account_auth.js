@@ -20,11 +20,6 @@
  *
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
-// // Never expose this as a RESTful model.
-// never ever ever ever.
-// never ever ever ever ever.
-//
-// never.
 var bcrypt      = require('bcrypt'),
     crypto = require('crypto'),
     BipModel = require('./prototype.js').BipModel;
@@ -51,11 +46,10 @@ function AESCrypt(value) {
         crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64');
 
     cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64');
-    /* @todo encrypted objects not equating correctly
+    /*
     if (value !== AESDecrypt(cryptEncoded, true)) {        
         throw new Error('Cipher Failure');
-    }
-    */
+    }*/
 
     return cryptEncoded;
 }
@@ -82,12 +76,7 @@ function AESDecrypt(cryptedStr, autoPadding) {
 function pwHash(pwValue) {
     var crypted;
     // tokens use AES
-    if (this.type == 'token' || this.type == 'oauth') {
-        /*
-        var cipher = crypto.createCipher('aes-256-cbc', CFG.cSalt);
-        crypted = cipher.update(pwValue, 'utf8', 'hex');
-        crypted += cipher.final('hex');
-        */
+    if (this.type !== 'login_primary') {
         crypted = AESCrypt(pwValue);
     // or seeded crypt
     } else {
@@ -141,18 +130,24 @@ AccountAuth.entitySchema = {
     },    
     password: {
         type: String,
-        renderable: true,
+        renderable: false,
         writable: false,
         set : cryptSave
     },
     username: {
         type: String,
-        renderable: true,
-        writable: false
+        renderable: false,
+        writable: false,
+        set : cryptSave
     },
     owner_id : {
         type: String,
         index: true,
+        renderable: true,
+        writable: false
+    },
+    auth_provider: {
+        type: String,
         renderable: true,
         writable: false
     },
@@ -174,20 +169,6 @@ AccountAuth.entitySchema = {
         set : cryptSaveObj
     }
 };
-
-// @todo crypt this!!!
-/*
-AccountAuth.entitySetters = {
-    password : cryptSave
-}
-*/
-/*    
-    oauth_refresh : AESCrypt,
-    oauth_profile : AESCrypt,
-    oauth_profile : function(profile) {
-        return JSON.stringify(profile);
-    }*/
-
 
 AccountAuth.hash = function(value) {
     return pwHash(value);
@@ -230,18 +211,5 @@ AccountAuth.getOAuthRefresh = function() {
 AccountAuth.getOauthProfile = function() {
     return JSON.parse(AESDecrypt(this.oauth_profile, true));
 }
-
-AccountAuth.preSave = function(sysInfo) {
-    // never allow non oauth saves
-    /*
-    console.log(this);
-    if (this.type != 'oauth') {
-        console.log('crit: AccountAuth [' + this.id + '] Attempted Save');
-        console.log(sysInfo);
-        throw DEFS.ERR_CONSTRAINT;
-    }
-    */
-}
-
 
 module.exports.AccountAuth = AccountAuth;

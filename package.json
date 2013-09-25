@@ -43,7 +43,7 @@
         "temp"          : ">=0.5.0",
         "passport"      : ">=0.1.15",
         "inquirer"  : ">=0.2.4",
-        "q" : ">=0.9.7",
+        "underscore" : ">=1.5.2",
         "bip-pod"   : ">=0.0.1"
     },
     "devDependencies": {

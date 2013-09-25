@@ -29,6 +29,7 @@ var app = {
         workerId : ':PID:' + process.pid
     },
     util            = require('util'),
+    underscore      = require('underscore'),
     winston         = require('winston'),
     helper          = require('./lib/helper'),    
     path            = require('path'),
@@ -45,11 +46,17 @@ GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + envConfig.datadir;
 
 // attach general helpers to the app
 app.helper = helper;
+app._ = underscore;
 
 // logger
 app.logmessage = function(message, loglevel) {
-    message = (app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':' + message;
-    if (winston) {
+    var obj = helper.isObject(message);
+    if (!obj) {
+        message = (app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':' + message;
+    } else {
+        app.logmessage((app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':OBJECT', loglevel);
+    }
+    if (!obj && winston) {
         winston.log(loglevel || 'info', message);
     } else {
         console.log(message);
@@ -72,7 +79,6 @@ process.addListener('uncaughtException', function (err, stack) {
 
 var dao = new require('./managers/dao'),
     bastion = new require('./managers/bastion');
-
 module.exports.app = app;
 module.exports.app.dao = new dao(CFG.dbMongo, app.logmessage);
-module.exports.app.bastion = new bastion(module.exports.app.dao);
+module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLESS);

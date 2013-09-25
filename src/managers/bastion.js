@@ -275,7 +275,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
         filter.domain_id = domainId;
     }
 
-    (function(accountInfo, client, filter) {
+    (function(accountInfo, client, filter, next) {
         self._dao.findFilter('bip',
             filter,
             function(err, bipResults) {
@@ -284,7 +284,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
                     numResults = bipResults.length;
 
                 if (err || numResults == 0) {
-                    cb(cbParameterMap.fail, err);
+                    next(cbParameterMap.fail, err);
                 } else {
                     for (var i = 0; i < numResults; i++) {
                         bipResult = bipResults[i];
@@ -295,9 +295,9 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
 
                             if (!firstBinder) {
                                 if (
-                                    !helper.inArray(bipResult.binder, client.remote_ip) &&
-                                    !(client.remote_sender && helper.inArray(bipResult.binder, client.remote_sender)) ) {
-                                    cb(cbParameterMap.fail, "Not Authorized");
+                                    !helper.inArray(bipResult.binder, client.host) &&
+                                    !(client.reply_to && helper.inArray(bipResult.binder, client.reply_to)) ) {
+                                    next(cbParameterMap.fail, "Not Authorized");
                                     return;
                                 }
                             }
@@ -335,7 +335,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
                             }
                         } else {
                             // add bip metadata to the container
-                            cb(
+                            next(
                                 cbParameterMap.success,
                                 {
                                     'status' : 'OK'
@@ -357,9 +357,9 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
                             if (firstBinder) {
                                 var bindTo;
                                 if (bipResult.type == 'smtp') {
-                                    bindTo = client.remote_sender;
+                                    bindTo = client.reply_to;
                                 } else {
-                                    bindTo = client.remote_ip;
+                                    bindTo = client.host;
                                 }
 
                                 // just incase
@@ -375,7 +375,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
                     }
                 }
             });
-    })(accountInfo, client, filter);   
+    })(accountInfo, client, filter, cb);   
 }
 
 /**
@@ -387,7 +387,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
  * @todo _bip and _client should be read-only objects
  * 
  */
-Bastion.prototype.bipFire = function(bip, content_type, client, content_parts, files) {
+Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files) {
     if (files) {
         content_parts._files = files;
     }
@@ -400,7 +400,7 @@ Bastion.prototype.bipFire = function(bip, content_type, client, content_parts, f
     app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : bip.owner_id, type : 'delivered_bip_inbound' } );
 
     // distribute the undirected graph out to channel workers
-    return this.channelDistribute(bip, 'source', client.content_type, client.encoding, exports, client, content_parts);
+    return this.channelDistribute(bip, 'source', client.content_type, client.encoding, app._.clone(exports), client, content_parts);
 
 }
 
@@ -410,11 +410,12 @@ Bastion.prototype.bipFire = function(bip, content_type, client, content_parts, f
  */
 Bastion.prototype.channelDistribute = function(bip, channel_id, content_type, encoding, imports, client, content_parts) {
     var numEdges = (bip.hub[channel_id]) ? bip.hub[channel_id].edges.length : 0, channelInvokePacket;
-    
     // create a new channel_id imports reference.  We dont' check if the channel
     // already exists in imports, because loops are not yet allowed.
     //imports[channel_id == 'source' ? '_source' : channel_id] = app.helper.copyProperties(imports.local, {} );
-    imports[channel_id] = app.helper.copyProperties(imports.local, {} );
+    if (!imports[channel_id]) {
+        imports[channel_id] = app.helper.copyProperties(imports.local, {} );
+    }
     
     for (var i = 0; i < numEdges; i++) {
         channelInvokePacket = {
@@ -429,7 +430,7 @@ Bastion.prototype.channelDistribute = function(bip, channel_id, content_type, en
         }
 
         app.logmessage('BASTION:FWD:TX:' + client.id + ':CID:' + channel_id);
-
+//console.log(channelInvokePacket);
         // send to rabbit
         //this._queue.producePublic(msgpack.pack(channelInvokePacket));
         this._queue.producePublic(channelInvokePacket);

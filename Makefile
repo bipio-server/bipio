@@ -1,4 +1,5 @@
-TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
+# TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
+TESTS = tests/*.js tests/managers/*.js
 REPORTER = dot
 
 install:

@@ -246,7 +246,7 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
                         var authModel = self.modelFactory('account_auth', result);
                         if (asOwnerId || authModel.cmpPassword(password)) {
 
-                            authModel.username = username;
+                            authModel.username = acctResult.username;
                             authModel.name = acctResult.name;
                             authModel.is_admin = acctResult.is_admin;
                             

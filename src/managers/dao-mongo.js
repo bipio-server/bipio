@@ -527,10 +527,9 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         nowTime = helper.nowUTCSeconds();
 
     // create model container
-    model = this.modelFactory(modelName, props, accountInfo);
+    model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
     if (model) {
-        model.id = id;
-        
+        model.id = id;        
         var mongoModel = this.toMongoModel(model);
         mongoModel.validate(function(err) {
             if (err) {
@@ -552,12 +551,17 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
                         self.errorMap(err)
                     );
             } else {
-                self._update(modelName, self.getObjectIdFilter(model, accountInfo), helper.pasteurize(props), accountInfo, next);
+                // create a model and then cast it back to plain'ol/JSON
+                // so that setter middleware is applied :|
+                var cleanModel = mongoModel.toJSON();
+                delete cleanModel._id;
+                self._update(modelName, self.getObjectIdFilter(mongoModel, accountInfo),cleanModel, accountInfo, next);
             }
         });
 
     } else {
-        this._log('Error: update(): cannot save item', 'error');
+        this._log('Invalid model', 'error');
+        this._log(model, 'error');
         if (next) {
             next(true, null, null, 500);
         }
