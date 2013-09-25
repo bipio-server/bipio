@@ -60,6 +60,8 @@ Domain.entitySchema = {
         validate : [
         {
             validator : function(val, next) {
+                next(true);
+                return;
                 var ok = /[\w\d]+\.[a-zA-Z]{2,}$/.test(val);
                 if (ok) {
                     var isLocal = Domain.isLocal(val);
