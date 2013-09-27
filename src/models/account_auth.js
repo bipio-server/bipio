@@ -200,6 +200,10 @@ AccountAuth.getPassword = function() {
     }
 };
 
+AccountAuth.getUsername = function() {
+    return AESDecrypt(this.username, true);
+};
+
 AccountAuth.getOAuthRefresh = function() {
     if (this.oauth_refresh) {
         return AESDecrypt(this.oauth_refresh, true);

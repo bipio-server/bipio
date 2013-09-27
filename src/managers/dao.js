@@ -252,9 +252,9 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
                             
                             self.getAccountStruct(authModel, function(err, accountInfo) {                                
                                 if (undefined == activeDomainId) {
-                                    accountInfo.activeDomainId = accountInfo.defaultDomainId;
+                                    accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
                                 } else {
-                                    accountInfo.activeDomainId = activeDomainId;
+                                    accountInfo.user.activeDomainId = activeDomainId;
                                 }
                                 cb(false, accountInfo);                                
                             });

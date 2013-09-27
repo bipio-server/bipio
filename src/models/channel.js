@@ -116,12 +116,12 @@ Channel.entitySchema = {
         required : true,
         writable: true,
         "default" : {},
-        validate : [        
+        validate : [
         {
             validator : function(val, next) {
                 next(true);
                 return;
-                
+
                 var ok = false;
                 if (validAction(this.action)) {
                     // validate the config for this action
@@ -178,7 +178,7 @@ function validAction(value) {
 // Pod Binder
 Channel.staticChildInit = function() {
     // initialize each channel pod
-    for (var idx in pods) {   
+    for (var idx in pods) {
         pods[idx].init(this.getDao(), CFG.pods[idx] );
     }
 
@@ -288,7 +288,7 @@ console.log('---');
     // invoke method
     client.owner_id = this.owner_id;
     if (pods[podName].isOAuth()) {
-        pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {            
+        pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
             if (!err && oAuthToken) {
                 var sysImports = {
                     client : client,
@@ -300,10 +300,26 @@ console.log('---');
                         }
                     }
                 };
-                //client._oauth_token = oAuthToken;
-                //client._oauth_token_secret = tokenSecret;
-                //client._oauth_profile = authProfile;
                 pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
+            } else {
+                next(err);
+            }
+        });
+    } else if ('issuer_token' === pods[podName]._authType) {
+        pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password) {
+            if (!err && username && password) {
+                var sysImports = {
+                    client : client,
+                    auth : {
+                        issuer_token : {
+                            username : username,
+                            password : password
+                        }
+                    }
+                };
+                pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
+            } else {
+                next(err);
             }
         });
     } else {
@@ -313,13 +329,13 @@ console.log('---');
 Channel.rpc = function(renderer, query, client, req, res) {
     var self = this,
         podTokens = this.getPodTokens();
-        
+
     if (pods[podTokens.name].isOAuth()) {
         (function(podName, action, renderer, query, client, req, res) {
-            pods[podName].oAuthGetToken(self.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {            
+            pods[podName].oAuthGetToken(self.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
                 var podTokens = self.getPodTokens();
 
-                if (!err && oAuthToken) {                 
+                if (!err && oAuthToken) {
                     var sysImports = {
                         client : client,
                         auth : {
@@ -338,7 +354,7 @@ Channel.rpc = function(renderer, query, client, req, res) {
                         query,
                         self,
                         req,
-                        res                   
+                        res
                     );
 
                 } else if (err) {
@@ -434,7 +450,7 @@ Channel.postSave = function(accountInfo, next, isNew) {
     if (pods[podName].isOAuth()) {
         // attach the users credentials for any potential oAuth based channel setup
         (function(channel, podName, action, accountInfo, next) {
-            pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {            
+            pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
                 if (!err && oAuthToken) {
                     var auth = {
                         oauth : {
@@ -450,9 +466,9 @@ Channel.postSave = function(accountInfo, next, isNew) {
     } else {
         pods[podName].setup(action, this, accountInfo, next);
     }
-    
-    
-    if (isNew) {   
+
+
+    if (isNew) {
         GLOBAL.app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'channels_total' } );
     }
 }
@@ -505,7 +521,7 @@ Channel.getPods = function(name) {
         return pods[name];
     } else {
         return pods;
-    }   
+    }
 }
 
 // We try to inject defaults into channel configs to avoid patching documents

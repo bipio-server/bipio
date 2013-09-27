@@ -119,7 +119,6 @@ function restAuthWrapper(req, res, cb) {
 var restResponse = function(res) {
     return function(error, modelName, results, code, options) {
         var contentType = DEFS.CONTENTTYPE_JSON;
-
         if (options) {
             if (options.content_type) {
                 contentType = options.content_type;
@@ -402,7 +401,6 @@ function bipAuthWrapper(req, res, cb) {
                         'owner_id' : ownerId,
                         'domain_id' : domainId
                     };
-
                 dao.find('bip', filter, function(err, result) {
                     var username,password;
                     if (!err && result) {
@@ -474,7 +472,7 @@ module.exports = {
             }
 
             (function(req, res, bipName, domain, client, files) {
-                bastion.bipUnpack(
+                GLOBAL.app.bastion.bipUnpack(
                     'http', 
                     bipName, 
                     req.remoteUser, 
@@ -522,7 +520,7 @@ module.exports = {
                                 restReponse = false;
                             }
 
-                            bastion.bipFire(bip, exports, client, contentParts, files);
+                            GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);
                         }
 
                         if (restReponse) {

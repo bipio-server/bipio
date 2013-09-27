@@ -69,6 +69,12 @@ function xmlBodyParser(req, res, next) {
     });
 }
 
+function errorHandler(err, req, res, next) {
+    console.log('here');
+  res.status(500);
+  res.render('error', { error: err });
+}
+
 // express preflight
 restapi.configure(function() {
     restapi.use(xmlBodyParser);
@@ -97,6 +103,8 @@ restapi.configure(function() {
     restapi.use(passport.initialize());
     restapi.use(passport.session());
     restapi.use('jsonp callback', true );
+        //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
+    restapi.use(errorHandler);
 });
 
 // export app everywhere
