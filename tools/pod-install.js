@@ -28,7 +28,8 @@
 var program = require('commander'),
     fs = require('fs'),
     os = require('os'),
-    helper = require('../src/lib/helper');
+    helper = require('../src/lib/helper'),
+    bootstrap = require(__dirname + '/../src/bootstrap');
 
 program
     .version('0.0.1')
@@ -110,56 +111,48 @@ if (pod && pod._name) {
         if (program.upgrade) {
             if (mode !== 'remove') {
                 console.log('Upgrading Cluster on ' + os.hostname());
-                var dao = require(__dirname + '/../src/bootstrap'),
-                    Bastion = require(process.cwd() + '/src/managers/bastion');
-                    app = dao.app,
-                    podContext = dao.pod(pod._name);
+                var podContext = bootstrap.app.dao.pod(pod._name);
 
                 module.exports.app = app;
 
+                bootstrap.app.bastion.on('readyQueue', function(readyQueue) {
+                    if (readyQueue == 'queue_jobs') {
+                        app.logmessage('Queue is up [queue_jobs]');
 
-                var bastion = new Bastion(
-                    dao,
-                    false,
-                    function(readyQueue) {
-                        if (readyQueue == 'queue_jobs') {
-                            app.logmessage('Queue is up [queue_jobs]');
-                            app.bastion = bastion;
+                        // get all users
+                        bootstrap.app.dao.findFilter('account', {}, function(err, accounts) {
+                            if (err) {
+                                console.log(err);
+                                process.exit(0);
+                            } else {
+                                if (accounts.length > 0) {
+                                    for (var j = 0; j < accounts.length; j++) {
+                                        account = accounts[j];
+                                        // install singletons
+                                        podContext.autoInstall(account, function(err, result) {
+                                            if (err) {
+                                                app.logmessage(result, 'error');
+                                            } else {
+                                                console.log('installed ' + result + ' into ' + result.owner_id);
+                                            }
 
+                                            if (j >= accounts.length - 1) {
+                                                process.exit(0);
+                                            }  
+                                        });
 
-                            // get all users
-                            dao.findFilter('account', {}, function(err, accounts) {
-                                if (err) {
-                                    console.log(err);
-                                    process.exit(0);
-                                } else {
-                                    if (accounts.length > 0) {
-
-                                        for (var j = 0; j < accounts.length; j++) {
-                                            account = accounts[j];
-                                            // install singletons
-                                            podContext.autoInstall(account, function(err, result) {
-                                                if (err) {
-                                                    app.logmessage(result, 'error');
-                                                } else {
-                                                    console.log('installed ' + result + ' into ' + account.id);
-                                                }
-
-                                                if (j === accounts.length) {
-                                                    process.exit(0);
-                                                }
-                                            });
-                                        }
-                                    } else {
-                                        app.logmessage('No Accounts!', 'error');
-                                        process.exit(0);
-
+                                        
                                     }
-                                }
-                            });
+                                } else {
+                                    app.logmessage('No Accounts!', 'error');
+                                    process.exit(0);
 
-                        }
-                    });
+                                }
+                            }
+                        });
+
+                    }
+                });
             }
         }
 
