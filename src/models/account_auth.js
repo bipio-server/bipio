@@ -175,7 +175,7 @@ AccountAuth.hash = function(value) {
 }
 
 AccountAuth.cmpPassword = function(passwordTainted) {
-    var password = this.getPassword();
+    var password = this.getPassword().replace(/^\s+|\s+$/g, "");
 
     // compare hash
     /* disabled

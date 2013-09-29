@@ -101,6 +101,7 @@ AccountInfo.prototype = {
 };
 
 Dao.prototype.getAccountStruct = function(authModel, next) {
+  console.log(authModel);
     var self = this,
         resultModel = { // session usable abstract model of the account
             id : authModel.owner_id,
@@ -223,11 +224,17 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
     var self = this;
     var filter = {};
 
+
+  console.log("username", username);
+  console.log("pass", password);
+
     if (asOwnerId) {
         filter['id'] = username;
     } else {
         filter['username'] = username;
     }
+         console.log("ola");
+
 
     this.find(
         'account',
@@ -241,9 +248,14 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
                 }
 
                 self.find('account_auth', filter, function(isErr, result) {
+                  console.log("res", result);
+                  console.log("isErr", isErr);
+
                     var resultModel = null;
                     if (!isErr && null != result) {
                         var authModel = self.modelFactory('account_auth', result);
+                      console.log("authModel.cmpPassword(password)", authModel.cmpPassword(password));
+
                         if (asOwnerId || authModel.cmpPassword(password)) {
 
                             authModel.username = acctResult.username;
