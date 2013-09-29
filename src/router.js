@@ -110,13 +110,13 @@ function publicFilter(modelName, modelStruct) {
 function restAuthWrapper(req, res, cb) {
     return express.basicAuth(function(user, pass, cb){
         dao.checkAuth(user, pass, 'token', cb);
-    })(req, res, cb);
+    })(req, res, cb);    
 }
 
 /**
  * Normalizes response data, catches errors etc.
  */
-var restResponse = function(res) {
+var restResponse = function(res) {    
     return function(error, modelName, results, code, options) {
         var contentType = DEFS.CONTENTTYPE_JSON;
         if (options) {
@@ -829,20 +829,13 @@ module.exports = {
                 res.send(400);
             }
         });
-        
-        express.all('*', function(req, res, next) {
-            // these response headers handled by LB outside of dev
-            if (express.settings.env == 'development') {
-                res.header('Access-Control-Allow-Origin', '*');
-                res.header("Access-Control-Allow-Headers", "X-Requested-With,Authorization,Accept,Origin,Content-Type");
-                res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-            }
+
+        express.all('*', function(req, res, next) {           
             if (req.method == 'OPTIONS') {
                 res.send(200);
             } else {
                 next();
             }
-        });
-        
+        });        
     }
 }

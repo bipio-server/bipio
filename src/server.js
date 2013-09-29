@@ -75,11 +75,19 @@ function errorHandler(err, req, res, next) {
   res.render('error', { error: err });
 }
 
+function setCORS(req, res, next) {   
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers']);
+    res.header('Access-Control-Allow-Methods', req.headers['access-control-request-method']);
+    res.header('Access-Control-Allow-Credentials', true);
+    
+    
+    next();    
+}
+
 // express preflight
 restapi.configure(function() {
     restapi.use(xmlBodyParser);
-    restapi.use(express.bodyParser());
-
     // respond with an error if body parser failed
     restapi.use(function(err, req, res, next) {
         console.log(err);
@@ -92,6 +100,11 @@ restapi.configure(function() {
             next(err, req, res, next);
         }
     });
+    
+    restapi.use(express.bodyParser());
+
+    
+    restapi.use(setCORS);
     restapi.use(express.methodOverride());
     restapi.use(express.cookieParser());
 

@@ -268,8 +268,11 @@ AccountOption.preSave = function(accountInfo, oldModel) {
 }
 
 function endLifeParse(end_life) {
-    if (isNaN(parseInt(end_life.imp))) {
+    var imp = parseInt(end_life.imp);
+    if (isNaN(imp)) {
         end_life.imp = 0;
+    } else {
+        end_life.imp = imp;
     }
 
     if (end_life.time === '') {
