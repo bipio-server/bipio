@@ -222,7 +222,6 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             this._dao.bipLog(jobPacket.data);
         } else {
             app.logmessage('BASTION:MALFORMED PACKET', 'error');
-            console.log(jobPacket);
         }
     }
 }

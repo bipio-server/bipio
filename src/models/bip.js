@@ -60,7 +60,7 @@ function endLifeParse(end_life) {
         d = new Date(Date.parse(end_life.time));
         if (d.getTime() != 0) {
             // @todo looks like a bug in datejs, no seconds for getTime?
-//            seconds = d.getSeconds() + (d.getMinutes() * 60) + (d.getHours() * 60 * 60);
+            //            seconds = d.getSeconds() + (d.getMinutes() * 60) + (d.getHours() * 60 * 60);
             // from microseconds to seconds
             // end_life.time = (d.getTime() / 100) + seconds;
             end_life.time = Math.floor(d.getTime() / 1000);
@@ -79,7 +79,7 @@ Bip.repr = function(accountInfo) {
     }
 
     var repr = '',
-        domainName = accountInfo.user.domains.get(this.domain_id).repr();
+    domainName = accountInfo.user.domains.get(this.domain_id).repr();
 
     // inject the port for dev
     if (process.env.NODE_ENV == 'development') {
@@ -105,12 +105,12 @@ Bip.entitySchema = {
     name: {
         type: String,
         renderable: true,
-        writable: true,        
+        writable: true,
         validate : [
-            {
-                'validator' : BipModel.validators.max_64,
-                'msg' : "64 characters max"
-            }
+        {
+            'validator' : BipModel.validators.max_64,
+            'msg' : "64 characters max"
+        }
         ]
     },
     domain_id: {
@@ -122,10 +122,10 @@ Bip.entitySchema = {
             validator : function(val, next) {
                 next(this.type === 'trigger' ? true :
                     this.getAccountInfo().user.domains.test(val)
-                );
+                    );
             },
             msg : 'Domain Not Found'
-            }
+        }
         ]
     },
     type: {
@@ -133,12 +133,12 @@ Bip.entitySchema = {
         renderable: true,
         writable: true,
         validate : [
-            {
-                validator : function(val, next) {
-                    next( /^(smtp|http|trigger)$/i.test(val) );
-                },
-                msg : 'Expected "smtp", "http" or "trigger"'
-            }
+        {
+            validator : function(val, next) {
+                next( /^(smtp|http|trigger)$/i.test(val) );
+            },
+            msg : 'Expected "smtp", "http" or "trigger"'
+        }
         ],
         set : function(type) {
             // empty name? then generate one
@@ -173,9 +173,9 @@ Bip.entitySchema = {
                 if (this.type == 'trigger') {
                     ok = false;
                     var cid = val.channel_id,
-                        userChannels = this.getAccountInfo().user.channels,
-                        channel = userChannels.get(cid),
-                        podTokens;
+                    userChannels = this.getAccountInfo().user.channels,
+                    channel = userChannels.get(cid),
+                    podTokens;
 
                     if (channel) {
                         podTokens = channel.getPodTokens();
@@ -223,49 +223,49 @@ Bip.entitySchema = {
         renderable: true,
         writable: true,
         validate : [
-            {
-                // not a very good validator, but will do for know.
-                // @todo ensure edge > vertex > edge doesn't exist
-                validator : function(hub, next) {
-                    var numEdges, edges = {}, edge, loop = false;
-                    for (key in hub) {
-                        edges[key] = 1;
-                        numEdges = hub[key].edges.length;
-                        for (var i = 0; i < numEdges; i++ ) {
-                            edge = hub[key].edges[i];
+        {
+            // not a very good validator, but will do for know.
+            // @todo ensure edge > vertex > edge doesn't exist
+            validator : function(hub, next) {
+                var numEdges, edges = {}, edge, loop = false;
+                for (key in hub) {
+                    edges[key] = 1;
+                    numEdges = hub[key].edges.length;
+                    for (var i = 0; i < numEdges; i++ ) {
+                        edge = hub[key].edges[i];
 
-                            if (!edges[edge]) {
-                                edges[edge] = 1;
-                            } else {
-                                edges[edge]++;
-                                break;
-                            }
-                        }
-                    }
-
-                    for (edge in edges) {
-                        loop = edges[edge] > 2;
-                        if (loop) {
+                        if (!edges[edge]) {
+                            edges[edge] = 1;
+                        } else {
+                            edges[edge]++;
                             break;
                         }
                     }
+                }
 
-                    next(!loop);
-                },
-                msg : "Loop Detected"
+                for (edge in edges) {
+                    loop = edges[edge] > 2;
+                    if (loop) {
+                        break;
+                    }
+                }
+
+                next(!loop);
             },
+            msg : "Loop Detected"
+        },
 
-            {
-                validator : function(val, next) {
-                    var ok = false,
-                        userChannels = this.getAccountInfo().user.channels,
-                        numEdges,
-                        transforms;
-                    // check channels + transforms make sense
-                    if (undefined != val.source) {
+        {
+            validator : function(val, next) {
+                var ok = false,
+                userChannels = this.getAccountInfo().user.channels,
+                numEdges,
+                transforms;
+                // check channels + transforms make sense
+                if (undefined != val.source) {
 
-                        // http can have dynamic exports, so inject them
-                        /*
+                    // http can have dynamic exports, so inject them
+                    /*
                         if (this.type == 'http' && this.config.exports) {
                             var expLen = this.config.exports.length;
                             if (expLen > 0) {
@@ -278,33 +278,33 @@ Bip.entitySchema = {
                         }
 */
 
-                        for (var cid in val) {
-                            if (val.hasOwnProperty(cid)) {
+                    for (var cid in val) {
+                        if (val.hasOwnProperty(cid)) {
                             // check channel exists
-                                ok = (cid == 'source' || userChannels.test(cid));
-                                if (ok) {
-                                    // check edges point to channels for this account
-                                    numEdges = val[cid].edges.length;
-                                    if (numEdges > 0) {
-                                        for (var e = 0; e < numEdges; e++) {
-                                            ok = userChannels.test(val[cid].edges[e]);
-                                            if (!ok) {
-                                                break;
-                                            }
+                            ok = (cid == 'source' || userChannels.test(cid));
+                            if (ok) {
+                                // check edges point to channels for this account
+                                numEdges = val[cid].edges.length;
+                                if (numEdges > 0) {
+                                    for (var e = 0; e < numEdges; e++) {
+                                        ok = userChannels.test(val[cid].edges[e]);
+                                        if (!ok) {
+                                            break;
                                         }
                                     }
                                 }
+                            }
 
-                                if (!ok) {
-                                    break;
-                                }
+                            if (!ok) {
+                                break;
                             }
                         }
                     }
-                    next(ok);
-                },
-                msg : 'Bad Channel in Hub'
-            }
+                }
+                next(ok);
+            },
+            msg : 'Bad Channel in Hub'
+        }
         ]
     },
     note: {
@@ -313,8 +313,8 @@ Bip.entitySchema = {
         writable: true,
         "default" : '',
         validate : [{
-                'validator' : BipModel.validators.max_text,
-                'msg' : "1024 characters max"
+            'validator' : BipModel.validators.max_text,
+            'msg' : "1024 characters max"
         }]
     },
     end_life: {
@@ -327,8 +327,8 @@ Bip.entitySchema = {
                 next(
                     (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
                     ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
-                      0 !== new Date(Date.parse(val.time)).getTime()
-                );
+                    0 !== new Date(Date.parse(val.time)).getTime()
+                    );
             },
             msg : 'Bad Expiry Structure'
         }]
@@ -340,7 +340,7 @@ Bip.entitySchema = {
         'default' : false,
         set : function(newValue) {
             return newValue;
-            /*
+        /*
             if (false === this.paused && newValue) {
                 Bip.getDao().pauseBip(this, null, newValue, null);
             }
@@ -348,8 +348,8 @@ Bip.entitySchema = {
             */
         },
         validate : [{
-                'validator' : BipModel.validators.bool_any,
-                'msg' : 'Expected 1,0,true,false'
+            'validator' : BipModel.validators.bool_any,
+            'msg' : 'Expected 1,0,true,false'
         }]
     },
     binder: {
@@ -438,15 +438,15 @@ Bip.exports = {
                 type : 'string',
                 description : 'Sender Info',
                 oneOf : [{
-                            "$ref" : "#/definitions/client_attribute"
-                        }]
+                    "$ref" : "#/definitions/client_attribute"
+                }]
             },
             '_bip' : {
                 type : 'string',
                 description : 'Bip Info',
                 oneOf : [{
-                            "$ref" : "#/definitions/bip_attribute"
-                        }]
+                    "$ref" : "#/definitions/bip_attribute"
+                }]
             }
         },
         definitions : {
@@ -484,7 +484,7 @@ Bip.exports = {
             }
         },
         definitions : {
-        }
+    }
     },
 
     // http export helpers
@@ -501,14 +501,14 @@ Bip.exports = {
             }
         },
         definitions : {
-        }
+    }
     },
 
     'trigger' : {
         properties : {
         },
         definitions : {
-        }
+    }
     }
 }
 
@@ -520,7 +520,7 @@ Bip.exports = {
 Bip.preSave = function(accountInfo) {
     var props = {
         'domain_id' : accountInfo.getSetting('bip_domain_id'),
-//        '_tz' : accountInfo.user.settings.timezone,
+        //        '_tz' : accountInfo.user.settings.timezone,
         'type' :  accountInfo.getSetting('bip_type'),
         'anonymize' :  accountInfo.getSetting('bip_anonymize'),
         'config' :  accountInfo.getSetting('bip_config'),
@@ -542,10 +542,8 @@ function getAction(accountInfo, channelId) {
     return accountInfo.user.channels.get(channelId).action;
 }
 
-Bip.postSave = function(accountInfo, next, isNew) {
-    // set user default transforms
+Bip.normalizeTransformDefaults = function(accountInfo, next) {
     var from, to, payload, fromMatch, transforms = {}, dirty = false;
-
     for (var key in this.hub) {
         if (this.hub.hasOwnProperty(key)) {
             fromMatch = new RegExp(key, 'gi');
@@ -583,19 +581,31 @@ Bip.postSave = function(accountInfo, next, isNew) {
                                 transform : this.hub[key].transforms[txChannelId],
                                 owner_id : accountInfo.user.id
                             };
-
-                            app.bastion.createJob(DEFS.JOB_BIP_SET_DEFAULTS, payload);
+                            next(payload);
                         }
                     }
                 }
             }
         }
     }
+}
+
+Bip.postSave = function(accountInfo, next, isNew) {    
+    this.normalizeTransformDefaults(accountInfo, function(payload) {
+        app.bastion.createJob(DEFS.JOB_BIP_SET_DEFAULTS, payload);
+    });
 
     // create metric updates jobs
     if (isNew) {
-        app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'bips_total' } );
-        app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, { bip_id : this.id, owner_id : accountInfo.user.id, code : 'bip_create' } );
+        app.bastion.createJob(DEFS.JOB_USER_STAT, {
+            owner_id : accountInfo.user.id,
+            type : 'bips_total'
+        } );
+        app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+            bip_id : this.id,
+            owner_id : accountInfo.user.id,
+            code : 'bip_create'
+        } );
     }
 
     next(false, this.getEntityName(), this);
