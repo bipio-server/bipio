@@ -351,7 +351,7 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
     }
 
     var model = this.modelFactory('bip', props);
-    this.update(
+    this.updateColumn(
         'bip',
         model.getIdValue(),
         {

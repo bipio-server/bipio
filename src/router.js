@@ -222,11 +222,14 @@ var restAction = function(req, res) {
                     }
 
                     // inject the referer favico
-                    if (undefined == req.body.icon) {
+                    if (undefined == req.body.icon && !/\.bip\.io$/.test(referer.url_tokens.hostname)) {
+                        
+                        
                         postSave = function(err, modelName, retModel, code ) {
                             if (!err && retModel.icon == '') {
                                 // @todo defer to out of band job
                                 iconUri = dao.getBipRefererIcon(retModel.id, 'http://' + referer.url_tokens.hostname, true);
+
                                 if (iconUri) {
                                     dao.updateColumn('bip', retModel.id, { icon : iconUri  });
                                 }

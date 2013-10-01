@@ -327,6 +327,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
                         }
 
                         if (expired) {
+
                             if ('delete' === accountInfo.user.settings.bip_expire_behaviour) {
                                 self._dao.deleteBip(bipResult, accountInfo, cb(cbParameterMap.fail, err), client.id);
                             } else {
