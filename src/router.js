@@ -482,13 +482,14 @@ module.exports = {
                     client, 
                     function(status, message, bip) {
                         var exports = {
-                            'local' : {}
+                            'source' : {}
                         };
 
                         if (!message){
                             message = '';
                         }
 
+                        // setup source exports for this bip
                         if (bip && bip.config.exports && bip.config.exports.length > 0) {
                             var exportLen = bip.config.exports.length,
                                 key;
@@ -496,12 +497,12 @@ module.exports = {
                             for (var i = 0; i < exportLen; i++) {
                                 key = bip.config.exports[i];
                                 if (req.query[key]) {
-                                    exports.local[key] = req.query[key];
+                                    exports.source[key] = req.query[key];
                                 }
                             }
                         } else {
-                            exports.local = req.query;
-                            exports.local._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
+                            exports.source = req.query;
+                            exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
                         }
 
                         var restReponse = true;
