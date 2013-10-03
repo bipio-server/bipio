@@ -514,7 +514,7 @@ Dao.prototype.shareBip = function(bip, cb) {
             if (err) {
                 cb(self.errorParse(err), null, null, self.errorMap(err) );
             } else {
-                var model = this.modelFactory(modelName, bipShare, bip.accountInfo);
+                var model = self.modelFactory(modelName, bipShare, bip.accountInfo);
                 if (!result) {
                     self.create(model, cb, bip.accountInfo);
 
