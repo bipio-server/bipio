@@ -676,7 +676,7 @@ Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
     if (referer) {
         // create hash
         var hashFile = helper.strHash(iconSource) + fileSuffix,
-        dDir = process.cwd() + DATA_DIR + '/cdn/img/' + cdnPath + '/',
+        dDir = DATA_DIR + '/cdn/img/' + cdnPath + '/',
         filePath = dDir + hashFile,
         cdnUri = CFG.cdn_public + '/' + cdnPath + '/' + hashFile;
 
