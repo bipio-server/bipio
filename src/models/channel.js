@@ -280,6 +280,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     podName = podTokens.name;
 /*
 console.log('adjacent exports :');
+console.log('ID ' + this.id);
 console.log(adjacentExports);
 console.log('transformed');
 console.log(transformedImports);

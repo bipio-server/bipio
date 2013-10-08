@@ -59,14 +59,34 @@ var helper = {
     },
 
     /**
-     * sanitized a string
-     */
-    _scrub: function(str) {
+     * sanitized a string.  Pretty nasty, the templating scheme is viewed as
+     * being xss.  Scrub tokens individually if it looks like a template string.
+     * nasty hackity hack
+     */    
+    _realScrub : function(str) {
         var retStr = helper.sanitize(str).xss();
         retStr = helper.sanitize(retStr).trim();
         retStr = helper.sanitize(retStr).escape();
-        retStr = helper.sanitize(retStr).entityEncode();
+        //retStr = helper.sanitize(retStr).entityEncode();
+        return retStr;
+    },
+    
+    _scrub: function(str) {
+        var regex = this.getRegActionUUID(),
+            retStr;
 
+        if (regex.test(str)) {
+            var tokens = str.split(' ');
+            for (var i = 0; i < tokens.length; i++) {
+                if (regex.test(tokens[i])) {
+                    tokens[i] = this._realScrub(tokens[i]);
+                }
+            }
+            retStr = tokens.join(' ');
+        } else {
+            retStr = this._realScrub(str);
+        }
+        
         return retStr;
     },
 

@@ -122,7 +122,6 @@ var cdn = {
     normedMeta: function(strategy, txId, payload) {
         var normFiles = [],
             struct, f;
-        
         if (strategy == 'express') {
             for (file in payload) {
                 f = payload[file];
@@ -131,8 +130,10 @@ var cdn = {
                     size : f.size,
                     localpath : f.path,
                     name : f.name,
-                    type : f.type,
-                    encoding : f._writeStream.encoding
+                    type : f.headers['content-type'],
+                    encoding : 'binary' // @todo may not be binary, express bodyparser looks broken after 3.4.0
+                    //encoding : f._writeStream.encoding
+                    
                 }
                 //normFiles.push(Object.create(ProcFile, struct));
                 normFiles.push(struct);

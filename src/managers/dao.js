@@ -363,7 +363,7 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
     }
 
     var model = this.modelFactory('bip', props);
-    this.update(
+    this.updateColumn(
         'bip',
         model.getIdValue(),
         {
@@ -526,7 +526,7 @@ Dao.prototype.shareBip = function(bip, cb) {
             if (err) {
                 cb(self.errorParse(err), null, null, self.errorMap(err) );
             } else {
-                var model = this.modelFactory(modelName, bipShare, bip.accountInfo);
+                var model = self.modelFactory(modelName, bipShare, bip.accountInfo);
                 if (!result) {
                     self.create(model, cb, bip.accountInfo);
 
@@ -688,7 +688,7 @@ Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
     if (referer) {
         // create hash
         var hashFile = helper.strHash(iconSource) + fileSuffix,
-        dDir = process.cwd() + DEFS.DATA_DIR + '/cdn/img/' + cdnPath + '/',
+        dDir = DATA_DIR + '/cdn/img/' + cdnPath + '/',
         filePath = dDir + hashFile,
         cdnUri = CFG.cdn_public + '/' + cdnPath + '/' + hashFile;
 

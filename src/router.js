@@ -110,13 +110,13 @@ function publicFilter(modelName, modelStruct) {
 function restAuthWrapper(req, res, cb) {
     return express.basicAuth(function(user, pass, cb){
         dao.checkAuth(user, pass, 'token', cb);
-    })(req, res, cb);
+    })(req, res, cb);    
 }
 
 /**
  * Normalizes response data, catches errors etc.
  */
-var restResponse = function(res) {
+var restResponse = function(res) {    
     return function(error, modelName, results, code, options) {
         var contentType = DEFS.CONTENTTYPE_JSON;
         if (options) {
@@ -222,11 +222,14 @@ var restAction = function(req, res) {
                     }
 
                     // inject the referer favico
-                    if (undefined == req.body.icon) {
+                    if (undefined == req.body.icon && !(/\.bip\.io$/.test(referer.url_tokens.hostname))) {
+                        
+                        
                         postSave = function(err, modelName, retModel, code ) {
                             if (!err && retModel.icon == '') {
                                 // @todo defer to out of band job
                                 iconUri = dao.getBipRefererIcon(retModel.id, 'http://' + referer.url_tokens.hostname, true);
+
                                 if (iconUri) {
                                     dao.updateColumn('bip', retModel.id, { icon : iconUri  });
                                 }
@@ -479,13 +482,14 @@ module.exports = {
                     client, 
                     function(status, message, bip) {
                         var exports = {
-                            'local' : {}
+                            'source' : {}
                         };
 
                         if (!message){
                             message = '';
                         }
 
+                        // setup source exports for this bip
                         if (bip && bip.config.exports && bip.config.exports.length > 0) {
                             var exportLen = bip.config.exports.length,
                                 key;
@@ -493,12 +497,12 @@ module.exports = {
                             for (var i = 0; i < exportLen; i++) {
                                 key = bip.config.exports[i];
                                 if (req.query[key]) {
-                                    exports.local[key] = req.query[key];
+                                    exports.source[key] = req.query[key];
                                 }
                             }
                         } else {
-                            exports.local = req.query;
-                            exports.local._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
+                            exports.source = req.query;
+                            exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
                         }
 
                         var restReponse = true;
@@ -829,20 +833,13 @@ module.exports = {
                 res.send(400);
             }
         });
-        
-        express.all('*', function(req, res, next) {
-            // these response headers handled by LB outside of dev
-            if (express.settings.env == 'development') {
-                res.header('Access-Control-Allow-Origin', '*');
-                res.header("Access-Control-Allow-Headers", "X-Requested-With,Authorization,Accept,Origin,Content-Type");
-                res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-            }
+
+        express.all('*', function(req, res, next) {           
             if (req.method == 'OPTIONS') {
                 res.send(200);
             } else {
                 next();
             }
-        });
-        
+        });        
     }
 }
