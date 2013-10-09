@@ -303,8 +303,37 @@ Bip.entitySchema = {
                 }
                 next(ok);
             },
-            msg : 'Bad Channel in Hub'
-        }
+            msg : 'Invalid or Missing Channel'
+        },
+        {
+            // ensure hub has a source edge
+            validator : function(hub, next) {
+                next(hub.source && hub.source.edges.length > 0);                
+            },
+            msg : "Cannot Be Empty"
+        },
+        /* @todo stubbed
+        {
+            // ensure no orphans
+            validator : function(hub, next) {
+                var cid, 
+                    k,
+                    egress = {};
+                
+                for (cid in hub) {
+                    if (hub.hasOwnProperty(cid)) {
+                        egress[cid] = 1;
+                        for (k = 0; k < hub[cid].edges.length; k++) {
+                            if (undefined === egress[hub[cid].edges[k]]) {
+                                egress[hub[cid].edges[k]] = 1;
+                            }
+                            egress[hub[cid].edges[k]]--;
+                        }
+                    }
+                }
+            },
+            msg : "Orphaned Channel"
+        }*/
         ]
     },
     note: {
