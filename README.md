@@ -5,14 +5,14 @@ Welcome to the Bipio API Server.
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
-Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
-
 Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph) <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelining</a>
 API talking RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, such as integrating "cloud" API's or other web 
-based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).
+based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier in consumerland, the concept
+is a little similar.
 
-The graph structures (bips) allow you to transform content between adjacent nodes. They can be reconfigured dynamically without requiring changes 
-to the connecting client, ideal for rapid prototyping, A/B testing, message escalation or any kind of interprotocol communication.
+The graph structures (bips) allow you to transform content between adjacent nodes indefinitely.  Bips can even create other bips.
+They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing,
+message normalization, digital asset monetization, sharing secret or (n)-use messages, or really any kind of web based interprotocol communication.
 
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes (channels).  Channels perform a discrete
 unit of work and emit a predictable result, they can be arranged on a bip's hub in meaningful ways.  Channels are largely decoupled from the graph resolution platform
@@ -31,7 +31,9 @@ supported services, please see the bip-pod-* repos via [https://github.com/bipio
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place.
 
 The server is currently distributed [headless](http://en.wikipedia.org/wiki/Headless_system).  Sign in to [bipio](https://bip.io)
-to mount your local install from your browser.
+to mount your local install from your browser under My Account > Mounts > Create Mount.
+
+Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
 
 Requirements
 -
