@@ -7,8 +7,8 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph) <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelining</a>
 API talking RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, such as integrating "cloud" API's or other web 
-based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier in consumerland, the concept
-is a little similar.  Bipio is a server with a small footprint that lets you create and automate an internet of things that matter to you, you
+based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept
+is a similar.  Bipio is a server with a small footprint that lets you create and automate an internet of things that matter to you, you
 can install it alongside your existing open source app or prototype, or even your Rasberry Pi.  
 
 The graph structures ([bips](https://bip.io/docs/resource/rest/bip)) allow you to transform content between adjacent nodes.  Bips can even create other bips.
