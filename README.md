@@ -7,22 +7,28 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph) <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelining</a>
 API talking RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, such as integrating "cloud" API's or other web 
-based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier in consumerland, the concept
-is a little similar.
+based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept
+is a similar.  Bipio is a server with a small footprint that lets you create and automate an internet of things that matter to you, you
+can install it alongside your existing open source app or prototype, or even your Rasberry Pi.  
 
-The graph structures (bips) allow you to transform content between adjacent nodes indefinitely.  Bips can even create other bips.
+The graph structures ([bips](https://bip.io/docs/resource/rest/bip)) allow you to transform content between adjacent nodes.  Bips can even create other bips.
 They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing,
 message normalization, digital asset monetization, sharing secret or (n)-use messages, or really any kind of web based interprotocol communication.
+It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), or automate tasks, be a personal message hub etc.
 
-Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes (channels).  Channels perform a discrete
-unit of work and emit a predictable result, they can be arranged on a bip's hub in meaningful ways.  Channels are largely decoupled from the graph resolution platform
-in self contained collections called Pods.  Feel free to roll your own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
+Bipio is dynamic, flexible, fast, modular, impartial and open source.
+
+Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes ([channels](https://bip.io/docs/resource/rest/channel)).
+Channels perform a discrete unit of work and emit a predictable result, its a true parallel pipeline where one channels export becomes the next adjacent channels import.  
+
+Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  Feel free to roll your 
+own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
 then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
 
 Bips can be given public facing endpoints over HTTP or SMTP which can trigger content for processing.  For example,
 a Bip could collect simple logs, model an integrated workflow, or be a rules based email service pushing one message to all your connected
-social networks and blogs, amongst others.  Certain types of channels, called 'emitters' can fire Bips periodically for polling content, synchronizing files,
-notifying you of important events, automatically generating content or simply scheduling messages.
+social networks and blogs, amongst others.  Certain types of channels, called 'emitters' can fire Bips periodically for syncing content/files,
+notifying you of important events, or simply scheduling messages.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 

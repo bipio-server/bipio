@@ -885,8 +885,9 @@ DaoMongo.prototype.listChannelActions = function(type, accountInfo, callback) {
         owner_id : owner_id
     };
 
-    this.find('channel', filter, function (err, results) {
+    this.findFilter('channel', filter, function (err, results) {
         var model;
+
         if (err) {
             self.log('Error: list(): ' + err);
             if (callback) {
