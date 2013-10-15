@@ -727,17 +727,18 @@ Dao.prototype.triggerAll = function(cb) {
             // @todo this is some ghetto shit. Hope we can get these triggers off fast enough.
             for (var i = 0; i < numResults; i++) {
                 // fire off a bip trigger job to rabbit
-                app.logmessage('DAO:Trigger:' + results[i].id);
                 (function(trigger, numResults, numProcessed, next) {
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger);
                     numProcessed++;
-                    app.logmessage('DAO:Trigger:' + trigger.id);
-                    if (numProcessed == numResults) {
+
+                    app.logmessage('DAO:Trigger:' + trigger.id + ':' + numProcessed + ':' + numResults);
+                    if (numProcessed == numResults - 1) {
                         // the amqp lib has stopped giving us queue publish acknowledgements?
                         setTimeout(function() {
-                            next(false, 'DAO:Trigger:' + numProcessed + ' Triggers Fired');
+                            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
                         }, 1000);
                     }
+                    
 
                     /*
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger, function() {
