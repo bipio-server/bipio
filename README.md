@@ -41,7 +41,7 @@ then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/
 The API is expressive and straight forward, there are only 2 1st-class resources - bips and channels.  For example, to create a basic email forwarder sitting infront of your actual
 inbox :
 
-#### Create a Channel
+###### Create a Channel
 ```
 POST /rest/channel
 {
@@ -57,7 +57,7 @@ RESPONSE
 }
 ```
 
-#### And then with that email channel,  place it onto an 'smtp' bip.
+###### And then with that email channel,  place it onto an 'smtp' bip.
 ```
 POST /rest/bip
 {
