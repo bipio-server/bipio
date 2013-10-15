@@ -19,6 +19,7 @@ It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) doe
 
 There are three flavors of Bip - public facing HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
 
+ - dynamic or automatically derived naming
  - pausing or self-destructing after a certain time or impressions volume
  - binding to connecting clients with soft ACLs over the course of their 'life'
  - able to be reconfigured dynamically without changing a client implementation
@@ -32,10 +33,44 @@ Channels perform a discrete unit of work and emit a predictable result, where on
 Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to the blazingly 
 fast [RabbitMQ](http://www.rabbitmq.com/) broker, where each atomic message can be independently processed by any subscribing node in the cluster.
 
-Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' meaning they are largely free
+Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' meaning they are free
 from other system concerns and can operate independently.  Channels can store, track, serve or transform content and messages as part of a pipeline.  Feel free to roll your 
 own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
 then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
+
+The API is expressive and straight forward, there are only 2 1st-class resources - bips and channels.  For example, to create a basic email forwarder sitting infront of your actual
+inbox :
+
+#### Create a Channel
+```
+POST /rest/channel
+{
+ action : 'email.smtp_forward',
+ config : {
+   'rcpt_to' : 'foo@bar.net'
+ }
+}
+
+RESPONSE
+{
+ id : '{email channel id}'
+}
+```
+
+#### And then with that email channel,  place it onto an 'smtp' bip.
+```
+POST /rest/bip
+{
+ type : 'smtp',
+ hub : {
+   'source' : {
+      edges : [ '{email channel id}' ]
+   }
+ }
+}
+```
+
+And thats it.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
@@ -43,12 +78,12 @@ The BipIO server software is the basic framework for processing bips and their d
 supported services, please see the bip-pod-* repos via [https://github.com/bipio-server](https://github.com/bipio-server) and please help make 
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place.
 
-The server is currently distributed [headless](http://en.wikipedia.org/wiki/Headless_system).  Sign in to [bipio](https://bip.io)
+The server is currently distributed headless.  Sign in to [bipio](https://bip.io)
 to mount your local install from your browser under My Account > Mounts > Create Mount.
 
 Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
 
-Requirements
+## Requirements
 -
 
   - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
