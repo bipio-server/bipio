@@ -721,7 +721,7 @@ Dao.prototype.triggerAll = function(cb) {
     };
 
     this.findFilter('bip', filter, function(err, results) {
-        if (!err && results) {
+        if (!err && results && results.length) {
             numResults = results.length;
             numProcessed = 0;
             // @todo this is some ghetto shit. Hope we can get these triggers off fast enough.
@@ -736,7 +736,7 @@ Dao.prototype.triggerAll = function(cb) {
                         // the amqp lib has stopped giving us queue publish acknowledgements?
                         setTimeout(function() {
                             next(false, 'DAO:Trigger:' + numProcessed + ' Triggers Fired');
-                        }, 100);
+                        }, 1000);
                     }
 
                     /*

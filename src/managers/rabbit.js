@@ -94,7 +94,6 @@ function Rabbit(cfg, next) {
 
 Rabbit.prototype.produce = function(xName, route, payload, cb) {   
     // this.exchanges[xName].publish(route, JSON.stringify(payload), {}, cb);
-
     // amqp has stopped giving us 'ack' now!?!?!??
     this.exchanges[xName].publish(route, JSON.stringify(payload), {});    
 }

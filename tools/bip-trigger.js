@@ -27,7 +27,6 @@
 process.HEADLESS = true;
 var bootstrap = require(__dirname + '/../src/bootstrap');
 bootstrap.app.bastion.on('readyQueue', function(readyQueue) {
-    console.log(readyQueue);
     if (readyQueue == 'queue_jobs') {
         app.logmessage('BIP-TRIGGER:Trigger Queue Discovered:queue_jobs');
         bootstrap.app.dao.triggerAll(function(err, msg) {

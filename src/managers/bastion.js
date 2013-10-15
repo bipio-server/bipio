@@ -45,10 +45,8 @@ function Bastion(dao, noConsume, cb) {
     }
     this._dao = dao;
 
-    var eventWrapper = function(readyQueue) {
-        
+    var eventWrapper = function(readyQueue) {        
         self.emit('readyQueue', readyQueue);        
-//        cb(readyQueue);
     };
     
     //this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
