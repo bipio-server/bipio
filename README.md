@@ -70,6 +70,12 @@ POST /rest/bip
    }
  }
 }
+
+RESPONSE
+{
+ name : 'lcasKQosWire22@yourdomain.net'
+}
+
 ```
 
 And thats it.
@@ -108,7 +114,7 @@ A sample upstart script is supplied in config/upstart_bip.conf -- suggest using 
 ## Documentation
 
 General API spec and tutorials can be found at https://bip.io.  For server setup and configuration guides,
-keep an eye on the (Wiki)[https://github.com/bipio-server/bipio/wiki], it will be continuously updated.
+keep an eye on the [Wiki](https://github.com/bipio-server/bipio/wiki), it will be continuously updated.
 
 ## License
 
