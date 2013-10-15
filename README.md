@@ -73,7 +73,8 @@ POST /rest/bip
 
 RESPONSE
 {
- name : 'lcasKQosWire22@yourdomain.net'
+ name : 'lcasKQosWire22'
+ _repr : 'lcasKQosWire22@yourdomain.net'
 }
 
 ```
