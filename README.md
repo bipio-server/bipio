@@ -8,27 +8,34 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph) <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelining</a>
 API talking RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, such as integrating "cloud" API's or other web 
 based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept
-is similar.  Bipio is a server with a small footprint that lets you create and automate an internet of things that matter to you, you
-can install it alongside your existing open source app or prototype, or even your Rasberry Pi.  
+is similar.  The server has a small footprint which lets you create and automate an internet of things that matter to you, you
+can install it alongside your existing open source app or prototype, or your Rasberry Pi for example.
 
 The graph structures ([bips](https://bip.io/docs/resource/rest/bip)) allow you to transform content between adjacent nodes.  Bips can even create other bips.
 They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing,
 message normalization, digital asset monetization, sharing secret or (n)-use messages, or really any kind of web based interprotocol communication.
+If you have a demanding product manager, they'll probably love that you can flip a switch and deliver a feature-creep integration in seconds.
 It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), or automate tasks, be a personal message hub etc.
 
-Bipio is dynamic, flexible, fast, modular, impartial and open source.
+There are three flavors of Bip - public facing HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
+
+ - pausing or self-destructing after a certain time or impressions volume
+ - binding to connecting clients with soft ACLs over the course of their 'life'
+ - able to be reconfigured dynamically without changing a client implementation
+ - infinitely extensible, from any channel to any other channel.
+ - can serve (render) protected channel content while inheriting all of the above characteristics
+
+Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes ([channels](https://bip.io/docs/resource/rest/channel)).
-Channels perform a discrete unit of work and emit a predictable result, its a true parallel pipeline where one channels export becomes the next adjacent channels import.  
+Channels perform a discrete unit of work and emit a predictable result, where one channels export becomes the next adjacent channels transformed import.
+Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to the blazingly 
+fast [RabbitMQ](http://www.rabbitmq.com/) broker, where each atomic message can be independently processed by any subscribing node in the cluster.
 
-Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  Feel free to roll your 
+Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' meaning they are largely free
+from other system concerns and can operate independently.  Channels can store, track, serve or transform content and messages as part of a pipeline.  Feel free to roll your 
 own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
 then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
-
-Bips can be given public facing endpoints over HTTP or SMTP which can trigger content for processing.  For example,
-a Bip could collect simple logs, model an integrated workflow, or be a rules based email service pushing one message to all your connected
-social networks and blogs, amongst others.  Certain types of channels, called 'emitters' can fire Bips periodically for syncing content/files,
-notifying you of important events, or simply scheduling messages.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
