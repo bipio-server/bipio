@@ -28,6 +28,8 @@ There are three flavors of Bip - public facing HTTP or SMTP endpoints, and perio
 
 Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
+![concept](https://bip.io/static/img/docs/bip_concept.png)
+
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes ([channels](https://bip.io/docs/resource/rest/channel)).
 Channels perform a discrete unit of work and emit a predictable result, where one channels export becomes the next adjacent channels transformed import.
 Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to the blazingly 
@@ -71,8 +73,6 @@ POST /rest/bip
 ```
 
 And thats it.
-
-![concept](https://bip.io/static/img/docs/bip_concept.png)
 
 The BipIO server software is the basic framework for processing bips and their delivery graphs.  For an authoritative list of officially
 supported services, please see the bip-pod-* repos via [https://github.com/bipio-server](https://github.com/bipio-server) and please help make 
