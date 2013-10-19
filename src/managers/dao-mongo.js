@@ -20,6 +20,36 @@
  *
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
+
+/**
+ * Mongodb DAO Strategy
+ *
+ * CRUD Methods
+ *
+ *  create(model, next, accountInfo, daoPostSave) // create from model
+ *  update(modelName, id, new_properties, next, accountInfo) // update by id
+ *  get(model, modelId, accountInfo, next) // get by id
+ *  remove(model, modelId, accountInfo, next) // remove by id
+ *  removeFilter(modelName, filter, next)
+ *
+ * Utilities
+ *
+ *  list(modelName, accountInfo, page_size, page, orderBy, filter,  next)
+ *  find(modelName, filter, next)
+ *  findFilter(modelName, filter, next)
+ *  accumulate(modelName, props, accumulator, inc)
+ *  accumulateFilter(modelName, filter, accumulator)
+ *  updateColumn(modelName, filter, props, next)
+ *  
+ * Factories
+ * 
+ *  modelFactory(modelName, properties, accountInfo, tainted) // 
+ *  toMongoModel(fromModel) // convert model to mongoose class
+ *  
+ *
+ * where next(bool error, string modelName, object model, int errorCode)
+ *
+ */
 var uuid        = require('node-uuid'),
     mongoose    = require('mongoose'),
     helper      = require('../lib/helper')
@@ -39,7 +69,7 @@ function DaoMongo(config, log, next) {
     options.server.socketOptions = options.replset.socketOptions = { keepAlive: 1 };
 
     mongoose.connection.on('error', function(err) {
-        log('MONGODB:UNCONNECTABLE:' + connectStr, 'error');
+        log('MONGODB:UNCONNECTABLE:' + config.connect, 'error');
         log(err, 'error');
         self.emit('error', err);
     });
@@ -151,32 +181,12 @@ DaoMongo.prototype.registerModel = function(modelClass) {
         }
     }
 
-/*
-    validators = modelClass.getValidators();
-    for (key in validators) {
-        container[modelName]['schema'].path(key).validate(validators[key][0], validators[key][1]);
-    }
-*/
-
     // basic model
     container[modelName]['class'] = modelClass;
 
     // register mongoose chema
     mongoose.model(modelClass.entityName, container[modelName]['schema']);
     return container;
-}
-
-
-/**
- *
- * Forces a filter object to use the model id, owner id
- */
-DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
-    return {
-        id : fromModel.id,
-        // find with the owner id filter for the authenticated user
-        owner_id : accountInfo.user.id
-    };
 }
 
 DaoMongo.prototype.buildProperties = function(struct, idStruct) {
@@ -195,6 +205,18 @@ DaoMongo.prototype.buildProperties = function(struct, idStruct) {
     }
 
     return propArgs
+}
+
+/**
+ *
+ * Forces a filter object to use the model id, owner id
+ */
+DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
+    return {
+        id : fromModel.id,
+        // find with the owner id filter for the authenticated user
+        owner_id : accountInfo.user.id
+    };
 }
 
 /**
@@ -271,30 +293,6 @@ DaoMongo.prototype.errorParse = function(err, responseData) {
     return friendlyError;
 };
 
-DaoMongo.prototype.__toMongoModel = function(srcModel) {
-    var modelName = srcModel.getEntityName(),
-        MongooseModel = mongoose.model(modelName),
-        m = new MongooseModel(srcModel),
-        def;
-/*
-    // mongoose doesn't look to apply defaults prior to validation??
-    for (var key in this.models[modelName]['class'].entitySchema) {
-        if (this.models[modelName]['class'].entitySchema.hasOwnProperty(key) ) {
-            def = this.models[modelName]['class'].entitySchema[key]['default'];
-            if (undefined === m[key] && !/^_/.test(key)) {
-                m[key] = def;
-            }
-        }
-
-    }
-
-    m.getAccountInfo = function() {
-        return srcModel.getAccountInfo();
-    }
-*/
-    return m;
-};
-
 DaoMongo.prototype.toMongoModel = function(srcModel) {
     var modelName = srcModel.getEntityName(),
         MongooseModel = mongoose.model(modelName),
@@ -320,8 +318,6 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
     return model;
 };
 
-// ------------------------------------------------------------------------ CRUD
-
 DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo, next) {
     var self = this;
     mongoose.model(model.getEntityName()).findOne(filter, function(err, result) {
@@ -338,6 +334,8 @@ DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo
         }
     });
 }
+
+// ------------------------------------------------------------------------ CRUD
 
 /**
  *
@@ -422,10 +420,13 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
 
 DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, next) {
     var self = this,
-        MongooseClass = mongoose.model(modelName);
+        MongooseClass = mongoose.model(modelName),
+        model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
+
     var f = filter; // something in mongoose is clobbering 'filter'
 
-    MongooseClass.update(filter, props, function(err) {
+    model.preSave(accountInfo);
+    MongooseClass.update(filter, model.toObj(), function(err) {
         if (err) {
             if (next) {
                 // conflict? Then load the record and return the payload
@@ -486,6 +487,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
             }
             return null;
         } else {
+
             // mongoose .update doesn't tell us how things changed,
             // reload from db
             MongooseClass.findOne(
@@ -502,6 +504,8 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
                         // populate from mongo model into our model, and build a representation
                         var model = self.modelFactory(modelName, {}, accountInfo);
                         model.populate(result, accountInfo);
+                        next(false, model.getEntityName(), model);
+                        /*
                         model.postSave(accountInfo, function(err, modelName, retModel, code) {
                              next(
                                  self.errorParse(err, model),
@@ -509,6 +513,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
                                  model
                              );
                          });
+                        */
                     }
             });
         }
@@ -529,7 +534,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
     // create model container
     model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
     if (model) {
-        model.id = id;        
+        model.id = id;
         var mongoModel = this.toMongoModel(model);
         mongoModel.validate(function(err) {
             if (err) {
@@ -568,7 +573,16 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
     }
 }
 
-DaoMongo.prototype.get = function(model, modelId, accountInfo, callback) {
+/**
+ * Retrieve a model by id
+ *
+ * @param BipModel model
+ * @param String modelId
+ * @param AccountInfo accountInfo
+ * @param Function next
+ * 
+ */
+DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
     var self = this;
 
     var TargetMongoModelClass = mongoose.model(model.getEntityName());
@@ -581,8 +595,8 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, callback) {
         var loadedModel;
         if (err) {
             self._log('Error: get(): ' + err);
-            if (callback) {
-                callback(false, null);
+            if (next) {
+                next(false, null);
                 return null;
             }
         }
@@ -592,14 +606,18 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, callback) {
             model.populate(result, accountInfo);
         }
 
-        if (callback) {
+        if (next) {
             // cast results in its result object
-            callback(false, model.getEntityName(), result ? model : result);
+            next(false, model.getEntityName(), result ? model : result);
         }
     });
 };
 
-DaoMongo.prototype.remove = function(model, modelId, accountInfo, callback) {
+/**
+ * Remove a model by model id
+ *
+ */
+DaoMongo.prototype.remove = function(model, modelId, accountInfo, next) {
     var self = this;
 
     var modelName = (helper.isString(model) ? model : model.getEntityName());
@@ -610,23 +628,32 @@ DaoMongo.prototype.remove = function(model, modelId, accountInfo, callback) {
         id : modelId
     }, accountInfo);
 
-    // @todo ensure the row can actually be removed without conflict
+    model.preRemove(modelId, accountInfo, function(err, modelName, model, code) {
+        if (err) {
+            next(
+                self.errorParse(err, model),
+                modelName,
+                model,
+                code || self.errorMap(err)
+            );                
+        } else {
+            MongoClass.remove(findObject, function (err, result) {
+                if (err || result == 0) {
+                    self._log('Error: remove(): ' + err);
+                    if (next) {
+                        next(false, null);
+                        return null;
+                    }
+                }
 
-    MongoClass.remove(findObject, function (err, result) {
-        if (err || result == 0) {
-            self._log('Error: remove(): ' + err);
-            if (callback) {
-                callback(false, null);
-                return null;
-            }
-        }
-
-        if (callback) {
-            callback(false, modelName, {
-                'status' : 'OK'
+                if (next) {
+                    next(false, modelName, {
+                        'status' : 'OK'
+                    });
+                }
+                return result;
             });
         }
-        return result;
     });
 };
 

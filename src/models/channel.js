@@ -474,6 +474,18 @@ Channel.postSave = function(accountInfo, next, isNew) {
     }
 }
 
+Channel.preRemove = function(id, accountInfo, next) {
+    var self = this;
+    this.getBips(id, accountInfo, function(err, results) {
+       // removing channel where it has bips, conflict
+       if (!err && results && results.length > 0) {           
+           next('Channel still has Bips attached', 'channel', { message : 'Channel still has Bips attached' }, 409);           
+       } else {
+           next(err, 'channel', self)
+       }
+    });
+}
+
 Channel.getPodTokens = function() {
     var ret = {
         ok : function() {
@@ -557,6 +569,15 @@ Channel.testImport = function(importName) {
 }
 
 /**
+ *
+ * Gets configured Bips for this channel
+ * 
+ */
+Channel.getBips = function(channelId, accountInfo, next) {
+    this._dao.getBipsByChannelId(channelId, accountInfo, next);
+}
+
+/**
  * Given a transformSource lookup, retrieves the default transform for this
  * channels configured pod.action
  *
@@ -570,8 +591,6 @@ Channel.getTransformDefault = function(transformSource) {
     }
     return transform;
 }
-
-
 
 Channel.getRendererUrl = function(renderer, accountInfo) {
     var action = this.getPodTokens(),

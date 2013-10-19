@@ -62,7 +62,6 @@ function Dao(config, log, next) {
     for (var key in modelSrc) {
         this.registerModel(modelSrc[key]);
     }
-
 }
 
 util.inherits(Dao, DaoMongo);
@@ -148,7 +147,7 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
             this.parallel());
         },
         function collateResults(err, auth, options, domains, channels) {
-          
+
             if (err || null == auth || null == options) {
                 err = true;
                 resultModel = null;
@@ -210,7 +209,7 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
             }
 
             var accountInfo = new AccountInfo(resultModel);
-            
+
             next(err, accountInfo);
         }
     );
@@ -250,14 +249,14 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
                             authModel.username = acctResult.username;
                             authModel.name = acctResult.name;
                             authModel.is_admin = acctResult.is_admin;
-                            
-                            self.getAccountStruct(authModel, function(err, accountInfo) {                                
+
+                            self.getAccountStruct(authModel, function(err, accountInfo) {
                                 if (undefined == activeDomainId) {
                                     accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
                                 } else {
                                     accountInfo.user.activeDomainId = activeDomainId;
                                 }
-                                cb(false, accountInfo);                                
+                                cb(false, accountInfo);
                             });
                         } else {
                             cb(true, resultModel);
@@ -738,7 +737,7 @@ Dao.prototype.triggerAll = function(cb) {
                             next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
                         }, 1000);
                     }
-                    
+
 
                     /*
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger, function() {
@@ -911,6 +910,15 @@ DaoMongo.prototype.listChannelActions = function(type, accountInfo, callback) {
             }
         }
     });
+}
+
+Dao.prototype.getBipsByChannelId = function(channelId, accountInfo, next) {
+    var filter = {
+        owner_id : accountInfo.getId(),
+        _channel_idx : channelId
+    }
+
+    this.findFilter('bip', filter, next);
 }
 
 // --------------------------------------------------------------------- UTILITY

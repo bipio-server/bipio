@@ -5,6 +5,8 @@ var defs = {
     CONTENTTYPE_HTML            : 'text/html',
     CONTENTTYPE_JSON            : 'application/json',
     CONTENTTYPE_BINARY          : 'application/octet-stream',
+    CONTENTTYPE_CSV             : 'application/csv',
+    CONTENTTYPE_TSV             : 'application/tsv',
 
     RESPONSE_OK                 : 'OK',
     RESPONSE_INPROCESS          : 'IN_PROCESS',

@@ -151,6 +151,14 @@ var BipModel = {
 
     },
 
+    postRemove : function(accountInfo, cb) {
+        cb(false, this.getEntityName(), this);
+    },
+    
+    preRemove : function(id, accountInfo, cb) {
+        cb(false, this.getEntityName(), this)
+    },
+
     getIdValue: function() {
         return this.id;
     },

@@ -413,6 +413,12 @@ Bip.entitySchema = {
         type : String,
         renderable : false,
         writable : false
+    },
+    // channel secondary index
+    _channel_idx : {
+        type : Array,
+        renderable : false,
+        writable : false
     }
 };
 
@@ -541,29 +547,44 @@ Bip.exports = {
     }
 }
 
-
-
 /**
  * For any omitted attributes, use account defaults
  */
 Bip.preSave = function(accountInfo) {
-    var props = {
-        'domain_id' : accountInfo.getSetting('bip_domain_id'),
-        //        '_tz' : accountInfo.user.settings.timezone,
-        'type' :  accountInfo.getSetting('bip_type'),
-        'anonymize' :  accountInfo.getSetting('bip_anonymize'),
-        'config' :  accountInfo.getSetting('bip_config'),
-        'end_life' :  accountInfo.getSetting('bip_end_life'),
-        'hub' :  accountInfo.getSetting('bip_hub'),
-        'icon' : ''
-    };
+    if ('' !== this.id && undefined !== this.id) {    
+        var props = {
+            'domain_id' : accountInfo.getSetting('bip_domain_id'),
+            //        '_tz' : accountInfo.user.settings.timezone,
+            'type' :  accountInfo.getSetting('bip_type'),
+            'anonymize' :  accountInfo.getSetting('bip_anonymize'),
+            'config' :  accountInfo.getSetting('bip_config'),
+            'end_life' :  accountInfo.getSetting('bip_end_life'),
+            'hub' :  accountInfo.getSetting('bip_hub'),
+            'icon' : ''
+        };
+
+        app.helper.copyProperties(props, this, false);
+    }
 
     if (this.domain_id === '') {
         this.domain_id = undefined;
     }
 
-    app.helper.copyProperties(props, this, false);
+    // create channel index
+    var channels = [];
+    if ('trigger' === this.type && this.config.channel_id && '' !== this.config.channel_id) {
+        channels.push(this.config.channel_id);        
+    }
 
+    for (var k in this.hub) {
+        if (this.hub.hasOwnProperty(k)) {
+            if (this.hub[k].edges) {
+                channels = channels.concat(this.hub[k].edges);
+            }
+        }
+    }
+
+    this._channel_idx = app._.uniq(channels);
     return;
 };
 

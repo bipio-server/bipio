@@ -44,6 +44,7 @@
         "passport"      : ">=0.1.15",
         "inquirer"  : ">=0.2.4",
         "underscore" : ">=1.5.2",
+        "mkdirp"    : ">=0.3.5",
         "bip-pod"   : ">=0.0.1"
     },
     "devDependencies": {

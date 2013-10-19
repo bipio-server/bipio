@@ -29,6 +29,7 @@ var    bcrypt      = require('bcrypt'),
     path = require('path'),
     http    = require('http'),
     https    = require('https'),
+    mkdirp = require('mkdirp'),
     validator = require('validator'),
     djs = require('datejs');
 
@@ -363,48 +364,12 @@ var helper = {
     },
 
     /**
-     * Offers functionality similar to mkdir -p
-     *
-     * Asynchronous operation. No arguments other than a possible exception
-     * are given to the completion callback.
+     * @todo deprecate.  This was handrolled, just use the mkdirp package
      */
-    mkdir_p: function(path, mode, callback, position) {
-        mode = mode || 0777;
-        position = position || 0;
-        parts = require('path').normalize(path).split('/');
-
-        if (position >= parts.length) {
-            if (callback) {
-                return callback();
-            } else {
-                return true;
-            }
-        }
-
-        var directory = parts.slice(0, position + 1).join('/');
-        fs.stat(process.cwd() + directory, function(err) {
-            if (err === null) {
-                helper.mkdir_p(path, mode, callback, position + 1);
-            } else {
-                if (directory == '') {
-                    directory = '/';
-                }
-                // always make vs process root
-                fs.mkdir(process.cwd() + directory, mode, function (err) {
-                    if (err) {
-                        if (callback) {
-                            return callback(err);
-                        } else {
-                            console.log('throw' + err);
-                            throw err;
-                        }
-                    } else {
-                        helper.mkdir_p(path, mode, callback, position + 1);
-                    }
-                })
-            }
-        });
+    mkdir_p: function(path, mode, callback) {
+        mkdirp(path, mode, callback);
     },
+
     getDomain: function(domain, withProto, withPort) {
         var proto = (withProto) ? CFG.proto_public : '',
         extracted = tldtools.extract(proto + domain);
