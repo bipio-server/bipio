@@ -619,7 +619,6 @@ module.exports = {
         /**
          * Pass through an RPC call to a pod
          */
-
         express.all('/rpc/pod/:pod/:action/:method/:channel_id?', restAuthWrapper, function(req, res) {
             (function(req, res) {
                 var pod = dao.pod(req.params.pod);
