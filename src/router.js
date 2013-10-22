@@ -208,6 +208,7 @@ var restAction = function(req, res) {
     accountInfo = req.remoteUser,
     owner_id = accountInfo.getId(),
     resourceName = req.params.resource_name,
+    resourceId = req.params.id,
     subResourceId = req.params.subresource_id,
     postSave;
 
@@ -272,13 +273,15 @@ var restAction = function(req, res) {
         } else if (rMethod == 'GET') {
             var filter = {};
 
-            // @todo a little kludging for bip logs.  It's not rest but need to
-            // inherit listing characteristics
+            // handle sub-collections
             if ('bip' === resourceName && 'logs' === subResourceId) {
-                filter.bip_id = req.params.id;
-                resourceName = 'bip_log';
-
-                req.params.id = undefined;
+              filter.bip_id = req.params.id;
+              resourceName = 'bip_log';
+              req.params.id = undefined;
+            } else if ('channel' === resourceName && 'bips' === subResourceId) {
+              filter._channel_idx = resourceId;
+              resourceName = 'bip';
+              req.params.id = undefined;
             }
 
             if (undefined !== req.params.id) {
@@ -826,33 +829,7 @@ module.exports = {
 
                 } else {
                     res.send(response);
-                }
-            } else if (methodDomain == 'channel') {
-                // method/resource are flipped in this case
-                // /rpc/channel/{cid}/bips
-                if (resourceId == 'bips' && '' !== method) {
-                    var page_size = 10,
-                        page = 1,
-                        order_by = 'recent',
-                        filter = {};
-
-                    if (undefined != req.query.page_size) {
-                        page_size = parseInt(req.query.page_size);
-                    }
-
-                    if (undefined != req.query.page) {
-                        page = parseInt(req.query.page);
-                    }
-                    
-                    var filter = {
-                        owner_id : accountInfo.getId(),
-                        _channel_idx : method
-                    }
-
-                    dao.list('bip', undefined, page_size, page, order_by, filter, restResponse(res));
-                } else {
-                    res.send(400);
-                }
+                }            
             } else {
                 res.send(400);
             }
