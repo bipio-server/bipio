@@ -603,7 +603,7 @@ module.exports = {
         });
 
         /**
-         * Account Auth RPC, sets up oAuth for the selected pod, if the pod supports oAuth
+         * Account Auth RPC, sets up issuer_token (API keypair) for the selected pod, if the pod supports issuer_token
          */
         express.all('/rpc/issuer_token/:pod/:auth_method', restAuthWrapper, function(req, res) {
             var podName = req.params.pod,
@@ -617,11 +617,10 @@ module.exports = {
         });
 
         /**
-         * Pass through an RPC call to a channel pod
-         *
-         *
+         * Pass through an RPC call to a pod
          */
-        express.all('/rpc/pod/:pod/:action/:method/:channel_id?', function(req, res) {
+
+        express.all('/rpc/pod/:pod/:action/:method/:channel_id?', restAuthWrapper, function(req, res) {
             (function(req, res) {
                 var pod = dao.pod(req.params.pod);
                     action = req.params.action,
@@ -654,7 +653,6 @@ module.exports = {
                                     }
                                 });
                             } else {
-                                //pod.rpc(action, method, req, restResponse(res));
                                 var channel = dao.modelFactory('channel', {
                                     owner_id : accountResult.user.id,
                                     action : pod.getName() + '.' + action
