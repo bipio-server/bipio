@@ -799,59 +799,54 @@ Dao.prototype.expireBip = function(bip, prefs, next) {
  * Expires bips
  *
  */
+
 Dao.prototype.expireAll = function(next) {
   var self = this;
   // find all users
   this.findFilter('account_option', {}, function(err, results) {
     var ownerPref = {},
     numResults,
-    numProcessed = 0;
+    numProcessed = 0,
+    filter,
+    tzNowTime;
 
     if (!err && results) {
       for (var i = 0; i < results.length; i++) {
-        
-        (function(result, numResults) {
-          var tzNowTime = Math.floor(
-            new time.Date().setTimezone(result.timezone).getTime() / 1000
-          ),
-            filter = { 
-              paused : false,
-              $or: [ 
-                { "end_life.time": { $gt: 0, $lt: tzNowTime } }, 
-                { "end_life.imp": { $gt: 0 } } 
-              ], 
-              owner_id: result.owner_id };
+        tzNowTime = Math.floor(
+          new time.Date().setTimezone(results[i].timezone).getTime() / 1000
+        );
 
-          self.findFilter(
-            'bip',
-            filter,
-            function(err, results) {                    
-              numProcessed++;
-              if (results.length > 0) {
-                for (var i = 0; i < results.length; i++) {
-                  self.expireBip(
-                    results[i],
-                    {
-                      mode : result.bip_expire_behaviour
-                    },
-                    function expireTracker(err, bip) {
-                      if (numProcessed >= numResults || err) {
-                        next(err, '');
-                      }
-                    }
-                  );
-                }
-              } else if (err) {
-                next(err, '');
-              } else {
-                if (numProcessed > numResults) {
-                  next(false, '');
-                }
-              }
-              
+        filter = { 
+          paused : false,
+          $or: [ 
+            { "end_life.time": { $gt: 0, $lt: tzNowTime } }, 
+            { "end_life.imp": { $gt: 0 } } 
+          ], 
+          owner_id: results[i].owner_id
+        };
+        
+        if ('delete' === results[i].bip_expire_behaviour) {
+          self.removeFilter('bip', filter, function(err) {
+            if (err) {
+              self.log(err);              
             }
-            );
-        })(results[i], results.length);
+            numProcessed++;
+            if (numProcessed >= results.length) {
+              next(false, '');
+            }
+          });
+        } else if ('pause' === results[i].bip_expire_behaviour) {
+          self.updateColumn('bip', filter, { paused : true }, function(err) {            
+            if (err) {
+              self.log(err);              
+            }
+            numProcessed++;           
+            if (numProcessed >= results.length) {
+              next(false, '');
+            }
+          });
+        }
+
       }
     } else {
       cb(false, '');
