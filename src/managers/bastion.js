@@ -303,7 +303,11 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
                         }
 
                         if (bipResult.end_life) {
-                            var endTime = parseInt(bipResult.end_life.time * 1),
+                            // convert bip expiry to user timezone
+                            var endTime = Math.floor(
+                              new Date(
+                                parseInt(bipResult.end_life.time * 1)
+                              ).setTimezone(accountInfo.user.settings.timezone).getTime() / 1000),
                             endImp =  parseInt(bipResult.end_life.imp * 1),
                             now, expired = false;
 

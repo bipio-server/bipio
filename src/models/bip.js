@@ -48,6 +48,9 @@ function generate_random_base() {
 
 /**
  * Takes a time string
+ * 
+ * Doesn't make a user setting timezone translation here, if they change timezones
+ * it means system needs to update all of their bips.
  */
 function endLifeParse(end_life) {
     var seconds, d;

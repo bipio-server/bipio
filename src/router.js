@@ -341,11 +341,7 @@ function channelRender(ownerId, channelId, renderer, req, res) {
         if (err || !result) {
             res.send(404);
         } else {
-            var channel = dao.modelFactory('channel', result),
-                action = channel.getPodTokens(),
-                pod = dao.pod(action.pod);
-
-            channel.rpc(
+            dao.modelFactory('channel', result).rpc(
                 renderer,
                 req.query,
                 getClientInfo(req),
@@ -511,9 +507,9 @@ module.exports = {
                                                 res
                                             );
                                 restReponse = false;
-                            } else {
-                              GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);  
-                            }                            
+                            } 
+
+                            GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);  
                         }
 
                         if (restReponse) {
