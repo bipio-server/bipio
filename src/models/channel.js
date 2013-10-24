@@ -387,15 +387,25 @@ Channel.rpc = function(renderer, query, client, req, res) {
 
 
 Channel.pod = function(podName) {
-    var ret;
+    var ret, tokens, schema;
     if (podName) {
         if (undefined != pods[podName]) {
             ret = pods[podName];
         }
+    } else if (this.action && '' !== this.action) {
+      tokens = this.action.split('.');
+      ret = schema = pods[tokens[0]];
+      
     } else {
         ret = pods;
     }
     return ret;
+}
+
+Channel.hasRenderer = function(renderer) {
+  var tokens = this.action.split('.'),
+    pod = this.pod(tokens[0]);
+  return pod.isRenderer(tokens[1]);
 }
 
 Channel.getActionList = function() {

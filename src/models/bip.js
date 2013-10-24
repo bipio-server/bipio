@@ -179,7 +179,6 @@ Bip.entitySchema = {
 
                     if (channel) {
                         podTokens = channel.getPodTokens();
-
                         ok = userChannels.test(cid) && podTokens.isTrigger();
                     }
 
@@ -216,7 +215,35 @@ Bip.entitySchema = {
                 next(ok);
             },
             msg : 'Bad Config'
-        }]
+        },
+        {
+          validator : function(val, next) {
+            var ok = true, 
+              userChannels;
+
+            if (this.type == 'http' && val.invoke_renderer) {
+              ok = app.helper.isObject(val.invoke_renderer) 
+                && val.invoke_renderer.channel_id
+                && val.invoke_renderer.renderer;
+              
+              // check channel exists
+              if (ok) {
+                userChannels = this.getAccountInfo().user.channels,
+                ok = userChannels.test(val.invoke_renderer.channel_id);
+              }
+            
+              // check renderer exists
+              if (ok) {
+                var channel = userChannels.get(val.invoke_renderer.channel_id);                
+                ok = channel.hasRenderer(val.invoke_renderer.renderer);                
+              }
+            }
+            next(ok);
+            return;
+          },
+          msg : 'Invalid Channel ID/Renderer pair'
+        }
+      ]
     },
     hub: {
         type: Object,
@@ -263,21 +290,6 @@ Bip.entitySchema = {
                 transforms;
                 // check channels + transforms make sense
                 if (undefined != val.source) {
-
-                    // http can have dynamic exports, so inject them
-                    /*
-                        if (this.type == 'http' && this.config.exports) {
-                            var expLen = this.config.exports.length;
-                            if (expLen > 0) {
-                                for (var i = 0; i < expLen; i++) {
-                                    localExports[this.config.exports[i]] = {
-                                        type : 'string'
-                                    }
-                                }
-                            }
-                        }
-*/
-
                     for (var cid in val) {
                         if (val.hasOwnProperty(cid)) {
                             // check channel exists
@@ -307,7 +319,7 @@ Bip.entitySchema = {
         },
         {
             // ensure hub has a source edge
-            validator : function(hub, next) {
+            validator : function(hub, next) {              
                 next(hub.source && hub.source.edges.length > 0);                
             },
             msg : "Cannot Be Empty"

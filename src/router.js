@@ -331,7 +331,7 @@ var restAction = function(req, res) {
     return;
 }
 
-function channelRender(ownerId, channelId, req, res, responseWrapper) {
+function channelRender(ownerId, channelId, renderer, req, res) {
     var filter = {
                 owner_id: ownerId,
                 id : channelId
@@ -339,33 +339,19 @@ function channelRender(ownerId, channelId, req, res, responseWrapper) {
 
     dao.find('channel', filter, function(err, result) {
         if (err || !result) {
-            console.log(err);
             res.send(404);
         } else {
             var channel = dao.modelFactory('channel', result),
                 action = channel.getPodTokens(),
-                pod = dao.pod(action.pod),
-                schema = action.getSchema(),
-                renderer = req.params.renderer;
+                pod = dao.pod(action.pod);
 
             channel.rpc(
                 renderer,
                 req.query,
+                getClientInfo(req),
                 req,
-                (schema.renderers[renderer] && schema.renderers[renderer].type == 'stream') ? res : responseWrapper(res),
-                channel
+                res  
             );
-
-            /*
-            pod.rpc(
-                action.action,
-                renderer,
-                req.query,
-                req,
-                (schema.renderers[renderer] && schema.renderers[renderer].type == 'stream') ? res : responseWrapper(res),
-                channel
-            );
-            */
         }
     });
 }
@@ -520,14 +506,14 @@ module.exports = {
                                 channelRender(
                                                 bip.owner_id,
                                                 bip.config.invoke_renderer.channel_id,
+                                                bip.config.invoke_renderer.renderer,
                                                 req,
-                                                res,
-                                                restResponse
+                                                res
                                             );
                                 restReponse = false;
-                            }
-
-                            GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);
+                            } else {
+                              GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);  
+                            }                            
                         }
 
                         if (restReponse) {

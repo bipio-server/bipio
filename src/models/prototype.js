@@ -81,7 +81,6 @@ var BipModel = {
     // instance constructor
     init: function(accountInfo) {
         this.accountInfo = accountInfo;
-
         return this;
     },
 
