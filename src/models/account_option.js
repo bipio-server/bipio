@@ -253,7 +253,7 @@ AccountOption.entityValidators = {
 AccountOption.preSave = function(accountInfo, oldModel) {
     // if the model avatar entity is a tainted external URL, then normalize it and
     // fire off a job to pull down an updated URL
-    if ('' == this.avatar) {
+    if ('' == this.avatar && oldModel) {
         this.avatar = oldModel.avatar;
     }
 

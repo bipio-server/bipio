@@ -367,7 +367,9 @@ var helper = {
      * @todo deprecate.  This was handrolled, just use the mkdirp package
      */
     mkdir_p: function(path, mode, callback) {
-        mkdirp(path, mode, callback);
+        mkdirp(path, mode, function(err) {
+          callback(err, path);
+        });
     },
 
     getDomain: function(domain, withProto, withPort) {

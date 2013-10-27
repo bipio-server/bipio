@@ -456,6 +456,9 @@ Channel.postSave = function(accountInfo, next, isNew) {
         return;
     }
 
+    this.accountInfo = undefined;
+    accountInfo.user.channels.set(this);    
+
     // channels behave a little differently, they can have postponed availability
     // after creation, which the pod actions themselves might want to dictate.
     if (pods[podName].isOAuth()) {
@@ -477,7 +480,6 @@ Channel.postSave = function(accountInfo, next, isNew) {
     } else {
         pods[podName].setup(action, this, accountInfo, next);
     }
-
 
     if (isNew) {
         GLOBAL.app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'channels_total' } );

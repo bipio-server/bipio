@@ -323,6 +323,12 @@ Dao.prototype.userNotify = function(payload, next) {
 // -------------------------------- BIPS
 
 // --------------------------------- Bip helpers
+
+Dao.prototype.createBip = function(struct, accountInfo, next, postSave) {
+  var model = this.modelFactory('bip', app.helper.pasteurize(struct), accountInfo, true);  
+  this.create(model, next, accountInfo, postSave); 
+}
+
 Dao.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
   this.remove('bip', props.id, accountInfo, function(err, result) {
     if (err) {
