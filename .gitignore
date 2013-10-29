@@ -4,3 +4,4 @@ config/default.json
 config/staging.json
 config/production.json
 config/haraka
+data
