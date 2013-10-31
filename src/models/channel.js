@@ -71,18 +71,14 @@ Channel.entitySchema = {
         renderable: true,
         required : true,
         writable: true,
-        set : function(action) {
-            if (validAction(action)) {
-                var podAction = Channel.getPodTokens(action);
-                if (podAction.ok()) {
-                    this.config = pods[podAction.pod].importGetDefaults(podAction.action);
-                }
+        set : function(action) {            
+            var podAction = Channel.getPodTokens(action);
+            if (podAction.ok()) {
+                this.config = pods[podAction.pod].importGetDefaults(podAction.action);
             }
-
             return action;
         },
         "default" : "",
-
         validate : [
         {
             validator : BipModel.validators.notempty,

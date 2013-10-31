@@ -83,8 +83,12 @@ AccountInfo.prototype = {
   getId : function() {
     return this.user.id;
   },
+  // @todo refactor - naming makes no sense
   getActiveDomain : function() {
     return this.user.activeDomainId;
+  },
+  getActiveDomainObj : function() {
+    return this.user.domains.get(this.user.activeDomainId);
   },
   getDefaultDomain: function() {
     return this.user.domains.get(this.user.defaultDomainId);

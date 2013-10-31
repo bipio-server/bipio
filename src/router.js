@@ -344,7 +344,7 @@ function channelRender(ownerId, channelId, renderer, req, res) {
                 req.query,
                 getClientInfo(req),
                 req,
-                res  
+                res
             );
         }
     });
@@ -495,19 +495,19 @@ module.exports = {
                             exports._bip = bip;
 
                             // Renderer Invoke, send a repsonse
-                            if (bip.config.invoke_renderer) {
+                            if (bip.config.renderer) {
                                 // get channel
                                 channelRender(
                                                 bip.owner_id,
-                                                bip.config.invoke_renderer.channel_id,
-                                                bip.config.invoke_renderer.renderer,
+                                                bip.config.renderer.channel_id,
+                                                bip.config.renderer.renderer,
                                                 req,
                                                 res
                                             );
                                 restReponse = false;
-                            } 
+                            }
 
-                            GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);  
+                            GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);
                         }
 
                         if (restReponse) {
@@ -806,7 +806,7 @@ module.exports = {
 
                 } else {
                     res.send(response);
-                }            
+                }
             } else {
                 res.send(400);
             }
@@ -816,7 +816,50 @@ module.exports = {
             if (req.method == 'OPTIONS') {
                 res.send(200);
             } else {
+
+              // API has no default/catchall renderer
+              if (req.headers.host === CFG.domain_public) {
                 next();
+              } else {
+                // try to find a default renderer for this domain
+                dao.domainAuth(
+                  helper.getDomain(req.headers.host, true),
+                  true,
+                  function(err, accountResult) {
+                    if (err) {
+                      res.send(500);
+                    } else if (!accountResult) {
+                      next();
+                    } else {
+                      // find default renderer
+                      var ownerId = accountResult.getId(),
+                        domain = accountResult.getActiveDomainObj(),
+                        filter;
+
+                      if (app.helper.isObject(domain.renderer) && '' !== domain.renderer.channel_id) {
+                        filter = {
+                          id : domain.renderer.channel_id,
+                          owner_id : ownerId
+                        }
+                        dao.find('channel', filter, function(err, result) {
+                          if (err) {
+                            res.send(500);
+
+                          } else if (!result) {
+                            res.send(404);
+
+                          } else {
+                            req.remoteUser = accountResult;
+                            channelRender(result.owner_id, result.id, domain.renderer.renderer, req, res);
+                          }
+                        });
+                      } else {
+                        next();
+                      }
+                    }
+                  }
+                );
+              }
             }
         });
     }

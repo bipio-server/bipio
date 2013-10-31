@@ -81,6 +81,40 @@ Domain.entitySchema = {
             msg : "Can not overwrite a protected Domain"
         },
         ]
+    },
+    renderer : {
+      type : Object,
+      renderable : true,
+      writable : true,
+      validate : [
+        {
+          validator : function(val, next) {
+            var ok = true;
+            if (app.helper.isObject(val) && val.channel_id && '' !== val.channel_id) {
+              var channels = this.getAccountInfo().user.channels,
+                ok = userChannels.test(val.renderer.channel_id);
+            }
+            next(ok);
+
+          },
+          msg : "Renderer Channel Does Not Exist"
+        },
+        {
+          validator : function(val, next) {
+            var ok = true;
+            if (app.helper.isObject(val) && val.channel_id && '' !== val.channel_id) {
+              var channels = this.getAccountInfo().user.channels,
+                ok = (channels.test(val.renderer.channel_id) && val.renderer && '' !== val.renderer);
+                if (ok) {
+                  var channel = channels.get(val.renderer.channel_id);
+                  ok = channel.hasRenderer(val.renderer.renderer);
+                }
+            }
+            next(ok);
+          },
+          msg : "Renderer Does Not Exist"
+        }
+      ]
     }
 };
 

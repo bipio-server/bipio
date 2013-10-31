@@ -224,21 +224,21 @@ Bip.entitySchema = {
         var ok = true,
         userChannels;
 
-        if (this.type == 'http' && val.invoke_renderer) {
-          ok = app.helper.isObject(val.invoke_renderer)
-          && val.invoke_renderer.channel_id
-          && val.invoke_renderer.renderer;
+        if (this.type == 'http' && val.renderer) {
+          ok = app.helper.isObject(val.renderer)
+          && val.renderer.channel_id
+          && val.renderer.renderer;
 
           // check channel exists
           if (ok) {
             userChannels = this.getAccountInfo().user.channels,
-            ok = userChannels.test(val.invoke_renderer.channel_id);
+            ok = userChannels.test(val.renderer.channel_id);
           }
 
           // check renderer exists
           if (ok) {
-            var channel = userChannels.get(val.invoke_renderer.channel_id);
-            ok = channel.hasRenderer(val.invoke_renderer.renderer);
+            var channel = userChannels.get(val.renderer.channel_id);
+            ok = channel.hasRenderer(val.renderer.renderer);
           }
         }
         next(ok);
@@ -291,7 +291,7 @@ Bip.entitySchema = {
           userChannels = this.getAccountInfo().user.channels,
           numEdges,
           transforms,
-          hasRenderer = this.config.invoke_renderer && undefined !== this.config.invoke_renderer.channel_id;
+          hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
 
         // check channels + transforms make sense
         if (undefined != val.source) {
@@ -327,7 +327,7 @@ Bip.entitySchema = {
     {
       // ensure hub has a source edge
       validator : function(hub, next) {
-        var hasRenderer = this.config.invoke_renderer && undefined !== this.config.invoke_renderer.channel_id;
+        var hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
         next(hub.source && hub.source.edges.length > 0 || hasRenderer);
       },
       msg : "Cannot Be Empty"
@@ -604,10 +604,10 @@ Bip.preSave = function(accountInfo) {
     }
   }
 
-  if ('http' === this.type && app.helper.isObject(this.invoke_renderer)
-          && this.invoke_renderer.channel_id
-          && this.invoke_renderer.renderer) {
-    channels.push(this.invoke_renderer.channel_id);
+  if ('http' === this.type && app.helper.isObject(this.renderer)
+          && this.renderer.channel_id
+          && this.renderer.renderer) {
+    channels.push(this.renderer.channel_id);
   }
   
 

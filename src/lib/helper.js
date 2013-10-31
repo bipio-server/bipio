@@ -374,7 +374,7 @@ var helper = {
 
     getDomain: function(domain, withProto, withPort) {
         var proto = (withProto) ? CFG.proto_public : '',
-        extracted = tldtools.extract(proto + domain);
+        extracted = tldtools.extract(proto + domain);       
         return (withPort) ? extracted.url_tokens.host : extracted.url_tokens.hostname;
     },
 
