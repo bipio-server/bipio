@@ -1,7 +1,7 @@
 {
     "author":       "Michael Pearson (http://www.cloudspark.com.au)",
     "name":         "bipio",
-    "version":      "0.1.9",
+    "version":      "0.1.10",
     "scripts": {
         
         "start": "supervisor src/server.js"
@@ -19,7 +19,7 @@
     },
 
     "dependencies": {
-        "mongoose"      : ">=2.5.13",
+        "mongoose"      : "3.6.20",
         "express"       : ">=3.4.0",
         "async"         : "0.1.18",
         "config"        : "0.4.11",
@@ -32,7 +32,7 @@
         "bcrypt"        : ">= 0.5",
         "posix-getopt"  : "0.0.1",
         "clone"         : ">=0.1.0",
-        "validator"     : ">=0.4.2",
+        "validator"     : "1.5.1",
         "request"       : ">= 2.2.9",
         "commander"     : ">=2.0.0",
         "amqp"          : ">=0.1.3",
