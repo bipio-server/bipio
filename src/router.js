@@ -263,8 +263,7 @@ var restAction = function(req, res) {
             }
         } else if (rMethod == 'DELETE') {
             if (undefined != req.params.id) {
-                var model = dao.modelFactory(resourceName, req.body, accountInfo, true);
-                dao.remove(model, req.params.id, accountInfo, restResponse(res));
+                dao.remove(resourceName, req.params.id, accountInfo, restResponse(res));
             } else {
                 res.send(404);
             }

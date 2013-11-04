@@ -470,6 +470,13 @@ Channel.postSave = function(accountInfo, next, isNew) {
                         }
                     };
                     pods[podName].setup(action, channel, accountInfo, auth, next);
+                // not authenticated? Then we can't perform setup so drop this 
+                // channel
+                } else if (!oAuthToken) {
+                  self._dao.remove('channel', self.id, accountInfo, function() {
+                    next(true, 'channel', { message : 'Channel could not authenticate'}, 500);  
+                  });
+                  
                 }
             });
         })(this, podName, action, accountInfo, next);
@@ -482,14 +489,23 @@ Channel.postSave = function(accountInfo, next, isNew) {
     }
 }
 
-Channel.preRemove = function(id, accountInfo, next) {
-    var self = this;
+/**
+ * Checks whether any bips are pointed to this channel and if not,
+ * calls any pod teardowns.
+ */
+Channel.preRemove = function(id, accountInfo, next) { 
+    var tTokens = this.action.split('.'),
+      podName = tTokens[0], action = tTokens[1],
+      self = this;
+
     this.getBips(id, accountInfo, function(err, results) {
        // removing channel where it has bips, conflict
        if (!err && results && results.length > 0) {           
            next('Channel still has Bips attached', 'channel', { message : 'Channel still has Bips attached' }, 409);           
        } else {
-           next(err, 'channel', self)
+         pods[podName].teardown(action, self, accountInfo, function(err) {
+           next(err, 'channel', self);
+         });
        }
     });
 }

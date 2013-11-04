@@ -51,10 +51,10 @@
  *
  */
 var uuid        = require('node-uuid'),
-mongoose    = require('mongoose'),
-helper      = require('../lib/helper')
-time        = require('time');
-events = require('events'),
+  mongoose    = require('mongoose'),
+  helper      = require('../lib/helper')
+  time        = require('time');
+  events = require('events'),
   eventEmitter = new events.EventEmitter();
 
 function DaoMongo(config, log, next) {
@@ -587,13 +587,13 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
 DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
   var self = this;
 
-  var TargetMongoModelClass = mongoose.model(model.getEntityName());
+  var MongoClass = mongoose.model(model.getEntityName());
 
   var findObject = self.getObjectIdFilter({
     id : modelId
   }, accountInfo);
 
-  TargetMongoModelClass.findOne(findObject, function (err, result) {
+  MongoClass.findOne(findObject, function (err, result) {
     var loadedModel;
     if (err) {
       self._log('Error: get(): ' + err);
@@ -615,46 +615,52 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
   });
 };
 
+
 /**
- * Remove a model by model id
+ * Removes a model, invokes any teardowns
+ *
  *
  */
-DaoMongo.prototype.remove = function(model, modelId, accountInfo, next) {
-  var self = this;
+DaoMongo.prototype.remove = function(modelName, modelId, accountInfo, next) {
+  var self = this,
+    MongoClass = mongoose.model(modelName),
+    findObject = self.getObjectIdFilter({
+      id : modelId
+    }, accountInfo);
 
-  var modelName = (helper.isString(model) ? model : model.getEntityName());
-
-  var MongoClass = mongoose.model(modelName);
-
-  var findObject = self.getObjectIdFilter({
-    id : modelId
-  }, accountInfo);
-
-  model.preRemove(modelId, accountInfo, function(err, modelName, model, code) {
+  MongoClass.findOne(findObject, function (err, result) {   
     if (err) {
-      next(
-        self.errorParse(err, model),
-        modelName,
-        model,
-        code || self.errorMap(err)
-        );
-    } else {
-      //
-      MongoClass.remove(findObject, function (err, result) {
-        if (err || result == 0) {
-          self._log('Error: remove(): ' + err);
-          if (next) {
-            next(false, null);
-            return null;
-          }
-        }
+      self._log(err);
+      next(err);
 
-        if (next) {
-          next(false, modelName, {
-            'status' : 'OK'
+    } else if (!result) {
+      next(false, modelName, null);
+
+    } else {
+      var model = self.modelFactory(modelName, result, accountInfo);
+      model.preRemove(model.id, accountInfo, function(err, modelName, model, code) {
+        if (err) {          
+          next(
+              self.errorParse(err, model),
+              modelName,
+              model,
+              code || self.errorMap(err)
+            );
+        } else {
+          MongoClass.remove({ id : model.id }, function (err, result) {
+            if (err || result == 0) {
+              self._log(err);
+              if (next) {
+                next(false, null);
+                return null;
+              }
+            } else {
+              next(false, modelName, {
+                'status' : 'OK'
+              });
+            }
           });
         }
-        return result;
       });
     }
   });
