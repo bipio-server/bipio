@@ -84,7 +84,7 @@ supported services, please see the bip-pod-* repos via [https://github.com/bipio
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place.
 
 The server is currently distributed headless.  Sign in to [bipio](https://bip.io)
-to mount your local install from your browser under My Account > Mounts > Create Mount.
+to mount your local install from your browser under My Account > Mounts > Create Mount.  The BipIO website is not a first class citizen or tightly coupled to one particular endpoint, so you can mount your local install(s) even if behind a firewall.
 
 Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
 
