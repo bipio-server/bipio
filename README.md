@@ -15,7 +15,7 @@ The graph structures ([bips](https://bip.io/docs/resource/rest/bip)) allow you t
 They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing,
 message normalization, digital asset monetization, sharing secret or (n)-use messages, or really any kind of web based interprotocol communication.
 
-It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), or automate tasks, be a personal message hub etc.
+It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), automate tasks, or be a personal message hub etc.
 
 There are three flavors of Bip - public facing HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
 
