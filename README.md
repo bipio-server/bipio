@@ -31,8 +31,7 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes ([channels](https://bip.io/docs/resource/rest/channel)).
 Channels perform a discrete unit of work and emit a predictable result, where one channels export becomes the next adjacent channels transformed import.
-Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to  
-[RabbitMQ](http://www.rabbitmq.com/), where each atomic message can be independently processed by any subscribing node in the cluster.
+Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to [RabbitMQ](http://www.rabbitmq.com/), where each atomic message can be independently processed by any subscribing node in the cluster.
 
 Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' meaning they are free
 from other system concerns and can operate independently.  Channels can store, track, serve or transform content and messages as part of a pipeline.  Feel free to roll your 
