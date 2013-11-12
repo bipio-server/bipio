@@ -6,16 +6,15 @@ Welcome to the Bipio API Server.
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
 Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph) <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelining</a>
-API talking RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, such as integrating "cloud" API's or other web 
-based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept
-is similar.  The server has a small footprint which lets you create and automate an internet of things that matter to you, you
-can install it alongside your existing open source app or prototype, or your Rasberry Pi for example.
+API for creating ephemeral endpoints with RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, 
+such as integrating "cloud" based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call), producing or consuming digital content.  If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept
+is similar.  The server has a small footprint which lets you create and automate an internet of things that matter to you and
+those you want to connect with.  It could be installed alongside your existing open source app or prototype for out-of-band message transformation, queuing or social network fanout, even on your Rasberry Pi.
 
 The graph structures ([bips](https://bip.io/docs/resource/rest/bip)) allow you to transform content between adjacent nodes.  Bips can even create other bips.
 They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing,
 message normalization, digital asset monetization, sharing secret or (n)-use messages, or really any kind of web based interprotocol communication.
-If you have a demanding product manager, they'll probably love that you can flip a switch and deliver a feature-creep integration in seconds.
-It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), or automate tasks, be a personal message hub etc.
+It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), automate tasks, or be a personal message hub etc.
 
 There are three flavors of Bip - public facing HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
 
@@ -32,15 +31,14 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes ([channels](https://bip.io/docs/resource/rest/channel)).
 Channels perform a discrete unit of work and emit a predictable result, where one channels export becomes the next adjacent channels transformed import.
-Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to the blazingly 
-fast [RabbitMQ](http://www.rabbitmq.com/) broker, where each atomic message can be independently processed by any subscribing node in the cluster.
+Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to [RabbitMQ](http://www.rabbitmq.com/), and each atomic message can be independently processed by any subscribing node in the cluster.
 
 Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' meaning they are free
 from other system concerns and can operate independently.  Channels can store, track, serve or transform content and messages as part of a pipeline.  Feel free to roll your 
 own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
 then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
 
-The API is expressive and straight forward, there are only 2 1st-class resources - bips and channels.  For example, to create a basic email forwarder sitting infront of your actual
+The API has two 1st-class resources - bips and channels.  For example, to create a basic email repeater infront of your actual
 inbox :
 
 ###### Create a Channel
@@ -86,7 +84,7 @@ supported services, please see the bip-pod-* repos via [https://github.com/bipio
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place.
 
 The server is currently distributed headless.  Sign in to [bipio](https://bip.io)
-to mount your local install from your browser under My Account > Mounts > Create Mount.
+to mount your local install from your browser under My Account > Mounts > Create Mount.  The BipIO website is not a first class citizen or tightly coupled to one particular endpoint, so you can mount your local install(s) even if behind a firewall.
 
 Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
 
