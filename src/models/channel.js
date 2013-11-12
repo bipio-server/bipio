@@ -618,13 +618,18 @@ Channel.getTransformDefault = function(transformSource) {
 
 Channel.getRendererUrl = function(renderer, accountInfo) {
     var action = this.getPodTokens(),
-    rStruct,
-    ret;
+      rStruct,
+      ret,
+      cid = this.getIdValue();
 
     if (action.ok()) {
         rStruct = action.getSchema('renderers');
         if (rStruct[renderer]) {
-            ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/' + renderer;
+          if (cid) {
+            ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
+          } else {
+            ret = accountInfo.getDefaultDomainStr(true) + '/rpc/pod/' + action.name + '/' + action.action + '/' + renderer;
+          }            
         }
     }
 

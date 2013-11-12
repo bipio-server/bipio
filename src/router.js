@@ -603,19 +603,21 @@ module.exports = {
                 var pod = dao.pod(req.params.pod);
                     action = req.params.action,
                     method = req.params.method,
-                    cid = req.params.channel_id;
+                    cid = req.params.channel_id,
+                    accountInfo = req.remoteUser;
 
                 if (pod && action && method) {
-                    dao.domainAuth(helper.getDomain(req.headers.host, true), true, function(err, accountResult) {
-                        if (err || !accountResult) {
+                    //dao.domainAuth(helper.getDomain(req.headers.host, true), true, function(err, accountInfo) {
+                    /*
+                        if (err || !accountInfo) {
                             app.logmessage(err, 'error');
                             res.send(403);
-                        } else {
-                            req.remoteUser = accountResult;
+                        } else {*/
+                            req.remoteUser = accountInfo;
 
                             if (cid) {
                                 var filter = {
-                                    owner_id: accountResult.id,
+                                    owner_id: accountInfo.id,
                                     id : cid
                                 };
 
@@ -632,7 +634,7 @@ module.exports = {
                                 });
                             } else {
                                 var channel = dao.modelFactory('channel', {
-                                    owner_id : accountResult.user.id,
+                                    owner_id : accountInfo.user.id,
                                     action : pod.getName() + '.' + action
                                 });
 
@@ -644,8 +646,8 @@ module.exports = {
                                     res
                                 );
                             }
-                        }
-                    });
+                        //}
+                    //});
                 } else {
                     res.send(404);
                 }
