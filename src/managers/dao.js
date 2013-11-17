@@ -724,7 +724,7 @@ Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
  * Trigger all trigger bips
  *
  */
-Dao.prototype.triggerAll = function(cb) {
+Dao.prototype.triggerAll = function(next) {
   var self = this,
   filter = {
     type : 'trigger',
@@ -735,33 +735,21 @@ Dao.prototype.triggerAll = function(cb) {
     if (!err && results && results.length) {
       numResults = results.length;
       numProcessed = 0;
-      // @todo this is some ghetto shit. Hope we can get these triggers off fast enough.
-      for (var i = 0; i < numResults; i++) {
-        // fire off a bip trigger job to rabbit
-        (function(trigger, numResults, numProcessed, next) {
+      for (var i = 0; i < numResults; i++) {       
+        (function(trigger) {
           app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger);
           numProcessed++;
 
           app.logmessage('DAO:Trigger:' + trigger.id + ':' + numProcessed + ':' + numResults);
-          if (numProcessed == numResults - 1) {
+          
+          if (numProcessed >= (numResults - 1)) {
             // the amqp lib has stopped giving us queue publish acknowledgements?
             setTimeout(function() {
               next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
             }, 1000);
           }
-
-
-        /*
-                    app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger, function() {
-                        numProcessed++;
-                        app.logmessage('DAO:Trigger:' + trigger.id + ':Complete');
-                        if (numProcessed == numResults) {
-                            next(false, 'DAO:Trigger:' + numProcessed + ' Triggers Fired');
-                        }
-                    });
-                    */
-        })(results[i], numResults, numProcessed, cb);
-      }
+        })(results[i]);
+      }      
     } else {
       cb(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
     }

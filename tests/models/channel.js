@@ -112,3 +112,7 @@ describe('channel dao', function() {
         );
     });
 });
+
+describe('channel transforms', function() {
+  
+});
