@@ -412,6 +412,12 @@ Bip.entitySchema = {
     writable: true,
     "default" : ""
   },
+  app_id : {
+    type: String,
+    renderable: true,
+    writable: true,
+    "default" : ""
+  },
   owner_id : {
     type: String,
     index: true,
