@@ -108,7 +108,21 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
 during the `make install` script to get a basically sane server running that you can play with.
 
-A sample upstart script is supplied in config/upstart_bip.conf -- suggest using upstart with monit
+For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
+/etc/init and reconfigured to suit your environment.  If you'd like it managed by Monit...
+
+### Monit Config (/etc/monit/config.d/bipio.conf)
+
+    #!monit
+    set logfile /var/log/monit.log
+
+    check process node with pidfile "/var/run/bip.pid"
+        start program = "/sbin/start bipio"
+        stop program  = "/sbin/stop bipio"
+        if failed port 5000 protocol HTTP
+            request /
+            with timeout 10 seconds
+            then restart
 
 To automatically expire Bips and Fire their triggers, create cron's like so
 
