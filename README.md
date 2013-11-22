@@ -111,8 +111,9 @@ during the `make install` script to get a basically sane server running that you
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
 /etc/init and reconfigured to suit your environment.  If you'd like it managed by Monit...
 
-### Monit Config (/etc/monit/config.d/bipio.conf)
+### Monit Config
 
+/etc/monit/config.d/bipio.conf
     #!monit
     set logfile /var/log/monit.log
 
