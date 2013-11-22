@@ -126,7 +126,8 @@ For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf
             with timeout 10 seconds
             then restart
 
-To automatically expire Bips and Fire their triggers, create cron's like so
+
+... and to automatically expire Bips and Fire their triggers, create cron's like so
 
 ### Expire Runner
 
