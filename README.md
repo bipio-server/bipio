@@ -110,6 +110,32 @@ during the `make install` script to get a basically sane server running that you
 
 A sample upstart script is supplied in config/upstart_bip.conf -- suggest using upstart with monit
 
+To automatically expire Bips and Fire their triggers, create cron's like so
+
+### Expire Runner
+
+
+    0 * * * * {username} /path/to/bipio/tools/expire-runner.sh
+
+The server comes with the 'bip-expire.js' hook but not the shell script at this stage.  You'll need to create the
+cron to match your environment (shell, install path, logging path).  Here's a sample
+
+    #!/bin/bash
+    export NODE_ENV=production
+    export HOME="/path/to//bipio"
+    cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/cron_server.log
+
+### Trigger Runner
+
+    */15 * * * * {username} /path/to/bipio/tools/trigger-runner.sh
+
+Similarly for bip-trigger.js
+
+    #!/bin/bash
+    export NODE_ENV=production
+    export HOME="/path/to//bipio"
+    cd $HOME (date && node ./tools/bip-trigger.js ) 2>&1 >> /path/to/bipio/logs/trigger.log
+
 ## Documentation
 
 General API spec and tutorials can be found at https://bip.io.  For server setup and configuration guides,
