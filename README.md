@@ -121,8 +121,9 @@ The server comes with the 'bip-expire.js' hook but not the shell script at this 
 cron to match your environment (shell, install path, logging path).  Here's a sample
 
     #!/bin/bash
+    # expire-runner.sh
     export NODE_ENV=production
-    export HOME="/path/to//bipio"
+    export HOME="/path/to/bipio"
     cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/cron_server.log
 
 ### Trigger Runner
@@ -132,6 +133,7 @@ cron to match your environment (shell, install path, logging path).  Here's a sa
 Similarly for bip-trigger.js
 
     #!/bin/bash
+    # trigger-runner.sh
     export NODE_ENV=production
     export HOME="/path/to//bipio"
     cd $HOME (date && node ./tools/bip-trigger.js ) 2>&1 >> /path/to/bipio/logs/trigger.log
