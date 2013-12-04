@@ -133,7 +133,6 @@ Feel free to fork this repository and create pods as you need, and please help m
 Pull Requests, issues, feature requests, integration ideas, general communication gladly accepted.
 
 ## Requirements
--
 
   - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
   - [MongoDB Server](http://www.mongodb.org) **data store**
