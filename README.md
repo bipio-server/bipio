@@ -13,8 +13,8 @@ HTTP Basic Authentication.
 
 If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept is similar.  The server has a small footprint 
 which lets you create and automate an internet of things that matter to you.   It can be installed alongside 
-your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing or social network fanout, 
-even on your Rasberry Pi.
+your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout
+or whatever you like, even on your Rasberry Pi.
 
 The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip),are unique in they allow you to transform 
 content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.
