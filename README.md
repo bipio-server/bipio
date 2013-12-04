@@ -95,7 +95,7 @@ POST /rest/bip
           "subject" : "[%source#subject%]",
           "body_html" : "[%source#body_html%]",
           "body_text" : "[%source#body_text%]",
-          "reply_to" : "[%_client#repr%]",
+          "reply_to" : "[%source#reply_to%]",
         }
       },
      _note : "^^ Transforms aren't mandatory, they're just here for illustration - you really just need the edge"
@@ -116,6 +116,8 @@ RESPONSE
 ```
 
 And thats it. We actually have a little [chrome extension](http://goo.gl/ZVIkfr) which does just this for web based email forms!
+For extra credit, I could store attachments arriving on that email address straight to dropbox by just adding an edge - check out
+how in the [cookbook](https://github.com/bipio-server/bipio/wiki/Email-Repeater,-Dropbox-Attachment-Save)
 
 ### please note
 
