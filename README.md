@@ -54,6 +54,7 @@ calls or 'render' channels without them having to be on a 'bip'.  Channels can t
 content and messages as part of a pipeline or in autonomous isolation.  For an authoritative list of officially
 supported services, please see the bip-pod-* repos via [https://github.com/bipio-server](https://github.com/bipio-server) or
 check the [website](https://bip.io/docs/pods) for quick at-a-glance channel definitions that you can use out of the box.  
+
 Keep in mind that Pods and Channels are modular, so feel free to create your own.  As long as they honor the basic pod 
 interface, your custom Pods should drop right in!
 
@@ -124,13 +125,12 @@ under My Account > Mounts > Create Mount.  The BipIO website is not a first clas
 endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
 middleware and distributed with Bipio at a later date.
 
+Feel free to fork this repository and create pods as you need, and please help make 
+[the community](https://groups.google.com/forum/#!forum/bipio-api) a better place. Pull Requests, issues, feature requests, 
+integration ideas, general communication gladly accepted.
+
 Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this 
 readme for important info.
-
-Feel free to fork this repository and create pods as you need, and please help make 
-[the community](https://groups.google.com/forum/#!forum/bipio-api) a better place.
-
-Pull Requests, issues, feature requests, integration ideas, general communication gladly accepted.
 
 ## Requirements
 
