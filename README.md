@@ -61,7 +61,7 @@ interface, your custom Pods should drop right in!
 ##### super easy
 
 Here's a quick example, lets say I have a private email address that I want to protect or obfuscate - I could use an SMTP bip to
-create a temporary repeater which will forward emails for 1 day only.  Here's how :
+create a temporary relay which will forward emails for 1 day only.  Here's how :
 
 Create my destination email address with an SMTP Forwarder Channel :
 ```
@@ -80,7 +80,7 @@ RESPONSE
 }
 ```
 ... I can now use that channel anywhere, its a permanent fixture in the system until explicitly deleted.  So now
-to create the repeater, I can create a simple SMTP bip with a single edge pointing to the 'Helo FuBa' channel :
+to create the relay, I can create a simple SMTP bip with a single edge pointing to the 'Helo FuBa' channel :
 
 
 ```
