@@ -38,7 +38,7 @@ Bips and Channels are 1st class API resources.
 
 Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) 
 across nodes ([channels](https://bip.io/docs/resource/rest/channel)) along with certain other metadata which defines the flavor,
-lifespan and overall characteristics of the endpoint or trigger.  You can find more info in 
+lifespan and overall characteristics of the endpoint or trigger.  It's a fairly large topic, find out more in 
 [the wiki](https://github.com/bipio-server/bipio/wiki/Bips).
 
 Channels are reusable entities which perform a discrete unit of work and emit a predictable result.  The collection of channels
