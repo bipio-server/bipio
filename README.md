@@ -5,18 +5,21 @@ Welcome to the Bipio API Server.
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
-Bipio is a [graph](http://en.wikipedia.org/wiki/Directed_graph) <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelining</a>
-API for creating ephemeral endpoints with RESTful JSON, where each node in your graph is responsible for performing a discrete unit of work, 
-such as integrating "cloud" based [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call), producing or consuming digital content.  If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept
-is similar.  The server has a small footprint which lets you create and automate an internet of things that matter to you and
-those you want to connect with.  It could be installed alongside your existing open source app or prototype for out-of-band message transformation, queuing or social network fanout, even on your Rasberry Pi.
+Bipio is a highly parallel nodejs based API integration framework which uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
+based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> to create ephemeral endpoints 
+and complex automated workflows and message distribution hubs using 3rd party API's and
+[RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  It's a RESTful JSON API which supports account level namespacing and
+HTTP Basic Authentication.
 
-The graph structures ([bips](https://bip.io/docs/resource/rest/bip)) allow you to transform content between adjacent nodes.  Bips can even create other bips.
-They can be reconfigured dynamically without requiring changes to the connecting client, ideal for rapid prototyping, A/B testing,
-message normalization, digital asset monetization, sharing secret or (n)-use messages, or really any kind of web based interprotocol communication.
-It can handle your email (like this [Chrome Extension](http://goo.gl/ZVIkfr) does), automate tasks, or be a personal message hub etc.
+If you're familiar with Yahoo Pipes, IFTTT or Zapier, the concept is similar.  The server has a small footprint 
+which lets you create and automate an internet of things that matter to you.   It can be installed alongside 
+your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing or social network fanout, 
+even on your Rasberry Pi.
 
-There are three flavors of Bip - public facing HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
+The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip),are unique in they allow you to transform 
+content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.
+
+There are three flavors of Bip - HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
 
  - dynamic or automatically derived naming
  - pausing or self-destructing after a certain time or impressions volume
@@ -29,68 +32,108 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
-Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) across nodes ([channels](https://bip.io/docs/resource/rest/channel)).
-Channels perform a discrete unit of work and emit a predictable result, where one channels export becomes the next adjacent channels transformed import.
-Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to [RabbitMQ](http://www.rabbitmq.com/), and each atomic message can be independently processed by any subscribing node in the cluster.
+#### bips & channels
 
-Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' meaning they are free
-from other system concerns and can operate independently.  Channels can store, track, serve or transform content and messages as part of a pipeline.  Feel free to roll your 
-own favorite integration by getting started with [Pods and Channels](https://github.com/bipio-server/bipio/wiki/Pods-and-Channels),
-then jump in and [Install Your First Pod](https://github.com/bipio-server/bipio/wiki/Getting-Started-:--Installing-Pods).
+Bips and Channels are 1st class API resources.
 
-The API has two 1st-class resources - bips and channels.  For example, to create a basic email repeater infront of your actual
-inbox :
+Bips are configured by defining a graph ([hub](https://bip.io/docs/resource/rest/bip#resource_rest_bip_hubs)) 
+across nodes ([channels](https://bip.io/docs/resource/rest/channel)) along with certain other metadata which defines the flavor,
+lifespan and overall characteristics of the endpoint or trigger.  You can find more info in 
+[the wiki](https://github.com/bipio-server/bipio/wiki/Bips).
 
-###### Create a Channel
+Channels are reusable entities which perform a discrete unit of work and emit a predictable result.  The collection of channels
+you create becomes something like a swatch from which you can orchestrate complex API workflows.  When dropped onto a bip's graph,
+a channels export then becomes the next adjacent channels transformed import.
+Parallel delivery is handled by an [AMQP](http://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol) transport to 
+[RabbitMQ](http://www.rabbitmq.com/), and every edge of a bips graph can be independently processed by any subscribing 
+node in the cluster.
+
+Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' 
+meaning they are free from other system concerns and can operate independently.  For example you can pass authenticated API 
+calls or 'render' channels without them having to be on a 'bip'.  Channels can therefore store, track, serve or transform 
+content and messages as part of a pipeline or in autonomous isolation.  For an authoritative list of officially
+supported services, please see the bip-pod-* repos via [https://github.com/bipio-server](https://github.com/bipio-server) or
+check the [website](https://bip.io/docs/pods) for quick at-a-glance channel definitions that you can use out of the box.  
+Keep in mind that Pods and Channels are modular, so feel free to create your own.  As long as they honor the basic pod 
+interface, your custom Pods should drop right in!
+
+##### super easy
+
+Here's a quick example, lets say I have a private email address that I want to protect or obfuscate - I could use an SMTP bip to
+create a temporary repeater which will forward emails for 1 day only.  Here's how :
+
+Create my destination email address with an SMTP Forwarder Channel :
 ```
 POST /rest/channel
 {
- action : 'email.smtp_forward',
+ action : "email.smtp_forward",
+ name : "Helo FuBa"
  config : {
-   'rcpt_to' : 'foo@bar.net'
+   rcpt_to : "foo@bar.net"
  }
 }
 
 RESPONSE
 {
- id : '{email channel id}'
+ id : "206fe27f-5c98-11e3-8ad3-c860002bd1a4"
 }
 ```
+... I can now use that channel anywhere, its a permanent fixture in the system until explicitly deleted.  So now
+to create the repeater, I can create a simple SMTP bip with a single edge pointing to the 'Helo FuBa' channel :
 
-###### And then with that email channel,  place it onto an 'smtp' bip.
+
 ```
 POST /rest/bip
 {
- type : 'smtp',
+ type : "smtp",
  hub : {
-   'source' : {
-      edges : [ '{email channel id}' ]
+   "source" : {
+      edges : [ "206fe27f-5c98-11e3-8ad3-c860002bd1a4" ],
+      transforms : {
+        "206fe27f-5c98-11e3-8ad3-c860002bd1a4" : {
+          "subject" : "[%source#subject%]",
+          "body_html" : "[%source#body_html%]",
+          "body_text" : "[%source#body_text%]",
+          "reply_to" : "[%_client#repr%]",
+        }
+      },
+     _note : "^^ Transforms aren't mandatory, they're just here for illustration - you really just need the edge"
    }
- }
+ },
+ end_life : {
+   imp : 0,
+   time : '+1d'
+ },
+ note : "No name, no problem.  Let the system generate something short and unique"
 }
 
 RESPONSE
 {
- name : 'lcasKQosWire22'
- _repr : 'lcasKQosWire22@yourdomain.net'
+ name : "lcasKQosWire22"
+ _repr : "lcasKQosWire22@yourdomain.net"
 }
-
 ```
 
-And thats it.
+And thats it. We actually have a little [chrome extension](http://goo.gl/ZVIkfr) which does just this for web based email forms!
 
-The BipIO server software is the basic framework for processing bips and their delivery graphs.  For an authoritative list of officially
-supported services, please see the bip-pod-* repos via [https://github.com/bipio-server](https://github.com/bipio-server) and please help make 
+### please note
+
+The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
+For graphical representation of your bips, sign in to [bipio](https://bip.io) to mount your local install from your browser 
+under My Account > Mounts > Create Mount.  The BipIO website is not a first class citizen or tightly coupled to one particular 
+endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
+middleware and distributed with Bipio at a later date.
+
+Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this 
+readme for important info.
+
+Feel free to fork this repository and create pods as you need, and please help make 
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place.
 
-The server is currently distributed headless.  Sign in to [bipio](https://bip.io)
-to mount your local install from your browser under My Account > Mounts > Create Mount.  The BipIO website is not a first class citizen or tightly coupled to one particular endpoint, so you can mount your local install(s) even if behind a firewall.
-
-Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this readme for important info.
+Pull Requests, issues, feature requests, integration ideas, general communication gladly accepted.
 
 ## Requirements
 -
-
   - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
   - [MongoDB Server](http://www.mongodb.org) **data store**
   - [RabbitMQ](http://www.rabbitmq.com) **message broker**
