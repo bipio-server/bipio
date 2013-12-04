@@ -134,6 +134,7 @@ Pull Requests, issues, feature requests, integration ideas, general communicatio
 
 ## Requirements
 -
+
   - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
   - [MongoDB Server](http://www.mongodb.org) **data store**
   - [RabbitMQ](http://www.rabbitmq.com) **message broker**
