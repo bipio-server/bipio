@@ -21,7 +21,7 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var baseConverter = require('base-converter'),
-djs = require('datejs'),
+djs = require('datejs'),en
 BipModel = require('./prototype.js').BipModel,
 Bip = Object.create(BipModel);
 
@@ -380,7 +380,14 @@ Bip.entitySchema = {
           );
       },
       msg : 'Bad Expiry Structure'
-    }]
+    },
+    {
+      validator : function(val, next) {
+        next(val.action && /^(pause|delete)$/i.test(val.action) );          
+      },
+      msg : 'Expected pause" or "delete"'
+    }
+    ]
   },
   paused: {
     type: Boolean,
@@ -590,6 +597,10 @@ Bip.preSave = function(accountInfo) {
     };
 
     app.helper.copyProperties(props, this, false);
+  }
+
+  if (!this.end_life.action || '' === this.end_life.action) {
+    this.end_life.action = accountInfo.getSetting('bip_expire_behaviour');
   }
 
   if (this.domain_id === '') {

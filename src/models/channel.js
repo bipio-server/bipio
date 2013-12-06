@@ -28,157 +28,163 @@
  *
  */
 var BipModel = require('./prototype.js').BipModel,
-    helper = require('../lib/helper');
+helper = require('../lib/helper');
 
 var Channel = Object.create(BipModel);
 
 Channel.entityName = 'channel';
 Channel.entitySchema = {
-    id: {
-        type: String,
-        index: true,
-        renderable: true,
-        writable: false
+  id: {
+    type: String,
+    index: true,
+    renderable: true,
+    writable: false
+  },
+
+  owner_id : {
+    type: String,
+    index: true,
+    renderable: false,
+    writable: false
+  },
+
+  name: {
+    type: String,
+    renderable: true,
+    required : true,
+    writable: true,
+    "default" : "",
+    validate : [
+    {
+      validator : BipModel.validators.notempty,
+      msg : "Cannot be empty"
     },
-
-    owner_id : {
-        type: String,
-        index: true,
-        renderable: false,
-        writable: false
-    },
-
-    name: {
-        type: String,
-        renderable: true,
-        required : true,
-        writable: true,
-        "default" : "",
-        validate : [
-        {
-            validator : BipModel.validators.notempty,
-            msg : "Cannot be empty"
-        },
-        {
-            validator : BipModel.validators.len_64,
-            msg : "64 characters max"
-        }
-        ]
-    },
-
-    action: {
-        type: String,
-        renderable: true,
-        required : true,
-        writable: true,
-        set : function(action) {            
-            var podAction = Channel.getPodTokens(action);
-            if (podAction.ok()) {
-                this.config = pods[podAction.pod].importGetDefaults(podAction.action);
-            }
-            return action;
-        },
-        "default" : "",
-        validate : [
-        {
-            validator : BipModel.validators.notempty,
-            msg : "Cannot be empty"
-        },
-
-        {
-            validator : function(val, next) {
-                next( validAction(val) );
-            },
-            msg : 'Invalid Pod or Action'
-        },
-
-        {
-            validator : function(val, next) {
-                var ok = false;
-                if (validAction(this.action)) {
-                    // validate the config for this action
-                    ok = true;
-                }
-                next(ok);
-            },
-            msg : 'Action Configuration Error'
-        }
-        ]
-    },
-
-    config:  {
-        type: Object,
-        renderable: true,
-        required : true,
-        writable: true,
-        "default" : {},
-        validate : [
-        {
-            validator : function(val, next) {
-                next(true);
-                return;
-
-                var ok = false;
-                if (validAction(this.action)) {
-                    // validate the config for this action
-                    ok = true;
-                }
-                next(ok);
-            },
-            msg : 'Invalid Config'
-        }
-        ]
-    },
-
-    _available : {
-        type: Boolean,
-        renderable: true,
-        writable: false,
-        "default" : true
-    },
-    note: {
-        type: String,
-        renderable: true,
-        writable: true,
-        validate : [
-        {
-            validator : BipModel.validators.max_text,
-            msg : "Text is too long, 1kb max"
-        }
-        ]
-    },
-    created : {
-        type: String,
-        renderable: true,
-        writable: false
+    {
+      validator : BipModel.validators.len_64,
+      msg : "64 characters max"
     }
+    ]
+  },
+
+  action: {
+    type: String,
+    renderable: true,
+    required : true,
+    writable: true,
+    set : function(action) {            
+      var podAction = Channel.getPodTokens(action);
+      if (podAction.ok()) {
+        this.config = pods[podAction.pod].importGetDefaults(podAction.action);
+      }
+      return action;
+    },
+    "default" : "",
+    validate : [
+    {
+      validator : BipModel.validators.notempty,
+      msg : "Cannot be empty"
+    },
+
+    {
+      validator : function(val, next) {
+        next( validAction(val) );
+      },
+      msg : 'Invalid Pod or Action'
+    },
+
+    {
+      validator : function(val, next) {
+        var ok = false;
+        if (validAction(this.action)) {
+          // validate the config for this action
+          ok = true;
+        }
+        next(ok);
+      },
+      msg : 'Action Configuration Error'
+    }
+    ]
+  },
+
+  config:  {
+    type: Object,
+    renderable: true,
+    required : true,
+    writable: true,
+    "default" : {},
+    validate : [
+    {
+      validator : function(val, next) {
+        next(true);
+        return;
+
+        var ok = false;
+        if (validAction(this.action)) {
+          // validate the config for this action
+          ok = true;
+        }
+        next(ok);
+      },
+      msg : 'Invalid Config'
+    }
+    ]
+  },
+
+  _available : {
+    type: Boolean,
+    renderable: true,
+    writable: false,
+    "default" : true
+  },
+  note: {
+    type: String,
+    renderable: true,
+    writable: true,
+    validate : [
+    {
+      validator : BipModel.validators.max_text,
+      msg : "Text is too long, 1kb max"
+    }
+    ]
+  },
+  icon : {
+    type: String,
+    renderable: true,
+    writable: true,
+    "default" : ""
+  },
+  created : {
+    type: String,
+    renderable: true,
+    writable: false
+  }
 };
 
 Channel.compoundKeyContraints = {
-    "owner_id" : 1,
-    "name" : 1,
-    "action" : 1
+  "owner_id" : 1,
+  "name" : 1,
+  "action" : 1
 };
 
 function validAction(value) {
-    var ok = false;
-    ok = (undefined != value && value != '' && value != 0);
-    if (ok) {
-        var tTokens = value.split('.');
-        var pod = tTokens[0], podAction = tTokens[1];
-        ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
-    }
-    return ok;
+  var ok = false;
+  ok = (undefined != value && value != '' && value != 0);
+  if (ok) {
+    var tTokens = value.split('.');
+    var pod = tTokens[0], podAction = tTokens[1];
+    ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
+  }
+  return ok;
 }
 
 // Pod Binder
 Channel.staticChildInit = function() {
-    // initialize each channel pod
-    for (var idx in pods) {
-        pods[idx].init(this.getDao(), CFG.pods[idx] );
-    }
+  // initialize each channel pod
+  for (var idx in pods) {
+    pods[idx].init(this.getDao(), CFG.pods[idx] );
+  }
 
-    return this;
+  return this;
 };
 
 /**
@@ -194,73 +200,73 @@ Channel.staticChildInit = function() {
  *
  */
 Channel._transform = function(adjacentExports, transforms, client, bip) {
-    var self = this,
-    pod = this.getPodTokens();
-    actionImports = pods[pod.name].getImports(pod.action), // expected imports
-    resolvedImports = {}, // final imports for the channel
-    localKey = 'local#'
-    //
-    // flattens adjacent exports so that we have a dot notation form to directly
-    // matched against.
-    flattenedExports = helper.flattenObject(adjacentExports, '#');
+  var self = this,
+  pod = this.getPodTokens();
+  actionImports = pods[pod.name].getImports(pod.action), // expected imports
+  resolvedImports = {}, // final imports for the channel
+  localKey = 'local#'
+  //
+  // flattens adjacent exports so that we have a dot notation form to directly
+  // matched against.
+  flattenedExports = helper.flattenObject(adjacentExports, '#');
 
-    // copy action Imports into resolved Imports, with empty values or exact
-    // matches
-    for (var localImport in actionImports) {
-        resolvedImports[localImport] = (flattenedExports[localKey + localImport] ?
-            flattenedExports[localKey + localImport] :
-            ''
-            );
-    }
+  // copy action Imports into resolved Imports, with empty values or exact
+  // matches
+  for (var localImport in actionImports) {
+    resolvedImports[localImport] = (flattenedExports[localKey + localImport] ?
+      flattenedExports[localKey + localImport] :
+      ''
+      );
+  }
 
-    if (Object.keys(transforms).length) {
-        var key;
-        var tplPattern;
+  if (Object.keys(transforms).length) {
+    var key;
+    var tplPattern;
 
-        for (var dst in transforms) {
-            //key = transforms[dst][i];
-            key = transforms[dst];
+    for (var dst in transforms) {
+      //key = transforms[dst][i];
+      key = transforms[dst];
 
-            if (undefined === resolvedImports[dst]) {
-                resolvedImports[dst] = '';
-            }
+      if (undefined === resolvedImports[dst]) {
+        resolvedImports[dst] = '';
+      }
 
-            // match explicit key
-            if (flattenedExports[key]) {
-                importVal = flattenedExports[key];
+      // match explicit key
+      if (flattenedExports[key]) {
+        importVal = flattenedExports[key];
 
-            // match 'local. derived key'
-            } else if (flattenedExports[localKey + key]) {
-                importVal = flattenedExports[localKey + key];
+      // match 'local. derived key'
+      } else if (flattenedExports[localKey + key]) {
+        importVal = flattenedExports[localKey + key];
 
-            } else {
+      } else {
 
-                // no exact match? Try and template it. Template engines are
-                // too insecure, so we roll a basic pattern match only for
-                // [% attribute %] or [% _bip.attribute %] or whatever
-                for (var exp in flattenedExports) {
-                    // if local expressin in exports, then drop it and try to match
-                    if (/^local#/.test(exp)) {
-                        expLocal = exp.replace(/^local#/, '');
-                    } else {
-                        expLocal = exp;
-                    }
+        // no exact match? Try and template it. Template engines are
+        // too insecure, so we roll a basic pattern match only for
+        // [% attribute %] or [% _bip.attribute %] or whatever
+        for (var exp in flattenedExports) {
+          // if local expressin in exports, then drop it and try to match
+          if (/^local#/.test(exp)) {
+            expLocal = exp.replace(/^local#/, '');
+          } else {
+            expLocal = exp;
+          }
 
-                    // it doesn't matter too much if people inject 'undefined'
-                    // into their transform template...
-                    key = String(key).replace(new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'), flattenedExports[ exp ]);
-
-                }
-                importVal = key;
-            }
-            resolvedImports[dst] += importVal;
+          // it doesn't matter too much if people inject 'undefined'
+          // into their transform template...
+          key = String(key).replace(new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'), flattenedExports[ exp ]);
 
         }
-    } else {
-        resolvedImports = adjacentExports;
-    }
+        importVal = key;
+      }
+      resolvedImports[dst] += importVal;
 
-    return resolvedImports;
+    }
+  } else {
+    resolvedImports = adjacentExports;
+  }
+
+  return resolvedImports;
 }
 
 /**
@@ -269,12 +275,12 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
  *
  */
 Channel.invoke = function(adjacentExports, transforms, client, contentParts, next) {
-    var self = this;
+  var self = this;
 
-    var transformedImports = this._transform(adjacentExports, transforms, client),
-    podTokens = this.getPodTokens(),
-    podName = podTokens.name;
-/*
+  var transformedImports = this._transform(adjacentExports, transforms, client),
+  podTokens = this.getPodTokens(),
+  podName = podTokens.name;
+  /*
 console.log('adjacent exports :');
 console.log('ID ' + this.id);
 console.log(adjacentExports);
@@ -282,156 +288,158 @@ console.log('transformed');
 console.log(transformedImports);
 console.log('---');
 */
-    // invoke method
-    client.owner_id = this.owner_id;
-    if (pods[podName].isOAuth()) {
-        pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-            if (!err && oAuthToken) {
-                var sysImports = {
-                    client : client,
-                    auth : {
-                        oauth : {
-                            token : oAuthToken,
-                            secret : tokenSecret,
-                            profile : authProfile
-                        }
-                    }
-                };
-                pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
-            } else {
-                next(err);
+  // invoke method
+  client.owner_id = this.owner_id;
+  if (pods[podName].isOAuth()) {
+    pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
+      if (!err && oAuthToken) {
+        var sysImports = {
+          client : client,
+          auth : {
+            oauth : {
+              token : oAuthToken,
+              secret : tokenSecret,
+              profile : authProfile
             }
-        });
-    } else if ('issuer_token' === pods[podName]._authType) {
-        pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password) {
-            if (!err && username && password) {
-                var sysImports = {
-                    client : client,
-                    auth : {
-                        issuer_token : {
-                            username : username,
-                            password : password
-                        }
-                    }
-                };
-                pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
-            } else {
-                next(err);
+          }
+        };
+        pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
+      } else {
+        next(err);
+      }
+    });
+  } else if ('issuer_token' === pods[podName]._authType) {
+    pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password) {
+      if (!err && username && password) {
+        var sysImports = {
+          client : client,
+          auth : {
+            issuer_token : {
+              username : username,
+              password : password
             }
-        });
-    } else {
-        pods[podName].invoke(podTokens.action, this, transformedImports, { client : client }, contentParts, next);
-    }
+          }
+        };
+        pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
+      } else {
+        next(err);
+      }
+    });
+  } else {
+    pods[podName].invoke(podTokens.action, this, transformedImports, {
+      client : client
+    }, contentParts, next);
+  }
 }
 Channel.rpc = function(renderer, query, client, req, res) {
-    var self = this,
-        podTokens = this.getPodTokens();
+  var self = this,
+  podTokens = this.getPodTokens();
 
-    if (pods[podTokens.name].isOAuth()) {
-        (function(podName, action, renderer, query, client, req, res) {
-            pods[podName].oAuthGetToken(self.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-                var podTokens = self.getPodTokens();
+  if (pods[podTokens.name].isOAuth()) {
+    (function(podName, action, renderer, query, client, req, res) {
+      pods[podName].oAuthGetToken(self.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
+        var podTokens = self.getPodTokens();
 
-                if (!err && oAuthToken) {
-                    var sysImports = {
-                        client : client,
-                        auth : {
-                            oauth : {
-                                token : oAuthToken,
-                                secret : tokenSecret,
-                                profile : authProfile
-                            }
-                        }
-                    };
-
-                    pods[podName].rpc(
-                        action,
-                        renderer,
-                        sysImports,
-                        query,
-                        self,
-                        req,
-                        res
-                    );
-
-                } else if (err) {
-                    GLOBAL.app.logmessage(err, 'error');
-                    res.send(403);
-                } else if (!oAuthToken) {
-                    res.send(403, {
-                        error : 'No OAuth Token bound for this Channel'
-                    });
-                }
-            });
-        })(podTokens.name, podTokens.action, renderer, query, client, req, res);
-    } else {
-        var sysImports = {
+        if (!err && oAuthToken) {
+          var sysImports = {
             client : client,
-            auth : {}
-        };
-        pods[podTokens.name].rpc(
-            podTokens.action,
+            auth : {
+              oauth : {
+                token : oAuthToken,
+                secret : tokenSecret,
+                profile : authProfile
+              }
+            }
+          };
+
+          pods[podName].rpc(
+            action,
             renderer,
             sysImports,
-            req.query,
-            this,
+            query,
+            self,
             req,
             res
-        );
-    }
+            );
+
+        } else if (err) {
+          GLOBAL.app.logmessage(err, 'error');
+          res.send(403);
+        } else if (!oAuthToken) {
+          res.send(403, {
+            error : 'No OAuth Token bound for this Channel'
+          });
+        }
+      });
+    })(podTokens.name, podTokens.action, renderer, query, client, req, res);
+  } else {
+    var sysImports = {
+      client : client,
+      auth : {}
+    };
+    pods[podTokens.name].rpc(
+      podTokens.action,
+      renderer,
+      sysImports,
+      req.query,
+      this,
+      req,
+      res
+      );
+  }
 }
 
 
 Channel.pod = function(podName) {
-    var ret, tokens, schema;
-    if (podName) {
-        if (undefined != pods[podName]) {
-            ret = pods[podName];
-        }
-    } else if (this.action && '' !== this.action) {
-      tokens = this.action.split('.');
-      ret = schema = pods[tokens[0]];
-      
-    } else {
-        ret = pods;
+  var ret, tokens, schema;
+  if (podName) {
+    if (undefined != pods[podName]) {
+      ret = pods[podName];
     }
-    return ret;
+  } else if (this.action && '' !== this.action) {
+    tokens = this.action.split('.');
+    ret = schema = pods[tokens[0]];
+      
+  } else {
+    ret = pods;
+  }
+  return ret;
 }
 
 Channel.hasRenderer = function(renderer) {
   var tokens = this.action.split('.'),
-    pod = this.pod(tokens[0]);
+  pod = this.pod(tokens[0]);
   return pod.isRenderer(tokens[1]);
 }
 
 Channel.getActionList = function() {
-    var schema, result = [];
+  var schema, result = [];
 
-    for (pod in pods) {
-        schema = pods[pod].getSchema();
-        for (action in schema) {
-            // @todo 'admin' actions should be surfaced to admin users
-            if (!schema[action].trigger && !schema[action].admin) {
-                result.push(pod + '.' + action);
-            }
-        }
+  for (pod in pods) {
+    schema = pods[pod].getSchema();
+    for (action in schema) {
+      // @todo 'admin' actions should be surfaced to admin users
+      if (!schema[action].trigger && !schema[action].admin) {
+        result.push(pod + '.' + action);
+      }
     }
-    return result;
+  }
+  return result;
 }
 
 Channel.getEmitterList = function() {
-    var schema, result = [];
+  var schema, result = [];
 
-    for (pod in pods) {
-        schema = pods[pod].getSchema();
-        for (action in schema) {
-            // @todo 'admin' actions should be surfaced to admin users
-            if (schema[action].trigger && !schema[action].admin) {
-                result.push(pod + '.' + action);
-            }
-        }
+  for (pod in pods) {
+    schema = pods[pod].getSchema();
+    for (action in schema) {
+      // @todo 'admin' actions should be surfaced to admin users
+      if (schema[action].trigger && !schema[action].admin) {
+        result.push(pod + '.' + action);
+      }
     }
-    return result;
+  }
+  return result;
 }
 
 // post save, run pod initialization
@@ -441,52 +449,57 @@ Channel.getEmitterList = function() {
  *
  */
 Channel.postSave = function(accountInfo, next, isNew) {
-    var tTokens = this.action.split('.'),
-        podName = tTokens[0], action = tTokens[1],
-        self = this;
+  var tTokens = this.action.split('.'),
+  podName = tTokens[0], action = tTokens[1],
+  self = this;
 
-    if (undefined == podName || undefined == action) {
-        // throw a constraint crit
-        console.log('crit: Channel [' + this.id + '] Init post save but no action?');
-        throw DEFS.ERR_CONSTRAINT;
-        return;
-    }
+  if (undefined == podName || undefined == action) {
+    // throw a constraint crit
+    console.log('crit: Channel [' + this.id + '] Init post save but no action?');
+    throw DEFS.ERR_CONSTRAINT;
+    return;
+  }
 
-    this.accountInfo = undefined;
-    accountInfo.user.channels.set(this);    
+  this.accountInfo = undefined;
+  accountInfo.user.channels.set(this);    
 
-    // channels behave a little differently, they can have postponed availability
-    // after creation, which the pod actions themselves might want to dictate.
-    if (pods[podName].isOAuth()) {
-        // attach the users credentials for any potential oAuth based channel setup
-        (function(channel, podName, action, accountInfo, next) {
-            pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-                if (!err && oAuthToken) {
-                    var auth = {
-                        oauth : {
-                            token : oAuthToken,
-                            secret : tokenSecret,
-                            profile : authProfile
-                        }
-                    };
-                    pods[podName].setup(action, channel, accountInfo, auth, next);
-                // not authenticated? Then we can't perform setup so drop this 
-                // channel
-                } else if (!oAuthToken) {
-                  self._dao.remove('channel', self.id, accountInfo, function() {
-                    next(true, 'channel', { message : 'Channel could not authenticate'}, 500);  
-                  });
+  // channels behave a little differently, they can have postponed availability
+  // after creation, which the pod actions themselves might want to dictate.
+  if (pods[podName].isOAuth()) {
+    // attach the users credentials for any potential oAuth based channel setup
+    (function(channel, podName, action, accountInfo, next) {
+      pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
+        if (!err && oAuthToken) {
+          var auth = {
+            oauth : {
+              token : oAuthToken,
+              secret : tokenSecret,
+              profile : authProfile
+            }
+          };
+          pods[podName].setup(action, channel, accountInfo, auth, next);
+        // not authenticated? Then we can't perform setup so drop this 
+        // channel
+        } else if (!oAuthToken) {
+          self._dao.remove('channel', self.id, accountInfo, function() {
+            next(true, 'channel', {
+              message : 'Channel could not authenticate'
+            }, 500);  
+          });
                   
-                }
-            });
-        })(this, podName, action, accountInfo, next);
-    } else {
-        pods[podName].setup(action, this, accountInfo, next);
-    }
+        }
+      });
+    })(this, podName, action, accountInfo, next);
+  } else {
+    pods[podName].setup(action, this, accountInfo, next);
+  }
 
-    if (isNew) {
-        GLOBAL.app.bastion.createJob(DEFS.JOB_USER_STAT, { owner_id : accountInfo.user.id, type : 'channels_total' } );
-    }
+  if (isNew) {
+    GLOBAL.app.bastion.createJob(DEFS.JOB_USER_STAT, {
+      owner_id : accountInfo.user.id, 
+      type : 'channels_total'
+    } );
+  }
 }
 
 /**
@@ -494,102 +507,104 @@ Channel.postSave = function(accountInfo, next, isNew) {
  * calls any pod teardowns.
  */
 Channel.preRemove = function(id, accountInfo, next) { 
-    var tTokens = this.action.split('.'),
-      podName = tTokens[0], action = tTokens[1],
-      self = this;
+  var tTokens = this.action.split('.'),
+  podName = tTokens[0], action = tTokens[1],
+  self = this;
 
-    this.getBips(id, accountInfo, function(err, results) {
-       // removing channel where it has bips, conflict
-       if (!err && results && results.length > 0) {           
-           next('Channel still has Bips attached', 'channel', { message : 'Channel still has Bips attached' }, 409);           
-       } else {
-         pods[podName].teardown(action, self, accountInfo, function(err) {
-           next(err, 'channel', self);
-         });
-       }
-    });
+  this.getBips(id, accountInfo, function(err, results) {
+    // removing channel where it has bips, conflict
+    if (!err && results && results.length > 0) {           
+      next('Channel still has Bips attached', 'channel', {
+        message : 'Channel still has Bips attached'
+      }, 409);           
+    } else {
+      pods[podName].teardown(action, self, accountInfo, function(err) {
+        next(err, 'channel', self);
+      });
+    }
+  });
 }
 
 Channel.getPodTokens = function() {
-    var ret = {
-        ok : function() {
-            return (undefined != this.pod);
-        }
-    };
-    if (this.action) {
-        var tokens = this.action.split('.');
-        if (tokens.length == 2) {
-            ret.name = ret.pod = tokens[0];
-            ret.action = tokens[1];
-            ret._struct = pods[ret.pod];
-            ret.getSchema = function(key) {
-                //var ptr = pods[this.pod]['_schemas'][this.action];
-                var ptr = pods[this.pod].getSchema(this.action);
-                if (key && ptr[key]) {
-                    return ptr[key];
-                }
-                return ptr;
-            };
-            ret.isTrigger = function() {
-                //return pods[this.pod]['_schemas'][this.action].trigger;
-                return pods[this.pod].isTrigger(this.action);
-            },
-            // get all unique keys
-            ret.getSingletonConstraints = function() {
-                var schema = this.getSchema(),
-                constraints = {}, singleton = false;
-
-                for (key in schema.config.properties) {
-                    if (schema.config.properties[key].unique) {
-                        singleton = true;
-                        constraints[key] = schema.config.properties;
-                    }
-                }
-
-                return singleton ? constraints : null;
-            }
-        }
+  var ret = {
+    ok : function() {
+      return (undefined != this.pod);
     }
-    return ret;
+  };
+  if (this.action) {
+    var tokens = this.action.split('.');
+    if (tokens.length == 2) {
+      ret.name = ret.pod = tokens[0];
+      ret.action = tokens[1];
+      ret._struct = pods[ret.pod];
+      ret.getSchema = function(key) {
+        //var ptr = pods[this.pod]['_schemas'][this.action];
+        var ptr = pods[this.pod].getSchema(this.action);
+        if (key && ptr[key]) {
+          return ptr[key];
+        }
+        return ptr;
+      };
+      ret.isTrigger = function() {
+        //return pods[this.pod]['_schemas'][this.action].trigger;
+        return pods[this.pod].isTrigger(this.action);
+      },
+      // get all unique keys
+      ret.getSingletonConstraints = function() {
+        var schema = this.getSchema(),
+        constraints = {}, singleton = false;
+
+        for (key in schema.config.properties) {
+          if (schema.config.properties[key].unique) {
+            singleton = true;
+            constraints[key] = schema.config.properties;
+          }
+        }
+
+        return singleton ? constraints : null;
+      }
+    }
+  }
+  return ret;
 }
 
 Channel.getPods = function(name) {
-    if (name && pods[name]) {
-        return pods[name];
-    } else {
-        return pods;
-    }
+  if (name && pods[name]) {
+    return pods[name];
+  } else {
+    return pods;
+  }
 }
 
 // We try to inject defaults into channel configs to avoid patching documents
 // in mongo with default configs as they change.
 Channel.getConfig = function() {
-    var config = {};
+  var config = {};
 
-    pod = this.getPodTokens();
-    var podConfig = pods[pod.name].importGetConfig(pod.action);
-    for (key in podConfig.properties) {
-        if (!this.config[key] && podConfig.properties[key]['default']) {
-            config[key] = podConfig.properties[key]['default'];
-        } else if (this.config[key]) {
-            config[key] = this.config[key];
-        }
+  pod = this.getPodTokens();
+  var podConfig = pods[pod.name].importGetConfig(pod.action);
+  for (key in podConfig.properties) {
+    if (!this.config[key] && podConfig.properties[key]['default']) {
+      config[key] = podConfig.properties[key]['default'];
+    } else if (this.config[key]) {
+      config[key] = this.config[key];
     }
-    return config;
+  }
+  return config;
 }
 
 /**
  * Tests a named import is valid for the configured chanenl
  */
 Channel.testImport = function(importName) {
-    var ok = false,
-    pod = this.getPodTokens();
+  var ok = false,
+  pod = this.getPodTokens();
 
-    if (pod.ok()) {
-        ok = pods[pod.name].testImport(pod.action, importName);
-    }
+  if (pod.ok()) {
+    ok = pods[pod.name].testImport(pod.action, importName);
+  }
 
-    return ok;
+  return ok;
 }
 
 /**
@@ -598,7 +613,7 @@ Channel.testImport = function(importName) {
  * 
  */
 Channel.getBips = function(channelId, accountInfo, next) {
-    this._dao.getBipsByChannelId(channelId, accountInfo, next);
+  this._dao.getBipsByChannelId(channelId, accountInfo, next);
 }
 
 /**
@@ -607,80 +622,80 @@ Channel.getBips = function(channelId, accountInfo, next) {
  *
  */
 Channel.getTransformDefault = function(transformSource) {
-    var transform,
-    action = this.getPodTokens();
+  var transform,
+  action = this.getPodTokens();
 
-    if (action.ok()) {
-        transform = pods[action.pod].getTransformDefault(transformSource, action.action);
-    }
-    return transform;
+  if (action.ok()) {
+    transform = pods[action.pod].getTransformDefault(transformSource, action.action);
+  }
+  return transform;
 }
 
 Channel.getRendererUrl = function(renderer, accountInfo) {
-    var action = this.getPodTokens(),
-      rStruct,
-      ret,
-      cid = this.getIdValue();
+  var action = this.getPodTokens(),
+  rStruct,
+  ret,
+  cid = this.getIdValue();
 
-    if (action.ok()) {
-        rStruct = action.getSchema('renderers');
-        if (rStruct[renderer]) {
-          if (cid) {
-            ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
-          } else {
-            ret = accountInfo.getDefaultDomainStr(true) + '/rpc/pod/' + action.name + '/' + action.action + '/' + renderer;
-          }            
-        }
+  if (action.ok()) {
+    rStruct = action.getSchema('renderers');
+    if (rStruct[renderer]) {
+      if (cid) {
+        ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
+      } else {
+        ret = accountInfo.getDefaultDomainStr(true) + '/rpc/pod/' + action.name + '/' + action.action + '/' + renderer;
+      }            
     }
+  }
 
-    return ret;
+  return ret;
 }
 
 Channel.attachRenderer = function(accountInfo) {
-    var action = this.getPodTokens();
+  var action = this.getPodTokens();
 
-    if (action.ok()) {
-        rStruct = action.getSchema();
-        if (rStruct && rStruct.renderers) {
-            this._renderers = {};
-            for (var idx in rStruct.renderers) {
-                this._renderers[idx] = rStruct.renderers[idx]
-                this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
-            }
-        }
+  if (action.ok()) {
+    rStruct = action.getSchema();
+    if (rStruct && rStruct.renderers) {
+      this._renderers = {};
+      for (var idx in rStruct.renderers) {
+        this._renderers[idx] = rStruct.renderers[idx]
+        this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
+      }
     }
+  }
 }
 
 Channel.href = function() {
-    return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
+  return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
 }
 
 /**
  * Channel representation
  */
 Channel.repr = function(accountInfo) {
-    var repr = '';
-    var action = this.getPodTokens();
+  var repr = '';
+  var action = this.getPodTokens();
 
-    if (action.ok()) {
-        repr = pods[action.pod].repr(action.action, this);
-        this.attachRenderer(accountInfo);
-    }
+  if (action.ok()) {
+    repr = pods[action.pod].repr(action.action, this);
+    this.attachRenderer(accountInfo);
+  }
 
 
 
-    return repr;
+  return repr;
 }
 
 // register pods
 if (!process.HEADLESS) {
-    var pods = {};
-    for (var podName in CFG.pods) {
-        if (CFG.pods.hasOwnProperty(podName) && podName !== 'testing') {
-            pods[podName] = require('bip-pod-' + podName);
-            GLOBAL.app.logmessage('POD:' + podName + ':UP');
-        }
+  var pods = {};
+  for (var podName in CFG.pods) {
+    if (CFG.pods.hasOwnProperty(podName) && podName !== 'testing') {
+      pods[podName] = require('bip-pod-' + podName);
+      GLOBAL.app.logmessage('POD:' + podName + ':UP');
     }
+  }
 }
 
 module.exports.Channel = Channel;
