@@ -15,7 +15,7 @@ your existing open source app or prototype for out-of-band message transformatio
 or whatever you like, even on your Rasberry Pi.
 
 The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip),are unique in they allow you to transform 
-content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.
+content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.  You can put web-hooks, web-sockets, emails or event triggers infront of Bip graphs to perform useful work.
 
 There are three flavors of Bip - HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
 
