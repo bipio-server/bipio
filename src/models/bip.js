@@ -298,13 +298,13 @@ Bip.entitySchema = {
           for (var cid in val) {
             if (val.hasOwnProperty(cid)) {
               // check channel exists
-              ok = (cid == 'source' || userChannels.test(cid));
+              ok = (cid == 'source' || userChannels.isAvailable(cid));
               if (ok) {                
                 // check edges point to channels for this account
                 numEdges = val[cid].edges.length;
                 if (numEdges > 0) {
                   for (var e = 0; e < numEdges; e++) {
-                    ok = userChannels.test(val[cid].edges[e]);
+                    ok = userChannels.isAvailable(val[cid].edges[e]);
                     if (!ok) {
                       break;
                     }
@@ -322,7 +322,7 @@ Bip.entitySchema = {
         }
         next(ok);
       },
-      msg : 'Invalid or Missing Channel'
+      msg : 'Invalid, Inactive or Missing Channel'
     },
     {
       // ensure hub has a source edge
@@ -661,7 +661,6 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
               for(var txKey in this.hub[key].transforms[txChannelId]) {
                 if (this.hub[key].transforms[txChannelId].hasOwnProperty(txKey)) {
                   this.hub[key].transforms[txChannelId][txKey].replace(fromMatch, from);
-
                   // strip any remaining uuid's.  Only supporting adjacent transform helpers
                   // for now.
                   this.hub[key].transforms[txChannelId][txKey].replace(app.helper.getRegActionUUID(), '');

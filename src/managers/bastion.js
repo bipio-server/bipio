@@ -473,6 +473,8 @@ Bastion.prototype.channelProcess = function(struct) {
     
   if (undefined != struct.bip) {
 
+    app.logmessage('BASTION:PROC:TX:' + struct.client.id + ':BIPID:' + struct.bip.id + ':CID:' + struct.channel_id, 'info');
+
     // Load channels & distribute
     var filter = {
       'id' : struct.channel_id,
@@ -486,6 +488,7 @@ Bastion.prototype.channelProcess = function(struct) {
         if (err || !result) {
           app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
         } else {
+          app.logmessage('BASTION:INVOKE:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
           var channel = self._dao.modelFactory('channel', result),
           transforms = {};
 

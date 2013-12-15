@@ -21,86 +21,86 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var bcrypt      = require('bcrypt'),
-    crypto = require('crypto'),
-    BipModel = require('./prototype.js').BipModel;
+crypto = require('crypto'),
+BipModel = require('./prototype.js').BipModel;
 
 var AccountAuth = Object.create(BipModel);
 
 function strCryptSync(str) {
-    return bcrypt.hashSync(str, bcrypt.genSaltSync(10));
+  return bcrypt.hashSync(str, bcrypt.genSaltSync(10));
 }
 
 function strCryptCmpSync(taintedClear, localHash) {
-    return bcrypt.compareSync(taintedClear, localHash);
+  return bcrypt.compareSync(taintedClear, localHash);
 }
 
 function AESCrypt(value) {
-    var key, keyVersion,
-        iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
-    // get latest key
-    for (keyVersion in CFG.k) {
-        key = CFG.k[keyVersion];
-    }
+  var key, keyVersion,
+  iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
+  // get latest key
+  for (keyVersion in CFG.k) {
+    key = CFG.k[keyVersion];
+  }
 
-    var cipher = crypto.createCipheriv('aes-256-cbc', key, iv),
-        crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64');
+  var cipher = crypto.createCipheriv('aes-256-cbc', key, iv),
+  crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64');
 
-    cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64');
-    /*
+  cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64');
+  /*
     if (value !== AESDecrypt(cryptEncoded, true)) {        
         throw new Error('Cipher Failure');
     }*/
 
-    return cryptEncoded;
+  return cryptEncoded;
 }
 
 function AESDecrypt(cryptedStr, autoPadding) {
-    var crypted = new Buffer(cryptedStr, 'base64').toString('utf-8');
-    var keyVersion = crypted.substr(0, 1),
-        iv = crypted.substr(1, 16),
-        key = CFG.k[keyVersion],
-        cypher = crypted.substr(17);
+  var crypted = new Buffer(cryptedStr, 'base64').toString('utf-8');
+  var keyVersion = crypted.substr(0, 1),
+  iv = crypted.substr(1, 16),
+  key = CFG.k[keyVersion],
+  cypher = crypted.substr(17);
 
-    var decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+  var decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
     
-    if (!autoPadding) {
-        autoPadding = false;
-    }
-    decipher.setAutoPadding(autoPadding);
+  if (!autoPadding) {
+    autoPadding = false;
+  }
+  decipher.setAutoPadding(autoPadding);
 
-    var decrypted = decipher.update(cypher, 'base64', 'ascii');
+  var decrypted = decipher.update(cypher, 'base64', 'ascii');
 
-    return decrypted + decipher.final('ascii');
+  return decrypted + decipher.final('ascii');
 }
 
 function pwHash(pwValue) {
-    var crypted;
-    // tokens use AES
-    if (this.type !== 'login_primary') {
-        crypted = AESCrypt(pwValue);
-    // or seeded crypt
-    } else {
-        crypted = strCryptSync(pwValue);
-    }
-    return crypted;
+  var crypted;
+  // tokens use AES
+  if (this.type !== 'login_primary') {
+    crypted = AESCrypt(pwValue);
+  // or seeded crypt
+  } else {
+    crypted = strCryptSync(pwValue);
+  }
+  return crypted;
 }
 
 function cryptSave(value) {
-    var crypted = value;
+  var crypted = value;
     
-    // passwords get 
-    if (this.type == 'login_primary' || this.type == 'login_sub') {
-        app.logmessage('Trying to write login primary to account_auth [' + this.id + ']', 'error');
-        throw new Error('Bad Type');
-    } else if (this.type !== 'token_invite') {
-        crypted = AESCrypt(value);
-    }
+  // passwords get 
+  if (this.type == 'login_primary' || this.type == 'login_sub') {
+    app.logmessage('Trying to write login primary to account_auth [' + this.id + ']', 'error');
+    throw new Error('Bad Type');
+  } else if (this.type !== 'token_invite') {
+    crypted = AESCrypt(value);
+  }
     
-    return crypted;   
+  return crypted;   
 }
 
 function cryptSaveObj(value) {
-    return cryptSave(JSON.stringify(value));
+  return cryptSave(JSON.stringify(value));
 }
 
 AccountAuth.id = '';
@@ -116,104 +116,108 @@ AccountAuth.oauth_profile = ''; // AES serialized profile, where type = 'oauth'
 
 AccountAuth.entityName = 'account_auth';
 AccountAuth.entitySchema = {
-    id: {
-        type: String,
-        index: true,
-        renderable: true,
-        writable: false
-    },
-    type: {
-        type: String,
-        index: true,
-        renderable: true,
-        writable: false
-    },    
-    password: {
-        type: String,
-        renderable: false,
-        writable: false,
-        set : cryptSave
-    },
-    username: {
-        type: String,
-        renderable: false,
-        writable: false,
-        set : cryptSave
-    },
-    owner_id : {
-        type: String,
-        index: true,
-        renderable: true,
-        writable: false
-    },
-    auth_provider: {
-        type: String,
-        renderable: true,
-        writable: false
-    },
-    oauth_provider: {
-        type: String,
-        renderable: true,
-        writable: false
-    },
-    oauth_refresh: {
-        type: String,
-        renderable: true,
-        writable: false,
-        set : cryptSave
-    },
-    oauth_profile: {
-        type: Object,
-        renderable: true,
-        writable: false,
-        set : cryptSaveObj
-    }
+  id: {
+    type: String,
+    index: true,
+    renderable: true,
+    writable: false
+  },
+  type: {
+    type: String,
+    index: true,
+    renderable: true,
+    writable: false
+  },    
+  password: {
+    type: String,
+    renderable: false,
+    writable: false,
+    set : cryptSave
+  },
+  username: {
+    type: String,
+    renderable: false,
+    writable: false,
+    set : cryptSave
+  },
+  owner_id : {
+    type: String,
+    index: true,
+    renderable: true,
+    writable: false
+  },
+  auth_provider: {
+    type: String,
+    renderable: true,
+    writable: false
+  },
+  oauth_provider: {
+    type: String,
+    renderable: true,
+    writable: false
+  },
+  oauth_refresh: {
+    type: String,
+    renderable: true,
+    writable: false,
+    set : cryptSave
+  },
+  oauth_profile: {
+    type: Object,
+    renderable: true,
+    writable: false,
+    set : cryptSaveObj
+  }
 };
 
 AccountAuth.hash = function(value) {
-    return pwHash(value);
+  return pwHash(value);
 }
 
 AccountAuth.cmpPassword = function(passwordTainted) {
-    var password = this.getPassword().replace(/^\s+|\s+$/g, "");
+  var password = this.getPassword().replace(/^\s+|\s+$/g, "");
 
-    // compare hash
-    /* disabled
+  // compare hash
+  /* disabled
     if (this.type == 'login_primary') {
         return bcrypt.compareSync(passwordTainted, password);
     */
-    // AES
-    if (this.type == 'token') {
-        return passwordTainted == password;
-    }
-    return false;
+  // AES
+  if (this.type == 'token') {
+    return passwordTainted == password;
+  }
+  return false;
 };
 
 // gets the password, if it's async then try to decrypt
 AccountAuth.getPassword = function() {
-    // AES
-    if (this.type == 'token') {
-       return AESDecrypt(this.password).substr(0,32);
-    } else {
-       // return this.password;
-       return AESDecrypt(this.password, true);
-    }
+  // AES
+  if (this.type == 'token') {
+    return AESDecrypt(this.password).substr(0,32);
+  } else {
+    // return this.password;
+    return AESDecrypt(this.password, true);
+  }
 };
 
 AccountAuth.getUsername = function() {
+  if (this.username) {
     return AESDecrypt(this.username, true);
+  } else {
+    return;
+  }
 };
 
 AccountAuth.getOAuthRefresh = function() {
-    if (this.oauth_refresh) {
-        return AESDecrypt(this.oauth_refresh, true);
-    } else {
-        return null;
-    }
+  if (this.oauth_refresh) {
+    return AESDecrypt(this.oauth_refresh, true);
+  } else {
+    return null;
+  }
 }
 
 AccountAuth.getOauthProfile = function() {
-    return JSON.parse(AESDecrypt(this.oauth_profile, true));
+  return JSON.parse(AESDecrypt(this.oauth_profile, true));
 }
 
 module.exports.AccountAuth = AccountAuth;

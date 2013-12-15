@@ -195,8 +195,10 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
           },
           test: function(id) {
             return (undefined != this.channels[id]);
+          },
+          isAvailable : function(id) {
+            return (undefined != this.channels[id] && true === this.channels[id].isAvailable() );
           }
-
         };
 
         for (idx in channels ) {

@@ -388,8 +388,8 @@ var helper = {
         return url.parse(uri, true);;
     },
     
-    regUUID : new RegExp("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", 'gi'),
-    regActionUUID : new RegExp("\[%.*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.*%\]", 'gi'),
+    regUUID : /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+    regActionUUID : /\[%(\s*?)(source|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_#]*(\s*?)%\]/gi,
     
     getRegUUID : function() {
         return this.regUUID;

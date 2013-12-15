@@ -227,7 +227,7 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
       //key = transforms[dst][i];
       key = transforms[dst];
 
-      if (undefined === resolvedImports[dst]) {
+      if ('' === resolvedImports[dst] || undefined === resolvedImports[dst]) {
         resolvedImports[dst] = '';
       }
 
@@ -240,7 +240,6 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
         importVal = flattenedExports[localKey + key];
 
       } else {
-
         // no exact match? Try and template it. Template engines are
         // too insecure, so we roll a basic pattern match only for
         // [% attribute %] or [% _bip.attribute %] or whatever
@@ -254,9 +253,18 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
 
           // it doesn't matter too much if people inject 'undefined'
           // into their transform template...
-          key = String(key).replace(new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'), flattenedExports[ exp ]);
-
+          key = String(key).replace(
+            new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'), 
+            flattenedExports[ exp ]
+          );
         }
+
+        // empty any unresolved key
+        key = String(key).replace(
+          helper.regActionUUID,
+          ''
+        );
+
         importVal = key;
       }
       resolvedImports[dst] += importVal;
@@ -310,7 +318,7 @@ console.log('---');
     });
   } else if ('issuer_token' === pods[podName]._authType) {
     pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password) {
-      if (!err && username && password) {
+      if (!err && (username || password)) {
         var sysImports = {
           client : client,
           auth : {
@@ -685,6 +693,10 @@ Channel.repr = function(accountInfo) {
 
 
   return repr;
+}
+
+Channel.isAvailable = function() {
+  return this._available;
 }
 
 // register pods

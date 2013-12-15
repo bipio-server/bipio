@@ -793,7 +793,7 @@ DaoMongo.prototype.findFilter = function(modelName, filter, next) {
   var self = this;
   mongoose.model(modelName).find(filter, function (err, result) {
     if (err) {
-      self._log('Error: findFilter(): ' + err);
+      self._log('Error: findFilter(): ' + err, 'error');
     }
     next(err, result);
   });
