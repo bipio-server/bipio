@@ -29,125 +29,141 @@
  *
  */
 var bootstrap = require(__dirname + '/bootstrap'),
-    app = bootstrap.app,
-    cluster         = require('cluster'),
-    express         = require('express'),
-    helper          = require('./lib/helper'),
-    passport        = require('passport'),
-    restapi         = express();
-    connectUtils    = require('express/node_modules/connect/lib/utils');
+app = bootstrap.app,
+cluster         = require('cluster'),
+express         = require('express'),
+helper          = require('./lib/helper'),
+passport        = require('passport'),
+cron        = require('cron'),
+restapi         = express();
+connectUtils    = require('express/node_modules/connect/lib/utils');
 
 /**
  * express bodyparser looks broken or too strict.
  */
 function xmlBodyParser(req, res, next) {
-    var enc = connectUtils.mime(req);
-    if (req._body) return next();
-    req.body = req.body || {};
+  var enc = connectUtils.mime(req);
+  if (req._body) return next();
+  req.body = req.body || {};
 
-    // ignore GET
-    if ('GET' == req.method || 'HEAD' == req.method) return next();
+  // ignore GET
+  if ('GET' == req.method || 'HEAD' == req.method) return next();
 
-    // check Content-Type
-    if (!/xml/.test(enc)) {
-        return next();
-    }
+  // check Content-Type
+  if (!/xml/.test(enc)) {
+    return next();
+  }
 
-    // flag as parsed
-    req._body = true;
+  // flag as parsed
+  req._body = true;
 
-    // parse
-    var buf = '';
-    req.setEncoding('utf8');
-    req.rawBody = '';
+  // parse
+  var buf = '';
+  req.setEncoding('utf8');
+  req.rawBody = '';
 
-    req.on('data', function(chunk) {
-        req.rawBody += chunk;
-    });
-    req.on('end', function(){
-        next();
-    });
+  req.on('data', function(chunk) {
+    req.rawBody += chunk;
+  });
+  req.on('end', function(){
+    next();
+  });
 }
 
 function errorHandler(err, req, res, next) {
-    console.log('here');
+  console.log('here');
   res.status(500);
   res.render('error', { error: err });
 }
 
-function setCORS(req, res, next) {   
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
-    res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers']);
-    res.header('Access-Control-Allow-Methods', req.headers['access-control-request-method']);
-    res.header('Access-Control-Allow-Credentials', true);
+function setCORS(req, res, next) {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers']);
+  res.header('Access-Control-Allow-Methods', req.headers['access-control-request-method']);
+  res.header('Access-Control-Allow-Credentials', true);
 
-    next();    
+  next();
 }
 
 // express preflight
 restapi.configure(function() {
-    restapi.use(xmlBodyParser);
-    // respond with an error if body parser failed
-    restapi.use(function(err, req, res, next) {
-        console.log(err);
-        if (err.status == 400) {
-            restapi.logmessage(err, 'error');
-            res.send(err.status, {
-                message : 'Invalid JSON. ' + err
-            });
-        } else {
-            next(err, req, res, next);
-        }
-    });
-    
-    restapi.use(express.bodyParser());
+  restapi.use(xmlBodyParser);
+  // respond with an error if body parser failed
+  restapi.use(function(err, req, res, next) {
+    console.log(err);
+    if (err.status == 400) {
+      restapi.logmessage(err, 'error');
+      res.send(err.status, {
+        message : 'Invalid JSON. ' + err
+      });
+    } else {
+      next(err, req, res, next);
+    }
+  });
 
-    
-    restapi.use(setCORS);
-    restapi.use(express.methodOverride());
-    restapi.use(express.cookieParser());
+  restapi.use(express.bodyParser());
 
-    // required for some oauth provders
-    restapi.use(express.session({
-        secret: GLOBAL.CFG.server.sessionSecret
-    }));
 
-    restapi.use(passport.initialize());
-    restapi.use(passport.session());
-    restapi.use('jsonp callback', true );
-        //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
-    restapi.use(errorHandler);
+  restapi.use(setCORS);
+  restapi.use(express.methodOverride());
+  restapi.use(express.cookieParser());
+
+  // required for some oauth provders
+  restapi.use(express.session({
+    secret: GLOBAL.CFG.server.sessionSecret
+  }));
+
+  restapi.use(passport.initialize());
+  restapi.use(passport.session());
+  restapi.use('jsonp callback', true );
+  //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
+  restapi.use(errorHandler);
 });
 
 // export app everywhere
 module.exports.app = app;
 
 if (cluster.isMaster) {
-    // when user hasn't explicitly configured a cluster size, use 1 process per cpu
-    var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
-    app.logmessage('BIPIO:STARTED:' + new Date());
-    app.logmessage('Node v' + process.versions.node);
-    app.logmessage('Starting ' + forks + ' fork(s)');
+  // when user hasn't explicitly configured a cluster size, use 1 process per cpu
+  var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
+  app.logmessage('BIPIO:STARTED:' + new Date());
+  app.logmessage('Node v' + process.versions.node);
+  app.logmessage('Starting ' + forks + ' fork(s)');
 
-    for (var i = 0; i < forks; i++) {
-        var worker = cluster.fork();
-    }
-} else {    
-    workerId = cluster.worker.workerID;
-    app.logmessage('BIPIO:STARTED:' + new Date());
-    helper.tldtools.init(
-        function() {
-            app.logmessage('TLD:UP');
-        },
-        function(body) {
-            app.logmessage('TLD:Cache fail - ' + body, 'error')
+  for (var i = 0; i < forks; i++) {
+    var worker = cluster.fork();
+  }
+  
+  app.dao.on('ready', function(dao) {
+    app.logmessage('DAO:Starting Stats Cron', 'info');   
+    var statsJob = new cron.CronJob('0 0 * * * *', function(){
+      dao.generateHubStats(function(err, msg) {
+        if (err) {
+          app.logmessage('STATS:THERE WERE ERRORS');
+        } else {
+          app.logmessage(msg);
+          app.logmessage('STATS:DONE');
         }
-    );
+      });
+    }, null, true, 'Asia/Tokyo');
+  });
+  
+} else {
+  workerId = cluster.worker.workerID;
+  app.logmessage('BIPIO:STARTED:' + new Date());
+  helper.tldtools.init(
+  function() {
+    app.logmessage('TLD:UP');
+  },
+  function(body) {
+    app.logmessage('TLD:Cache fail - ' + body, 'error')
+  }
+);
 
-    app.dao.on('ready', function(dao) {
-        require('./router').init(restapi, dao);
-        restapi.listen(GLOBAL.CFG.server.port, function() {
-            app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
-        });        
+  app.dao.on('ready', function(dao) {
+    require('./router').init(restapi, dao);
+    restapi.listen(GLOBAL.CFG.server.port, function() {
+      app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
+  });
 }

@@ -61,7 +61,7 @@ function Dao(config, log, next) {
 
   for (var key in modelSrc) {
     this.registerModel(modelSrc[key]);
-  }
+  }    
 }
 
 util.inherits(Dao, DaoMongo);
@@ -331,8 +331,8 @@ Dao.prototype.userNotify = function(payload, next) {
 // --------------------------------- Bip helpers
 
 Dao.prototype.createBip = function(struct, accountInfo, next, postSave) {
-  var model = this.modelFactory('bip', app.helper.pasteurize(struct), accountInfo, true);  
-  this.create(model, next, accountInfo, postSave); 
+  var model = this.modelFactory('bip', app.helper.pasteurize(struct), accountInfo, true);
+  this.create(model, next, accountInfo, postSave);
 }
 
 Dao.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
@@ -737,13 +737,13 @@ Dao.prototype.triggerAll = function(next) {
     if (!err && results && results.length) {
       numResults = results.length;
       numProcessed = 0;
-      for (var i = 0; i < numResults; i++) {       
+      for (var i = 0; i < numResults; i++) {
         (function(trigger) {
           app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger);
           numProcessed++;
 
           app.logmessage('DAO:Trigger:' + trigger.id + ':' + numProcessed + ':' + numResults);
-          
+
           if (numProcessed >= (numResults - 1)) {
             // the amqp lib has stopped giving us queue publish acknowledgements?
             setTimeout(function() {
@@ -751,7 +751,7 @@ Dao.prototype.triggerAll = function(next) {
             }, 1000);
           }
         })(results[i]);
-      }      
+      }
     } else {
       cb(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
     }
@@ -814,21 +814,31 @@ Dao.prototype.expireAll = function(next) {
       for (var i = 0; i < results.length; i++) {
         tzNowTime = Math.floor(
           new time.Date().setTimezone(results[i].timezone).getTime() / 1000
-        );
+          );
 
-        filter = { 
+        filter = {
           paused : false,
-          $or: [ 
-            { "end_life.time": { $gt: 0, $lt: tzNowTime } }, 
-            { "end_life.imp": { $gt: 0 } } 
-          ], 
+          $or: [
+          {
+            "end_life.time": {
+              $gt: 0,
+              $lt: tzNowTime
+            }
+          },
+
+          {
+            "end_life.imp": {
+              $gt: 0
+            }
+          }
+          ],
           owner_id: results[i].owner_id
         };
-        
+
         if ('delete' === results[i].bip_expire_behaviour) {
           self.removeFilter('bip', filter, function(err) {
             if (err) {
-              self.log(err);              
+              self.log(err);
             }
             numProcessed++;
             if (numProcessed >= results.length) {
@@ -836,11 +846,13 @@ Dao.prototype.expireAll = function(next) {
             }
           });
         } else if ('pause' === results[i].bip_expire_behaviour) {
-          self.updateColumn('bip', filter, { paused : true }, function(err) {            
+          self.updateColumn('bip', filter, {
+            paused : true
+          }, function(err) {
             if (err) {
-              self.log(err);              
+              self.log(err);
             }
-            numProcessed++;           
+            numProcessed++;
             if (numProcessed >= results.length) {
               next(false, '');
             }
@@ -1020,6 +1032,105 @@ Dao.prototype.setNetworkChordStat = function(ownerId, newNetwork, next) {
   });
 }
 
+Dao.prototype.generateAccountStats = function(accountId, next) {
+  var self = this;
+  app.logmessage('STATS:Processing Account ' + accountId);
+  step(
+    function loadNetwork() {
+      self.findFilter(
+        'channel',
+        {
+          'owner_id' : accountId
+        },
+        this.parallel()
+        );
+
+      self.findFilter(
+        'bip',
+        {
+          'owner_id' : accountId
+        },
+        this.parallel()
+        );
+    },
+
+    function done(err, channels, bips) {
+      if (err) {
+        next(true);
+      } else {
+        var channelMap = {},
+        j,
+        bip,
+        from,
+        to,
+        chordKey = '',
+
+        networkData = {};
+
+        // translate channel id's into actions
+        for (j = 0; j < channels.length; j++) {
+          if (!channelMap[channels[j].id]) {
+            channelMap[channels[j].id] = channels[j].action;
+          }
+        }
+
+        delete channels;
+
+        for (j = 0; j < bips.length; j++) {
+          bip = bips[j];
+          for (var key in bip.hub) {
+            if (bip.hub.hasOwnProperty(key)) {
+              if (key === 'source') {
+                from = bip.type === 'trigger' ?
+                channelMap[bip.config.channel_id] :
+                'bip.' + bip.type;
+              } else {
+                from = channelMap[key]
+              }
+
+              // skip bad hubs or deleted channels that
+              // are yet to resolve.
+              if (from) {
+                for (var k = 0; k < bip.hub[key].edges.length; k++) {
+                  to = channelMap[bip.hub[key].edges[k]];
+                  if (to) {
+                    // nasty. mongodb normaliser
+                    chordKey = (from + ';' + to).replace(new RegExp('\\.', 'g'), '#');
+                    if (!networkData[chordKey]) {
+                      networkData[chordKey] = 0;
+                    }
+                    networkData[chordKey]++;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // write
+        if (Object.keys(networkData).length > 0) {
+          app.logmessage('STATS:WRITING ACTIVITY:' + accountId);
+          self.setNetworkChordStat(
+            accountId,
+            {
+              data : networkData
+            },
+            function(err) {
+              if (err) {
+                next(true);
+              } else {
+                next(false, networkData);
+              }
+            }
+            );
+        } else {
+          app.logmessage('STATS:NO ACTIVITY:' + accountId);
+          next(false)
+        }
+      }
+    });
+}
+
 
 Dao.prototype.generateHubStats = function(next) {
   var self = this;
@@ -1034,149 +1145,44 @@ Dao.prototype.generateHubStats = function(next) {
       next(err);
     } else {
       if (!results) {
-        next(true, 'NO ACCOUNTS FOUND');
+        next(true, 'STATS:NO ACCOUNTS FOUND');
       } else {
         var numProcessed = 0, numResults = results.length;
         for (var i = 0; i < numResults; i++) {
-          (function(accountId) {
-            step(
-              function loadNetwork() {
-                self.findFilter(
-                  'channel',
-                  {
-                    'owner_id' : accountId
-                  },
-                  this.parallel()
-                  );
-
-                self.findFilter(
-                  'bip',
-                  {
-                    'owner_id' : accountId
-                  },
-                  this.parallel()
-                  );
-              },
-
-              function done(err, channels, bips) {
-                if (!err) {
-                  var channelMap = {},
-                  j,
-                  bip,
-                  from,
-                  to,
-                  chordKey = '',
-
-                  networkData = {};
-
-                  // translate channel id's into actions
-                  for (j = 0; j < channels.length; j++) {
-                    if (!channelMap[channels[j].id]) {
-                      channelMap[channels[j].id] = channels[j].action;
-                    }
+          self.generateAccountStats(results[i].id, function(err, accountStats) {
+            numProcessed++;
+            if (!err) {
+              for (var chordKey in accountStats) {
+                if (accountStats.hasOwnProperty(chordKey)) {
+                  if (!globalStats[chordKey]) {
+                    globalStats[chordKey] = 0;
                   }
-
-                  delete channels;
-
-                  for (j = 0; j < bips.length; j++) {
-                    bip = bips[j];
-                    for (var key in bip.hub) {
-                      if (bip.hub.hasOwnProperty(key)) {
-                        if (key === 'source') {
-                          from = bip.type === 'trigger' ?
-                          channelMap[bip.config.channel_id] :
-                          'bip.' + bip.type;
-                        } else {
-                          from = channelMap[key]
-                        }
-
-                        // skip bad hubs or deleted channels that
-                        // are yet to resolve.
-                        if (from) {
-                          for (var k = 0; k < bip.hub[key].edges.length; k++) {
-                            to = channelMap[bip.hub[key].edges[k]];
-                            if (to) {
-                              // truly nasty.
-                              chordKey = (from + ';' + to).replace(new RegExp('\\.', 'g'), '#');
-                              //chordKey = .replace('.', '_');
-
-                              //chordKeyPod = from.split('.')[0] + '-' + to.split('.')[0];
-                              if (!networkData[chordKey]) {
-                                networkData[chordKey] = 0;
-                              }
-                              networkData[chordKey]++;
-
-                              if (!globalStats[chordKey]) {
-                                globalStats[chordKey] = 0;
-                              }
-                              globalStats[chordKey]++;
-                            }
-                          }
-                        }
-
-                      }
-                    }
-                  }
-
-                  numProcessed++;
-
-                  // write
-                  if (Object.keys(networkData).length > 0) {
-                    self.setNetworkChordStat(
-                      accountId,
-                      {
-                        data : networkData
-                      },
-                      function(err) {
-                        if (err) {
-                          next(err, err);
-                        } else if (numProcessed === numResults ) {
-                          app.logmessage('Processed ' + numProcessed + ' accounts');
-                          app.logmessage('Writing System Entry ');
-                          self.setNetworkChordStat(
-                            'system',
-                            {
-                              data : globalStats
-                            },
-                            function(err) {
-                              if (err) {
-                                next(err, err);
-                              } else {
-                                next(false, 'ok');
-                              }
-                            }
-                            );
-                        }
-                      }
-                      );
-                  } else {
-                    next(false, 'NO ACTIVITY')
-                  }
-                } else {
-                  next(true, err);
+                  globalStats[chordKey]++;
                 }
               }
-              );
-          })(results[i].id);
-        }
 
-      /*
-                while (done >= results.length) {
-
-                }
-                // write global stats
+              if (numResults === numProcessed) {
+                app.logmessage('Writing System Entry ');
                 self.setNetworkChordStat(
-                    'system',
-                    {
-                        data : globalStats
-                    },
-                    function(err) {
-                        if (err) {
-                            console.log(err);
-                        }
+                  'system',
+                  {
+                    data : globalStats
+                  },
+                  function(err) {
+                    if (err) {
+                      app.logmessage('STATS:' + err, 'error');
+                      next(true);
+                    } else {
+                      next(false, 'ok');
                     }
+                  }
                 );
-                 */
+              }
+            } else {
+              next(err);
+            }
+          });
+        }
       }
     }
   });

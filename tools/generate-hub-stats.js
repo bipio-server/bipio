@@ -22,14 +22,15 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 /**
- * Builds active hub/edges stats for today for every user
+ * Forces a builds active hub/edges stats for today for every user.
+ * The system will otherwise automatically generate these stats once per day.
  */
 
 process.HEADLESS = true;
 var bootstrap = require(__dirname + '/../src/bootstrap');
 bootstrap.app.dao.generateHubStats(function(err, msg) {
     if (err) {
-        app.logmessage('ERROR:' + err + ' ' + msg);
+        app.logmessage('THERE WERE ERRORS');
     } else {
         app.logmessage(msg);
         app.logmessage('DONE');
