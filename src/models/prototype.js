@@ -126,8 +126,9 @@ var BipModel = {
         this._href = this.href();
     },
 
-    toObj : function() {
-        return helper.copyProperties(this, {}, true, this.getPropNamesAsArray());
+    toObj : function() {  
+      return JSON.parse(JSON.stringify(this));
+      //return helper.copyProperties(this, {}, true, this.getPropNamesAsArray());
     },
 
     toMongoModel: function(mongoModel) {

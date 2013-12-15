@@ -51,10 +51,10 @@
  *
  */
 var uuid        = require('node-uuid'),
-  mongoose    = require('mongoose'),
-  helper      = require('../lib/helper')
-  time        = require('time');
-  events = require('events'),
+mongoose    = require('mongoose'),
+helper      = require('../lib/helper')
+time        = require('time');
+events = require('events'),
   eventEmitter = new events.EventEmitter();
 
 function DaoMongo(config, log, next) {
@@ -625,12 +625,12 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
  */
 DaoMongo.prototype.remove = function(modelName, modelId, accountInfo, next) {
   var self = this,
-    MongoClass = mongoose.model(modelName),
-    findObject = self.getObjectIdFilter({
-      id : modelId
-    }, accountInfo);
+  MongoClass = mongoose.model(modelName),
+  findObject = self.getObjectIdFilter({
+    id : modelId
+  }, accountInfo);
 
-  MongoClass.findOne(findObject, function (err, result) {   
+  MongoClass.findOne(findObject, function (err, result) {
     if (err) {
       self._log(err);
       next(err);
@@ -641,15 +641,17 @@ DaoMongo.prototype.remove = function(modelName, modelId, accountInfo, next) {
     } else {
       var model = self.modelFactory(modelName, result, accountInfo);
       model.preRemove(model.id, accountInfo, function(err, modelName, model, code) {
-        if (err) {          
+        if (err) {
           next(
-              self.errorParse(err, model),
-              modelName,
-              model,
-              code || self.errorMap(err)
+            self.errorParse(err, model),
+            modelName,
+            model,
+            code || self.errorMap(err)
             );
         } else {
-          MongoClass.remove({ id : model.id }, function (err, result) {
+          MongoClass.remove({
+            id : model.id
+          }, function (err, result) {
             if (err || result == 0) {
               self._log(err);
               if (next) {
@@ -757,8 +759,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
           realResult = [];
           for (key in results) {
             model = self.modelFactory(modelName, results[key], accountInfo);
-            //model.decorate();
-            realResult.push(model);
+            realResult.push(model.toObj());
           }
 
           var resultStruct = {
