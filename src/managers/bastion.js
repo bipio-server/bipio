@@ -135,14 +135,34 @@ Bastion.prototype.jobRunner = function(jobPacket) {
               transforms, // transforms
               clientStruct, // client
               contentParts, // content parts
-              function(err, exports, content_parts) {
+              function(err, exports, content_parts, downloadSize) {
                 var normedExports = {};
+                downloadSize = downloadSize || 0;
                 for (var key in exports) {
                   normedExports['source#' + key] = exports[key];
                 }
                 if (!err) {
                   if (exports) {
                     self._dao.accumulate('bip', imports._bip, '_imp_actual');
+                                           
+                    // any trigger which retrieves data outside the system
+                    // should provide a #bytes sent for outbound accounting
+                    for (var k in exports) {
+                      if (exports.hasOwnProperty(k) && ~/^_/.test(key)) {
+                        downloadSize += exports[key].length;
+                      }
+                    }
+
+                    app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                      owner_id : result.owner_id, 
+                      type : 'traffic_inbound_mb', 
+                      inc : sprintf('%.4f', (downloadSize / (1024 * 1024)) )
+                    });                   
+                    
+                    app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                      owner_id : result.owner_id, 
+                      type : 'delivered_bip_inbound'
+                    });
                                                     
                     // translate trigger exports
                     // into bip #source hub key.
@@ -414,11 +434,18 @@ Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files)
     statSize += sprintf('%.4f', (content_parts._files[i].size / (1024 * 1024)) );
   }
 
+  for (var k in exports) {
+    if (exports.hasOwnProperty(k) && ~/^_/.test(key)) {
+      statSize += exports[key].length;
+    }
+  }
+
   app.bastion.createJob(DEFS.JOB_USER_STAT, {
     owner_id : bip.owner_id, 
     type : 'traffic_inbound_mb', 
     inc : statSize
   } );
+  
   app.bastion.createJob(DEFS.JOB_USER_STAT, {
     owner_id : bip.owner_id, 
     type : 'delivered_bip_inbound'
@@ -501,11 +528,26 @@ Bastion.prototype.channelProcess = function(struct) {
             transforms,
             struct.client, // system imports
             struct.content_parts,
-            function(err, exports, contentParts) {
+            function(err, exports, contentParts, uploadSize) {
               if (!err && exports) {
 
                 var newImports = struct.imports
                 newImports.local = exports;
+
+                // any channel which pushes data outside the system
+                // should provide a #bytes sent for outbound accounting
+                if (uploadSize) {
+                  app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                    owner_id : channel.owner_id, 
+                    type : 'traffic_outbound_mb', 
+                    inc : sprintf('%.4f', (uploadSize / (1024 * 1024)) )
+                  });
+                  
+                  app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                    owner_id : channel.owner_id, 
+                    type : 'delivered_channel_outbound'
+                  });
+                }
 
                 self.channelDistribute(
                   struct.bip,
@@ -515,7 +557,7 @@ Bastion.prototype.channelProcess = function(struct) {
                   // exports,
                   newImports,
                   struct.client,
-                  contentParts
+                  contentParts || struct.content_parts
                   );
               }
 
