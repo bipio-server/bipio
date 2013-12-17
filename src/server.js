@@ -133,21 +133,56 @@ if (cluster.isMaster) {
   for (var i = 0; i < forks; i++) {
     var worker = cluster.fork();
   }
-  
+
   app.dao.on('ready', function(dao) {
-    app.logmessage('DAO:Starting Stats Cron', 'info');   
-    var statsJob = new cron.CronJob('0 0 * * * *', function(){
-      dao.generateHubStats(function(err, msg) {
-        if (err) {
-          app.logmessage('STATS:THERE WERE ERRORS');
-        } else {
-          app.logmessage(msg);
-          app.logmessage('STATS:DONE');
-        }
-      });
-    }, null, true, 'Asia/Tokyo');
+    var crons = GLOBAL.CFG.crons;
+
+    // Network chords and stats summaries
+    if (crons && crons.stat && '' !== crons.stat) {
+      app.logmessage('DAO:Starting Stats Cron', 'info');
+      var statsJob = new cron.CronJob(crons.stat, function() {
+        dao.generateHubStats(function(err, msg) {
+          if (err) {
+            app.logmessage('STATS:THERE WERE ERRORS');
+          } else {
+            app.logmessage(msg);
+            app.logmessage('STATS:DONE');
+          }
+        });
+      }, null, true, GLOBAL.CFG.timezone);
+    }
+
+    // periodic triggers
+    if (crons && crons.trigger && '' !== crons.trigger) {
+      app.logmessage('DAO:Starting Trigger Cron', 'info');
+      var triggerJob = new cron.CronJob(crons.trigger, function() {
+        dao.triggerAll(function(err, msg) {
+          if (err) {
+            app.logmessage('TRIGGER:' + err + ' ' + msg);
+          } else {
+            app.logmessage(msg);
+            app.logmessage('TRIGGER:DONE');
+          }
+        });
+      }, null, true, GLOBAL.CFG.timezone);
+    }
+
+    // auto-expires
+    if (crons && crons.expire && '' !== crons.expire) {
+      app.logmessage('DAO:Starting Expiry Cron', 'info');
+      var expireJob = new cron.CronJob(crons.expire, function() {
+        dao.expireAll(function(err, msg) {
+          if (err) {
+              app.logmessage('EXPIRE:ERROR:' + err);
+              app.logmessage(msg);
+          } else {
+              app.logmessage('EXPIRE:DONE');
+          }
+        });
+      }, null, true, GLOBAL.CFG.timezone);
+    }
   });
-  
+
 } else {
   workerId = cluster.worker.workerID;
   app.logmessage('BIPIO:STARTED:' + new Date());

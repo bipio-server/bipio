@@ -3,6 +3,12 @@
     "website_public": "http://localhost",
     "cdn_public": "http://localhost/static/img/cdn",
     "proto_public": "http://",
+    "crons" : {
+      "stat" : "0 0 * * * *",
+      "trigger" : "0 */15 * * * *",
+      "expire" : "0 0 * * * *"
+    },
+    "timezone" : "Asia/Tokyo",
     "server": {
         "port": 5000,
         "sessionSecret" : "",

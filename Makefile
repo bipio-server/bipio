@@ -8,6 +8,7 @@ install:
 	mkdir -p data/cdn/img/av
 	mkdir -p data/cdn/img/icofactory
 	mkdir -p data/cdn/img/pods	
+  @SYSTEM_TZ=`date +%Z`
 	./tools/setup.js
 
 test-install:

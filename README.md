@@ -170,15 +170,29 @@ For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf
             then restart
 
 
-... and to automatically expire Bips and Fire their triggers, create cron's like so
+### Crons
+
+Periodic tasks will run from the server master instance automatically, you can find the config
+in the `config/{environment}.json` file, keyed by 'cron'.  
+
+* stats - network chord stats, every hour
+* triggers - trigger channels, every 15 minutes
+* expirer - bip expirer, every hour
+
+To disable a cron, either remove it from config or set an empty string.
+
+To have these crons handled by your system scheduler rather than the bipio server, disable the crons
+in config as described.  Wrapper scripts can be found in ./tools for each of stats (`tools/generate-hub-stats.js`), 
+triggers (`tools/bip-trigger.js`) and expirer (`tools/bip-expire.js`).
+
+Here's some example wrappers.
 
 ### Expire Runner
 
-
+Cron:
     0 * * * * {username} /path/to/bipio/tools/expire-runner.sh
 
-The server comes with the 'bip-expire.js' hook but not the shell script at this stage.  You'll need to create the
-cron to match your environment (shell, install path, logging path).  Here's a sample
+expire-runner.sh :
 
     #!/bin/bash
     # expire-runner.sh
@@ -188,15 +202,29 @@ cron to match your environment (shell, install path, logging path).  Here's a sa
 
 ### Trigger Runner
 
+Cron:
     */15 * * * * {username} /path/to/bipio/tools/trigger-runner.sh
 
-Similarly for bip-trigger.js
+trigger-runner.sh :
 
     #!/bin/bash
     # trigger-runner.sh
     export NODE_ENV=production
-    export HOME="/path/to//bipio"
+    export HOME="/path/to/bipio"
     cd $HOME (date && node ./tools/bip-trigger.js ) 2>&1 >> /path/to/bipio/logs/trigger.log
+
+### Expire Runner
+
+Cron:
+    */15 * * * * {username} /path/to/bipio/tools/expire-runner.sh
+
+expire-runner.sh :
+
+    #!/bin/bash
+    # expire-runner.sh
+    export NODE_ENV=production
+    export HOME="/path/to/bipio"
+    cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/expire.log
 
 ## Documentation
 

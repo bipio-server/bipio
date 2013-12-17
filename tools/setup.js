@@ -31,6 +31,8 @@ mongoose = require('mongoose');
 // load sparse config
 var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
     appEnv = process.env.NODE_ENV;
+    
+sparseConfig.timezone = process.env.SYSTEM_TZ;
 
 crypto.randomBytes(48, function(ex, buf) {
     sparseConfig.server.sessionSecret = buf.toString('hex');
@@ -42,7 +44,7 @@ if (appEnv === 'development' || !appEnv) {
 
 var targetConfig = path.resolve(__dirname, '../config/' + appEnv + '.json');
 
-function writeConfig() {
+function writeConfig() {    
     fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 4), function(err) {
         if (err) {
             console.log(err);
