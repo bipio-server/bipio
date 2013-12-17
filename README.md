@@ -187,19 +187,6 @@ triggers (`tools/bip-trigger.js`) and expirer (`tools/bip-expire.js`).
 
 Here's some example wrappers.
 
-### Expire Runner
-
-Cron:
-    0 * * * * {username} /path/to/bipio/tools/expire-runner.sh
-
-expire-runner.sh :
-
-    #!/bin/bash
-    # expire-runner.sh
-    export NODE_ENV=production
-    export HOME="/path/to/bipio"
-    cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/cron_server.log
-
 ### Trigger Runner
 
 Cron:
@@ -216,7 +203,7 @@ trigger-runner.sh :
 ### Expire Runner
 
 Cron:
-    */15 * * * * {username} /path/to/bipio/tools/expire-runner.sh
+    0 * * * * {username} /path/to/bipio/tools/expire-runner.sh
 
 expire-runner.sh :
 
@@ -224,7 +211,20 @@ expire-runner.sh :
     # expire-runner.sh
     export NODE_ENV=production
     export HOME="/path/to/bipio"
-    cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/expire.log
+    cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/cron_server.log
+
+### Stats Runner
+
+Cron:
+    */15 * * * * {username} /path/to/bipio/tools/stats-runner.sh
+
+stats-runner.sh :
+
+    #!/bin/bash
+    # stats-runner.sh
+    export NODE_ENV=production
+    export HOME="/path/to/bipio"
+    cd $HOME (date && node ./tools/generate-hub-stats.js ) 2>&1 >> /path/to/bipio/logs/stats.log
 
 ## Documentation
 
