@@ -7,9 +7,8 @@ install:
 	mkdir -p data/channels
 	mkdir -p data/cdn/img/av
 	mkdir -p data/cdn/img/icofactory
-	mkdir -p data/cdn/img/pods	
-  @SYSTEM_TZ=`date +%Z`
-	./tools/setup.js
+	mkdir -p data/cdn/img/pods		
+	@SYSTEM_TZ=`/usr/bin/env date +%Z` ./tools/setup.js
 
 test-install:
 	@NODE_ENV=testing ./tools/setup.js

@@ -47,7 +47,7 @@ function filterModel(filterLen, modelPublicFilters, modelStruct) {
             result[publicAttribute] = modelStruct[publicAttribute];
         }
     }
-    return result;
+    return helper.naturalize(result);
 }
 
 /**

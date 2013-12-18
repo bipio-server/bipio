@@ -187,7 +187,7 @@ triggers (`tools/bip-trigger.js`) and expirer (`tools/bip-expire.js`).
 
 Here's some example wrappers.
 
-### Trigger Runner
+#### Trigger Runner
 
 Cron:
     */15 * * * * {username} /path/to/bipio/tools/trigger-runner.sh
@@ -200,7 +200,7 @@ trigger-runner.sh :
     export HOME="/path/to/bipio"
     cd $HOME (date && node ./tools/bip-trigger.js ) 2>&1 >> /path/to/bipio/logs/trigger.log
 
-### Expire Runner
+#### Expire Runner
 
 Cron:
     0 * * * * {username} /path/to/bipio/tools/expire-runner.sh
@@ -213,7 +213,7 @@ expire-runner.sh :
     export HOME="/path/to/bipio"
     cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/cron_server.log
 
-### Stats Runner
+#### Stats Runner
 
 Cron:
     */15 * * * * {username} /path/to/bipio/tools/stats-runner.sh
