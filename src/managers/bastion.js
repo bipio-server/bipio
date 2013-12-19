@@ -435,7 +435,7 @@ Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files)
   }
 
   for (var k in exports) {
-    if (exports.hasOwnProperty(k) && ~/^_/.test(key)) {
+    if (exports.hasOwnProperty(k) && ~/^_/.test(key) && exports[key]) {
       statSize += exports[key].length;
     }
   }
