@@ -147,8 +147,8 @@ var BipModel = {
     },
 
     // called prior to save
-    preSave: function() {
-
+    preSave: function(accountInfo, next) {
+      next(false, this);
     },
 
     preRemove : function(id, accountInfo, cb) {

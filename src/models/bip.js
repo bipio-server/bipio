@@ -583,7 +583,7 @@ Bip.exports = {
 /**
  * For any omitted attributes, use account defaults
  */
-Bip.preSave = function(accountInfo) {
+Bip.preSave = function(accountInfo, next) {
   if ('' !== this.id && undefined !== this.id) {
     var props = {
       'domain_id' : accountInfo.getSetting('bip_domain_id'),
@@ -625,11 +625,10 @@ Bip.preSave = function(accountInfo) {
           && this.renderer.channel_id
           && this.renderer.renderer) {
     channels.push(this.renderer.channel_id);
-  }
-  
+  }  
 
   this._channel_idx = app._.uniq(channels);
-  return;
+  next(false, this);
 };
 
 function getAction(accountInfo, channelId) {

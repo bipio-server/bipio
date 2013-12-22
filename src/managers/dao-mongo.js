@@ -353,67 +353,73 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
   if (model) {
     model[ model.getEntityIndex() ] = uuid();
     model[ model.getEntityCreated() ] = nowTime;
-    model.preSave(accountInfo);
-
-    var mongoModel = this.toMongoModel(model);
-
-    mongoModel.save(function(err) {
+    model.preSave(accountInfo, function(err, model) {
       if (err) {
-        self._log(err, 'error');
-        if (next) {
-          // conflict? Then load the record and return the payload
-          // with an error response
-          if (err.code == 11000) {
-            // always bind to the authed user
-            var filter = {
-              'owner_id' : accountInfo.user.id
-            };
+        next(err, model.getEntityName(), model, 500);
+        return;
+      }
+      
+      var mongoModel = self.toMongoModel(model);
 
-            // get key constraints from model
-            var compoundConstraints = model.getCompoundKeyConstraints();
-            if (undefined != compoundConstraints) {
-              for (key in compoundConstraints) {
-                if (key != 'owner_id') {
-                  filter[key] = mongoModel[key];
+      mongoModel.save(function(err) {
+        if (err) {
+          self._log(err, 'error');
+          if (next) {
+            // conflict? Then load the record and return the payload
+            // with an error response
+            if (err.code == 11000) {
+              // always bind to the authed user
+              var filter = {
+                'owner_id' : accountInfo.user.id
+              };
+
+              // get key constraints from model
+              var compoundConstraints = model.getCompoundKeyConstraints();
+              if (undefined != compoundConstraints) {
+                for (key in compoundConstraints) {
+                  if (key != 'owner_id') {
+                    filter[key] = mongoModel[key];
+                  }
                 }
               }
-            }
 
-            self._hydrateModelFromFilter(model, filter, accountInfo, next);
+              self._hydrateModelFromFilter(model, filter, accountInfo, next);
 
-          } else {
-            var errResp;
-            // looks like a mongo validation error? then normalize it
-            if (err.errors && err.name) {
-              errResp = {
-                'status' : 400,
-                'message' : err.name,
-                'errors' : err.errors
-              }
             } else {
-              errResp = err;
+              var errResp;
+              // looks like a mongo validation error? then normalize it
+              if (err.errors && err.name) {
+                errResp = {
+                  'status' : 400,
+                  'message' : err.name,
+                  'errors' : err.errors
+                }
+              } else {
+                errResp = err;
+              }
+              next(self.errorParse(err, model), model.getEntityName(), errResp, self.errorMap(err) );
             }
-            next(self.errorParse(err, model), model.getEntityName(), errResp, self.errorMap(err) );
           }
+          return null;
         }
-        return null;
-      }
-      // populate from mongo model into our model, and build a representation
-      model.populate(mongoModel, accountInfo);
-      model.postSave(accountInfo, function(err, modelName, retModel, code) {
-        if (next) {
-          next(err, modelName, retModel, code );
-        }
-        // depending on the model, we can inject post-saves which are
-        // outside the model's scope, such as notifications, or other
-        // types of bindings.
-        if (daoPostSave) {
-          daoPostSave(err, modelName, retModel, code );
-        }
-      }, true);
+        // populate from mongo model into our model, and build a representation
+        model.populate(mongoModel, accountInfo);
+        model.postSave(accountInfo, function(err, modelName, retModel, code) {
+          if (next) {
+            next(err, modelName, retModel, code );
+          }
+          // depending on the model, we can inject post-saves which are
+          // outside the model's scope, such as notifications, or other
+          // types of bindings.
+          if (daoPostSave) {
+            daoPostSave(err, modelName, retModel, code );
+          }
+        }, true);
 
-      return model;
+        return model;
+      });
     });
+    
   } else {
     this._log('Error: create(): cannot save item', 'error');
     if (next) {
@@ -429,100 +435,107 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
 
   var f = filter; // something in mongoose is clobbering 'filter'
 
-  model.preSave(accountInfo);
-  MongooseClass.update(filter, model.toObj(), function(err) {
+  model.preSave(accountInfo, function(err, model) {
     if (err) {
-      if (next) {
-        // conflict? Then load the record and return the payload
-        // with an error response
-        if (err.code == 11000) {
-          // always bind to the authed user
-          var filter = {
-            'owner_id' : accountInfo.user.id
-          };
+      next(err, model.getEntityName(), model, 500);
+      return;
+    }
+    
+    MongooseClass.update(filter, model.toObj(), function(err) {
+      if (err) {
+        if (next) {
+          // conflict? Then load the record and return the payload
+          // with an error response
+          if (err.code == 11000) {
+            // always bind to the authed user
+            var filter = {
+              'owner_id' : accountInfo.user.id
+            };
 
-          // get key constraints from model
-          var compoundConstraints = model.getCompoundKeyConstraints();
-          if (undefined != compoundConstraints) {
-            for (key in compoundConstraints) {
-              if (key != 'owner_id') {
-                filter[key] = model[key];
+            // get key constraints from model
+            var compoundConstraints = model.getCompoundKeyConstraints();
+            if (undefined != compoundConstraints) {
+              for (key in compoundConstraints) {
+                if (key != 'owner_id') {
+                  filter[key] = model[key];
+                }
               }
             }
-          }
 
-          MongooseClass.findOne(filter, function(gErr, result) {
-            if (gErr || !result) {
-              next(
-                self.errorParse(gErr),
-                null,
-                null,
-                self.errorMap(gErr)
-                );
-            } else {
-              model.populate(result, accountInfo);
-              next(
-                self.errorParse(gErr, model),
-                model.getEntityName(),
-                model,
-                self.errorMap(gErr)
-                );
-            }
-          });
-        } else {
-          var errResp;
-          // looks like a mongo validation error? then normalize it
-          if (err.errors && err.name) {
-            errResp = {
-              'status' : 400,
-              'message' : err.name,
-              'errors' : err.errors
-            }
+            MongooseClass.findOne(filter, function(gErr, result) {
+              if (gErr || !result) {
+                next(
+                  self.errorParse(gErr),
+                  null,
+                  null,
+                  self.errorMap(gErr)
+                  );
+              } else {
+                model.populate(result, accountInfo);
+                next(
+                  self.errorParse(gErr, model),
+                  model.getEntityName(),
+                  model,
+                  self.errorMap(gErr)
+                  );
+              }
+            });
           } else {
-            errResp = err;
-          }
-          next(
-            self.errorParse(err, model),
-            model.getEntityName(),
-            errResp,
-            self.errorMap(err)
-            );
-        }
-      }
-      return null;
-    } else {
-
-      // mongoose .update doesn't tell us how things changed,
-      // reload from db
-      MongooseClass.findOne(
-        f,
-        function(err, result) {
-          if (err || !result) {
+            var errResp;
+            // looks like a mongo validation error? then normalize it
+            if (err.errors && err.name) {
+              errResp = {
+                'status' : 400,
+                'message' : err.name,
+                'errors' : err.errors
+              }
+            } else {
+              errResp = err;
+            }
             next(
-              self.errorParse(err),
-              null,
-              null,
+              self.errorParse(err, model),
+              model.getEntityName(),
+              errResp,
               self.errorMap(err)
               );
-          } else {
-            // populate from mongo model into our model, and build a representation
-            var model = self.modelFactory(modelName, {}, accountInfo);
-            model.populate(result, accountInfo);
-            next(false, model.getEntityName(), model);
-          /*
-                        model.postSave(accountInfo, function(err, modelName, retModel, code) {
-                             next(
-                                 self.errorParse(err, model),
-                                 model.getEntityName(),
-                                 model
-                             );
-                         });
-                        */
           }
-        });
-    }
-    return model;
+        }
+        return null;
+      } else {
+
+        // mongoose .update doesn't tell us how things changed,
+        // reload from db
+        MongooseClass.findOne(
+          f,
+          function(err, result) {
+            if (err || !result) {
+              next(
+                self.errorParse(err),
+                null,
+                null,
+                self.errorMap(err)
+                );
+            } else {
+              // populate from mongo model into our model, and build a representation
+              var model = self.modelFactory(modelName, {}, accountInfo);
+              model.populate(result, accountInfo);
+              next(false, model.getEntityName(), model);
+            /*
+                          model.postSave(accountInfo, function(err, modelName, retModel, code) {
+                               next(
+                                   self.errorParse(err, model),
+                                   model.getEntityName(),
+                                   model
+                               );
+                           });
+                          */
+            }
+          });
+      }
+      return model;
+    });
   });
+
 };
 
 
