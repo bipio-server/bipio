@@ -9,13 +9,9 @@ Bipio is a highly parallel nodejs based API integration framework.  It uses [gra
 based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  It's a RESTful JSON API that supports account level namespacing.  Clients authenticate over HTTP Basic.
 
-If you're familiar with Yahoo Pipes, IFTTT, Zapier, Mulesoft, Cloudworks or Temboo - the concept is similar, but this is open source, and intrinsically extensible.  The server has a small footprint 
-which lets you create and automate an internet of things that matter to you.   It can be installed alongside 
-your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout
-or whatever you like, even on your Rasberry Pi.
+If you're familiar with Yahoo Pipes, IFTTT, Zapier, Mulesoft, Cloudwork or Temboo - the concept is a little similar. The server has a small footprint which lets you create and automate an internet of things that matter to you.   It can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
-The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip),are unique in they allow you to transform 
-content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.  You can put web-hooks, web-sockets, emails or event triggers infront of Bip graphs to perform useful work.
+The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip),are unique in they allow you to transform content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.  You can put web-hooks, web-sockets, emails or event triggers infront of Bip graphs to perform useful work.
 
 There are three flavors of Bip - HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
 
@@ -124,6 +120,8 @@ For graphical representation of your bips, sign in to [bipio](https://bip.io) to
 under My Account > Mounts > Create Mount.  The BipIO website is not a first class citizen or tightly coupled to one particular 
 endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
 middleware and distributed with Bipio at a later date.
+
+By itself, Bipio does not provide SSL termination or any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  If you need SSL termination this should be delegated to a forward proxy such as NginX, Apache, HAProxy etc.
 
 Feel free to fork this repository and create pods as you need, and please help make 
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place. Pull Requests, issues, feature requests, 
