@@ -640,14 +640,13 @@ Bip.preSave = function(accountInfo, next) {
     if (this.hub.hasOwnProperty(cid)) {
       if (this.hub[cid].transforms) {
         for (edgeCid in this.hub[cid].transforms) {
-          // request default transform from dao
           if ('default' === this.hub[cid].transforms[edgeCid]) {
             this.hub[cid].transforms[edgeCid] = {};
             transformUnpack.push(
               (function(accountInfo, from, to, ptr) {
                 return function(cb) {
                   self._dao.getTransformHint(accountInfo, from, to, function(err, modelName, result) {
-                    if (!err) {
+                    if (!err && result && result.transform) {
                       app.helper.copyProperties(result.transform, ptr, true);
                     }
 
