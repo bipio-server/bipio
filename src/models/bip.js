@@ -21,7 +21,8 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var baseConverter = require('base-converter'),
-djs = require('datejs'),en
+djs = require('datejs'),
+async       = require('async'),
 BipModel = require('./prototype.js').BipModel,
 Bip = Object.create(BipModel);
 
@@ -299,7 +300,7 @@ Bip.entitySchema = {
             if (val.hasOwnProperty(cid)) {
               // check channel exists
               ok = (cid == 'source' || userChannels.isAvailable(cid));
-              if (ok) {                
+              if (ok) {
                 // check edges point to channels for this account
                 numEdges = val[cid].edges.length;
                 if (numEdges > 0) {
@@ -383,7 +384,7 @@ Bip.entitySchema = {
     },
     {
       validator : function(val, next) {
-        next(val.action && /^(pause|delete)$/i.test(val.action) );          
+        next(val.action && /^(pause|delete)$/i.test(val.action) );
       },
       msg : 'Expected pause" or "delete"'
     }
@@ -580,10 +581,35 @@ Bip.exports = {
   }
 }
 
+Bip._createChannelIndex = function() {
+  // create channel index
+  var channels = [];
+  if ('trigger' === this.type && this.config.channel_id && '' !== this.config.channel_id) {
+    channels.push(this.config.channel_id);
+  }
+
+  for (var k in this.hub) {
+    if (this.hub.hasOwnProperty(k)) {
+      if (this.hub[k].edges) {
+        channels = channels.concat(this.hub[k].edges);
+      }
+    }
+  }
+
+  if ('http' === this.type && app.helper.isObject(this.renderer)
+          && this.renderer.channel_id
+          && this.renderer.renderer) {
+    channels.push(this.renderer.channel_id);
+  }
+
+  this._channel_idx = app._.uniq(channels);
+}
+
 /**
  * For any omitted attributes, use account defaults
  */
 Bip.preSave = function(accountInfo, next) {
+  var self = this;
   if ('' !== this.id && undefined !== this.id) {
     var props = {
       'domain_id' : accountInfo.getSetting('bip_domain_id'),
@@ -607,28 +633,47 @@ Bip.preSave = function(accountInfo, next) {
     this.domain_id = undefined;
   }
 
-  // create channel index
-  var channels = [];
-  if ('trigger' === this.type && this.config.channel_id && '' !== this.config.channel_id) {
-    channels.push(this.config.channel_id);
-  }
+  var transformUnpack = [], ptr;
 
-  for (var k in this.hub) {
-    if (this.hub.hasOwnProperty(k)) {
-      if (this.hub[k].edges) {
-        channels = channels.concat(this.hub[k].edges);
+  // translate 'default' transforms
+  for (cid in this.hub) {
+    if (this.hub.hasOwnProperty(cid)) {
+      if (this.hub[cid].transforms) {
+        for (edgeCid in this.hub[cid].transforms) {
+          // request default transform from dao
+          if ('default' === this.hub[cid].transforms[edgeCid]) {
+            this.hub[cid].transforms[edgeCid] = {};
+            transformUnpack.push(
+              (function(accountInfo, from, to, ptr) {
+                return function(cb) {
+                  self._dao.getTransformHint(accountInfo, from, to, function(err, modelName, result) {
+                    if (!err) {
+                      app.helper.copyProperties(result.transform, ptr, true);
+                    }
+
+                    cb(err);
+                  });
+                }
+              })(accountInfo,
+              'bip.' + this.type,
+              accountInfo.user.channels.get(edgeCid).action,
+              this.hub[cid].transforms[edgeCid])
+            );
+          }
+        }
       }
     }
   }
 
-  if ('http' === this.type && app.helper.isObject(this.renderer)
-          && this.renderer.channel_id
-          && this.renderer.renderer) {
-    channels.push(this.renderer.channel_id);
-  }  
+  if (transformUnpack.length > 0) {
+    async.parallel(transformUnpack, function(err) {
+      next(err, self);
+    });
+  } else {
+    this._createChannelIndex();
+    next(false, this);
+  }
 
-  this._channel_idx = app._.uniq(channels);
-  next(false, this);
 };
 
 function getAction(accountInfo, channelId) {

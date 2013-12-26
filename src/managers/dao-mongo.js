@@ -301,6 +301,7 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
   mongoModel = new MongooseModel(srcModel);
 
   var model = helper.copyProperties(srcModel, mongoModel, true);
+  delete model.accountInfo;
   var self = this;
 
   // mongoose doesn't look to apply defaults prior to validation??
