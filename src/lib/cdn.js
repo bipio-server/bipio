@@ -59,7 +59,7 @@ var cdn = {
     httpSnarfResponseHandler : function(res, srcUrl, dstFile, next, hops) {        
         if (hops > 3) {
             next(true, 'too many redirects');
-        } else if (res.getHeader('content-length') == 0) {
+        } else if (res.headers['content-length'] == 0) {
           var msg = 'Zero Size Reply';
           console.log(msg);
           next(true, msg);

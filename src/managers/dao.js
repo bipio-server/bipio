@@ -753,7 +753,7 @@ Dao.prototype.triggerAll = function(next) {
         })(results[i]);
       }
     } else {
-      cb(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
+      next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
     }
   });
 }
