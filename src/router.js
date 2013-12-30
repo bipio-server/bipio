@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU General Public Licenpse
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
@@ -434,6 +434,10 @@ module.exports = {
         express.put( '/rest/:resource_name/:id?', restAuthWrapper, restAction);
         express.del( '/rest/:resource_name/:id', restAuthWrapper, restAction);
 
+        express.options('*', function(req, res) {
+          res.send(200);
+        });
+
         /**
          * Pass through HTTP Bips
          */
@@ -533,7 +537,7 @@ module.exports = {
             (function(domain, req, res) {
                 dao.domainAuth(domain, true, function(err, accountResult) {
                     if (err || !accountResult) {
-                        app.logmessage.log(err, 'error');
+                        app.logmessage(err, 'error');
                         res.send(403);
                     } else {
                         var filter = {
@@ -543,7 +547,7 @@ module.exports = {
 
                         dao.find('channel', filter, function(err, result) {
                             if (err || !result) {
-                                app.logmessage.log(err, 'error');
+                                app.logmessage(err, 'error');
                                 res.send(404);
                             } else {
                                 req.remoteUser = accountResult;
@@ -598,6 +602,7 @@ module.exports = {
         /**
          * Pass through an RPC call to a pod
          */
+        //rpc/pod/syndication/feed/json
         express.all('/rpc/pod/:pod/:action/:method/:channel_id?', restAuthWrapper, function(req, res) {
             (function(req, res) {
                 var pod = dao.pod(req.params.pod);
@@ -814,9 +819,10 @@ module.exports = {
         });
 
         express.all('*', function(req, res, next) {
-            if (req.method == 'OPTIONS') {
-                res.send(200);
-            } else {
+         
+//            if (req.method == 'OPTIONS') {
+ //               res.send(200);
+   //         } else {
 
               // API has no default/catchall renderer
               if (req.headers.host === CFG.domain_public) {
@@ -861,7 +867,7 @@ module.exports = {
                   }
                 );
               }
-            }
+           // }
         });
     }
 }
