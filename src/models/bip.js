@@ -728,7 +728,10 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
 
 Bip.postSave = function(accountInfo, next, isNew) {
   this.normalizeTransformDefaults(accountInfo, function(payload) {
-    app.bastion.createJob(DEFS.JOB_BIP_SET_DEFAULTS, payload);
+    console.log(payload);
+    if (payload.transform && Object.keys(payload.transform).length > 0) {
+      app.bastion.createJob(DEFS.JOB_BIP_SET_DEFAULTS, payload);
+    }
   });
 
   // create metric updates jobs
