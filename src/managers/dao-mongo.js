@@ -731,7 +731,8 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
     'alphabetical' : 'name'
   }
 
-  var model = mongoose.model(modelName);
+  var model = mongoose.model(modelName),
+    m = this.modelFactory(modelName);
 
   var query = model.find( mongoFilter.owner_id ? mongoFilter : null );
 
@@ -755,7 +756,12 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         query = query.limit(page_size).skip( (page - 1)  * page_size );
       }
 
-      if (sortMap[orderBy] || orderBy) {
+      if (app.helper.isArray(orderBy) && /asc|desc/.test(orderBy[1]) && m.testProperty(orderBy[0])) {
+        var s = {};
+        s[orderBy[0]] = orderBy[1];
+        query = query.sort(s);
+
+      } else if (sortMap[orderBy] || orderBy) {
         var s = {};
         s[sortMap[orderBy] ? sortMap[orderBy] : orderBy] = (orderBy === 'alphabetical' ? 'asc' : 'desc');
         query = query.sort(s);

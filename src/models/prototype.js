@@ -235,6 +235,10 @@ var BipModel = {
             validators = this.entitySchema[attr].validate;
         }
         return validators;
+    },
+    
+    testProperty : function(prop) {
+      return this.entitySchema.hasOwnProperty(prop);
     }
 }
 
