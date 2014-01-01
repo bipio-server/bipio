@@ -886,8 +886,33 @@ DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
     "$set" : props
   }
 
-  // increment it
   MongoModel.update( updateFilter, updateCols ).exec(next);
 };
+
+/**
+ * Updates properties into a model by id, with setters applied
+ */
+DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
+  var model = this.modelFactory(modelName, props),
+    updateFilter = {},
+    setProperties = {};
+
+  updateFilter[model.getEntityIndex()] = id;
+
+  // cast to mongoose model
+  var mongoModel = this.toMongoModel(model);
+  for (var k in props) {
+    if (props.hasOwnProperty(k)) {
+      setProperties[k] = mongoModel[k];
+    }    
+  }
+
+  var updateCols = {
+    "$set" : app._.clone(setProperties)
+  }
+
+  mongoose.model(model.getEntityName()).update( updateFilter, updateCols ).exec(next);
+};
+
 
 module.exports = DaoMongo;

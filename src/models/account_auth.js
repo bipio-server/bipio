@@ -162,6 +162,14 @@ AccountAuth.entitySchema = {
     writable: false,
     set : cryptSave
   },
+  oauth_token_expire : {
+    type : Number,
+    renderable : false,
+    writable : false,
+    set : function(value) {
+      return (new Date()).getTime() + value
+    }
+  },
   oauth_profile: {
     type: Object,
     renderable: true,

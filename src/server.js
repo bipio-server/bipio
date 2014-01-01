@@ -181,6 +181,12 @@ if (cluster.isMaster) {
         });
       }, null, true, GLOBAL.CFG.timezone);
     }
+
+    // oAuth refresh
+    app.logmessage('DAO:Starting OAuth Refresh', 'info');
+    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
+      dao.refreshOAuth();
+    }, null, true, GLOBAL.CFG.timezone);   
   });
 
 } else {
@@ -197,7 +203,7 @@ if (cluster.isMaster) {
 
   app.dao.on('ready', function(dao) {
     require('./router').init(restapi, dao);
-    restapi.listen(GLOBAL.CFG.server.port, function() {
+    restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
   });

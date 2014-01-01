@@ -61,7 +61,7 @@ function Dao(config, log, next) {
 
   for (var key in modelSrc) {
     this.registerModel(modelSrc[key]);
-  }    
+  }
 }
 
 util.inherits(Dao, DaoMongo);
@@ -871,6 +871,31 @@ Dao.prototype.expireAll = function(next) {
 // POD RPC
 Dao.prototype.pod = function(podName) {
   return this.models['channel']['class'].pod(podName);
+}
+
+Dao.prototype.refreshOAuth = function() {
+  var self = this,
+    pods = this.models['channel']['class'].getPods(),
+    withinSeconds = 16 * 60 * 1000; // 16 mins (cron by 15 mins)
+    maxExpiry = (new Date()).getTime() + withinSeconds;
+
+  // get account
+  var filter = {
+    "oauth_token_expire" : {
+      '$gt' : 0,
+      '$lt' : maxExpiry,
+      '$exists' : true
+    },
+    'type' : 'oauth'
+  }
+
+  this.findFilter('account_auth', filter, function(err, results) {
+    if (!err) {
+      for (var i = 0; i < results.length; i++) {
+        pods[results[i].oauth_provider].oAuthRefresh(self.modelFactory('account_auth', results[i]));
+      }
+    }
+  });
 }
 
 /**

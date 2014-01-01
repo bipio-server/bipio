@@ -35,7 +35,8 @@ var app = {
     cdn          = require('./lib/cdn'),
     path            = require('path'),
     defs            = require('../config/defs'),
-    envConfig       = require('config');
+    envConfig       = require('config'),
+    os = require('os');
 
 // globals
 GLOBAL.app = app;
@@ -79,6 +80,17 @@ process.addListener('uncaughtException', function (err, stack) {
         console.log(message);
     }
 });
+
+if (!GLOBAL.CFG.server.public_interfaces) {
+  GLOBAL.CFG.server.public_interfaces = [];
+  var ifaces = os.networkInterfaces();
+  for (var i in ifaces) {
+    ifaces[i].forEach(function(details) {
+      app.logmessage('Resolvable Interface ' + i + ':' + details.address);    
+      GLOBAL.CFG.server.public_interfaces.push(details.address);    
+    });
+  }
+}
 
 var dao = new require('./managers/dao'),
     bastion = new require('./managers/bastion');
