@@ -364,11 +364,15 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
 
       mongoModel.save(function(err) {
         if (err) {
-          self._log(err, 'error');
+          self._log(err, 'error');          
           if (next) {
+
             // conflict? Then load the record and return the payload
             // with an error response
+            /*
+            console.log(err.code);
             if (err.code == 11000) {
+              console.log('SHOULD BE 409!?')
               // always bind to the authed user
               var filter = {
                 'owner_id' : accountInfo.user.id
@@ -387,6 +391,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
               self._hydrateModelFromFilter(model, filter, accountInfo, next);
 
             } else {
+              */
               var errResp;
               // looks like a mongo validation error? then normalize it
               if (err.errors && err.name) {
@@ -398,8 +403,9 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
               } else {
                 errResp = err;
               }
+              
               next(self.errorParse(err, model), model.getEntityName(), errResp, self.errorMap(err) );
-            }
+            //}
           }
           return null;
         }
