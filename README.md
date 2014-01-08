@@ -117,7 +117,12 @@ how in the [cookbook](https://github.com/bipio-server/bipio/wiki/Email-Repeater,
 
 The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
 For graphical representation of your bips, sign in to [bipio](https://bip.io) to mount your local install from your browser 
-under My Account > Mounts > Create Mount.  The BipIO website is not a first class citizen or tightly coupled to one particular 
+under My Account > Mounts > Create Mount.  
+
+![Server Mount](https://bip.io/static/img/docs/server_mount.png)
+
+
+The BipIO website is not a first class citizen or tightly coupled to one particular 
 endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
 middleware and distributed with Bipio at a later date.
 
