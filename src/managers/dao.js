@@ -392,31 +392,39 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
 
 
 // update account options with the selected bip's config.
-Dao.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, cb) {
+Dao.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, next) {
   var self = this;
+
   // get bip
   this.find('bip', {
     id : bipId,
     owner_id : accountInfo.user.id
   }, function(err, result) {
-    if (err) {
+    
+    if (err || !result) {
       cb(self.errorParse(err), null, null, self.errorMap(err) );
     } else {
-      // update into account options
-      targetModel.bip_config = result.config;
-      targetModel.bip_domain_id = result.domain_id;
-      targetModel.bip_end_life = result.end_life;
-      targetModel.bip_hub = result.hub;
-      targetModel.bip_type = result.type;
 
       // update into account options
-      self.update(
-        'account_option',
+      var patch = {
+        bip_config : result.config,
+        bip_domain_id : result.domain_id,
+        bip_end_life : result.end_life,
+        bip_hub : result.hub,
+        bip_type : result.type
+      }
+
+
+
+      // update into account options
+      self.updateProperties(
+        targetModel.getEntityName(),
         targetModel.id,
-        targetModel,
-        cb,
-        accountInfo
-        );
+        patch,
+        function(err) {
+          next(err, 'account_option', { message : 'OK' }, 200);
+        }
+      );
     }
   });
 };

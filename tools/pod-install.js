@@ -89,6 +89,11 @@ if (pod && pod._name) {
         var actionDone = false;
         if (mode === 'add' && !currentConfig.pods[pod._name]) {
             currentConfig.pods[pod._name] = config;
+            if (config.oauth.callbackURL) {
+              currentConfig.pods[pod._name].oauth.callbackURL = currentConfig.proto_public 
+                + currentConfig.domain_public 
+                + config.oauth.callbackURL;
+            }
             actionDone = true;
 
         } else if (mode === 'remove' && currentConfig.pods[pod._name]) {

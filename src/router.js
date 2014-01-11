@@ -783,10 +783,14 @@ module.exports = {
 
           dao.find('account_option', filter, function(err, result) {
             if (err || !result) {
-              console.log(err);
               res.send(404);
             } else {
-              dao.setDefaultBip(resourceId, dao.modelFactory('account_option', result, accountInfo), accountInfo, restResponse(res));
+              dao.setDefaultBip(
+                resourceId, 
+                dao.modelFactory('account_option', result, accountInfo), 
+                accountInfo, 
+                restResponse(res)
+              );
             }
           });
 

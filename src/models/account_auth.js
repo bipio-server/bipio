@@ -100,7 +100,8 @@ function cryptSave(value) {
 }
 
 function cryptSaveObj(value) {
-  return cryptSave(JSON.stringify(value));
+  var strVal = (new Buffer(JSON.stringify(value), 'utf-8' )).toString('ascii')
+  return cryptSave(JSON.stringify(strVal));
 }
 
 AccountAuth.id = '';
