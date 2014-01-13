@@ -45,10 +45,10 @@ function Bastion(dao, noConsume, cb) {
   }
   this._dao = dao;
 
-  var eventWrapper = function(readyQueue) {        
-    self.emit('readyQueue', readyQueue);        
+  var eventWrapper = function(readyQueue) {
+    self.emit('readyQueue', readyQueue);
   };
-    
+
   //this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
   this._queue = new Rabbit(CFG.rabbit, noConsume ? eventWrapper : cb);
   return this;
@@ -135,41 +135,33 @@ Bastion.prototype.jobRunner = function(jobPacket) {
               transforms, // transforms
               clientStruct, // client
               contentParts, // content parts
-              function(err, exports, content_parts, downloadSize) {
+              function(err, exports, content_parts, transferSizeBytes) {
                 var normedExports = {};
-                downloadSize = downloadSize || 0;
+                transferSizeBytes = transferSizeBytes || 0;
                 for (var key in exports) {
                   normedExports['source#' + key] = exports[key];
                 }
                 if (!err) {
                   if (exports) {
                     self._dao.accumulate('bip', imports._bip, '_imp_actual');
-                                           
-                    // any trigger which retrieves data outside the system
-                    // should provide a #bytes sent for outbound accounting
-                    for (var k in exports) {
-                      if (exports.hasOwnProperty(k) && ~/^_/.test(key)) {
-                        downloadSize += exports[key].length;
-                      }
-                    }
 
                     app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                      owner_id : result.owner_id, 
-                      type : 'traffic_inbound_mb', 
-                      inc : sprintf('%.4f', (downloadSize / (1024 * 1024)) )
-                    });                   
-                    
+                      owner_id : result.owner_id,
+                      type : 'traffic_inbound_mb',
+                      inc : sprintf('%.4f', (transferSizeBytes / (1024 * 1024)) )
+                    });
+
                     app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                      owner_id : result.owner_id, 
+                      owner_id : result.owner_id,
                       type : 'delivered_bip_inbound'
                     });
-                                                    
+
                     // translate trigger exports
                     // into bip #source hub key.
                     var v = {
                       'source' : exports
                     };
-                                                    
+
                     self.channelDistribute(
                       jobPacket.data,
                       'source',
@@ -192,11 +184,11 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 
     } else if (jobPacket.name == DEFS.JOB_SET_DEFAULT_SPACE) {
       this._dao.updateColumn(
-        'account_option', 
+        'account_option',
         {
           owner_id : jobPacket.data.owner_id
-        }, 
-{
+        },
+        {
           default_feed_id : jobPacket.data.channel_id
         },
         function(err, resp) {
@@ -204,7 +196,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             app.logmessage(err, 'error');
           }
         }
-        );  
+        );
     } else if (jobPacket.name == DEFS.JOB_BIP_SET_DEFAULTS) {
       this._dao.setTransformDefaults(jobPacket.data);
 
@@ -217,12 +209,18 @@ Bastion.prototype.jobRunner = function(jobPacket) {
         modelName = 'stats_account',
         model,
         statType = jobPacket.data.type,
-        inc = jobPacket.data.inc || 1;
-                    
+        inc = Number(jobPacket.data.inc) || 1;        
+
+        if (isNaN(inc)) {
+          app.logmessage('Incrementor is Not A Number', 'warning');
+          app.logmessage(inc, 'warning');
+          inc = 0;
+        }
+
         this._dao.findFilter(modelName, filter, function(err, results) {
           var result = results.pop();
           if (err) {
-            app.logmessage(err, 'error');                        
+            app.logmessage(err, 'error');
           } else if (!result) {
             // create
             filter[statType] = inc;
@@ -231,7 +229,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
               function(err) {
                 if (err) {
                   app.logmesasge(err, 'error');
-                }                                
+                }
               }
               );
           } else {
@@ -239,16 +237,16 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             // feed forward to general system stats
             if (jobPacket.data.owner_id !== 'system') {
               self.createJob(DEFS.JOB_USER_STAT, {
-                owner_id : 'system', 
-                type : jobPacket.data.type, 
+                owner_id : 'system',
+                type : jobPacket.data.type,
                 inc : inc
               } );
-            }                        
+            }
           }
         });
-      }          
+      }
 
-    } else if (jobPacket.name == DEFS.JOB_BIP_ACTIVITY) {            
+    } else if (jobPacket.name == DEFS.JOB_BIP_ACTIVITY) {
       this._dao.bipLog(jobPacket.data);
     } else {
       app.logmessage('BASTION:MALFORMED PACKET', 'error');
@@ -363,9 +361,9 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
 
             if (expired) {
               expireBehavior = (bipResult.end_life.action && '' !== bipResult.end_life.action)
-                ? bipResult.end_life.action
-                : accountInfo.user.settings.bip_expire_behaviour;
-                
+              ? bipResult.end_life.action
+              : accountInfo.user.settings.bip_expire_behaviour;
+
               if ('delete' === expireBehavior) {
                 self._dao.deleteBip(bipResult, accountInfo, cb(cbParameterMap.fail, err), client.id);
               } else {
@@ -413,24 +411,24 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
           }
         }
       });
-  })(accountInfo, client, filter, cb);   
+  })(accountInfo, client, filter, cb);
 }
 
 /**
  * Given a bip and some content, begins the delivery process
- * 
+ *
  * bip and client also exist in exports as _bip and _client respectively, we
  * break them out as seperate system usable arguments.
- * 
+ *
  * @todo _bip and _client should be read-only objects
- * 
+ *
  */
 Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files) {
   if (files) {
     content_parts._files = files;
   }
   var statSize = 0;
-  for (var i = 0; i < content_parts._files.length; i++) {       
+  for (var i = 0; i < content_parts._files.length; i++) {
     statSize += sprintf('%.4f', (content_parts._files[i].size / (1024 * 1024)) );
   }
 
@@ -441,13 +439,13 @@ Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files)
   }
 
   app.bastion.createJob(DEFS.JOB_USER_STAT, {
-    owner_id : bip.owner_id, 
-    type : 'traffic_inbound_mb', 
+    owner_id : bip.owner_id,
+    type : 'traffic_inbound_mb',
     inc : statSize
   } );
-  
+
   app.bastion.createJob(DEFS.JOB_USER_STAT, {
-    owner_id : bip.owner_id, 
+    owner_id : bip.owner_id,
     type : 'delivered_bip_inbound'
   } );
 
@@ -481,7 +479,7 @@ Bastion.prototype.channelDistribute = function(bip, channel_id, content_type, en
     }
 
     app.logmessage('BASTION:FWD:TX:' + client.id + ':CID:' + channel_id);
-       
+
     // produce an export for the next upstream
     // adjacent channel
     this._queue.producePublic(channelInvokePacket);
@@ -497,7 +495,7 @@ Bastion.prototype.channelProcess = function(struct) {
   // unpack the bip and deliver
   app.logmessage('BASTION:PROC:TX:' + struct.client.id, 'info'); // transaction started
   app.logmessage('BASTION:FWD:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
-    
+
   if (undefined != struct.bip) {
 
     app.logmessage('BASTION:PROC:TX:' + struct.client.id + ':BIPID:' + struct.bip.id + ':CID:' + struct.channel_id, 'info');
@@ -506,7 +504,7 @@ Bastion.prototype.channelProcess = function(struct) {
     var filter = {
       'id' : struct.channel_id,
       'owner_id' : struct.bip.owner_id
-    };        
+    };
 
     this._dao.find(
       'channel',
@@ -528,7 +526,7 @@ Bastion.prototype.channelProcess = function(struct) {
             transforms,
             struct.client, // system imports
             struct.content_parts,
-            function(err, exports, contentParts, uploadSize) {
+            function(err, exports, contentParts, transferredBytes) {
               if (!err && exports) {
 
                 var newImports = struct.imports
@@ -536,15 +534,16 @@ Bastion.prototype.channelProcess = function(struct) {
 
                 // any channel which pushes data outside the system
                 // should provide a #bytes sent for outbound accounting
-                if (uploadSize) {
+                if (null !== transferredBytes) {
+
                   app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                    owner_id : channel.owner_id, 
-                    type : 'traffic_outbound_mb', 
-                    inc : sprintf('%.4f', (uploadSize / (1024 * 1024)) )
+                    owner_id : channel.owner_id,
+                    type : 'traffic_outbound_mb',
+                    inc : sprintf('%.4f', (transferredBytes / (1024 * 1024)) )
                   });
-                  
+
                   app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                    owner_id : channel.owner_id, 
+                    owner_id : channel.owner_id,
                     type : 'delivered_channel_outbound'
                   });
                 }
@@ -559,6 +558,9 @@ Bastion.prototype.channelProcess = function(struct) {
                   struct.client,
                   contentParts || struct.content_parts
                   );
+              } else if (err) {
+                app.logmessage('Channel Invoke Failure:' + channel.id);
+                app.logmessage(err);
               }
 
             });
@@ -582,7 +584,7 @@ Bastion.prototype.consumeLoop = function() {
     consumer;
 
     if (queueConsume == 'queue_bastion') {
-      consumer = function (message, headers, deliveryInfo) {                
+      consumer = function (message, headers, deliveryInfo) {
         self.channelProcess(JSON.parse(message.data.toString()));
       //self.channelProcess(msgpack.unpack(message.data));
       }

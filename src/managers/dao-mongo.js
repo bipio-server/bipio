@@ -745,8 +745,15 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
   // @todo this is expensive, filter out keys which are not
   // indexed
   if (undefined != filter) {
+    var q;
     for (key in filter) {
-      query = query.where(key).regex(new RegExp(filter[key], 'i'));
+      if (app.helper.isObject(filter[key])) {
+        q = {};
+        q[key] = filter[key];
+        query = query.find(q);
+      } else {
+        query = query.where(key).regex(new RegExp(filter[key], 'i'));
+      }
     }
   }
 
