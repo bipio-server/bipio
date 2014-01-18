@@ -1,6 +1,8 @@
 bipio
 =========
 
+[![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
+
 Welcome to the Bipio API Server. 
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
