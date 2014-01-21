@@ -5,6 +5,8 @@ Welcome to the Bipio API Server.
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
+[![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
+
 Bipio is a highly parallel nodejs based API integration framework.  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
 based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
