@@ -214,7 +214,7 @@ var cdn = {
     res.on('end', function() {
       var suffix, hashFile;      
       if (favUrl) {
-        suffix = '.' + favUrl.split('.').pop();
+        suffix = '.' + favUrl.split('.').pop().replace(/\?.*$/, '');
         hashFile = app.helper.strHash(host) + suffix
       }
 

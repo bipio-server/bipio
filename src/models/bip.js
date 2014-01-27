@@ -664,12 +664,13 @@ Bip.preSave = function(accountInfo, next) {
     }
   }
 
+  this._createChannelIndex();
+
   if (transformUnpack.length > 0) {
     async.parallel(transformUnpack, function(err) {
       next(err, self);
     });
-  } else {
-    this._createChannelIndex();
+  } else {    
     next(false, this);
   }
 
