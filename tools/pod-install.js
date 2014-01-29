@@ -25,8 +25,10 @@
  * Installs the singletons for a pod against accounts which do not currently
  * have it installed.
  */
+process.HEADLESS = true;
 var program = require('commander'),
     fs = require('fs'),
+    path = require('path'),
     os = require('os'),
     helper = require('../src/lib/helper'),
     bootstrap = require(__dirname + '/../src/bootstrap');
@@ -69,8 +71,8 @@ if (appEnv === 'development' || !appEnv) {
 }
 
 if (pod && pod._name) {
-    var configFile = __dirname + '/../config/' + appEnv + '.json';
-    console.log('Installing ' + podName + ' into ' + configFile);
+    var configFile = path.resolve(__dirname + '/../config/' + appEnv + '.json');
+    console.log('Installing "' + podName + '" POD');
 
     // load local
     var currentConfig = JSON.parse(fs.readFileSync(configFile)),
@@ -89,11 +91,13 @@ if (pod && pod._name) {
         var actionDone = false;
         if (mode === 'add' && !currentConfig.pods[pod._name]) {
             currentConfig.pods[pod._name] = config;
-            if (config.oauth.callbackURL) {
-              currentConfig.pods[pod._name].oauth.callbackURL = currentConfig.proto_public 
-                + currentConfig.domain_public 
+            /*
+            if (config.oauth && config.oauth.callbackURL) {
+              currentConfig.pods[pod._name].oauth.callbackURL = currentConfig.proto_public
+                + currentConfig.domain_public
                 + config.oauth.callbackURL;
             }
+            */
             actionDone = true;
 
         } else if (mode === 'remove' && currentConfig.pods[pod._name]) {
@@ -143,10 +147,10 @@ if (pod && pod._name) {
 
                                             if (j >= accounts.length - 1) {
                                                 process.exit(0);
-                                            }  
+                                            }
                                         });
 
-                                        
+
                                     }
                                 } else {
                                     app.logmessage('No Accounts!', 'error');
@@ -159,6 +163,17 @@ if (pod && pod._name) {
                     }
                 });
             }
+        } else {
+          console.log('DONE!');
+          if (config.oauth) {
+            console.log('*** Manual OAuth Setup Required - update the pods.' + pod._name + '.oauth section of ' + configFile + ' with your app credentials before restart');
+
+          } else if (config.api_key) {
+            console.log('*** Manual API Key Setup Required - update the pods.' + pod._name + '.api_key section of ' + configFile + ' with your app API key before restart');
+          } else {
+            console.log('Please restart the server at your convenience');
+          }
+          process.exit(0);
         }
 
     }

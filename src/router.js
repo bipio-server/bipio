@@ -532,8 +532,8 @@ module.exports = {
     });
 
     /**
-         * DomainAuth channel renderer
-         */
+     * DomainAuth channel renderer
+     */
     express.all('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
       var domain = helper.getDomain(req.headers.host, true);
       (function(domain, req, res) {
@@ -570,8 +570,8 @@ module.exports = {
     });
 
     /**
-         * Account Auth RPC, sets up oAuth for the selected pod, if the pod supports oAuth
-         */
+     * Account Auth RPC, sets up oAuth for the selected pod, if the pod supports oAuth
+     */
     express.all('/rpc/oauth/:pod/:auth_method', restAuthWrapper, function(req, res) {
       var podName = req.params.pod,
       pod = dao.pod(podName),
@@ -790,7 +790,7 @@ module.exports = {
                 dao.modelFactory('account_option', result, accountInfo), 
                 accountInfo, 
                 restResponse(res)
-              );
+                );
             }
           });
 

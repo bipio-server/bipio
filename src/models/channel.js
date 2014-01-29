@@ -380,6 +380,38 @@ Channel.rpc = function(renderer, query, client, req, res) {
         }
       });
     })(podTokens.name, podTokens.action, renderer, query, client, req, res);
+    
+  } else if ('issuer_token' === pods[podTokens.name]._authType) {
+    
+    
+    (function(podName, action, renderer, query, client, req, res) {
+      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password) {
+        if (!err && (username || password)) {
+          var sysImports = {
+            client : client,
+            auth : {
+              issuer_token : {
+                username : username,
+                password : password
+              }
+            }
+          };
+          pods[podName].rpc(
+              action,
+              renderer,
+              sysImports,
+              query,
+              self,
+              req,
+              res
+              );
+        } else {
+          res.send(403, {
+            error : 'No Issuer Token bound for this Channel'
+          });
+        }
+      });
+    })(podTokens.name, podTokens.action, renderer, query, client, req, res);
   } else {
     var sysImports = {
       client : client,

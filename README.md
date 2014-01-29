@@ -1,7 +1,7 @@
 bipio
 =========
 
-Welcome to the Bipio API Server. 
+Welcome to the BipIO API Server. 
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
@@ -13,9 +13,11 @@ based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> t
 
 If you're familiar with Yahoo Pipes, IFTTT, Zapier, Mulesoft, Cloudwork or Temboo - the concept is a little similar. The server has a small footprint which lets you create and automate an internet of things that matter to you.   It can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
-The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip),are unique in they allow you to transform content between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.  You can put web-hooks, web-sockets, emails or event triggers infront of Bip graphs to perform useful work.
+The graph definitions, which are called [bips](https://bip.io/docs/resource/rest/bip), allow you to transform content 
+between adjacent nodes and chain outputs to inputs indefinitely across disparate 'cloud' services.  You can put web-hooks, 
+web-sockets, emails or event triggers infront of Bip graphs to perform useful work.
 
-There are three flavors of Bip - HTTP or SMTP endpoints, and periodic Triggers.  Some of their characteristics include
+Some of their characteristics include :
 
  - dynamic or automatically derived naming
  - pausing or self-destructing after a certain time or impressions volume
@@ -28,7 +30,7 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
-#### bips & channels
+#### Bips & Channels
 
 Bips and Channels are 1st class API resources.
 
@@ -46,20 +48,23 @@ node in the cluster.
 
 Channels are largely decoupled from the graph resolution platform in self contained collections called Pods.  'Self Contained' 
 meaning they are free from other system concerns and can operate independently.  For example you can pass authenticated API 
-calls or 'render' channels without them having to be on a 'bip'.  Channels can therefore store, track, serve or transform 
+calls or 'render' channels without them having to be an active graph participant.  Channels can therefore store, track, serve or transform 
 content and messages as part of a pipeline or in autonomous isolation.  For an authoritative list of officially
 supported services, please see the bip-pod-* repos via [https://github.com/bipio-server](https://github.com/bipio-server) or
 check the [website](https://bip.io/docs/pods) for quick at-a-glance channel definitions that you can use out of the box.  
 
 Keep in mind that Pods and Channels are modular, so feel free to create your own.  As long as they honor the basic pod 
-interface, your custom Pods should drop right in!
+interface, your custom Pods should drop right in!  Take a look at the [Pod Boilerplate](https://github.com/bipio-server/bip-pod)
+to get started.
 
-##### super easy
+##### Super Easy Integrations
 
 Here's a quick example, lets say I have a private email address that I want to protect or obfuscate - I could use an SMTP bip to
-create a temporary relay which will forward emails for 1 day only.  Here's how :
+create a temporary relay which will forward emails for 1 day only.  
 
-Create my destination email address with an SMTP Forwarder Channel :
+**Here's how :**
+
+Create an SMTP Forwarder Channel to email me with any messages it receives :
 ```
 POST /rest/channel
 {
@@ -75,9 +80,9 @@ RESPONSE
  id : "206fe27f-5c98-11e3-8ad3-c860002bd1a4"
 }
 ```
-... I can now use that channel anywhere, its a permanent fixture in the system until explicitly deleted.  So now
-to create the relay, I can create a simple SMTP bip with a single edge pointing to the 'Helo FuBa' channel :
 
+... And now I I can use that channel anywhere, its a permanent fixture in the system until explicitly deleted.  So now
+to create the relay, I can build a simple SMTP bip with a single edge pointing to the 'Helo FuBa' channel :
 
 ```
 POST /rest/bip
@@ -94,7 +99,7 @@ POST /rest/bip
           "reply_to" : "[%source#reply_to%]",
         }
       },
-     _note : "^^ Transforms aren't mandatory, they're just here for illustration - you really just need the edge"
+     _note : "^^ Transforms aren't mandatory, but here for illustration - you only need an edge"
    }
  },
  end_life : {
@@ -115,14 +120,13 @@ And thats it. We actually have a little [chrome extension](http://goo.gl/ZVIkfr)
 For extra credit, I could store attachments arriving on that email address straight to dropbox by just adding an edge - check out
 how in the [cookbook](https://github.com/bipio-server/bipio/wiki/Email-Repeater,-Dropbox-Attachment-Save)
 
-### please note
+### Please Note
 
 The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
 For graphical representation of your bips, sign in to [bipio](https://bip.io) to mount your local install from your browser 
 under My Account > Mounts > Create Mount.  
 
 ![Server Mount](https://bip.io/static/img/docs/server_mount.png)
-
 
 The BipIO website is not a first class citizen or tightly coupled to one particular 
 endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
@@ -132,7 +136,7 @@ By itself, Bipio does not provide SSL termination or any load balancing beyond [
 
 Feel free to fork this repository and create pods as you need, and please help make 
 [the community](https://groups.google.com/forum/#!forum/bipio-api) a better place. Pull Requests, issues, feature requests, 
-integration ideas, general communication gladly accepted.
+integration ideas, general communication is always welcome.
 
 Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this 
 readme for important info.
@@ -155,6 +159,10 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
 Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
 during the `make install` script to get a basically sane server running that you can play with.
+
+The server ships with several Pod dependencies which you can use right away - Email, Text/HTML Templating, Flow Control and Syndication.
+Additional Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio).  The [Pods](https://github.com/bipio-server/bipio/wiki/Pods)
+section in the Wiki will guide any future installs.
 
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
 /etc/init and reconfigured to suit your environment.  If you'd like it managed by Monit...
