@@ -530,6 +530,33 @@ Channel.postSave = function(accountInfo, next, isNew) {
         }
       });
     })(this, podName, action, accountInfo, next);
+    
+  } else if ('issuer_token' === pods[podName]._authType) {
+    
+    (function(channel, podName, action, accountInfo, next) {
+      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password) {
+        if (!err && (username || password)) {
+          var auth = {
+            issuer_token : {
+              username : username,
+              password : password
+            }
+          };
+          
+          pods[podName].setup(action, channel, accountInfo, auth, next);
+          
+        } else {
+          // not authenticated? Then we can't perform setup so drop this 
+          // channel
+          self._dao.remove('channel', self.id, accountInfo, function() {
+            next(true, 'channel', {
+              message : 'No Issuer Token bound for this Channel'
+            }, 403);  
+          });
+        }
+      });
+    })(this, podName, action, accountInfo, next);
+    
   } else {
     pods[podName].setup(action, this, accountInfo, next);
   }

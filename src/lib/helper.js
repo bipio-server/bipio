@@ -64,15 +64,17 @@ var helper = {
      * being xss.  Scrub tokens individually if it looks like a template string.
      * nasty hackity hack
      */
-  _realScrub : function(str) {
+  _realScrub : function(str, noEscape) {
     var retStr = helper.sanitize(str).xss();
     retStr = helper.sanitize(retStr).trim();
-    retStr = helper.sanitize(retStr).escape();
+    if (!noEscape) {
+      retStr = helper.sanitize(retStr).escape();
+    }
     //retStr = helper.sanitize(retStr).entityEncode();
     return retStr;
   },
 
-  _scrub: function(str) {
+  _scrub: function(str, noEscape) {
     var regex = this.getRegActionUUID(),
     retStr;
 
@@ -80,12 +82,12 @@ var helper = {
       var tokens = str.split(' ');
       for (var i = 0; i < tokens.length; i++) {
         if (regex.test(tokens[i])) {
-          tokens[i] = this._realScrub(tokens[i]);
+          tokens[i] = this._realScrub(tokens[i], noEscape);
         }
       }
       retStr = tokens.join(' ');
     } else {
-      retStr = this._realScrub(str);
+      retStr = this._realScrub(str, noEscape);
     }
 
     return retStr;
@@ -94,20 +96,20 @@ var helper = {
   /**
      * Cleans an object thoroughly.  Script scrubbed, html encoded.
      */
-  pasteurize: function(src) {
+  pasteurize: function(src, noEscape) {
     var attrLen, newKey;
     if (this.isArray(src)) {
       var attrLen = src.length;
       for (var i = 0; i < attrLen; i++) {
-        src[i] = this.pasteurize(src[i]);
+        src[i] = this.pasteurize(src[i], noEscape);
       }
     } else if (this.isString(src)) {
-      src = this._scrub(src);
+      src = this._scrub(src, noEscape);
     } else if (this.isObject(src)) {
       var newSrc = {};
       for (key in src) {
         newKey = this._scrub(key);
-        newSrc[newKey] = this.pasteurize(src[key]);
+        newSrc[newKey] = this.pasteurize(src[key], noEscape);
       }
       src = newSrc;
     }

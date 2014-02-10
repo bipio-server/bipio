@@ -186,6 +186,10 @@ var cdn = {
   convert : function(args, next) {
     imagemagick.convert(args, next);
   },
+  
+  resize : function(args, next) {
+    imagemagick.resize(args, next);
+  },
 
   _favicoHandler : function(res, host, next) {
     var favUrl = null;

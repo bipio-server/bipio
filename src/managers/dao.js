@@ -1241,7 +1241,7 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
 
   // don't care if the file exists or not, just suck it down.
   cdn.httpFileSnarf(avPath, dstFile, function(err, resp) {
-    var convertArgs = [ dstFile, '-resize', '125x125' ];
+    var convertArgs = [ dstFile ];
 
     // if avPath isn't a jpeg, convert it
     if (! /(jpg|jpeg)$/i.test(dstFile)  ) {
@@ -1249,13 +1249,22 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
       newDst.pop();
       newDst = newDst.join('.') + '.jpg';
       convertArgs.push(newDst);
+    } else {
+      newDst = dstFile;
     }
 
     cdn.convert(convertArgs, function(err, stdout) {
       if (err) {
         next(true, resp);
       } else {
-        next(false, payload);
+        cdn.resize({
+          srcPath : newDst,
+          dstPath : newDst,
+          width : 125,
+          height : 125
+        }, function(err, stdout) {
+          next(err, payload);  
+        });        
       }
     });
   });

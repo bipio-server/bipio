@@ -253,6 +253,20 @@ Bip.entitySchema = {
     type: Object,
     renderable: true,
     writable: true,
+    set : function(hub) {
+      for (var src in hub) {
+        if (hub.hasOwnProperty(src)) {
+          for (var cid in hub[src].transforms) {
+            if (hub[src].transforms.hasOwnProperty(cid)) {    
+              for (var k in hub[src].transforms[cid]) {
+                hub[src].transforms[cid][k] = hub[src].transforms[cid][k].trim();
+              }              
+            }
+          }
+        }
+      }
+      return hub;
+    },
     validate : [
     {
       // not a very good validator, but will do for know.

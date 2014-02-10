@@ -7,7 +7,7 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
-Bipio is a highly parallel nodejs based API integration framework.  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
+BipIO is a highly parallel nodejs based API integration framework.  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
 based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
@@ -248,7 +248,7 @@ keep an eye on the [Wiki](https://github.com/bipio-server/bipio/wiki), it will b
 
 [GPLv3](http://www.gnu.org/copyleft/gpl.html)
 
-Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPL license v3. 
+Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3. 
 
 If you'd like to integrate BipIO with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License for Bipio,
 please [reach us](mailto:enquiries@cloudspark.com.au)
