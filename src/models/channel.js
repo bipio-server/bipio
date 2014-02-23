@@ -120,7 +120,6 @@ Channel.entitySchema = {
           // validate the config for this action
           ok = true;
         }
-        ok = false;
         next(ok);
       },
       msg : 'Invalid Config'
@@ -295,19 +294,23 @@ console.log('transformed');
 console.log(transformedImports);
 console.log('---');
 */
+
+  // attach bip and client configs
+  var sysImports = {
+    client : client,
+    bip : adjacentExports._bip
+  }
+
   // invoke method
   client.owner_id = this.owner_id;
   if (pods[podName].isOAuth()) {
     pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
       if (!err && oAuthToken) {
-        var sysImports = {
-          client : client,
-          auth : {
-            oauth : {
-              token : oAuthToken,
-              secret : tokenSecret,
-              profile : authProfile
-            }
+        sysImports.auth = {
+          oauth : {
+            token : oAuthToken,
+            secret : tokenSecret,
+            profile : authProfile
           }
         };
         pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
@@ -318,13 +321,10 @@ console.log('---');
   } else if ('issuer_token' === pods[podName]._authType) {
     pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password) {
       if (!err && (username || password)) {
-        var sysImports = {
-          client : client,
-          auth : {
-            issuer_token : {
-              username : username,
-              password : password
-            }
+        sysImports.auth = {
+          issuer_token : {
+            username : username,
+            password : password
           }
         };
         pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
@@ -333,9 +333,7 @@ console.log('---');
       }
     });
   } else {
-    pods[podName].invoke(podTokens.action, this, transformedImports, {
-      client : client
-    }, contentParts, next);
+    pods[podName].invoke(podTokens.action, this, transformedImports, sysImports, contentParts, next);
   }
 }
 Channel.rpc = function(renderer, query, client, req, res) {

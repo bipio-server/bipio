@@ -74,8 +74,8 @@ function errorHandler(err, req, res, next) {
 
 function setCORS(req, res, next) {
   res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers']);
-  res.header('Access-Control-Allow-Methods', req.headers['access-control-request-method']);
+  res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || '*');
+  res.header('Access-Control-Allow-Methods', req.headers['access-control-request-method'] || 'GET,POST,PUT,DELETE');
   res.header('Access-Control-Allow-Credentials', true);
 
   next();
@@ -103,11 +103,13 @@ restapi.configure(function() {
   restapi.use(express.cookieParser());
 
   // required for some oauth provders
+
   restapi.use(express.session({
-    secret: GLOBAL.CFG.server.sessionSecret,
+    secret: GLOBAL.CFG.server.sessionSecret
+    /*
     store: new MongoStore({      
       mongoose_connection : app.dao.getConnection()
-    })
+    })*/
   }));
 
   restapi.use(passport.initialize());

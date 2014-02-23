@@ -534,7 +534,8 @@ module.exports = {
     /**
      * DomainAuth channel renderer
      */
-    express.all('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+    express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+     
       var domain = helper.getDomain(req.headers.host, true);
       (function(domain, req, res) {
         dao.domainAuth(domain, true, function(err, accountResult) {
@@ -605,7 +606,7 @@ module.exports = {
          * Pass through an RPC call to a pod
          */
     //rpc/pod/syndication/feed/json
-    express.all('/rpc/pod/:pod/:action/:method/:channel_id?', restAuthWrapper, function(req, res) {
+    express.get('/rpc/pod/:pod/:action/:method/:channel_id?', restAuthWrapper, function(req, res) {
       (function(req, res) {
         var pod = dao.pod(req.params.pod);
         action = req.params.action,
@@ -825,10 +826,9 @@ module.exports = {
     });
 
     express.all('*', function(req, res, next) {
-
-      //            if (req.method == 'OPTIONS') {
-      //               res.send(200);
-      //         } else {
+      if (req.method == 'OPTIONS') {
+        res.send(200);
+      } else
 
       // API has no default/catchall renderer
       if (req.headers.host === CFG.domain_public) {
