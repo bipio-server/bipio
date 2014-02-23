@@ -31,7 +31,8 @@ http    = require('http'),
 https    = require('https'),
 mkdirp = require('mkdirp'),
 validator = require('validator'),
-djs = require('datejs');
+djs = require('datejs'),
+rimraf = require('rimraf');
 
 var helper = {
 
@@ -385,13 +386,14 @@ var helper = {
     return baseConverter.decToGeneric(target, this.shortenerBase);
   },
 
-  /**
-     * @todo deprecate.  This was handrolled, just use the mkdirp package
-     */
-  mkdir_p: function(path, mode, callback) {
+  mkdir_p: function(path, mode, next) {
     mkdirp(path, mode, function(err) {
-      callback(err, path);
+      next(err, path);
     });
+  },
+
+  rmdir : function(path, next) {
+    rimraf(path, next)
   },
 
   getDomain: function(domain, withProto, withPort) {

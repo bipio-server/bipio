@@ -118,15 +118,20 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
   // finally, try to pull out the users auth token and account options
   step(
     function loadAcctInfo() {
-      self.find(
-        'account_auth',
-        {
-          'owner_id' : authModel.owner_id,
-          'type' : 'token'
-        },
-        this.parallel()
-        );
-
+      /*
+      if ('token' !== authModel.type) {
+        self.find(
+          'account_auth',
+          {
+            'owner_id' : authModel.owner_id,
+            'type' : 'token'
+          },
+          this.parallel()
+          );
+      } else {
+        this.parallel()(false, authModel);
+      }
+*/
       self.find(
         'account_option',
         {
@@ -150,9 +155,8 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
         },
         this.parallel());
     },
-    function collateResults(err, auth, options, domains, channels) {
-
-      if (err || null == auth || null == options) {
+    function collateResults(err, options, domains, channels) {
+      if (err || !options || !domains || !channels) {
         err = true;
         resultModel = null;
       } else {
@@ -208,10 +212,11 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
         resultModel.domains = domainModels;
         resultModel.channels = channelModels;
         resultModel.settings = options;
-
+/*
         var model = self.modelFactory('account_auth', auth);
         resultModel.settings.api_token = model.getPassword();
         resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(authModel.username + ':' + model.getPassword()).toString('base64'));
+  */      
       }
 
       var accountInfo = new AccountInfo(resultModel);

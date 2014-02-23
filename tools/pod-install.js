@@ -37,6 +37,7 @@ program
     .version('0.0.1')
     .option('-a, --add [name]', 'Initialize a new Pod for this environment')
     .option('-r, --remove [name]', 'Drops a Pod from this environment (+destroys config)')
+    .option('-c, --corpus', 'Update system transform corpus')
     .option('-u, --upgrade', 'Upgrade Host Cluster. Auto installs singletons **experimental, still requires a restart')
     // .option('-i, --interactive', 'Interactive Config, sets config values now')
     .parse(process.argv);
@@ -71,7 +72,9 @@ if (appEnv === 'development' || !appEnv) {
 }
 
 if (pod && pod._name) {
-    var configFile = path.resolve(__dirname + '/../config/' + appEnv + '.json');
+    var configFile = path.resolve(__dirname + '/../config/' + appEnv + '.json'),
+      corpusFile = path.resolve(__dirname + '/node_modules/bip-pod-' + podName + '/corpus.json');
+
     console.log('Installing "' + podName + '" POD');
 
     // load local

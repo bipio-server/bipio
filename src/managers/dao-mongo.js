@@ -86,6 +86,10 @@ function DaoMongo(config, log, next) {
 
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
 
+DaoMongo.prototype.getConnection = function() {
+  return mongoose.connection;
+}
+
 /**
  *
  * General translation from MongoDB errors to a HTTP response code
@@ -128,13 +132,18 @@ DaoMongo.prototype.getModelPublicFilters = function() {
  * @param modelClass model prototype
  */
 DaoMongo.prototype.registerModel = function(modelClass) {
-  var modelName = modelClass.entityName, validators, numValidators;
+  var modelName = modelClass.getEntityName(), validators, numValidators;
   var container = this.models;
 
   // Already registered? then skip
   if (undefined != container[modelName]) {
     return;
   }
+
+  container[modelName] = {};
+
+  // basic model
+  container[modelName]['class'] = modelClass;
 
   // initialize static prototype
   modelClass.staticInit(this);
@@ -145,11 +154,14 @@ DaoMongo.prototype.registerModel = function(modelClass) {
   });
 
   //
-  container[modelName] = {};
+  
+  var model = this.modelFactory(modelClass.getEntityName());
+  
   // swap out 'object' types for mixed.  This lets us separate mongoose
   // from our actual models
-  var modelSchema = modelClass.entitySchema;
-  for (var key in modelClass.getEntitySchema()) {
+  var modelSchema = model.getEntitySchema();
+
+  for (var key in modelSchema) {
     if (undefined == modelSchema[key].type) {
       delete modelSchema[key];
     }
@@ -158,7 +170,7 @@ DaoMongo.prototype.registerModel = function(modelClass) {
       modelSchema[key].type = mongoose.Schema.Types.Mixed;
     }
 
-    if (key == modelClass.getEntityIndex() || helper.inArray(modelClass.uniqueKeys, key)) {
+    if (key == model.getEntityIndex() || helper.inArray(modelClass.uniqueKeys, key)) {
       modelSchema[key].unique = true;
     }
   }
@@ -166,7 +178,7 @@ DaoMongo.prototype.registerModel = function(modelClass) {
   container[modelName]['schema'] = new mongoose.Schema( modelSchema );
 
   // apply compound key constraints index
-  var compoundConstraints = modelClass.getCompoundKeyConstraints();
+  var compoundConstraints = model.getCompoundKeyConstraints();
   if (undefined != compoundConstraints) {
     container[modelName]['schema'].index(compoundConstraints, {
       unique: true
@@ -183,11 +195,10 @@ DaoMongo.prototype.registerModel = function(modelClass) {
     }
   }
 
-  // basic model
-  container[modelName]['class'] = modelClass;
 
   // register mongoose chema
-  mongoose.model(modelClass.entityName, container[modelName]['schema']);
+  mongoose.model(modelClass.getEntityName(), container[modelName]['schema']);
+  
   return container;
 }
 
@@ -265,6 +276,8 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
 
   var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
 
+  this.models[modelName]['class'].constructor.apply(model);
+
   if (!tainted || (tainted && undefined !== accountInfo)) {
     model.populate(initProperties, accountInfo);
   }
@@ -298,16 +311,17 @@ DaoMongo.prototype.errorParse = function(err, responseData) {
 DaoMongo.prototype.toMongoModel = function(srcModel) {
   var modelName = srcModel.getEntityName(),
   MongooseModel = mongoose.model(modelName),
-  mongoModel = new MongooseModel(srcModel);
+  mongoModel = new MongooseModel(srcModel),
+  schema = this.models[modelName]['class'].getEntitySchema();
 
   var model = helper.copyProperties(srcModel, mongoModel, true);
   delete model.accountInfo;
   var self = this;
 
   // mongoose doesn't look to apply defaults prior to validation??
-  for (var key in this.models[modelName]['class'].entitySchema) {
-    if (this.models[modelName]['class'].entitySchema.hasOwnProperty(key) ) {
-      def = this.models[modelName]['class'].entitySchema[key]['default'];
+  for (var key in schema) {
+    if (schema.hasOwnProperty(key) ) {
+      def = schema[key]['default'];
       if (undefined === model[key] && !/^_/.test(key)) {
         model[key] = def;
       }
@@ -740,7 +754,8 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
   var model = mongoose.model(modelName),
     m = this.modelFactory(modelName);
 
-  var query = model.find( mongoFilter.owner_id ? mongoFilter : null );
+  var query = model.find( mongoFilter.owner_id ? mongoFilter : null ),
+    countQuery = model.find( mongoFilter.owner_id ? mongoFilter : null );
 
   // @todo this is expensive, filter out keys which are not
   // indexed
@@ -751,14 +766,16 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         q = {};
         q[key] = filter[key];
         query = query.find(q);
+        countQuery = countQuery.find(q);
       } else {
         query = query.where(key).regex(new RegExp(filter[key], 'i'));
+        countQuery = countQuery.where(key).regex(new RegExp(filter[key], 'i'));
       }
     }
   }
 
   // count
-  query.count(function(err, count) {
+  countQuery.count(function(err, count) {
     if (err) {
       self._log('Error: list(): ' + err);
       if (callback) {
@@ -780,7 +797,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         query = query.sort(s);
       }
 
-      query.execFind(function (err, results) {
+      query.exec(function (err, results) {
         var model;
         if (err) {
           self._log('Error: list(): ' + err);

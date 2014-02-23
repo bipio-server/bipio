@@ -107,7 +107,8 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             _files : []
           },
           imports = {
-            'local' : {}
+            'local' : {},
+             _bip : app._.clone(jobPacket.data)
           },
           transforms = {},
           clientStruct = {
@@ -120,9 +121,8 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             'content_type' : '',
             'encoding' : ''
           };
-
+          
           imports._client = clientStruct;
-          imports._bip = jobPacket.data;
 
           if (err) {
             app.logmessage(err, 'error');
@@ -505,6 +505,8 @@ Bastion.prototype.channelProcess = function(struct) {
       'id' : struct.channel_id,
       'owner_id' : struct.bip.owner_id
     };
+    
+    struct.imports._bip = app._.clone(struct.bip);
 
     this._dao.find(
       'channel',

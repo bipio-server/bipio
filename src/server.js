@@ -22,21 +22,18 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 /**
- *
- * REST API Server bootstrap
- *
- * michael@cloudspark.com.au
- *
+ * REST API Server bootstrap 
  */
 var bootstrap = require(__dirname + '/bootstrap'),
 app = bootstrap.app,
-cluster         = require('cluster'),
-express         = require('express'),
-helper          = require('./lib/helper'),
-passport        = require('passport'),
-cron        = require('cron'),
-restapi         = express();
-connectUtils    = require('express/node_modules/connect/lib/utils');
+cluster = require('cluster'),
+express = require('express'),
+helper  = require('./lib/helper'),
+passport = require('passport'),
+cron = require('cron'),
+restapi = express();
+MongoStore = require('connect-mongo')(express);
+connectUtils = require('express/node_modules/connect/lib/utils');
 
 /**
  * express bodyparser looks broken or too strict.
@@ -101,15 +98,16 @@ restapi.configure(function() {
   });
 
   restapi.use(express.bodyParser());
-
-
   restapi.use(setCORS);
   restapi.use(express.methodOverride());
   restapi.use(express.cookieParser());
 
   // required for some oauth provders
   restapi.use(express.session({
-    secret: GLOBAL.CFG.server.sessionSecret
+    secret: GLOBAL.CFG.server.sessionSecret,
+    store: new MongoStore({      
+      mongoose_connection : app.dao.getConnection()
+    })
   }));
 
   restapi.use(passport.initialize());
@@ -121,6 +119,8 @@ restapi.configure(function() {
 
 // export app everywhere
 module.exports.app = app;
+
+app.isMaster = cluster.isMaster;
 
 if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu

@@ -551,7 +551,7 @@ module.exports = {
               if (err || !result) {
                 app.logmessage(err, 'error');
                 res.send(404);
-              } else {
+              } else {   
                 req.remoteUser = accountResult;
                 var channel = dao.modelFactory('channel', result);
 

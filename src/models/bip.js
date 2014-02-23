@@ -535,11 +535,13 @@ Bip.exports = {
     definitions : {
       "client_attribute" : {
         "description" : "Connecting client attributes",
-        "enum" : [ "host" , "repr" ]
+        "enum" : [ "host" , "repr", "date" ],
+        "enum_label" : [ "Host" , "Sender", "Invoke Time" ]
       },
       "bip_attribute" : {
         "description" : "This Bip's attribute",
-        "enum" : [ "name" , "type", "config", "_repr" ]
+        "enum" : [ "name" , "type", "_repr" ],
+        "enum_label" : [ "Name" , "Type", "Representation" ]
       }
     }
   },
@@ -759,6 +761,11 @@ Bip.postSave = function(accountInfo, next, isNew) {
       owner_id : accountInfo.user.id,
       code : 'bip_create'
     } );
+    
+    // if its a new trigger, then run it
+    if ('trigger' === this.type && !this.paused) {
+      app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, this);
+    }    
   }
 
   next(false, this.getEntityName(), this);

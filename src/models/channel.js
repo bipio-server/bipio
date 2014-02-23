@@ -115,14 +115,12 @@ Channel.entitySchema = {
     validate : [
     {
       validator : function(val, next) {
-        next(true);
-        return;
-
         var ok = false;
         if (validAction(this.action)) {
           // validate the config for this action
           ok = true;
         }
+        ok = false;
         next(ok);
       },
       msg : 'Invalid Config'
@@ -172,6 +170,7 @@ function validAction(value) {
   if (ok) {
     var tTokens = value.split('.');
     var pod = tTokens[0], podAction = tTokens[1];
+   
     ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
   }
   return ok;
