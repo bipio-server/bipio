@@ -105,11 +105,13 @@ restapi.configure(function() {
   // required for some oauth provders
 
   restapi.use(express.session({
-    secret: GLOBAL.CFG.server.sessionSecret
-    /*
+    cookie: {
+      maxAge: 60 * 60 * 1000
+    },
+    secret: GLOBAL.CFG.server.sessionSecret,
     store: new MongoStore({      
       mongoose_connection : app.dao.getConnection()
-    })*/
+    })
   }));
 
   restapi.use(passport.initialize());

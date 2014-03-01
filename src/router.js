@@ -109,7 +109,14 @@ function publicFilter(modelName, modelStruct) {
  */
 function restAuthWrapper(req, res, cb) {
   return express.basicAuth(function(user, pass, cb){
-    dao.checkAuth(user, pass, 'token', cb);
+    if (req.session.account && req.session.account.username === user) { 
+      dao.getAccountStruct(req.session.account, function(err, accountInfo) {
+        cb(err, accountInfo);
+      });
+    } else {
+      dao.checkAuth(user, pass, 'token', cb);  
+    }
+    
   })(req, res, cb);
 }
 
@@ -224,7 +231,7 @@ var restAction = function(req, res) {
           }
 
           // inject the referer favico
-          if (undefined == req.body.icon && !(/\.bip\.io$/.test(referer.url_tokens.hostname))) {
+          if (undefined == req.body.icon && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public) ) {
             postSave = function(err, modelName, retModel, code ) {
               if (!err && retModel.icon == '') {
                 // @todo defer to out of band job
@@ -823,6 +830,22 @@ module.exports = {
       } else {
         res.send(400);
       }
+    });
+
+    express.get('/login', restAuthWrapper, function(req, res) {
+      req.session.account = {
+        owner_id : req.user.user.id,
+        username : req.user.user.username,
+        name : req.user.user.name,
+        is_admin : req.user.user.is_admin
+      }
+      
+      res.send(200);
+    });
+
+    express.get('/logout', function(req, res) {
+      req.session.destroy();
+      res.send(200);
     });
 
     express.all('*', function(req, res, next) {
