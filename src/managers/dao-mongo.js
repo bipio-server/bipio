@@ -277,7 +277,6 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
   var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
 
   this.models[modelName]['class'].constructor.apply(model);
-
   if (!tainted || (tainted && undefined !== accountInfo)) {
     model.populate(initProperties, accountInfo);
   }
@@ -315,9 +314,7 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
   schema = this.models[modelName]['class'].getEntitySchema();
 
   var model = helper.copyProperties(srcModel, mongoModel, true);
-  delete model.accountInfo;
-  var self = this;
-
+  
   // mongoose doesn't look to apply defaults prior to validation??
   for (var key in schema) {
     if (schema.hasOwnProperty(key) ) {
@@ -331,6 +328,8 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
   model.getAccountInfo = function() {
     return srcModel.getAccountInfo();
   }
+
+  delete model.accountInfo;
 
   return model;
 };
@@ -452,7 +451,8 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
 DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, next) {
   var self = this,
   MongooseClass = mongoose.model(modelName),
-  model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
+  //model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
+  model = this.modelFactory(modelName, helper.pasteurize(props));
 
   var f = filter; // something in mongoose is clobbering 'filter'
 
@@ -570,7 +570,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
   nowTime = helper.nowUTCSeconds();
 
   // create model container
-  model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
+  model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);  
   if (model) {
     model.id = id;
     var mongoModel = this.toMongoModel(model);
@@ -597,7 +597,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         // create a model and then cast it back to plain'ol/JSON
         // so that setter middleware is applied :|
         var cleanModel = mongoModel.toJSON();
-        delete cleanModel._id;
+        delete cleanModel._id;        
         self._update(modelName, self.getObjectIdFilter(mongoModel, accountInfo), cleanModel, accountInfo, next);
       }
     });
