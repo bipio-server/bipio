@@ -276,6 +276,19 @@ var restAction = function(req, res) {
       } else {
         res.send(404);
       }
+    } else if (rMethod == 'PATCH') {
+      if (undefined != req.params.id) {
+        var writeFilters = modelPublicFilter[resourceName]['write'];
+        dao.patch(
+          resourceName, 
+          req.params.id, 
+          filterModel(writeFilters.length, writeFilters, req.body), 
+          accountInfo, 
+          restResponse(res)
+        );
+      } else {
+        res.send(404);
+      }
     } else if (rMethod == 'GET') {
       var filter = {};
 
@@ -442,6 +455,7 @@ module.exports = {
     express.get( '/rest/:resource_name/:id?/:subresource_id?', restAuthWrapper, restAction);
     express.put( '/rest/:resource_name/:id?', restAuthWrapper, restAction);
     express.del( '/rest/:resource_name/:id', restAuthWrapper, restAction);
+    express.patch( '/rest/:resource_name/:id', restAuthWrapper, restAction);
 
     express.options('*', function(req, res) {
       res.send(200);

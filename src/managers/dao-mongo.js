@@ -919,8 +919,23 @@ DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
   MongoModel.update( updateFilter, updateCols ).exec(next);
 };
 
+DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
+  var model = this.modelFactory(modelName, {}, accountInfo),
+    self = this;
+    
+  this.get(model, id, accountInfo, function(err, modelName, result) {
+    if (err) {
+      next.apply(self, arguments);
+    } else {
+      self.updateProperties(modelName, result.id, props, function(err) {
+        next(err, modelName, {});
+      });
+    }
+  })
+}
+
 /**
- * Updates properties into a model by id, with setters applied
+ * Updates properties into a model by id, with setters applied. No Taint Check.
  */
 DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
   var model = this.modelFactory(modelName, props),
