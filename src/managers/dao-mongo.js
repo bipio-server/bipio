@@ -51,14 +51,16 @@
  *
  */
 var uuid        = require('node-uuid'),
-mongoose    = require('mongoose'),
-helper      = require('../lib/helper')
-time        = require('time');
-events = require('events'),
-  eventEmitter = new events.EventEmitter();
+  mongoose    = require('mongoose'),
+  helper      = require('../lib/helper')
+  time        = require('time');
+  events = require('events'),
+  eventEmitter = new events.EventEmitter(),
+  mongooseOpen = false;
 
 function DaoMongo(config, log, next) {
   var self = this;
+  
   events.EventEmitter.call(this);
   this._log = log;
   var options = {
@@ -79,13 +81,18 @@ function DaoMongo(config, log, next) {
   mongoose.connection.on('open', function() {
     log('DAO:MONGODB:Connected');
     self.emit('ready', self);
+    mongooseOpen = true;
   });
 
-  mongoose.connect(config.connect, options);
+
+  if (!mongooseOpen) {
+    mongoose.connect(config.connect, options);
+  }
 }
 
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
 
+// @todo deprecate
 DaoMongo.prototype.getConnection = function() {
   return mongoose.connection;
 }
@@ -195,9 +202,14 @@ DaoMongo.prototype.registerModel = function(modelClass) {
     }
   }
 
-
-  // register mongoose chema
-  mongoose.model(modelClass.getEntityName(), container[modelName]['schema']);
+  // register mongoose schema
+  try {
+    mongoose.model(modelClass.getEntityName(), container[modelName]['schema']);
+  } catch (e) {    
+    if (e.name !== 'OverwriteModelError') {
+      throw new Exception(e);
+    }
+  }
   
   return container;
 }

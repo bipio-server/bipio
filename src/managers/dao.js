@@ -58,7 +58,6 @@ function Dao(config, log, next) {
   }
 
   this.models = { };
-
   for (var key in modelSrc) {
     this.registerModel(modelSrc[key]);
   }
@@ -69,7 +68,6 @@ util.inherits(Dao, DaoMongo);
 Dao.prototype.getBaseUrl = function() {
   return this._baseUrl;
 }
-
 
 // ---------------------- USERS
 function AccountInfo(account) {

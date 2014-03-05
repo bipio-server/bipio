@@ -81,7 +81,7 @@ process.addListener('uncaughtException', function (err, stack) {
     }
 });
 
-if (!GLOBAL.CFG.server.public_interfaces) {
+if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   GLOBAL.CFG.server.public_interfaces = [];
   var ifaces = os.networkInterfaces();
   for (var i in ifaces) {
@@ -94,6 +94,7 @@ if (!GLOBAL.CFG.server.public_interfaces) {
 
 var dao = new require('./managers/dao'),
     bastion = new require('./managers/bastion');
+
 module.exports.app = app;
 module.exports.app.dao = new dao(CFG.dbMongo, app.logmessage);
 module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLESS);

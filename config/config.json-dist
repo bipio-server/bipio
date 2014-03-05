@@ -83,5 +83,13 @@
     "k": {
     },
     "pods": {
+      "email" : {
+        "mailer": {
+          "host": "localhost"
+        }
+      },
+      "templater" : {},
+      "flow" : {},
+      "syndication" : {}
     }
 }
