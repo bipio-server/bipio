@@ -1,7 +1,7 @@
 {
     "author":       "Michael Pearson (http://www.cloudspark.com.au)",
     "name":         "bipio",
-    "version":      "0.1.36",
+    "version":      "0.1.37",
     "scripts": {        
         "start": "supervisor src/server.js"
     },
@@ -48,6 +48,7 @@
         "rimraf"    : ">=2.2.6",
         "cron"  : ">=1.0.1",
         "htmlparser2" : ">=3.4.0",
+        "ipaddr.js" : ">=0.1.2",
         "bip-pod"   : ">=0.0.1",
         "bip-pod-email"   : ">=0.0.1",
         "bip-pod-templater"   : ">=0.0.1",

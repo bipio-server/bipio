@@ -3,7 +3,7 @@
  * The Bipio API Server.  Application Bootstrap
  *
  * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 CloudSpark pty ltd http://www.cloudspark.com.au
+ * Copyright (c) 2010-2014 CloudSpark pty ltd http://www.cloudspark.com.au
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,17 +26,17 @@ process.env.NODE_CONFIG_DIR = __dirname + '/../config';
 
 // includes
 var app = {
-        workerId : ':PID:' + process.pid
-    },
-    util            = require('util'),
-    underscore      = require('underscore'),
-    winston         = require('winston'),
-    helper          = require('./lib/helper'),    
-    cdn          = require('./lib/cdn'),
-    path            = require('path'),
-    defs            = require('../config/defs'),
-    envConfig       = require('config'),
-    os = require('os');
+  workerId : ':PID:' + process.pid
+},
+util            = require('util'),
+underscore      = require('underscore'),
+winston         = require('winston'),
+helper          = require('./lib/helper'),
+cdn          = require('./lib/cdn'),
+path            = require('path'),
+defs            = require('../config/defs'),
+envConfig       = require('config'),
+os = require('os');
 
 // globals
 GLOBAL.app = app;
@@ -45,7 +45,7 @@ GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.datadir,
-GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.cdn;
+  GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.cdn;
 
 // attach general helpers to the app
 app.helper = helper;
@@ -54,31 +54,36 @@ app._ = underscore;
 
 // logger
 app.logmessage = function(message, loglevel) {
-    var obj = helper.isObject(message);
-    if (!obj) {
-        message = (app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':' + message;
-    } else {
-        app.logmessage((app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':OBJECT', loglevel);
+  var obj = helper.isObject(message);
+  if (!obj) {
+    message = message.trim();
+    if (!message) {
+      return;
     }
-    if (!obj && winston) {
-        winston.log(loglevel || 'info', message);
-    } else {
-        console.log(message);
-    }
+    message = (app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':' + message;
+  } else {
+    app.logmessage((app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':OBJECT', loglevel);
+  }
 
-    if ('error' === loglevel && 'development' ===  process.env.NODE_ENV) {
-        console.trace(message);
-    }
+  if (!obj && winston) {
+    winston.log(loglevel || 'info', message);
+  } else {
+    console.log(message);
+  }
+
+  if ('error' === loglevel && 'development' ===  process.env.NODE_ENV) {
+    console.trace(message);
+  }
 }
 
 // exception catchall
 process.addListener('uncaughtException', function (err, stack) {
-    var message = 'Caught exception: ' + err + '\n' + err.stack;
-    if (app && app.logmessage) {
-        app.logmessage(message);
-    } else {
-        console.log(message);
-    }
+  var message = 'Caught exception: ' + err + '\n' + err.stack;
+  if (app && app.logmessage) {
+    app.logmessage(message);
+  } else {
+    console.log(message);
+  }
 });
 
 if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
@@ -86,14 +91,14 @@ if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   var ifaces = os.networkInterfaces();
   for (var i in ifaces) {
     ifaces[i].forEach(function(details) {
-      app.logmessage('Resolvable Interface ' + i + ':' + details.address);    
-      GLOBAL.CFG.server.public_interfaces.push(details.address);    
+      app.logmessage('Resolvable Interface ' + i + ':' + details.address);
+      GLOBAL.CFG.server.public_interfaces.push(details.address);
     });
   }
 }
 
 var dao = new require('./managers/dao'),
-    bastion = new require('./managers/bastion');
+bastion = new require('./managers/bastion');
 
 module.exports.app = app;
 module.exports.app.dao = new dao(CFG.dbMongo, app.logmessage);

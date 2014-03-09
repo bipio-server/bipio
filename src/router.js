@@ -39,7 +39,7 @@ cdn      = require('./lib/cdn'),
 restResources = ['bip', 'channel', 'domain', 'account_option'],
 modelPublicFilter;
 
-function filterModel(filterLen, modelPublicFilters, modelStruct) {
+function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
   var result = {};
   for (var i = 0; i < filterLen; i++) {
     publicAttribute = modelPublicFilters[i];
@@ -47,7 +47,12 @@ function filterModel(filterLen, modelPublicFilters, modelStruct) {
       result[publicAttribute] = modelStruct[publicAttribute];
     }
   }
-  return helper.naturalize(result);
+  
+  if (decode) {
+    return helper.naturalize(result);
+  } else {
+    return helper.pasteurize(result);
+  }
 }
 
 /**
@@ -90,14 +95,14 @@ function publicFilter(modelName, modelStruct) {
 
         // filter every model in the collection
         for (var i = 0; i < modelLen; i++) {
-          result['data'].push(filterModel(filterLen, modelPublicFilters, context[i]));
+          result['data'].push(filterModel(filterLen, modelPublicFilters, context[i], true));
         }
       } else {
         result[key] = modelStruct[key];
       }
     }
   } else {
-    result = filterModel(filterLen, modelPublicFilters, modelStruct);
+    result = filterModel(filterLen, modelPublicFilters, modelStruct, true);
   }
 
   return result;

@@ -155,7 +155,7 @@ Bip.entitySchema = {
       // scrub name
       if ('trigger' !== type) {
         this.name = this.name.replace(/\s/g, '-');
-        this.name = this.name.replace(/[^a-zA-Z0-9-_]/g, '');
+        this.name = this.name.replace(/[^a-zA-Z0-9-_.]/g, '');
       }
       return type;
     }
@@ -535,8 +535,8 @@ Bip.exports = {
     definitions : {
       "client_attribute" : {
         "description" : "Connecting client attributes",
-        "enum" : [ "host" , "repr", "date" ],
-        "enum_label" : [ "Host" , "Sender", "Invoke Time" ]
+        "enum" : [ "host" , "repr", "date", "id", "proto", "method" ],
+        "enum_label" : [ "Host" , "Sender", "Invoke Time", "Message ID", "Protocol", "Request Method" ]
       },
       "bip_attribute" : {
         "description" : "This Bip's attribute",

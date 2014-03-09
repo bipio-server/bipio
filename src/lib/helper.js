@@ -32,7 +32,11 @@ https    = require('https'),
 mkdirp = require('mkdirp'),
 validator = require('validator'),
 djs = require('datejs'),
-rimraf = require('rimraf');
+dns = require('dns'),
+uuid = require('node-uuid'),
+ipaddr = require('ipaddr.js'),
+rimraf = require('rimraf'),
+_ = require('underscore');
 
 var helper = {
 
@@ -71,7 +75,7 @@ var helper = {
     if (!noEscape) {
       retStr = helper.sanitize(retStr).escape();
     }
-    //retStr = helper.sanitize(retStr).entityEncode();
+    retStr = helper.sanitize(retStr).entityEncode();
     return retStr;
   },
 
@@ -114,6 +118,7 @@ var helper = {
       }
       src = newSrc;
     }
+  
     return src;
   },
 
@@ -197,6 +202,10 @@ var helper = {
       ret += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return ret;
+  },
+
+  uuid : function() {
+    return uuid;
   },
 
   validator : function() {
@@ -466,8 +475,31 @@ var helper = {
 
   isTrue : function(input) {
     return (true === input || /1|yes|y|true/g.test(input));
+  },
+  
+  // ---------- DNS helpers
+  
+  // Returns all ipv4/6 A records for a host
+  resolveHost : function(host, next) {
+    var tokens = tldtools.extract(host);
+    if (ipaddr.IPv4.isValid(host) || ipaddr.IPv6.isValid(host) ) {
+      next(false, [ host ]);
+    } else {
+      dns.resolve(tokens.inspect.getDomain() || tokens.domain, next);
+    }
+  },
+  
+  // tests whether host is in blacklist
+  hostBlacklisted : function(host, next) {
+    var blacklist = CFG.server.public_interfaces;
+    this.resolveHost(host, function(err, aRecords) {
+      var inBlacklist = false;
+      if (!err) {
+        inBlacklist = _.intersection(aRecords, blacklist)
+      }
+      next(err, inBlacklist, aRecords);      
+    });    
   }
-
 }
 
 //
