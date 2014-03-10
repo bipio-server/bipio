@@ -90,6 +90,7 @@
       },
       "templater" : {},
       "flow" : {},
-      "syndication" : {}
+      "syndication" : {},
+      "http" : {}
     }
 }

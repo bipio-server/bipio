@@ -56,7 +56,10 @@ app._ = underscore;
 app.logmessage = function(message, loglevel) {
   var obj = helper.isObject(message);
   if (!obj) {
-    message = message.trim();
+    if (message && message.trim) {
+      message = message.trim();
+    }
+    
     if (!message) {
       return;
     }

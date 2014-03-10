@@ -65,7 +65,12 @@ Channel.entitySchema = {
     }
     ]
   },
-
+  app_id : {
+    type: String,
+    renderable: true,
+    writable: true,
+    "default" : ""
+  },
   action: {
     type: String,
     renderable: true,
