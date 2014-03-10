@@ -53,7 +53,7 @@
         "bip-pod-email"   : ">=0.0.1",
         "bip-pod-templater"   : ">=0.0.1",
         "bip-pod-flow"   : ">=0.0.1",
-        "bip-pod-syndication"   : ">=0.0.1"
+        "bip-pod-syndication"   : ">=0.0.1",
         "bip-pod-http"   : ">=0.0.1"
     },
     "devDependencies": {
