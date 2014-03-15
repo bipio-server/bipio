@@ -132,6 +132,14 @@ DaoMongo.prototype.getModelPublicFilters = function() {
   return filters;
 };
 
+DaoMongo.prototype.getModelReadableProps = function(modelName) {
+  return this.models[modelName]['class'].getRenderablePropsArray();
+}
+
+DaoMongo.prototype.getModelWritableProps = function(modelName) {
+  return this.models[modelName]['class'].getWritablePropsArray();
+}
+
 /**
  *
  * Initializes a model and binds it to a Mongoose schema
@@ -750,7 +758,7 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
  * @param int page page number (page 1 start)
  * @param function callback completed callback
  */
-DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orderBy, filter,  callback) {
+DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orderBy, filter, callback) {
   var owner_id = accountInfo ? accountInfo.user.id : undefined;
   var self = this, cacheKey = 'slist_' + modelName + '_' + owner_id + '_' + page + '_' + page_size;
   var mongoFilter = {
@@ -810,7 +818,9 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
       }
 
       query.exec(function (err, results) {
-        var model;
+        var model, 
+          modelPublicFilter = self.getModelReadableProps(modelName);
+        
         if (err) {
           self._log('Error: list(): ' + err);
           if (callback) {
@@ -818,10 +828,21 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
           }
         } else {
           // convert to models
-          realResult = [];
+          var modelStruct, realResult = [], publicModel, publicAttribute;
+          
           for (key in results) {
             model = self.modelFactory(modelName, results[key], accountInfo);
-            realResult.push(model.toObj());
+            modelStruct = model.toObj();
+            
+            publicModel = {};
+            for (var i = 0; i < modelPublicFilter.length; i++) {
+              publicAttribute = modelPublicFilter[i];
+              if (undefined != modelStruct[publicAttribute]) {
+                publicModel[publicAttribute] = modelStruct[publicAttribute];
+              }
+            }
+            realResult.push(publicModel);
+            //realResult.push(model.toObj());
           }
 
           var resultStruct = {
@@ -888,21 +909,27 @@ DaoMongo.prototype.accumulate = function(modelName, props, accumulator, inc) {
   MongoModel.update( filter, incUpdate ).exec();
 };
 
-DaoMongo.prototype.accumulateFilter = function(modelName, filter, accumulator) {
+DaoMongo.prototype.accumulateFilter = function(modelName, filter, accumulator, setter, next, incBy) {
   var model = this.modelFactory(modelName),
   // cast to mongoose model
   MongoModel = mongoose.model(model.getEntityName()),
   idx = model.getEntityIndex(),
-  acc = {};
+  acc = {},
+  upsert = false;
 
-  acc[accumulator] = 1;
+  acc[accumulator] = (undefined === incBy ? 1 : incBy);
 
   var incUpdate = {
     "$inc" : acc
   }
 
+  if (setter) {
+    incUpdate['$set'] = setter;
+    upsert = true;
+  }
+
   // increment it
-  MongoModel.update( filter, incUpdate ).exec();
+  MongoModel.update( filter, incUpdate, { upsert : upsert } ).exec(next);
 };
 
 /**

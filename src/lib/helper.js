@@ -75,7 +75,7 @@ var helper = {
     if (!noEscape) {
       retStr = helper.sanitize(retStr).escape();
     }
-    retStr = helper.sanitize(retStr).entityEncode();
+    //retStr = helper.sanitize(retStr).entityEncode();
     return retStr;
   },
 

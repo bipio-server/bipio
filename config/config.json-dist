@@ -91,6 +91,7 @@
       "templater" : {},
       "flow" : {},
       "syndication" : {},
-      "http" : {}
+      "http" : {},
+      "time" : {}
     }
 }

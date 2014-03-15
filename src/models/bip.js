@@ -153,9 +153,11 @@ Bip.entitySchema = {
       }
 
       // scrub name
-      if ('trigger' !== type) {
+      if ('smtp' === type) {
         this.name = this.name.replace(/\s/g, '-');
         this.name = this.name.replace(/[^a-zA-Z0-9-_.]/g, '');
+      } else if ('http' === type) {
+        this.name = this.name.replace(/[^a-zA-Z0-9-_.\s()!*+,;\[\]@]/g, '');
       }
       return type;
     }

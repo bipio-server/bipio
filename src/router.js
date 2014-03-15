@@ -39,6 +39,7 @@ cdn      = require('./lib/cdn'),
 restResources = ['bip', 'channel', 'domain', 'account_option'],
 modelPublicFilter;
 
+// @todo deprecate - should be handled by DAO
 function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
   var result = {};
   for (var i = 0; i < filterLen; i++) {
