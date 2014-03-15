@@ -133,7 +133,17 @@ DaoMongo.prototype.getModelPublicFilters = function() {
 };
 
 DaoMongo.prototype.getModelReadableProps = function(modelName) {
-  return this.models[modelName]['class'].getRenderablePropsArray();
+  var modelPublicFilters = this.models[modelName]['class'].getRenderablePropsArray();
+  
+  modelPublicFilters.push('_repr');
+  modelPublicFilters.push('_href');
+  modelPublicFilters.push('_renderers');
+  modelPublicFilters.push('status');
+  modelPublicFilters.push('message');
+  modelPublicFilters.push('code');
+  modelPublicFilters.push('errors');
+  
+  return modelPublicFilters;
 }
 
 DaoMongo.prototype.getModelWritableProps = function(modelName) {
