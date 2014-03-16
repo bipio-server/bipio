@@ -118,7 +118,7 @@ var helper = {
       }
       src = newSrc;
     }
-  
+
     return src;
   },
 
@@ -476,29 +476,42 @@ var helper = {
   isTrue : function(input) {
     return (true === input || /1|yes|y|true/g.test(input));
   },
-  
+
   // ---------- DNS helpers
-  
+
   // Returns all ipv4/6 A records for a host
   resolveHost : function(host, next) {
-    var tokens = tldtools.extract(host);
+    var tokens = tldtools.extract(host),
+      resolvingHost;
     if (ipaddr.IPv4.isValid(host) || ipaddr.IPv6.isValid(host) ) {
-      next(false, [ host ]);
+      next(false, [ host ], host);
     } else {
-      dns.resolve(tokens.inspect.getDomain() || tokens.domain, next);
+      resolvingHost = tokens.inspect.getDomain() || tokens.domain;
+      dns.resolve(resolvingHost, function(err, aRecords) {
+        next(err, aRecords, resolvingHost );
+      });
     }
   },
-  
+
   // tests whether host is in blacklist
-  hostBlacklisted : function(host, next) {
+  hostBlacklisted : function(host, whitelist, next) {
     var blacklist = CFG.server.public_interfaces;
-    this.resolveHost(host, function(err, aRecords) {
+    this.resolveHost(host, function(err, aRecords, resolvedHost) {
       var inBlacklist = false;
-      if (!err) {
+      if (!err) {       
+        if (whitelist) {
+          for (var i = 0; i < whitelist.length; i++) {
+            if (resolvedHost === whitelist[i]) {
+              next(err, [], aRecords);
+              return;
+            }
+          }
+        }
+
         inBlacklist = _.intersection(aRecords, blacklist)
       }
-      next(err, inBlacklist, aRecords);      
-    });    
+      next(err, inBlacklist, aRecords);
+    });
   }
 }
 

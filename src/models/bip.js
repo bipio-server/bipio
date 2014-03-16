@@ -614,10 +614,10 @@ Bip._createChannelIndex = function() {
     }
   }
 
-  if ('http' === this.type && app.helper.isObject(this.renderer)
-          && this.renderer.channel_id
-          && this.renderer.renderer) {
-    channels.push(this.renderer.channel_id);
+  if ('http' === this.type && app.helper.isObject(this.config.renderer)
+          && this.config.renderer.channel_id
+          && this.config.renderer.renderer) {
+    channels.push(this.config.renderer.channel_id);
   }
 
   this._channel_idx = app._.uniq(channels);
