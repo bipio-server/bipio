@@ -61,17 +61,18 @@ function endLifeParse(end_life) {
   }
 
   if (end_life.time !== '0' && end_life.time !== 0 && end_life.time !== '') {
-    d = new Date(Date.parse(end_life.time));
-    if (d.getTime() != 0) {
-      // @todo looks like a bug in datejs, no seconds for getTime?
-      //            seconds = d.getSeconds() + (d.getMinutes() * 60) + (d.getHours() * 60 * 60);
-      // from microseconds to seconds
-      // end_life.time = (d.getTime() / 100) + seconds;
-      end_life.time = Math.floor(d.getTime() / 1000);
+    try {     
+      d = new Date(Date.parse(end_life.time));
+      if (d.getTime() != 0) {
+        end_life.time = Math.floor(d.getTime() / 1000);
+      }
+    } catch (e) {      
     }
+    
   } else {
     end_life.time = 0;
-  }
+  } 
+
 
   return end_life;
 }
@@ -691,7 +692,6 @@ Bip.preSave = function(accountInfo, next) {
   } else {    
     next(false, this);
   }
-
 };
 
 function getAction(accountInfo, channelId) {

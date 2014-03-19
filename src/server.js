@@ -105,8 +105,10 @@ restapi.configure(function() {
   // required for some oauth provders
 
   restapi.use(express.session({
+    key : 'sid',
     cookie: {
-      maxAge: 60 * 60 * 1000
+      maxAge: 60 * 60 * 1000,
+      httpOnly : true
     },
     secret: GLOBAL.CFG.server.sessionSecret,
     store: new MongoStore({      
@@ -119,6 +121,7 @@ restapi.configure(function() {
   restapi.use('jsonp callback', true );
   //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
   restapi.use(errorHandler);
+  restapi.disable('x-powered-by');
 });
 
 // export app everywhere
