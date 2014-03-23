@@ -307,6 +307,10 @@ var restAction = function(req, res) {
         filter._channel_idx = resourceId;
         resourceName = 'bip';
         req.params.id = undefined;
+      } else if ('channel' === resourceName && 'logs' === subResourceId) {
+        filter.channel_id = req.params.id;
+        resourceName = 'channel_log';
+        req.params.id = undefined;
       }
 
       if (undefined !== req.params.id) {
