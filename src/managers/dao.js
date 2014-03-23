@@ -44,6 +44,7 @@ function Dao(config, log, next) {
     'bip_share' : require('../models/bip_share').BipShare,
     'bip_log' : require('../models/bip_log').BipLog,
     'channel' : require('../models/channel').Channel,
+    'channel_log' : require('../models/channel_log').ChannelLog,
     'domain' : require('../models/domain').Domain,
 
     'transform_default' : require('../models/transform_default').TransformDefault,

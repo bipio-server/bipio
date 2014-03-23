@@ -23,7 +23,7 @@
 
 // always look to local config
 process.env.NODE_CONFIG_DIR = __dirname + '/../config';
-
+process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 // includes
 var app = {
   workerId : ':PID:' + process.pid

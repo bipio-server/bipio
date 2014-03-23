@@ -997,6 +997,9 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
   var mongoModel = this.toMongoModel(model);
   for (var k in props) {
     if (props.hasOwnProperty(k)) {
+      if (app.helper.isObject(mongoModel[k]) && Object.keys(mongoModel[k]).length === 0) {
+        mongoModel[k] = undefined;
+      }
       setProperties[k] = mongoModel[k];
     }    
   }

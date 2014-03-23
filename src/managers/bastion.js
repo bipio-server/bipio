@@ -121,7 +121,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             'content_type' : '',
             'encoding' : ''
           };
-          
+
           imports._client = clientStruct;
 
           if (err) {
@@ -209,7 +209,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
         modelName = 'stats_account',
         model,
         statType = jobPacket.data.type,
-        inc = Number(jobPacket.data.inc) || 1;        
+        inc = Number(jobPacket.data.inc) || 1;
 
         if (isNaN(inc)) {
           app.logmessage('Incrementor is Not A Number', 'warning');
@@ -505,7 +505,7 @@ Bastion.prototype.channelProcess = function(struct) {
       'id' : struct.channel_id,
       'owner_id' : struct.bip.owner_id
     };
-    
+
     struct.imports._bip = app._.clone(struct.bip);
 
     this._dao.find(
@@ -563,12 +563,24 @@ Bastion.prototype.channelProcess = function(struct) {
               } else if (err) {
                 app.logmessage('Channel Invoke Failure:' + channel.id);
                 app.logmessage(err);
-              }
 
+                var logModel = self._dao.modelFactory(
+                  'channel_log',
+                  {
+                    owner_id : channel.owner_id,
+                    channel_id : channel.id,
+                    transaction_id : struct.client.id,
+                    code : 'channel_error',
+                    bip_id : struct.imports._bip.id,
+                    message : err.toString()
+                  }
+                );
+                self._dao.create(logModel);
+              }
             });
         }
       }
-      );
+    );
   }
 }
 

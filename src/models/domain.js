@@ -67,8 +67,8 @@ Domain.entitySchema = {
 
         var ok = /[\w\d]+\.[a-zA-Z]{2,}$/.test(val);
         if (ok) {
+         
           var isLocal = Domain.isLocal(val);
-
           if (this.type == 'custom') {
             ok = !isLocal;
           } else {
@@ -120,7 +120,7 @@ Domain.entitySchema = {
 
 // is a local domain
 Domain.isLocal = function(domain) {
-  var local = GLOBAL.CFG.domain_public.split(':').shift(),
+  var local = GLOBAL.CFG.domain_public.split(':').shift().replace(/\./g, '\\.'),
   reg = new RegExp(local + '$');
   return reg.test(domain);
 }
