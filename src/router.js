@@ -115,6 +115,7 @@ function publicFilter(modelName, modelStruct) {
  */
 function restAuthWrapper(req, res, cb) {
   return express.basicAuth(function(user, pass, cb){
+console.log('user ' + user + ' password ' + pass);      
     if (req.session.account && req.session.account.username === user) { 
       dao.getAccountStruct(req.session.account, function(err, accountInfo) {
         cb(err, accountInfo);

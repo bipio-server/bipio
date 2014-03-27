@@ -58,6 +58,9 @@ var uuid        = require('node-uuid'),
   eventEmitter = new events.EventEmitter(),
   mongooseOpen = false;
 
+/**
+ * Mongoose DAO Constructor
+ */
 function DaoMongo(config, log, next) {
   var self = this;
   
@@ -92,7 +95,6 @@ function DaoMongo(config, log, next) {
 
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
 
-// @todo deprecate
 DaoMongo.prototype.getConnection = function() {
   return mongoose.connection;
 }

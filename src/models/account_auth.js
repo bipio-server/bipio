@@ -44,12 +44,7 @@ function AESCrypt(value) {
 
   var cipher = crypto.createCipheriv('aes-256-cbc', key, iv),
   crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64');
-
   cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64');
-  /*
-    if (value !== AESDecrypt(cryptEncoded, true)) {        
-        throw new Error('Cipher Failure');
-    }*/
 
   return cryptEncoded;
 }
@@ -68,9 +63,8 @@ function AESDecrypt(cryptedStr, autoPadding) {
   }
   decipher.setAutoPadding(autoPadding);
 
-  var decrypted = decipher.update(cypher, 'base64', 'ascii');
-
-  return decrypted + decipher.final('ascii');
+  var decrypted = (decipher.update(cypher, 'base64', 'ascii') + decipher.final('ascii'));
+  return decrypted;
 }
 
 function pwHash(pwValue) {
@@ -192,7 +186,7 @@ AccountAuth.cmpPassword = function(passwordTainted) {
         return bcrypt.compareSync(passwordTainted, password);
     */
   // AES
-  if (this.type == 'token') {
+  if (this.type == 'token') {   
     return passwordTainted == password;
   }
   return false;

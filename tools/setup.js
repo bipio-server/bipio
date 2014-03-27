@@ -363,6 +363,3 @@ function auxServers() {
 }
 
 domainSelect();
-
-
-

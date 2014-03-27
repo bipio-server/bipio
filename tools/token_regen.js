@@ -25,28 +25,74 @@
  * Regenerates a token for an account id
  */
 
-var accountId = process.argv[2],
-    dao = require('../src/bootstrap'),
-    crypto = require('crypto');
-
+process.HEADLESS = true;
 if (!process.argv[2]) {
-    console.log('Usage - token_regen {account uuid}');
-    process.exit(0);
+  console.log('Usage - token_regen {account uuid}');
+  process.exit(0);
 }
 
-crypto.randomBytes(16, function(ex, buf) {
+var accountId = process.argv[2],
+  crypto = require('crypto'),
+  bootstrap = require(__dirname + '/../src/bootstrap'),
+  dao = bootstrap.app.dao,
+  modelName = 'account_auth';
+
+dao.on('ready', function(dao) {  
+  crypto.randomBytes(16, function(ex, buf) {
     var token = buf.toString('hex');
     setTimeout(function() {
-        var pw = app.helper.AESCrypt(token);
-        dao.updateColumn('account_auth', { owner_id : accountId, type : 'token'}, { password : pw}, function(err, result) {
-            if (err) {
+      dao.find(
+      modelName,
+      {
+        owner_id : accountId, 
+        type : 'token'
+      },
+      function(err, result) {
+        if (err) {
+          console.log(err);
+          console.log(result);
+        } else {
+          result.password = token;
+          
+          /*
+          dao.update(
+            modelName,
+            result.id,
+            result,
+            function(err, result) {
+              if (err) {
                 console.log(err);
                 console.log(result);
-            } else {
+              } else {
                 console.log('new token : ' + token)
                 console.log('done');
                 process.exit(0);
+              }
+            }            
+          );
+          */
+          // DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
+          
+          dao.updateProperties(
+            modelName,
+            result.id,
+            {
+              password : token
+            },
+            function(err, result) {
+              if (err) {
+                console.log(err);
+                console.log(result);
+              } else {
+                console.log('new token : ' + token)
+                console.log('done');
+                process.exit(0);
+              }
             }
-        });
+          );
+        }
+      }
+    );
     }, 2000);
+  });  
 });
