@@ -167,6 +167,19 @@ section in the Wiki will guide any future installs.
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
 /etc/init and reconfigured to suit your environment.  If you'd like it managed by Monit...
 
+## Updating
+
+Updating BipIO via `npm` will resolve any new dependencies for you, however if you're checking out from the repository 
+directly with `git pull` you may need to manually run `npm install` to download any new dependencies (bundled pods, for example).
+
+If you're going the `git pull` route and want to save this step, create a git 'post merge' hook by copying it from `./tools` like so :
+
+    mkdir -p .git/hooks
+    cp ./tools/post-merge .git/hooks
+    chmod ug+x .git/hooks/post-merge
+
+This will automatically install any missind dependencies every time you `git pull`
+
 ### Monit Config
 
 /etc/monit/config.d/bipio.conf
