@@ -617,7 +617,7 @@ module.exports = {
       } else {
         res.send(404);
       }
-    });
+    });!
 
     /**
          * Account Auth RPC, sets up issuer_token (API keypair) for the selected pod, if the pod supports issuer_token
@@ -632,11 +632,37 @@ module.exports = {
         res.send(415);
       }
     });
+    
+    express.get('/rpc/pod/:pod/render/:method', restAuthWrapper, function(req, res) {
+       (function(req, res) {
+        var method = req.params.method
+          accountInfo = req.remoteUser,
+          channel = dao.modelFactory('channel', {
+            owner_id : accountInfo.user.id,
+            action : req.params.pod + '.'
+          }),
+          pod = channel.getPods(req.params.pod);
+
+        if (pod && method) {
+          req.remoteUser = accountInfo;
+
+          channel.rpc(
+            method,
+            req.query,
+            getClientInfo(req),
+            req,
+            res
+          );
+
+        } else {
+          res.send(404);
+        }
+      })(req, res);     
+    });
 
     /**
-         * Pass through an RPC call to a pod
-         */
-    //rpc/pod/syndication/feed/json
+      * Pass through an RPC call to a pod
+      */
     express.get('/rpc/pod/:pod/:action/:method/:channel_id?', restAuthWrapper, function(req, res) {
       (function(req, res) {
         var pod = dao.pod(req.params.pod);
@@ -646,12 +672,6 @@ module.exports = {
         accountInfo = req.remoteUser;
 
         if (pod && action && method) {
-          //dao.domainAuth(helper.getDomain(req.headers.host, true), true, function(err, accountInfo) {
-          /*
-                        if (err || !accountInfo) {
-                            app.logmessage(err, 'error');
-                            res.send(403);
-                        } else {*/
           req.remoteUser = accountInfo;
 
           if (cid) {
@@ -685,8 +705,6 @@ module.exports = {
               res
               );
           }
-        //}
-        //});
         } else {
           res.send(404);
         }
