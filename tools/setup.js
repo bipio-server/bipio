@@ -339,13 +339,8 @@ function auxServers() {
     console.log('trying ' + sparseConfig.dbMongo.connect + ' Ctrl-C to quit');
     GLOBAL.CFG = sparseConfig;
 
-    var Dao = require(__dirname + '/../src/managers/dao');
-    
-    var dao = new Dao(sparseConfig.dbMongo,  function(message) {
-      console.log(message);
-    });
-
-    dao.on('ready', function(dao) {
+    var Dao = require(__dirname + '/../src/managers/dao');    
+    var dao = new Dao(sparseConfig.dbMongo,  function(message) {      
       writeConfig(function() {
         var bootstrap = require(__dirname + '/../src/bootstrap');
         _createAccount(bootstrap.app.dao, function() {
