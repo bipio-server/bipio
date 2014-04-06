@@ -874,15 +874,44 @@ module.exports = {
       }
     });
 
-    express.get('/login', restAuthWrapper, function(req, res) {
-      req.session.account = {
-        owner_id : req.user.user.id,
-        username : req.user.user.username,
-        name : req.user.user.name,
-        is_admin : req.user.user.is_admin
+    express.get('/login', function(req, res) {
+      var authorization = req.headers.authorization;
+
+      if (req.user) return next();
+      if (!authorization) return unauthorized(res, realm);
+
+      var parts = authorization.split(' ');
+
+      if (parts.length !== 2) {
+        res.send(400);
+        return;
       }
+
+      var scheme = parts[0]
+        , credentials = new Buffer(parts[1], 'base64').toString()
+        , index = credentials.indexOf(':');
+
+      if ('Basic' != scheme || index < 0) {
+        res.send(400);
+        return;
+      }
+
+      var user = credentials.slice(0, index),
+        pass = credentials.slice(index + 1);
       
-      res.send(200);
+      dao.checkAuth(user, pass, 'token', function(err, result) {
+        if (err) {
+          res.send(401)
+        } else {
+          req.session.account = {
+            owner_id : result.user.id,
+            username : result.user.username,
+            name : result.user.name,
+            is_admin : result.user.is_admin
+          }
+          res.send({ message : 'OK' });
+        }
+      });  
     });
 
     express.get('/logout', function(req, res) {
