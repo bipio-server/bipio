@@ -902,14 +902,15 @@ module.exports = {
       dao.checkAuth(user, pass, 'token', function(err, result) {
         if (err) {
           res.send(401)
-        } else {
+        } else {         
           req.session.account = {
             owner_id : result.user.id,
             username : result.user.username,
             name : result.user.name,
             is_admin : result.user.is_admin
           }
-          res.send({ message : 'OK' });
+          
+          res.send(publicFilter('account_option', result.user.settings));
         }
       });  
     });
