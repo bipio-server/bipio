@@ -28,15 +28,16 @@ process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 var app = {
   workerId : ':PID:' + process.pid
 },
-util            = require('util'),
-underscore      = require('underscore'),
-winston         = require('winston'),
-helper          = require('./lib/helper'),
-cdn          = require('./lib/cdn'),
-path            = require('path'),
-defs            = require('../config/defs'),
-envConfig       = require('config'),
-os = require('os');
+sugar       = require('sugar'),
+util        = require('util'),
+underscore  = require('underscore'),
+winston     = require('winston'),
+helper      = require('./lib/helper'),
+cdn         = require('./lib/cdn'),
+path        = require('path'),
+defs        = require('../config/defs'),
+envConfig   = require('config'),
+os          = require('os');
 
 // globals
 GLOBAL.app = app;
