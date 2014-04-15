@@ -877,8 +877,10 @@ module.exports = {
     express.get('/login', function(req, res) {
       var authorization = req.headers.authorization;
 
-      if (req.user) return next();
-      if (!authorization) return unauthorized(res, realm);
+      if (!authorization) {
+        res.send(401);
+        return;
+      }
 
       var parts = authorization.split(' ');
 

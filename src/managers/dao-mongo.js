@@ -945,9 +945,25 @@ DaoMongo.prototype.accumulateFilter = function(modelName, filter, accumulator, s
 };
 
 /**
+ * Upserts a document, no taint check
+ */
+DaoMongo.prototype.upsert = function(modelName, filter, props, next) {
+  var model = this.modelFactory(modelName),
+  // cast to mongoose model
+  MongoModel = mongoose.model(model.getEntityName()),
+  idx = model.getEntityIndex();
+
+  var upsertProps = {
+    '$set' : props
+  }
+
+  // increment it
+  MongoModel.update( filter, upsertProps, { upsert : true } ).exec(next);
+};
+
+/**
  * Updates an explicit set of columns.  No taint check or validation,
  * trusted sources only.
- *
  */
 DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
   var model = this.modelFactory(modelName),
