@@ -102,12 +102,12 @@ BipShare.entitySchema = {
         "default" : 0
     },
     created : {
-        type: String,
+        type: Number,
         renderable: true,
         writable: false
     },
     updated : {
-        type: String,
+        type: Number,
         renderable: true,
         writable: false
     }

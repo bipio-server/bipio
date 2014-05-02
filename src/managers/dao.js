@@ -215,7 +215,7 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
         var model = self.modelFactory('account_auth', auth);
         resultModel.settings.api_token = model.getPassword();
         resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(authModel.username + ':' + model.getPassword()).toString('base64'));
-  */      
+  */
       }
 
       var accountInfo = new AccountInfo(resultModel);
@@ -404,7 +404,7 @@ Dao.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, next) {
     id : bipId,
     owner_id : accountInfo.user.id
   }, function(err, result) {
-    
+
     if (err || !result) {
       cb(self.errorParse(err), null, null, self.errorMap(err) );
     } else {
@@ -666,6 +666,79 @@ Dao.prototype.setTransformDefaults = function(newDefaults) {
     }
   });
 };
+
+/**
+ *
+ * Takes a simple count of non-system provided transforms and creates
+ * new system hints for use by /rpc/bip/get_transform_hint
+ *
+ */
+Dao.prototype.reCorp = function() {
+  this.findFilter(
+    'transform_default',
+    {
+      'owner_id' : {
+        '$ne' : 'system'
+      }/*,
+      '$orderby' : {
+        created : -1
+      }*/
+    },
+    function(err, results) {
+      var r, tx, agg = {}, key, uKey, otx = {};
+      if (!err) {
+        for (var i = 0; i < results.length; i++) {
+          r = results[i];
+
+          key = r.from_channel + ':' + r.to_channel;
+          uKey = r.owner_id + ':' + key;
+
+          // 1 latest sample per user
+          if (!otx[uKey]) {
+            otx[uKey] = true;
+            tx = JSON.stringify(r.transform);
+
+            if (!agg[key]) {
+              agg[key] = {};
+              agg[key][tx] = 0;
+            }
+
+            agg[key][tx]++;
+          }
+        }
+        
+//console.log('aggretate', agg);
+
+        var maxYields, reduced;
+        for (var k in agg) {
+          if (agg.hasOwnProperty(k)) {
+            for (var j in agg[k]) {
+              
+console.log(agg[k][j])              
+              
+              if (!reduced[agg[k]]) {
+                reduced[agg[k]] = agg[k][j];
+              }
+              
+              
+              
+              if (agg[k][j] > reduced[agg[k][j]]) {
+                reduced[agg[k][j]] = agg[k][j];
+              }
+            }
+          }
+        }
+
+        console.log('reduced',  reduced);
+
+
+      } else {
+        app.logmessage(err, 'error');
+      }
+    }
+  );
+}
+
 
 Dao.prototype.bipLog = function(payload) {
   var self = this,
@@ -1267,8 +1340,8 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
           width : 125,
           height : 125
         }, function(err, stdout) {
-          next(err, payload);  
-        });        
+          next(err, payload);
+        });
       }
     });
   });

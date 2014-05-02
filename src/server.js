@@ -28,12 +28,20 @@ var bootstrap = require(__dirname + '/bootstrap'),
 app = bootstrap.app,
 cluster = require('cluster'),
 express = require('express'),
+session = require('express-session'),
+cookieParser = require('cookie-parser'),
+bodyParser = require('body-parser'),
+jsonp = require('json-middleware'),
+methodOverride = require('method-override'),
 helper  = require('./lib/helper'),
 passport = require('passport'),
 cron = require('cron'),
 restapi = express();
-MongoStore = require('connect-mongo')(express);
-connectUtils = require('express/node_modules/connect/lib/utils');
+MongoStore = require('connect-mongo')({ session : session});
+connectUtils = require(__dirname + '/../node_modules/connect/lib/utils.js');
+
+// export app everywhere
+module.exports.app = app;
 
 /**
  * express bodyparser looks broken or too strict.
@@ -69,7 +77,7 @@ function xmlBodyParser(req, res, next) {
 
 function errorHandler(err, req, res, next) {
   res.status(500);
-  res.render('error', { error: err });
+  res.send({ error: err });
 }
 
 function setCORS(req, res, next) {
@@ -82,7 +90,7 @@ function setCORS(req, res, next) {
 }
 
 // express preflight
-restapi.configure(function() {
+
   restapi.use(xmlBodyParser);
   // respond with an error if body parser failed
   restapi.use(function(err, req, res, next) {
@@ -97,14 +105,14 @@ restapi.configure(function() {
     }
   });
 
-  restapi.use(express.bodyParser());
+  restapi.use(bodyParser());
   restapi.use(setCORS);
-  restapi.use(express.methodOverride());
-  restapi.use(express.cookieParser());
+  restapi.use(methodOverride());
+  restapi.use(cookieParser());
 
   // required for some oauth provders
 
-  restapi.use(express.session({
+  restapi.use(session({
     key : 'sid',
     cookie: {
       maxAge: 60 * 60 * 1000,
@@ -118,16 +126,15 @@ restapi.configure(function() {
 
   restapi.use(passport.initialize());
   restapi.use(passport.session());
-  restapi.use('jsonp callback', true );
+  restapi.set('jsonp callback', true );
   //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
   restapi.use(errorHandler);
   restapi.disable('x-powered-by');
-});
 
-// export app everywhere
-module.exports.app = app;
 
-app.isMaster = cluster.isMaster;
+
+
+
 
 if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
@@ -193,6 +200,16 @@ if (cluster.isMaster) {
     var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);   
+    
+    
+    // transform recalcs
+    
+    //app.logmessage('DAO:Starting Corpus Recalc', 'info');
+    //var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
+//      dao.reCorp();
+//    }, null, true, GLOBAL.CFG.timezone);   
+  
+    
   });
 
 } else {

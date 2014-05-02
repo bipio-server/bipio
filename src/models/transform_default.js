@@ -3,7 +3,7 @@
  * The Bipio API Server
  *
  * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 CloudSpark pty ltd http://www.cloudspark.com.au
+ * Copyright (c) 2010-2014 CloudSpark pty ltd http://www.cloudspark.com.au
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,51 +21,56 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 /**
- * 
+ *
  * TranslateDefault is responsible for surfacing transforms between two channels
  * based on the last saved transform for the channels by the client, or otherwise
  * from the system.
- * 
+ *
  */
 var BipModel = require('./prototype.js').BipModel,
-    TransformDefault = Object.create(BipModel);
+TransformDefault = Object.create(BipModel);
 
 TransformDefault.compoundKeyContraints = {
-    owner_id : 1,
-    from_channel : 1,
-    to_channel : 1
-}; 
+  owner_id : 1,
+  from_channel : 1,
+  to_channel : 1
+};
 TransformDefault.entityName = 'transform_default';
 TransformDefault.entitySchema = {
-    id: {
-        type: String, 
-        index: true,
-        renderable: false, 
-        writable: false
-    },
-    owner_id : { // owner_id 'system' = system determined map
-        type: String, 
-        index: true,
-        renderable: false, 
-        writable: false
-    },
-    from_channel: { // channel action (pod.action)
-        type: String, 
-        index: true,
-        renderable: true, 
-        writable: false
-    },
-    to_channel: { // channel action (pod.action)
-        type: String, 
-        index: true,
-        renderable: true, 
-        writable: false
-    },
-    transform : { // serialized transform
-        type: Object, 
-        renderable: true, 
-        writable: false
-    }
+  id: {
+    type: String,
+    index: true,
+    renderable: false,
+    writable: false
+  },
+  owner_id : { // owner_id 'system' = system determined map
+    type: String,
+    index: true,
+    renderable: false,
+    writable: false
+  },
+  from_channel: { // channel action (pod.action)
+    type: String,
+    index: true,
+    renderable: true,
+    writable: false
+  },
+  to_channel: { // channel action (pod.action)
+    type: String,
+    index: true,
+    renderable: true,
+    writable: false
+  },
+  transform : { // serialized transform
+    type: Object,
+    renderable: true,
+    writable: false
+  },
+  created : {
+    type: Number,
+    renderable: true,
+    writable: false
+  }
 };
 
 module.exports.TransformDefault = TransformDefault;

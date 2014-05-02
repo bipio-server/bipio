@@ -90,7 +90,7 @@ BipLog.entitySchema = {
         writable: false
     },
     created : {
-        type: String,
+        type: Number,
         renderable: true,
         writable: false
     }    

@@ -37,6 +37,7 @@ cdn         = require('./lib/cdn'),
 path        = require('path'),
 defs        = require('../config/defs'),
 envConfig   = require('config'),
+cluster     = require('cluster'),
 os          = require('os');
 
 // globals
@@ -46,12 +47,14 @@ GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.datadir,
-  GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.cdn;
+GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.cdn;
 
 // attach general helpers to the app
 app.helper = helper;
 app.cdn = cdn;
 app._ = underscore;
+
+app.isMaster = cluster.isMaster;
 
 // logger
 app.logmessage = function(message, loglevel) {

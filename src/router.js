@@ -31,9 +31,10 @@ var dao,
 bastion,
 util        = require('util'),
 express     = require('express'),
+connect     = require('connect'),
 helper      = require('./lib/helper'),
 uuid            = require('node-uuid'),
-utils = require('express/node_modules/connect/lib/utils'),
+utils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
 cdn      = require('./lib/cdn'),
 // restful models
 restResources = ['bip', 'channel', 'domain', 'account_option'],
@@ -114,7 +115,7 @@ function publicFilter(modelName, modelStruct) {
  * if fails, defers to http basic auth.
  */
 function restAuthWrapper(req, res, cb) {
-  return express.basicAuth(function(user, pass, cb){
+  return connect.basicAuth(function(user, pass, cb){
     if (req.session.account && req.session.account.username === user) { 
       dao.getAccountStruct(req.session.account, function(err, accountInfo) {
         cb(err, accountInfo);
@@ -712,6 +713,27 @@ module.exports = {
     });
 
     // ----------------------------------------------------------- CATCHALLS
+
+/* dev testing route
+    express.get('/t', function(req, res) {
+      //channel, action, ageDays
+      var 
+        channel = {
+          id : '24fe06a4-dc07-49f3-b669-c1cf23819983',
+          action : 'syndication.feed',
+          config : {
+            purge_after : '30d'
+          },
+          owner_id : "7853b07f-d2dd-4f90-ae62-8c53950da0a0"
+        }
+        action = 'feed',
+        ageDays = 30;
+        
+      dao.pod('syndication').expireCDNDir(channel, action, ageDays);
+      res.send(200);
+    })
+
+*/
 
     // RPC Catchall
     express.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', restAuthWrapper, function(req, res) {
