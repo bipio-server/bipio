@@ -199,7 +199,11 @@ AccountAuth.getPassword = function() {
     return AESDecrypt(this.password).substr(0,32);
   } else {
     // return this.password;
-    return AESDecrypt(this.password, true);
+    if (this.password) {
+      return AESDecrypt(this.password, true);
+    } else {
+      return this.password;
+    }
   }
 };
 

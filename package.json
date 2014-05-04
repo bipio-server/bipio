@@ -1,9 +1,9 @@
 {
   "author": "Michael Pearson (http://www.cloudspark.com.au)",
   "name": "bipio",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "scripts": {
-    "start": "supervisor src/server.js"
+    "start": "node src/server.js"
   },
   "description": "API and graph resolver for the bipio content pipeline.",
   "homepage": "https://bip.io",
