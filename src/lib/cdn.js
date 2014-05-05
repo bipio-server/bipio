@@ -123,7 +123,7 @@ var cdn = {
      * Given a file creation strategy we know about, takes the meta data payload
      * and renormalizes it for internal use
      *
-     */
+     */    
   normedMeta: function(strategy, txId, payload) {
     var normFiles = [],
     struct, f;
@@ -134,8 +134,9 @@ var cdn = {
           txId : txId,
           size : f.size,
           localpath : f.path,
-          name : f.name,
-          type : f.headers['content-type'],
+          name : f.originalname,
+          //type : f.headers['content-type'],
+          type : f.mimetype,
           encoding : 'binary' // @todo may not be binary, express bodyparser looks broken after 3.4.0
         //encoding : f._writeStream.encoding
 

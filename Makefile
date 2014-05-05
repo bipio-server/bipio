@@ -4,6 +4,7 @@ REPORTER = dot
 
 install:
 	npm install
+	mkdir -p data/tmp
 	mkdir -p data/channels
 	mkdir -p data/cdn/img/av
 	mkdir -p data/cdn/img/icofactory

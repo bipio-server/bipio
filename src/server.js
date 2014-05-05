@@ -33,6 +33,7 @@ cookieParser = require('cookie-parser'),
 bodyParser = require('body-parser'),
 jsonp = require('json-middleware'),
 methodOverride = require('method-override'),
+multer = require('multer'),
 helper  = require('./lib/helper'),
 passport = require('passport'),
 cron = require('cron'),
@@ -90,6 +91,7 @@ function setCORS(req, res, next) {
 }
 
 // express preflight
+  restapi.use(multer({ dest : GLOBAL.DATA_DIR + '/tmp' }));
 
   restapi.use(xmlBodyParser);
   // respond with an error if body parser failed
@@ -130,11 +132,6 @@ function setCORS(req, res, next) {
   //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
   restapi.use(errorHandler);
   restapi.disable('x-powered-by');
-
-
-
-
-
 
 if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
