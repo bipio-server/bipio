@@ -49,7 +49,7 @@ function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
       result[publicAttribute] = modelStruct[publicAttribute];
     }
   }
-  
+
   if (decode) {
     return helper.naturalize(result);
   } else {
@@ -116,14 +116,14 @@ function publicFilter(modelName, modelStruct) {
  */
 function restAuthWrapper(req, res, cb) {
   return connect.basicAuth(function(user, pass, cb){
-    if (req.session.account && req.session.account.username === user) { 
+    if (req.session.account && req.session.account.username === user) {
       dao.getAccountStruct(req.session.account, function(err, accountInfo) {
         cb(err, accountInfo);
       });
     } else {
-      dao.checkAuth(user, pass, 'token', cb);  
+      dao.checkAuth(user, pass, 'token', cb);
     }
-    
+
   })(req, res, cb);
 }
 
@@ -287,12 +287,12 @@ var restAction = function(req, res) {
       if (undefined != req.params.id) {
         var writeFilters = modelPublicFilter[resourceName]['write'];
         dao.patch(
-          resourceName, 
-          req.params.id, 
-          filterModel(writeFilters.length, writeFilters, req.body), 
-          accountInfo, 
+          resourceName,
+          req.params.id,
+          filterModel(writeFilters.length, writeFilters, req.body),
+          accountInfo,
           restResponse(res)
-        );
+          );
       } else {
         res.send(404);
       }
@@ -467,17 +467,16 @@ module.exports = {
     express.put( '/rest/:resource_name/:id?', restAuthWrapper, restAction);
     express.del( '/rest/:resource_name/:id', restAuthWrapper, restAction);
     express.patch( '/rest/:resource_name/:id', restAuthWrapper, restAction);
-/*
     express.options('*', function(req, res) {
       res.send(200);
     });
-*/
+
     express.all('*', function(req, res, next) {
       if (req.method == 'OPTIONS') {
         res.send(200);
-      } else
+
       // API has no default/catchall renderer
-      if (req.headers.host === CFG.domain_public) {
+      } else if (req.headers.host === CFG.domain_public) {
         next();
       } else {
         // try to find a default renderer for this domain
@@ -515,7 +514,6 @@ module.exports = {
                 });
               } else {
                 // try to shortcut a bip
-                
                 var pathToken = decodeURIComponent(req.originalUrl.split('/').pop());
                 if (pathToken) {
                   var filter = {
@@ -530,26 +528,25 @@ module.exports = {
                       if (!result) {
                         next();
                       } else {
-                        req.url = '/bip/http/' + result.name;                    
+                        req.url = '/bip/http/' + result.name;
                         next('route');
                       }
-                      
+
                     }
-                    
+
                   });
                 } else {
                   next();
-                }                
+                }
               }
             }
-          }
-          );
-      }
-    });
+          });
+        }
+      });
 
     /**
-         * Pass through HTTP Bips
-         */
+     * Pass through HTTP Bips
+     */
     express.all('/bip/http/:bip_name', bipAuthWrapper, function(req, res) {
       var txId = uuid.v4(),
       client = getClientInfo(req, txId),
@@ -642,7 +639,7 @@ module.exports = {
      * DomainAuth channel renderer
      */
     express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
-     
+
       var domain = helper.getDomain(req.headers.host, true);
       (function(domain, req, res) {
         dao.domainAuth(domain, true, function(err, accountResult) {
@@ -659,7 +656,7 @@ module.exports = {
               if (err || !result) {
                 app.logmessage(err, 'error');
                 res.send(404);
-              } else {   
+              } else {
                 req.remoteUser = accountResult;
                 var channel = dao.modelFactory('channel', result);
 
@@ -693,11 +690,12 @@ module.exports = {
       } else {
         res.send(404);
       }
-    });!
+    });
+    !
 
     /**
-         * Account Auth RPC, sets up issuer_token (API keypair) for the selected pod, if the pod supports issuer_token
-         */
+     * Account Auth RPC, sets up issuer_token (API keypair) for the selected pod, if the pod supports issuer_token
+     */
     express.all('/rpc/issuer_token/:pod/:auth_method', restAuthWrapper, function(req, res) {
       var podName = req.params.pod,
       pod = dao.pod(podName),
@@ -708,16 +706,16 @@ module.exports = {
         res.send(415);
       }
     });
-    
+
     express.get('/rpc/pod/:pod/render/:method', restAuthWrapper, function(req, res) {
-       (function(req, res) {
+      (function(req, res) {
         var method = req.params.method
-          accountInfo = req.remoteUser,
-          channel = dao.modelFactory('channel', {
-            owner_id : accountInfo.user.id,
-            action : req.params.pod + '.'
-          }),
-          pod = channel.getPods(req.params.pod);
+        accountInfo = req.remoteUser,
+        channel = dao.modelFactory('channel', {
+          owner_id : accountInfo.user.id,
+          action : req.params.pod + '.'
+        }),
+        pod = channel.getPods(req.params.pod);
 
         if (pod && method) {
           req.remoteUser = accountInfo;
@@ -728,12 +726,12 @@ module.exports = {
             getClientInfo(req),
             req,
             res
-          );
+            );
 
         } else {
           res.send(404);
         }
-      })(req, res);     
+      })(req, res);
     });
 
     /**
@@ -788,27 +786,6 @@ module.exports = {
     });
 
     // ----------------------------------------------------------- CATCHALLS
-
-/* dev testing route
-    express.get('/t', function(req, res) {
-      //channel, action, ageDays
-      var 
-        channel = {
-          id : '24fe06a4-dc07-49f3-b669-c1cf23819983',
-          action : 'syndication.feed',
-          config : {
-            purge_after : '30d'
-          },
-          owner_id : "7853b07f-d2dd-4f90-ae62-8c53950da0a0"
-        }
-        action = 'feed',
-        ageDays = 30;
-        
-      dao.pod('syndication').expireCDNDir(channel, action, ageDays);
-      res.send(200);
-    })
-
-*/
 
     // RPC Catchall
     express.get('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', restAuthWrapper, function(req, res) {
@@ -933,9 +910,9 @@ module.exports = {
               res.send(404);
             } else {
               dao.setDefaultBip(
-                resourceId, 
-                dao.modelFactory('account_option', result, accountInfo), 
-                accountInfo, 
+                resourceId,
+                dao.modelFactory('account_option', result, accountInfo),
+                accountInfo,
                 restResponse(res)
                 );
             }
@@ -987,8 +964,8 @@ module.exports = {
       }
 
       var scheme = parts[0]
-        , credentials = new Buffer(parts[1], 'base64').toString()
-        , index = credentials.indexOf(':');
+      , credentials = new Buffer(parts[1], 'base64').toString()
+      , index = credentials.indexOf(':');
 
       if ('Basic' != scheme || index < 0) {
         res.send(400);
@@ -996,29 +973,27 @@ module.exports = {
       }
 
       var user = credentials.slice(0, index),
-        pass = credentials.slice(index + 1);
-      
+      pass = credentials.slice(index + 1);
+
       dao.checkAuth(user, pass, 'token', function(err, result) {
         if (err) {
           res.send(401)
-        } else {         
+        } else {
           req.session.account = {
             owner_id : result.user.id,
             username : result.user.username,
             name : result.user.name,
             is_admin : result.user.is_admin
           }
-          
+
           res.send(publicFilter('account_option', result.user.settings));
         }
-      });  
+      });
     });
 
     express.get('/logout', function(req, res) {
       req.session.destroy();
       res.send(200);
     });
-
-
   }
 }
