@@ -471,79 +471,6 @@ module.exports = {
       res.send(200);
     });
 
-    express.all('*', function(req, res, next) {
-      if (req.method == 'OPTIONS') {
-        res.send(200);
-
-      // API has no default/catchall renderer
-      } else if (req.headers.host === CFG.domain_public) {
-        next();
-      } else {
-        // try to find a default renderer for this domain
-        dao.domainAuth(
-          helper.getDomain(req.headers.host, true),
-          true,
-          function(err, accountResult) {
-            if (err) {
-              res.send(500);
-            } else if (!accountResult) {
-              next();
-            } else {
-
-              // find default renderer
-              var ownerId = accountResult.getId(),
-              domain = accountResult.getActiveDomainObj(),
-              filter;
-
-              if (app.helper.isObject(domain.renderer) && '' !== domain.renderer.channel_id) {
-                filter = {
-                  id : domain.renderer.channel_id,
-                  owner_id : ownerId
-                }
-                dao.find('channel', filter, function(err, result) {
-                  if (err) {
-                    res.send(500);
-
-                  } else if (!result) {
-                    res.send(404);
-
-                  } else {
-                    req.remoteUser = accountResult;
-                    channelRender(result.owner_id, result.id, domain.renderer.renderer, req, res);
-                  }
-                });
-              } else {
-                // try to shortcut a bip
-                var pathToken = decodeURIComponent(req.originalUrl.split('/').pop());
-                if (pathToken) {
-                  var filter = {
-                    name : pathToken,
-                    owner_id : ownerId
-                  }
-                  dao.find('bip', filter, function(err, result) {
-                    if (err) {
-                      app.logmessage(err);
-                      next();
-                    } else {
-                      if (!result) {
-                        next();
-                      } else {
-                        req.url = '/bip/http/' + result.name;
-                        next('route');
-                      }
-
-                    }
-
-                  });
-                } else {
-                  next();
-                }
-              }
-            }
-          });
-        }
-      });
-
     /**
      * Pass through HTTP Bips
      */
@@ -994,6 +921,79 @@ module.exports = {
     express.get('/logout', function(req, res) {
       req.session.destroy();
       res.send(200);
+    });
+
+    express.all('*', function(req, res, next) {
+      if (req.method == 'OPTIONS') {
+        res.send(200);
+
+      // API has no default/catchall renderer
+      } else if (req.headers.host === CFG.domain_public) {
+        next();
+      } else {
+        // try to find a default renderer for this domain
+        dao.domainAuth(
+          helper.getDomain(req.headers.host, true),
+          true,
+          function(err, accountResult) {
+            if (err) {
+              res.send(500);
+            } else if (!accountResult) {
+              next();
+            } else {
+
+              // find default renderer
+              var ownerId = accountResult.getId(),
+              domain = accountResult.getActiveDomainObj(),
+              filter;
+
+              if (app.helper.isObject(domain.renderer) && '' !== domain.renderer.channel_id) {
+                filter = {
+                  id : domain.renderer.channel_id,
+                  owner_id : ownerId
+                }
+                dao.find('channel', filter, function(err, result) {
+                  if (err) {
+                    res.send(500);
+
+                  } else if (!result) {
+                    res.send(404);
+
+                  } else {
+                    req.remoteUser = accountResult;
+                    channelRender(result.owner_id, result.id, domain.renderer.renderer, req, res);
+                  }
+                });
+              } else {
+                // try to shortcut a bip
+                var pathToken = decodeURIComponent(req.originalUrl.split('/').pop());
+                if (pathToken) {
+                  var filter = {
+                    name : pathToken,
+                    owner_id : ownerId
+                  }
+                  dao.find('bip', filter, function(err, result) {
+                    if (err) {
+                      app.logmessage(err);
+                      next();
+                    } else {
+                      if (!result) {
+                        next();
+                      } else {
+                        req.url = '/bip/http/' + result.name;
+                        next('route');
+                      }
+
+                    }
+
+                  });
+                } else {
+                  next();
+                }
+              }
+            }
+          });
+      }
     });
   }
 }

@@ -31,12 +31,12 @@ if [ $NAME ]; then
   fi
 
   p1="s/boilerplate/${NAME}/g"
-  p2="s/boilerplate/${TITLE}/g"
+  p2="s/Boilerplate/${TITLE}/g"
 
   perl -pi -e $p1 *
   perl -pi -e $p2 *
 
-  mv undefined.png $NAME.png
+  mv boilerplate.png $NAME.png
 
   echo 'Done'
 
