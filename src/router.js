@@ -520,8 +520,10 @@ module.exports = {
                 }
               }
             } else {
-              exports.source = req.query;
-              exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
+              exports.source = ('GET' === req.method) ? req.query : req.body;
+              
+              //exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
+              exports.source._body = req.rawBody;
             }
 
             var restReponse = true;
@@ -964,32 +966,6 @@ module.exports = {
                     channelRender(result.owner_id, result.id, domain.renderer.renderer, req, res);
                   }
                 });
-              } else {
-                // try to shortcut a bip
-                var pathToken = decodeURIComponent(req.originalUrl.split('/').pop());
-                if (pathToken) {
-                  var filter = {
-                    name : pathToken,
-                    owner_id : ownerId
-                  }
-                  dao.find('bip', filter, function(err, result) {
-                    if (err) {
-                      app.logmessage(err);
-                      next();
-                    } else {
-                      if (!result) {
-                        next();
-                      } else {
-                        req.url = '/bip/http/' + result.name;
-                        next('route');
-                      }
-
-                    }
-
-                  });
-                } else {
-                  next();
-                }
               }
             }
           });
