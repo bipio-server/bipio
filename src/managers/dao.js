@@ -595,6 +595,22 @@ Dao.prototype.unshareBip = function(id, accountInfo, cb) {
   })(id, accountInfo, cb);
 }
 
+Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
+  var pageSize = pageSize || 10,
+    page = page || 1,
+    orderBy = orderBy || 'recent',
+    filter = {}, regExp;
+
+  if (listBy) {
+    regExp = new RegExp(listBy + '\.*', 'i');
+    filter.manifest = {
+      '$regex' : regExp
+    }
+  }
+
+  this.list('bip_share', null, pageSize, page, orderBy, filter, next);
+}
+
 /**
  * Gets a transformation hint for the requested adjacent channels
  */

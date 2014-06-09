@@ -786,7 +786,7 @@ module.exports = {
               page = parseInt(req.query.page);
             }
 
-            dao.list('bip_share', undefined, page_size, page, order_by, {}, restResponse(res));
+            dao.listShares(page, page_size, order_by, req.query.filter, restResponse(res));
           } else {
             if (subResourceId && 'test' === subResourceId) {
               var filter = {
