@@ -238,7 +238,7 @@ var restAction = function(req, res) {
           }
 
           // inject the referer favico
-          if (undefined == req.body.icon && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public) ) {
+          if (undefined == req.body.icon && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public.replace(/:\d*$/, '')) ) {
             postSave = function(err, modelName, retModel, code ) {
               if (!err && retModel.icon == '') {
                 // @todo defer to out of band job
