@@ -14,8 +14,8 @@ based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> t
 
 The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
 
-  npm install bip-pod-{pod-name}
-  ./tools/pod-install.js -a {pod-name}
+    npm install bip-pod-{pod-name}
+    ./tools/pod-install.js -a {pod-name}
   
 And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
 
