@@ -38,7 +38,8 @@ path        = require('path'),
 defs        = require('../config/defs'),
 envConfig   = require('config'),
 cluster     = require('cluster'),
-os          = require('os');
+os          = require('os'),
+memwatch = require('memwatch');
 
 // globals
 GLOBAL.app = app;
@@ -55,6 +56,15 @@ app.cdn = cdn;
 app._ = underscore;
 
 app.isMaster = cluster.isMaster;
+
+memwatch.on('leak', function(info) { 
+  app.logmessage(info, 'error');
+});
+
+// heap profiling.
+if ('development' ===  process.env.NODE_ENV) {
+//  var agent = require('webkit-devtools-agent');
+}
 
 // logger
 app.logmessage = function(message, loglevel) {

@@ -455,7 +455,6 @@ function bipAuthWrapper(req, res, cb) {
   })(helper.getDomain(req.headers.host, true), req, res);
 }
 
-
 module.exports = {
   init : function(express, _dao) {
     dao = _dao;
@@ -620,8 +619,7 @@ module.exports = {
         res.send(404);
       }
     });
-    !
-
+    
     /**
      * Account Auth RPC, sets up issuer_token (API keypair) for the selected pod, if the pod supports issuer_token
      */

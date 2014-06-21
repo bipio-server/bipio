@@ -22,27 +22,31 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 /**
- * REST API Server bootstrap 
+ * REST API Server bootstrap
  */
 var bootstrap = require(__dirname + '/bootstrap'),
-app = bootstrap.app,
-cluster = require('cluster'),
-express = require('express'),
-session = require('express-session'),
-cookieParser = require('cookie-parser'),
-bodyParser = require('body-parser'),
-jsonp = require('json-middleware'),
-methodOverride = require('method-override'),
-multer = require('multer'),
-helper  = require('./lib/helper'),
-passport = require('passport'),
-cron = require('cron'),
-restapi = express();
-MongoStore = require('connect-mongo')({ session : session});
-connectUtils = require(__dirname + '/../node_modules/connect/lib/utils.js');
+  app = bootstrap.app,
+  cluster = require('cluster'),
+  express = require('express'),
+  restapi = express();
+  
+  session = require('express-session'),
+  cookieParser = require('cookie-parser'),
+  bodyParser = require('body-parser'),
+  jsonp = require('json-middleware'),
+  methodOverride = require('method-override'),
+  multer = require('multer'),
+  helper  = require('./lib/helper'),
+  passport = require('passport'),
+  cron = require('cron'),
+  MongoStore = require('connect-mongo')({ session : session});
+  connectUtils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
+  domain = require('domain');
 
 // export app everywhere
 module.exports.app = app;
+
+
 
 /**
  * express bodyparser looks broken or too strict.
@@ -76,62 +80,51 @@ function xmlBodyParser(req, res, next) {
   });
 }
 
-function errorHandler(err, req, res, next) {
-  res.status(500);
-  res.send({ error: err });
-}
-
 function setCORS(req, res, next) {
   res.header('Access-Control-Allow-Origin', req.headers.origin);
   res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || '*');
   res.header('Access-Control-Allow-Methods', req.headers['access-control-request-method'] || 'GET,POST,PUT,DELETE');
   res.header('Access-Control-Allow-Credentials', true);
-
   next();
 }
 
 // express preflight
-  restapi.use(multer({ dest : GLOBAL.DATA_DIR + '/tmp' }));
+restapi.use(multer({ dest : GLOBAL.DATA_DIR + '/tmp' }));
+restapi.use(xmlBodyParser);
+restapi.use(function(err, req, res, next) {
+  if (err.status == 400) {
+    restapi.logmessage(err, 'error');
+    res.send(err.status, {
+      message : 'Invalid JSON. ' + err
+    });
+  } else {
+    next(err, req, res, next);
+  }
+});
 
-  restapi.use(xmlBodyParser);
-  // respond with an error if body parser failed
-  restapi.use(function(err, req, res, next) {
-    console.log(err);
-    if (err.status == 400) {
-      restapi.logmessage(err, 'error');
-      res.send(err.status, {
-        message : 'Invalid JSON. ' + err
-      });
-    } else {
-      next(err, req, res, next);
-    }
-  });
+restapi.use(bodyParser());
+restapi.use(setCORS);
+restapi.use(methodOverride());
+restapi.use(cookieParser());
 
-  restapi.use(bodyParser());
-  restapi.use(setCORS);
-  restapi.use(methodOverride());
-  restapi.use(cookieParser());
+// required for some oauth provders
 
-  // required for some oauth provders
+restapi.use(session({
+  key : 'sid',
+  cookie: {
+    maxAge: 60 * 60 * 1000,
+    httpOnly : true
+  },
+  secret: GLOBAL.CFG.server.sessionSecret,
+  store: new MongoStore({
+    mongoose_connection : app.dao.getConnection()
+  })
+}));
 
-  restapi.use(session({
-    key : 'sid',
-    cookie: {
-      maxAge: 60 * 60 * 1000,
-      httpOnly : true
-    },
-    secret: GLOBAL.CFG.server.sessionSecret,
-    store: new MongoStore({      
-      mongoose_connection : app.dao.getConnection()
-    })
-  }));
-
-  restapi.use(passport.initialize());
-  restapi.use(passport.session());
-  restapi.set('jsonp callback', true );
-  //restapi.use(express.errorHandler( { dumpExceptions : false, showStack : false}));
-  restapi.use(errorHandler);
-  restapi.disable('x-powered-by');
+restapi.use(passport.initialize());
+restapi.use(passport.session());
+restapi.set('jsonp callback', true );
+restapi.disable('x-powered-by');
 
 if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
@@ -183,10 +176,10 @@ if (cluster.isMaster) {
       var expireJob = new cron.CronJob(crons.expire, function() {
         dao.expireAll(function(err, msg) {
           if (err) {
-              app.logmessage('EXPIRE:ERROR:' + err);
-              app.logmessage(msg);
+            app.logmessage('EXPIRE:ERROR:' + err);
+            app.logmessage(msg);
           } else {
-              app.logmessage('EXPIRE:DONE');
+            app.logmessage('EXPIRE:DONE');
           }
         });
       }, null, true, GLOBAL.CFG.timezone);
@@ -196,20 +189,26 @@ if (cluster.isMaster) {
     app.logmessage('DAO:Starting OAuth Refresh', 'info');
     var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
       dao.refreshOAuth();
-    }, null, true, GLOBAL.CFG.timezone);   
-    
-    
+    }, null, true, GLOBAL.CFG.timezone);
+
+
     // transform recalcs
-    
+
     //app.logmessage('DAO:Starting Corpus Recalc', 'info');
     //var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
-//      dao.reCorp();
-//    }, null, true, GLOBAL.CFG.timezone);   
-  
-    
+    //      dao.reCorp();
+    //    }, null, true, GLOBAL.CFG.timezone);
+
+
+  });
+
+  cluster.on('disconnect', function(worker) {
+    app.logmessage('Worker:' + worker.workerID + ':Disconnect');
+    cluster.fork();
   });
 
 } else {
+
   workerId = cluster.worker.workerID;
   app.logmessage('BIPIO:STARTED:' + new Date());
   helper.tldtools.init(
@@ -222,8 +221,49 @@ if (cluster.isMaster) {
 );
 
   app.dao.on('ready', function(dao) {
-    require('./router').init(restapi, dao);
-    restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
+    var server;    
+    
+    require('./router').init(restapi, dao);    
+    
+    restapi.use(function(err, req, res, next) {
+       
+        var rDomain = domain.create();
+
+        res.on('close', function () {
+          rDomain.dispose();
+        });
+
+        res.on('finish', function () {
+          rDomain.dispose();
+        });
+
+        if (err) {
+          app.logmessage(err, 'error');
+          res.status(500);
+          res.send({ error: 'Internal Error' });
+
+          // respawn  worker
+          if (!cluster.isMaster) {
+            var killtimer = setTimeout(function() {
+              app.logmessage('Worker:' + cluster.worker.workerID + ':EXITED');
+              process.exit(1);
+            }, 5000);
+
+            killtimer.unref();
+
+            app.bastion.close();            
+            server.close();
+            cluster.worker.disconnect();
+          }
+
+          rDomain.dispose();
+          
+        } else {
+          rDomain.run(next);
+        }
+      });
+    
+    server = restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
   });

@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson (http://www.cloudspark.com.au)",
   "name": "bipio",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "scripts": {
     "start": "node src/server.js"
   },
@@ -37,6 +37,7 @@
     "cron": ">=1.0.1",
     "dateformat": "1.0.2-1.2.3",
     "datejs": ">=0.0.2",
+    "errorhandler": "^1.1.1",
     "express": ">=4.0.0",
     "express-session": "^1.0.4",
     "htmlparser2": ">=3.4.0",
@@ -44,6 +45,7 @@
     "inquirer": ">=0.2.4",
     "ipaddr.js": ">=0.1.2",
     "json-middleware": "^1.0.2",
+    "memwatch": "^0.2.2",
     "method-override": "^1.0.0",
     "mkdirp": ">=0.3.5",
     "mongoose": ">=3.8.0",
@@ -60,6 +62,7 @@
     "tldtools": ">=0.0.6",
     "underscore": ">=1.5.2",
     "validator": "1.5.1",
+    "webkit-devtools-agent": "^0.2.4",
     "winston": "0.5.1"
   },
   "devDependencies": {

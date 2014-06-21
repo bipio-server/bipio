@@ -38,11 +38,15 @@ eventEmitter = new events.EventEmitter();
 
 function Bastion(dao, noConsume, cb) {
   var self = this;
+  
+  this.consumerTags = {};
+  
   events.EventEmitter.call(this);
 
   if (!cb && !noConsume) {
     cb = this.consumeLoop()
   }
+  
   this._dao = dao;
 
   var eventWrapper = function(readyQueue) {
@@ -51,6 +55,7 @@ function Bastion(dao, noConsume, cb) {
 
   //this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
   this._queue = new Rabbit(CFG.rabbit, noConsume ? eventWrapper : cb);
+  
   return this;
 }
 
@@ -610,10 +615,24 @@ Bastion.prototype.consumeLoop = function() {
     }
 
     if (consumer) {
-      q.subscribe(consumer);
+      q.subscribe(consumer).addCallback(function(ok) {
+        self.consumerTags[ok.consumerTag] = q;
+      });
       app.logmessage('BASTION:' + queueConsume + ':consumer attached');
     }
   }
+}
+
+Bastion.prototype.close = function() {
+  var ct = this.consumerTags;
+  for (k in ct) {
+    if (ct.hasOwnProperty(k)) {
+      app.logmessage('BASTION:consumer tag:unsubscribed');
+      ct[k].unsubscribe(k);
+    }
+  }
+
+  this._queue.disconnect();
 }
 
 module.exports = Bastion;
