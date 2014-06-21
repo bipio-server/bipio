@@ -12,8 +12,15 @@ based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> t
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
 
-The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) or feel free to [roll your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
+The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
 
+  npm install bip-pod-{pod-name}
+  ./tools/pod-install.js -a {pod-name}
+  
+And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
+
+
+### Concept
 
 If you're familiar with Yahoo Pipes, IFTTT, Zapier, Mulesoft, Cloudwork or Temboo - the concept is a little similar. The server has a small footprint which lets you create and automate an internet of things that matter to you.   It can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
