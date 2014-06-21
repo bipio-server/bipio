@@ -7,7 +7,7 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
-<a href="https://twitter.com/bipioapp"><img alt="Follow Button Large" src="https://dev.twitter.com/sites/default/files/images_documentation/follow_button_large_1.png"></a>
+Status and Updates via Twitter <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a>
 
 BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
 based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
