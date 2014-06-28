@@ -1,11 +1,9 @@
 bipio
 =========
 
-Welcome to the BipIO API Server. 
+Welcome to the BipIO API Server.
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
-
-<a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a>
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
@@ -16,6 +14,8 @@ based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> o
 It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
 BipIO can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
+
+Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates
 
 ### Concept
 
