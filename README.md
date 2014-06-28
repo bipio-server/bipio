@@ -5,6 +5,8 @@ Welcome to the BipIO API Server.
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
+<a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a>
+
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
 BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
@@ -23,14 +25,7 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
-The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
 
-    npm install bip-pod-{pod-name}
-    ./tools/pod-install.js -a {pod-name}
-  
-And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
-
-Status and Updates via Twitter <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a>
 
 #### Bips
 
@@ -56,6 +51,14 @@ The collection of channels you create becomes something like a swatch from which
 Channels are instantiated from service containers called Pods.  Pods only concern is providing a set of possible actions, and doing that well.
 
 Channels can store, track, serve or transform content and messages as part of a pipeline or in autonomous isolation.  
+
+The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
+
+    npm install bip-pod-{pod-name}
+    ./tools/pod-install.js -a {pod-name}
+  
+And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
+
 
 ##### Simple Integrations
 
