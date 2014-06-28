@@ -57,6 +57,7 @@ Changes to Pods (ie: bip-pod-? repositories in the Github bipio-server organizat
 
  * Create a Pod under your own GitHub account named `bip-pod-{pod name}`
  * Submit a new issue in the [repo issue tracker](https://github.com/bipio-server/bipio/issues), detailing the new pod, some potential use cases (for testing), and a link to your repository
+ * Your Pod repo will be installed and peer reviewed for scalability and security, and rolled into the [Official Pods List](https://github.com/bipio-server/bipio/wiki/Pod-List).  If its generally useful, it may even ship with the server itself.
 
 
 
