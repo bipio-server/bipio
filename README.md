@@ -29,7 +29,7 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 #### Bips
 
-[Bips](https://bip.io/docs/resource/rest/bip) are graph structures which transform content between adjacent [Channels](https://bip.io/docs/resource/rest/channel) and chain outputs to inputs indefinitely across disparate 'cloud' services. The structures also contain metadata defining the flavor, lifespan and overall characteristics of the endpoint or trigger.
+[Bips](https://bip.io/docs/resource/rest/bip) are graph structures which transform messages between adjacent [Channels](https://bip.io/docs/resource/rest/channel) and chain outputs to inputs indefinitely across disparate 'cloud' services. The structures also contain metadata defining the flavor, lifespan and overall characteristics of the endpoint or trigger.
 
 Some of their characteristics include :
 
@@ -123,26 +123,7 @@ And thats it. There's actually a little [chrome extension](http://goo.gl/ZVIkfr)
 For an extra credit example, I could store attachments arriving on that email address straight to dropbox by just adding an edge - check out
 how in the [cookbook](https://github.com/bipio-server/bipio/wiki/Email-Repeater,-Dropbox-Attachment-Save)
 
-### Please Note
 
-The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
-For graphical representation of your bips, sign in to [bipio](https://bip.io) to mount your local install from your browser 
-under My Account > Mounts > Create Mount.  
-
-![Server Mount](https://bip.io/static/img/docs/server_mount.png)
-
-The BipIO website is not a first class citizen or tightly coupled to one particular 
-endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
-middleware and distributed with Bipio at a later date.
-
-By itself, Bipio does not provide SSL termination or any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  If you need SSL termination this should be delegated to a forward proxy such as NginX, Apache, HAProxy etc.
-
-Feel free to fork this repository and create pods as you need, and please help make 
-[the community](https://groups.google.com/forum/#!forum/bipio-api) a better place. Pull Requests, issues, feature requests, 
-integration ideas, general communication is always welcome.
-
-Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this 
-readme for important info.
 
 ## Requirements
 
@@ -256,6 +237,27 @@ stats-runner.sh :
 
 General API spec and tutorials can be found at https://bip.io.  For server setup and configuration guides,
 keep an eye on the [Wiki](https://github.com/bipio-server/bipio/wiki), it will be continuously updated.
+
+### Please Note
+
+The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
+For graphical representation of your bips, sign in to [bipio](https://bip.io) to mount your local install from your browser 
+under My Account > Mounts > Create Mount.  
+
+![Server Mount](https://bip.io/static/img/docs/server_mount.png)
+
+The BipIO website is not a first class citizen or tightly coupled to one particular 
+endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
+middleware and distributed with Bipio at a later date.
+
+By itself, Bipio does not provide SSL termination or any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  If you need SSL termination this should be delegated to a forward proxy such as NginX, Apache, HAProxy etc.
+
+Feel free to fork this repository and create pods as you need, and please help make 
+[the community](https://groups.google.com/forum/#!forum/bipio-api) a better place. Pull Requests, issues, feature requests, 
+integration ideas, general communication is always welcome.
+
+Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this 
+readme for important info.
 
 ## License
 
