@@ -523,8 +523,8 @@ Channel.postSave = function(accountInfo, next, isNew) {
         // not authenticated? Then we can't perform setup so drop this 
         // channel
         } else if (!oAuthToken) {
-          self._dao.remove('channel', self.id, accountInfo, function() {
-            next(true, 'channel', {
+          self._dao.remove('channel', self.id, accountInfo, function() {            
+            next('Channel could not authenticate', 'channel', {
               message : 'Channel could not authenticate'
             }, 500);  
           });
