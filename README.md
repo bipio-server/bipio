@@ -15,7 +15,9 @@ It's a RESTful JSON API that supports account level namespacing and multiple dom
 
 BipIO can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
-Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates.  For visual tools, sign in to [the bipio site](https://bip.io).  Your local server can be mounted via where you can mount your local install under `My Account` > `Mounts` > `Create Mount`
+Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates.  
+
+For visual tools, sign in to [the bipio site](https://bip.io).  Your local server can be mounted via where you can mount your local install under `My Account` > `Mounts` > `Create Mount`
 
 ### Concept
 
