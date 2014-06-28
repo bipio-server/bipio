@@ -1,7 +1,7 @@
 BipIO
 =========
 
-Welcome to the BipIO API Server.  
+Welcome to the [BipIO](https://bip.io) API Server.  
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
@@ -233,22 +233,15 @@ stats-runner.sh :
     export HOME="/path/to/bipio"
     cd $HOME (date && node ./tools/generate-hub-stats.js ) 2>&1 >> /path/to/bipio/logs/stats.log
 
-## Documentation
-
-General API spec and tutorials can be found at https://bip.io.  For server setup and configuration guides,
-keep an eye on the [Wiki](https://github.com/bipio-server/bipio/wiki), it will be continuously updated.
-
-### Please Note
+## Notes
 
 The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
-For graphical representation of your bips, sign in to [bipio](https://bip.io) to mount your local install from your browser 
+For visual tools, sign in to [bipio](https://bip.io) to mount your local install from your browser 
 under My Account > Mounts > Create Mount.  
 
 ![Server Mount](https://bip.io/static/img/docs/server_mount.png)
 
-The BipIO website is not a first class citizen or tightly coupled to one particular 
-endpoint, so you can mount your local install(s) even if behind a firewall.  The dashboard will be migrated into express static
-middleware and distributed with Bipio at a later date.
+The BipIO website is not a first class citizen or tightly coupled to one particular endpoint, so you can mount your local install(s) even if behind a firewall.
 
 By itself, Bipio does not provide SSL termination or any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  If you need SSL termination this should be delegated to a forward proxy such as NginX, Apache, HAProxy etc.
 
