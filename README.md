@@ -17,7 +17,7 @@ BipIO can be installed alongside your existing open source app or prototype for 
 
 Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates.  
 
-For visual tools, sign in to [the bipio site](https://bip.io) where you can mount your local install under `My Account` > `Mounts` > `Create Mount`
+For visual tools, sign in to [the bipio site](https://bip.io).  Your local install(s) can be mounted under `My Account` > `Mounts` > `Create Mount`
 
 ### Concept
 
