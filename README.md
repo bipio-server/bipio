@@ -247,7 +247,7 @@ By itself, Bipio does not provide SSL termination or any load balancing beyond [
 
 ## Developing and Contributing
 
-A healthy contributor community is great for everyone! Take a look at the Contribution Document to see how to get your changes merged in.
+A healthy contributor community is great for everyone! Take a look at the [Contribution Document](https://github.com/bipio-server/bipio/blob/master/CONTRIBUTING.md) to see how to get your changes merged in.
 
 ## Support
 
