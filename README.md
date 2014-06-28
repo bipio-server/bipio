@@ -245,12 +245,13 @@ The BipIO website is not a first class citizen or tightly coupled to one particu
 
 By itself, Bipio does not provide SSL termination or any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  If you need SSL termination this should be delegated to a forward proxy such as NginX, Apache, HAProxy etc.
 
-Feel free to fork this repository and create pods as you need, and please help make 
-[the community](https://groups.google.com/forum/#!forum/bipio-api) a better place. Pull Requests, issues, feature requests, 
-integration ideas, general communication is always welcome.
+## Developing and Contributing
 
-Hosted/Commercial OEM solutions can be found at [https://bip.io](https://bip.io). Read the License section at the end of this 
-readme for important info.
+A healthy contributor community is great for everyone! Take a look at the Contribution Document to see how to get your changes merged in.
+
+## Support
+
+Please log issues to the [repository issue tracker](https://github.com/bipio-server/bipio/issues) on GitHub.  
 
 ## License
 
