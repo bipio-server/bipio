@@ -483,7 +483,6 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
 DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, next) {
   var self = this,
   MongooseClass = mongoose.model(modelName),
-  //model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);
   model = this.modelFactory(modelName, helper.pasteurize(props));
 
   var f = filter; // something in mongoose is clobbering 'filter'
@@ -602,7 +601,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
   nowTime = helper.nowUTCSeconds();
 
   // create model container
-  model = this.modelFactory(modelName, helper.pasteurize(props), accountInfo);  
+  model = this.modelFactory(modelName, props, accountInfo);  
   if (model) {
     model.id = id;
     var mongoModel = this.toMongoModel(model);

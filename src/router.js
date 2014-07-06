@@ -50,11 +50,14 @@ function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
     }
   }
 
+  return result;
+/*
   if (decode) {
     return helper.naturalize(result);
   } else {
     return helper.pasteurize(result);
   }
+*/  
 }
 
 /**

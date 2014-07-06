@@ -277,7 +277,7 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
     resolvedImports = adjacentExports;
   }
 
-  return resolvedImports;
+  return helper.naturalize(resolvedImports);
 }
 
 /**
