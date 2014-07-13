@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  *
  * The Bipio API Server
@@ -45,8 +46,6 @@ var bootstrap = require(__dirname + '/bootstrap'),
 
 // export app everywhere
 module.exports.app = app;
-
-
 
 /**
  * express bodyparser looks broken or too strict.
@@ -212,13 +211,22 @@ if (cluster.isMaster) {
   workerId = cluster.worker.workerID;
   app.logmessage('BIPIO:STARTED:' + new Date());
   helper.tldtools.init(
-  function() {
-    app.logmessage('TLD:UP');
-  },
-  function(body) {
-    app.logmessage('TLD:Cache fail - ' + body, 'error')
-  }
-);
+    function() {
+      app.logmessage('TLD:UP');
+    },
+    function(body) {
+      app.logmessage('TLD:Cache fail - ' + body, 'error')
+    }
+  );
+
+  if (process.env.BIP_DUMP_HEAPS) {
+    var heapdump = require('heapdump');  
+    setInterval(function() {
+      var f = '/tmp/bipio_' + workerId + '_' + Date.now() + '.heapsnapshot';
+      console.log('Writing ' + f);
+      heapdump.writeSnapshot(f);
+    }, 60000);
+  }  
 
   app.dao.on('ready', function(dao) {
     var server;    
@@ -264,6 +272,15 @@ if (cluster.isMaster) {
       });
     
     server = restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
+      
+      // drop readme's from memory
+      var rCache = require.cache;
+      for (var k in rCache) {
+        if (rCache.hasOwnProperty(k) && rCache[k].exports && rCache[k].exports.readme) {
+          delete rCache[k].exports.readme;
+        }
+      }
+      
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
   });
