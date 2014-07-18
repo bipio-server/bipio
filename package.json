@@ -1,5 +1,5 @@
 {
-  "author": "Michael Pearson (http://www.cloudspark.com.au)",
+  "author": "Michael Pearson",
   "name": "bipio",
   "version": "0.2.28",
   "scripts": {
@@ -35,7 +35,7 @@
     "connect-mongo": ">=0.4.0",
     "cookie-parser": "^1.0.1",
     "cron": ">=1.0.1",
-    "dateformat": "1.0.7-1.2.3"
+    "dateformat": "1.0.7-1.2.3",
     "datejs": ">=0.0.2",
     "errorhandler": "^1.1.1",
     "express": ">=4.0.0",
