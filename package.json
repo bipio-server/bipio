@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson (http://www.cloudspark.com.au)",
   "name": "bipio",
-  "version": "0.2.26",
+  "version": "0.2.27",
   "scripts": {
     "install" : "make install",
     "start": "node src/server.js"
@@ -29,7 +29,6 @@
     "bip-pod-time": ">=0.0.1",
     "body-parser": "^1.0.2",
     "clone": ">=0.1.0",
-    "cluster": "0.7.7",
     "commander": ">=2.0.0",
     "config": "0.4.11",
     "connect": "^2.14.5",
