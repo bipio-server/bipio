@@ -146,6 +146,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 #### via git
 
     git clone git@github.com:bipio-server/bipio.git
+    cd bipio
     make install
     node ./src/server.js
 
