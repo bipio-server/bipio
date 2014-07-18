@@ -224,6 +224,7 @@ if (cluster.isMaster) {
     setInterval(function() {
       var f = '/tmp/bipio_' + workerId + '_' + Date.now() + '.heapsnapshot';
       console.log('Writing ' + f);
+      console.log(require.cache);
       heapdump.writeSnapshot(f);
     }, 60000);
   }  
@@ -280,6 +281,10 @@ if (cluster.isMaster) {
           delete rCache[k].exports.readme;
         }
       }
+      
+      //console.log(rCache);
+      
+      console.log(packageCache);
       
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
