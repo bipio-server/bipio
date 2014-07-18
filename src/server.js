@@ -282,10 +282,6 @@ if (cluster.isMaster) {
         }
       }
       
-      //console.log(rCache);
-      
-      console.log(packageCache);
-      
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
   });
