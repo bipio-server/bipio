@@ -138,17 +138,22 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
 ## Installation
 
+#### via npm
+
     npm install bipio
+    node ./src/server.js
+
+#### via git
+
+    git clone git@github.com:bipio-server/bipio.git
+    make install
     node ./src/server.js
 
 Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
 during the install process to get a basically sane server running that you can play with.
 
-To reconfigure the server or start installing where you left of, `cd node_modules/bipio; make install`
-
-
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
-/etc/init and reconfigured to suit your environment.  If you'd like it managed by Monit...
+/etc/init and reconfigured to suit your environment.
 
 ## Updating
 
@@ -162,22 +167,6 @@ If you're going the `git pull` route and want to save this step, create a git 'p
     chmod ug+x .git/hooks/post-merge
 
 This will automatically install any missind dependencies every time you `git pull`
-
-### Monit Config
-
-/etc/monit/config.d/bipio.conf
-
-    #!monit
-    set logfile /var/log/monit.log
-
-    check process node with pidfile "/var/run/bip.pid"
-        start program = "/sbin/start bipio"
-        stop program  = "/sbin/stop bipio"
-        if failed port 5000 protocol HTTP
-            request /
-            with timeout 10 seconds
-            then restart
-
 
 ### Crons
 
@@ -234,6 +223,22 @@ stats-runner.sh :
     export NODE_ENV=production
     export HOME="/path/to/bipio"
     cd $HOME (date && node ./tools/generate-hub-stats.js ) 2>&1 >> /path/to/bipio/logs/stats.log
+
+### Monit Config
+
+/etc/monit/config.d/bipio.conf
+
+    #!monit
+    set logfile /var/log/monit.log
+
+    check process node with pidfile "/var/run/bip.pid"
+        start program = "/sbin/start bipio"
+        stop program  = "/sbin/stop bipio"
+        if failed port 5000 protocol HTTP
+            request /
+            with timeout 10 seconds
+            then restart
+
 
 ## Notes
 

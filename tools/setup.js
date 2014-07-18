@@ -51,6 +51,11 @@ GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + sparseConfig.cdn;
 
 sparseConfig.timezone = process.env.SYSTEM_TZ;
 
+// some systems report EDT while not having EDT zoneinfo
+if ('EDT' === sparseConfig.timezone) {
+  sparseConfig.timezone = 'EST';
+}
+
 crypto.randomBytes(48, function(ex, buf) {
   sparseConfig.server.sessionSecret = buf.toString('hex');
 });
