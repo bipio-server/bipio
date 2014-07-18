@@ -4,7 +4,7 @@
   "version": "0.2.29",
   "scripts": {
     "start": "node src/server.js",
-    "install" : "make install",
+    "install" : "make install"
   },
   "description": "API and graph resolver for the bipio content pipeline.",
   "homepage": "https://bip.io",
