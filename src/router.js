@@ -118,7 +118,7 @@ function publicFilter(modelName, modelStruct) {
  */
 function restAuthWrapper(req, res, cb) {
   return connect.basicAuth(function(user, pass, cb){
-    if (req.session.account && req.session.account.username === user) {
+    if (req.session.account && req.session.account.host === getClientInfo(req)) {
       dao.getAccountStruct(req.session.account, function(err, accountInfo) {
         cb(err, accountInfo);
       });
@@ -206,7 +206,7 @@ function getReferer(req) {
 function getClientInfo(req, txId) {
   return {
     'id' : txId || uuid.v4(),
-    'host' : req.header('x-forwarded-for') || req.connection.remoteAddress,
+    'host' : req.header('X-Forwarded-For') || req.connection.remoteAddress,
     'date' : Math.floor(new Date().getTime() / 1000),
     'proto' : 'http',
     'reply_to' : '',
@@ -912,7 +912,8 @@ module.exports = {
             owner_id : result.user.id,
             username : result.user.username,
             name : result.user.name,
-            is_admin : result.user.is_admin
+            is_admin : result.user.is_admin,
+            host : getClientInfo(req).host
           }
 
           res.send(publicFilter('account_option', result.user.settings));
