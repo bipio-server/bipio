@@ -141,6 +141,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 #### via npm
 
     npm install bipio
+    cd node_modules/bipio
     node ./src/server.js
 
 #### via git
