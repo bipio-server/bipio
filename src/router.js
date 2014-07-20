@@ -56,7 +56,7 @@ function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
   } else {
     return helper.pasteurize(result);
   }
-*/  
+*/
 }
 
 /**
@@ -116,17 +116,21 @@ function publicFilter(modelName, modelStruct) {
  * Wrapper for connect.basicAuth. Checks the session for an authed flag and
  * if fails, defers to http basic auth.
  */
-function restAuthWrapper(req, res, cb) {
-  return connect.basicAuth(function(user, pass, cb){
-    if (req.session.account && req.session.account.host === getClientInfo(req)) {
-      dao.getAccountStruct(req.session.account, function(err, accountInfo) {
-        cb(err, accountInfo);
-      });
-    } else {
-      dao.checkAuth(user, pass, 'token', cb);
-    }
-
-  })(req, res, cb);
+function restAuthWrapper(req, res, next) {
+  if (req.session.account && req.session.account.host === getClientInfo(req).host) {
+    dao.getAccountStruct(req.session.account, function(err, accountInfo) {
+      if (!err) {
+        req.remoteUser = req.user = accountInfo;
+        next();
+      } else {
+        res.send(401);
+      }
+    });
+  } else {
+    return connect.basicAuth(function(user, pass, next) {
+      dao.checkAuth(user, pass, 'token', next);
+    })(req, res, next);
+  }
 }
 
 /**
@@ -522,7 +526,7 @@ module.exports = {
               }
             } else {
               exports.source = ('GET' === req.method) ? req.query : req.body;
-              
+
               //exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
               exports.source._body = req.rawBody;
             }
@@ -621,7 +625,7 @@ module.exports = {
         res.send(404);
       }
     });
-    
+
     /**
      * Account Auth RPC, sets up issuer_token (API keypair) for the selected pod, if the pod supports issuer_token
      */

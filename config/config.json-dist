@@ -2,6 +2,7 @@
     "domain_public": "localhost:5000",
     "website_public": "http://localhost",
     "cdn_public": "http://localhost/static/img/cdn",
+    "site_emitter": "https://bip.io",
     "proto_public": "http://",
     "crons" : {
       "stat" : "0 0 * * * *",
