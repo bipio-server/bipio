@@ -43,7 +43,7 @@ var bootstrap = require(__dirname + '/bootstrap'),
   MongoStore = require('connect-mongo')({ session : session});
   connectUtils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
   domain = require('domain');
-
+  
 // export app everywhere
 module.exports.app = app;
 
@@ -125,7 +125,7 @@ restapi.use(passport.session());
 restapi.set('jsonp callback', true );
 restapi.disable('x-powered-by');
 
-if (cluster.isMaster) {
+if (cluster.isMaster) { 
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
   var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
   app.logmessage('BIPIO:STARTED:' + new Date());
@@ -133,7 +133,7 @@ if (cluster.isMaster) {
   app.logmessage('Starting ' + forks + ' fork(s)');
 
   for (var i = 0; i < forks; i++) {
-    var worker = cluster.fork();
+    cluster.fork();
   }
 
   app.dao.on('ready', function(dao) {

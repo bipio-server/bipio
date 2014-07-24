@@ -83,6 +83,9 @@
     "cdn": "/data/cdn",
     "k": {
     },
+    "auth" : {
+      "type" : "native"      
+    },
     "pods": {
       "email" : {
         "mailer": {

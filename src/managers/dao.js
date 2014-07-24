@@ -21,20 +21,22 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var util        = require('util'),
-helper      = require('../lib/helper'),
-cdn         = require('../lib/cdn'),
-step        = require('../lib/step'),
-async       = require('async'),
-fs          = require('fs'),
-time        = require('time'),
-DaoMongo    = require('./dao-mongo.js');
+  helper      = require('../lib/helper'),
+  cdn         = require('../lib/cdn'),
+  step        = require('../lib/step'),
+  async       = require('async'),
+  fs          = require('fs'),
+  time        = require('time'),
+  DaoMongo    = require('./dao-mongo.js')
+  ldap = require('ldapjs');
+
 
 function Dao(config, log, next) {
   var self = this;
   DaoMongo.apply(this, arguments);
 
   // protocol + base url
-  this._baseUrl = CFG.proto_public + CFG.domain_public;
+  this._baseUrl = config.proto_public + config.domain_public;
   this.cdn = cdn;
   this._modelPrototype = require('../models/prototype.js').BipModel;
 
@@ -61,6 +63,14 @@ function Dao(config, log, next) {
   this.models = { };
   for (var key in modelSrc) {
     this.registerModel(modelSrc[key]);
+  }
+
+  if (config.auth && config.auth.type) {
+    this.authStrategy = config.auth;
+  } else {
+    this.authStrategy = {
+      type : 'native'
+    }
   }
 }
 
@@ -225,10 +235,10 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
     );
 }
 
-/**
- *
+/*
+ *  Native local MongoDB lookup
  */
-Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, activeDomainId) {
+Dao.prototype._checkAuthNative = function(username, password, type, next, asOwnerId, activeDomainId) {
   var self = this;
   var filter = {};
 
@@ -266,20 +276,101 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
                 } else {
                   accountInfo.user.activeDomainId = activeDomainId;
                 }
-                cb(false, accountInfo);
+                next(false, accountInfo);
               });
             } else {
-              cb(true, resultModel);
+              next(true, resultModel);
             }
           } else {
-            cb(true, resultModel);
+            next(true, resultModel);
           }
         });
       } else {
-        cb(true, null);
+        next(true, null);
       }
     }
-    );
+  );
+}
+
+/**
+ * LDAP Auth
+ */
+Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerId, activeDomainId) {
+  var config = this.authStrategy.config,
+    base = config.base,
+    self = this;
+
+  if (!username || !password) {
+    next(true, null);
+    return;
+  }
+
+  if(typeof base !== 'string'){
+    base = base.join(',');
+  }
+
+  username = (config.uidTag || 'cn') + '=' + username + ',' + base;
+  var client = ldap.createClient(config.server);
+
+  client.bind(username, password, function(err, res) {
+    if (err) {
+      next(err.message);
+    } else {
+      self.find(
+        'account',
+        {
+          username : username
+        },
+        function(err, acctResult) {          
+          if (!err && (null != acctResult)) {
+
+            var filter = {
+              'owner_id' : acctResult.id,
+              'type' : type
+            }
+
+            self.find('account_auth', filter, function(isErr, result) {
+              var resultModel = null;
+              if (!isErr && null != result) {
+                var authModel = self.modelFactory('account_auth', result);
+                authModel.username = acctResult.username;
+                authModel.name = acctResult.name;
+                authModel.is_admin = acctResult.is_admin;
+
+                self.getAccountStruct(authModel, function(err, accountInfo) {
+                  if (undefined == activeDomainId) {
+                    accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                  } else {
+                    accountInfo.user.activeDomainId = activeDomainId;
+                  }
+                  next(false, accountInfo);
+                });
+                
+              } else {
+                next(true, resultModel);
+              }
+            });
+          } else {
+            next(true, null);
+          }
+        }
+      );
+    }
+  });
+}
+
+/**
+ *
+ */
+Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, activeDomainId) {
+
+  // ldap does not support ownerId/domainId lookups at this point
+  // @todo add ldap attributes map to ownerid/domainid
+  if ('ldap' === this.authStrategy.type && !asOwnerId && 'token' === type) {
+    this._checkAuthLDAP.apply(this, arguments);
+  } else {
+    this._checkAuthNative.apply(this, arguments);
+  }
 }
 
 /**
@@ -722,22 +813,22 @@ Dao.prototype.reCorp = function() {
             agg[key][tx]++;
           }
         }
-        
+
 //console.log('aggretate', agg);
 
         var maxYields, reduced;
         for (var k in agg) {
           if (agg.hasOwnProperty(k)) {
             for (var j in agg[k]) {
-              
-console.log(agg[k][j])              
-              
+
+console.log(agg[k][j])
+
               if (!reduced[agg[k]]) {
                 reduced[agg[k]] = agg[k][j];
               }
-              
-              
-              
+
+
+
               if (agg[k][j] > reduced[agg[k][j]]) {
                 reduced[agg[k][j]] = agg[k][j];
               }

@@ -1,10 +1,10 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.2.34",
+  "version": "0.2.35",
   "scripts": {
     "start": "node src/server.js",
-    "install" : "make install"
+    "install": "make install"
   },
   "description": "API and graph resolver for the bipio content pipeline.",
   "homepage": "https://bip.io",
@@ -46,6 +46,7 @@
     "inquirer": ">=0.2.4",
     "ipaddr.js": ">=0.1.2",
     "json-middleware": "^1.0.2",
+    "ldapjs": "^0.7.1",
     "memwatch": "^0.2.2",
     "method-override": "^1.0.0",
     "mkdirp": ">=0.3.5",

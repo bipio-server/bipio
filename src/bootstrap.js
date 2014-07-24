@@ -118,5 +118,5 @@ var dao = new require('./managers/dao'),
 bastion = new require('./managers/bastion');
 
 module.exports.app = app;
-module.exports.app.dao = new dao(CFG.dbMongo, app.logmessage);
+module.exports.app.dao = new dao(CFG, app.logmessage);
 module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLESS);

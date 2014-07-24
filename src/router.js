@@ -28,17 +28,18 @@
 app = module.parent.exports.app;
 
 var dao,
-bastion,
-util        = require('util'),
-express     = require('express'),
-connect     = require('connect'),
-helper      = require('./lib/helper'),
-uuid            = require('node-uuid'),
-utils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
-cdn      = require('./lib/cdn'),
-// restful models
-restResources = ['bip', 'channel', 'domain', 'account_option'],
-modelPublicFilter;
+  bastion,
+  util        = require('util'),
+  express     = require('express'),
+  connect     = require('connect'),
+  helper      = require('./lib/helper'),
+  uuid            = require('node-uuid'),
+  utils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
+  cdn      = require('./lib/cdn'),
+  // restful models
+  restResources = ['bip', 'channel', 'domain', 'account_option'],
+  modelPublicFilter;
+
 
 function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
   var result = {};

@@ -65,7 +65,9 @@ function DaoMongo(config, log, next) {
   var self = this;
   
   events.EventEmitter.call(this);
+  
   this._log = log;
+  
   var options = {
     server : {},
     replset : {}
@@ -76,7 +78,7 @@ function DaoMongo(config, log, next) {
   };
 
   mongoose.connection.on('error', function(err) {
-    log('MONGODB:UNCONNECTABLE:' + config.connect, 'error');
+    log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
     log(err, 'error');
     self.emit('error', err);
   });
@@ -87,10 +89,9 @@ function DaoMongo(config, log, next) {
     mongooseOpen = true;
   });
 
-
   if (!mongooseOpen) {
-    mongoose.connect(config.connect, options);
-  }
+    mongoose.connect(config.dbMongo.connect, options);
+  } 
 }
 
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
