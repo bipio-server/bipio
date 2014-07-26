@@ -728,7 +728,16 @@ Channel.attachRenderer = function(accountInfo) {
   if (action.ok()) {
     rStruct = action.getSchema();
     if (rStruct && rStruct.renderers) {
-      this._renderers = {};
+      // add global invokers
+      this._renderers = {
+        'invoke' : {
+          description : 'Invoke',
+          description_long : 'Invokes the Channel with ad-hoc imports',
+          contentType : DEFS.CONTENTTYPE_JSON,
+          _href : accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/invoke'
+        }
+      };
+      
       for (var idx in rStruct.renderers) {
         this._renderers[idx] = rStruct.renderers[idx]
         this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
