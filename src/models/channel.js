@@ -324,12 +324,13 @@ console.log('---');
       }
     });
   } else if ('issuer_token' === pods[podName]._authType) {
-    pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password) {
-      if (!err && (username || password)) {
+    pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password, key) {
+      if (!err && (username || password || key)) {
         sysImports.auth = {
           issuer_token : {
             username : username,
-            password : password
+            password : password,
+            key : key
           }
         };
         pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
@@ -536,11 +537,12 @@ Channel.postSave = function(accountInfo, next, isNew) {
   } else if ('issuer_token' === pods[podName]._authType) {
     
     (function(channel, podName, action, accountInfo, next) {
-      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password) {
-        if (!err && (username || password)) {
+      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password, key) {
+        if (!err && (username || password || key)) {
           var auth = {
             issuer_token : {
               username : username,
+              key : key,
               password : password
             }
           };

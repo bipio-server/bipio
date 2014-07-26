@@ -135,6 +135,12 @@ AccountAuth.entitySchema = {
     writable: false,
     set : cryptSave
   },
+  key: {
+    type: String,
+    renderable: false,
+    writable: false,
+    set : cryptSave
+  },
   owner_id : {
     type: String,
     index: true,
@@ -210,6 +216,14 @@ AccountAuth.getPassword = function() {
 AccountAuth.getUsername = function() {
   if (this.username) {
     return AESDecrypt(this.username, true);
+  } else {
+    return;
+  }
+};
+
+AccountAuth.getKey = function() {
+  if (this.key) {
+    return AESDecrypt(this.key, true);
   } else {
     return;
   }
