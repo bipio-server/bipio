@@ -305,56 +305,77 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
     return;
   }
 
-  if(typeof base !== 'string'){
-    base = base.join(',');
+  var client = ldap.createClient(config.server),
+    search = app._.clone(config.search);
+    
+  if (search.filter) {
+    search.filter = search.filter.replace(/{{username}}/, username);
   }
-
-  username = (config.uidTag || 'cn') + '=' + username + ',' + base;
-  var client = ldap.createClient(config.server);
-
-  client.bind(username, password, function(err, res) {
+  
+  client.search(base, search, function(err, res) {
     if (err) {
-      next(err.message);
-    } else {
-      self.find(
-        'account',
-        {
-          username : username
-        },
-        function(err, acctResult) {          
-          if (!err && (null != acctResult)) {
-
-            var filter = {
-              'owner_id' : acctResult.id,
-              'type' : type
-            }
-
-            self.find('account_auth', filter, function(isErr, result) {
-              var resultModel = null;
-              if (!isErr && null != result) {
-                var authModel = self.modelFactory('account_auth', result);
-                authModel.username = acctResult.username;
-                authModel.name = acctResult.name;
-                authModel.is_admin = acctResult.is_admin;
-
-                self.getAccountStruct(authModel, function(err, accountInfo) {
-                  if (undefined == activeDomainId) {
-                    accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
-                  } else {
-                    accountInfo.user.activeDomainId = activeDomainId;
-                  }
-                  next(false, accountInfo);
-                });
-                
-              } else {
-                next(true, resultModel);
-              }
-            });
+      next(err);
+    } else {    
+      res.on('searchEntry', function(entry) {
+        //console.log('entry: ', entry.object));
+        client.bind(entry.dn, password, function(err, res) {
+          if (err) {
+            next(err);
           } else {
-            next(true, null);
-          }
-        }
-      );
+            self.find(
+              'account',
+              {
+                username : username
+              },
+              function(err, acctResult) {          
+                if (!err && (null != acctResult)) {
+
+                  var filter = {
+                    'owner_id' : acctResult.id,
+                    'type' : type
+                  }
+
+                  self.find('account_auth', filter, function(isErr, result) {
+                    var resultModel = null;
+                    if (!isErr && null != result) {
+                      var authModel = self.modelFactory('account_auth', result);
+                      authModel.username = acctResult.username;
+                      authModel.name = acctResult.name;
+                      authModel.is_admin = acctResult.is_admin;
+
+                      self.getAccountStruct(authModel, function(err, accountInfo) {
+                        if (undefined == activeDomainId) {
+                          accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                        } else {
+                          accountInfo.user.activeDomainId = activeDomainId;
+                        }
+                        next(false, accountInfo);
+                      });
+
+                    } else {
+                      next(true, resultModel);
+                    }
+                  });
+                } else {
+                  next(true, null);
+                }
+              }
+            );
+          }          
+        });
+      });
+      
+      res.on('error', function(err) {
+        next(err.message);
+      });
+      
+      /*
+      res.on('searchReference', function(referral) {
+      });
+      
+      res.on('end', function(err) {        
+      });
+      */
     }
   });
 }

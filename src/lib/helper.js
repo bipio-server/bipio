@@ -36,7 +36,8 @@ dns = require('dns'),
 uuid = require('node-uuid'),
 ipaddr = require('ipaddr.js'),
 rimraf = require('rimraf'),
-_ = require('underscore');
+_ = require('underscore'),
+JSONPath = require('JSONPath');
 
 var helper = {
 
@@ -512,6 +513,10 @@ var helper = {
       }
       next(err, inBlacklist, aRecords);
     });
+  },
+  
+  jsonPath : function(obj, path) {
+    return JSONPath.eval(obj, path);
   }
 }
 
