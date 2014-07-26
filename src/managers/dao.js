@@ -23,6 +23,7 @@
 var util        = require('util'),
   helper      = require('../lib/helper'),
   cdn         = require('../lib/cdn'),
+  crypto = require('crypto'),
   step        = require('../lib/step'),
   async       = require('async'),
   fs          = require('fs'),
@@ -111,6 +112,120 @@ AccountInfo.prototype = {
     return this.user.name;
   }
 };
+
+Dao.prototype._createUser = function(username, emailAddress, password, next) {
+  var self = this;
+  
+  // ----- CREATE ACCOUNT
+  var account = self.modelFactory(
+    'account',
+    {
+      name : username,
+      username : username,
+      is_admin : false,
+      email_account : emailAddress
+    });
+
+  self.create(account, function(err, modelName, accountResult) {
+    if (err) {
+      next(err);
+
+    } else {            
+      // -----CREATE AUTH
+      var accountInfo = {
+        user : {
+          id : accountResult.id,
+          domains : {
+            test : function() {
+              return true
+            }
+          }
+        }
+      };
+      
+      var accountAuth = self.modelFactory(
+        'account_auth',
+        {
+          username : username,
+          password : password,
+          type : 'token'          
+        }, accountInfo);
+
+      self.create(accountAuth, function(err, modelName, accountResult) {
+        if (err) {
+          next(err);
+          
+        } else {
+          // ----- CREATE DOMAIN
+          var domain = self.modelFactory(
+            'domain',
+            {
+              name : (username + '.' + CFG.domain_public).replace(/:.*$/, ''),
+              type : 'custom',
+              _available : true
+            }, accountInfo);
+
+          self.create(domain, function(err, modelName, domainResult) {    
+            // skip name lookup errors
+            if (err && err.code !== 'ENOTFOUND') {
+              next(err);
+
+            } else {
+              // upgrade to vanity
+              self.updateColumn('domain', { id : domainResult.id }, { type : 'vanity', available : 'true' });
+
+              // ----- CREATE OPTIONS
+              var accountOptions = self.modelFactory(
+                'account_option',
+                {
+                  bip_type : 'http',
+                  bip_domain_id : domainResult.id,
+                  bip_end_life : {
+                    imp : 0,
+                    time : 0
+                  },
+                  bip_expire_behaviour: 'pause',
+                  timezone : CFG.timezone
+                }, accountInfo);
+
+              self.create(accountOptions, function(err, modelName, result) {
+                next(err, accountInfo.user.id);
+              });
+            }
+          });
+        }
+      });          
+    }
+  });
+}
+
+Dao.prototype.createUser = function(username, emailAddress, password, next) {
+  var self = this;
+  
+  if (app.helper.isFunction(password)) {
+    next = password;
+    password = null;
+  }
+  
+  if (username && emailAddress) {
+    // check user exists
+    self.find('account', { username : username }, function(err, result) {
+      if (err) {
+        next(err);
+      } else if (result) {
+        next('Username ' + username + ' already exists');
+      } else {
+        if (password) {
+          self._createUser(username, emailAddress, password, next);
+        } else {
+          crypto.randomBytes(16, function(ex, buf) {
+            self._createUser(username, emailAddress, buf.toString('hex'), next);
+          });
+        }        
+      }
+    });
+  }  
+}
 
 Dao.prototype.getAccountStruct = function(authModel, next) {
   var self = this,
