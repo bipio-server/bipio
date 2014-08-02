@@ -101,7 +101,8 @@ restapi.use(function(err, req, res, next) {
   }
 });
 
-restapi.use(bodyParser());
+restapi.use(bodyParser.urlencoded({ extended : true }));
+restapi.use(bodyParser.json());
 restapi.use(setCORS);
 restapi.use(methodOverride());
 restapi.use(cookieParser());
@@ -110,6 +111,8 @@ restapi.use(cookieParser());
 
 restapi.use(session({
   key : 'sid',
+  resave : false,
+  saveUninitialized : true,
   cookie: {
     maxAge: 60 * 60 * 1000,
     httpOnly : true
