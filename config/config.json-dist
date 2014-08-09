@@ -1,4 +1,5 @@
 {
+    "site_name" : "BipIO",
     "domain_public": "localhost:5000",
     "website_public": "http://localhost",
     "cdn_public": "http://localhost/static/img/cdn",

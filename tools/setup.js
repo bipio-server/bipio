@@ -362,4 +362,9 @@ function auxServers() {
   });
 }
 
-domainSelect();
+if (!fs.existsSync(targetConfig)) {
+  domainSelect();
+} else {
+  // @todo add any migrations 
+  console.log('Nothing To Do')
+}

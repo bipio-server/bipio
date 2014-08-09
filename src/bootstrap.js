@@ -39,6 +39,7 @@ defs        = require('../config/defs'),
 envConfig   = require('config'),
 cluster     = require('cluster'),
 os          = require('os'),
+ipaddr = require('ipaddr.js'),
 memwatch = require('memwatch');
 
 // globals
@@ -114,6 +115,19 @@ if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   }
 }
 
+// validate config
+if (/^http(s?):\/\//i.test(envConfig.domain_public)) {
+  envConfig.domain_public = envConfig.domain_public.replace(/^http(s?):\/\//, '');
+  app.logmessage('CONFIG:domain_public should not include protocol', 'warn');
+}
+
+var domainPublic = envConfig.domain_public.replace(/:\d*/, '');
+if (ipaddr.IPv4.isValid(domainPublic) || ipaddr.IPv6.isValid(domainPublic) ) {
+  app.logmessage('CONFIG:domain_public can not be an IP Address', 'error');
+  process.exit(0);
+}
+
+// initialize DAO and bastion (queue manager)
 var dao = new require('./managers/dao'),
 bastion = new require('./managers/bastion');
 
