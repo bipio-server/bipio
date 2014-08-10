@@ -2,9 +2,19 @@
   "author": "Michael Pearson",
   "name": "bipio",
   "version": "0.2.41",
+  "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "install": "make install"
+    "test": "make test"
+  },
+  "bin": {
+    "bipio": "./src/server.js",
+    "bipio-setup": "./tools/setup.js",
+    "bipio-token-regen": "./tools/token_regen.js",
+    "bipio-pod-install": "./tools/pod-install.js",
+    "bipio-trigger": "./tools/bip-trigger.js",
+    "bipio-expire": "./tools/bip-expire.js",
+    "bipio-generate-hub-stats": "./tools/generate-hub-stats.js"
   },
   "description": "API and graph resolver for the bipio content pipeline.",
   "homepage": "https://bip.io",
@@ -53,6 +63,7 @@
     "mkdirp": ">=0.3.5",
     "mongoose": ">=3.8.0",
     "multer": "0.0.6",
+    "node-fs": "^0.1.7",
     "node-uuid": "1.3.3",
     "passport": ">=0.1.15",
     "posix-getopt": "1.1.0",

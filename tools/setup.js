@@ -22,12 +22,27 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var inquirer = require("inquirer"),
-fs = require('fs'),
+fs = require('node-fs'),
 path = require('path'),
 crypto = require('crypto'),
 sparseFile = __dirname + '/../config/config.json-dist',
 defs = require('../config/defs'),
 mongoose = require('mongoose');
+
+// Select prompt
+if (process.env.HEADLESS) {
+  var prompt = function (select, cb) {
+    console.log(select.message);
+    var answer = {};
+    if (select.type == "input")
+      answer[select.name] = '';
+    else if (select.type == "confirm")
+      answer[select.name] = true; 
+    cb(answer);
+  };
+} else {
+  var prompt = inquirer.prompt;
+}
 
 // load sparse config
 var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
@@ -43,11 +58,8 @@ GLOBAL.app = {
     }
   }
 }
-GLOBAL.CFG_CDN = sparseConfig.cdn;
 GLOBAL.CFG = sparseConfig;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
-GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + '/../' + sparseConfig.datadir,
-GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + sparseConfig.cdn;
 
 sparseConfig.timezone = process.env.SYSTEM_TZ;
 
@@ -68,7 +80,10 @@ process.on('uncaughtException', function(err) {
   console.error(err);
 });
 
-var targetConfig = path.resolve(__dirname, '../config/' + appEnv + '.json');
+var targetConfig = path.resolve(
+  process.env.NODE_CONFIG_DIR || path.join(__dirname, '../config/'),
+  appEnv + '.json'
+);
 
 function writeConfig(next) {
   fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 4), function(err) {
@@ -100,7 +115,7 @@ function domainSelect() {
     message : 'Hostname (FQDN). default "' + valDefault + '" :'
   }
 
-  inquirer.prompt(domainSelect, function(answer) {
+  prompt(domainSelect, function(answer) {
     if ('' === answer.defaultDomain) {
       answer.defaultDomain = valDefault;
     }
@@ -126,13 +141,64 @@ function portSelect() {
     message : 'API TCP Port. default "' + valDefault + '" :'
   }
 
-  inquirer.prompt(portSelect, function(answer) {
+  prompt(portSelect, function(answer) {
     if ('' === answer.defaultPort) {
       answer.defaultPort = valDefault;
     }
     sparseConfig.server.port = answer.defaultPort;
-    aesSetup();
+    datadirSelect();
   });
+}
+
+function datadirSelect() {
+  var valDefault = path.resolve(__dirname + "/.." + sparseConfig.datadir);
+  var datadirSelect = {
+    type : 'input',
+    name : 'datadir',
+    message : 'Data directory. default "' + valDefault + '" :'
+  }
+
+  prompt(datadirSelect, function(answer) {
+    if ('' === answer.datadir) {
+      answer.datadir = valDefault;
+    }
+    sparseConfig.datadir = path.resolve(answer.datadir);
+    cdnSelect();
+  });
+}
+
+function cdnSelect() {
+  var valDefault = path.join(sparseConfig.datadir, "/cdn");
+  var cndSelect = {
+    type : 'input',
+    name : 'cdn',
+    message : 'CDN directory. default "' + valDefault + '" :'
+  }
+
+  prompt(cndSelect, function(answer) {
+    if ('' === answer.cdn) {
+      answer.cdn = valDefault;
+    }
+    sparseConfig.cdn = path.resolve(answer.cdn);
+    createDataDirs();
+  });
+}
+
+/*
+ * Creates required data directories
+ */
+function createDataDirs() {
+  function cb(err) {
+    if (err) console.log(err);
+  }
+
+  fs.mkdir(path.join(sparseConfig.datadir, "tmp"), 0755, true, cb);
+  fs.mkdir(path.join(sparseConfig.datadir, "channels"), 0755, true, cb);
+  fs.mkdir(path.join(sparseConfig.cdn, "img/av"), 0755, true, cb);
+  fs.mkdir(path.join(sparseConfig.cdn, "img/icofactory"), 0755, true, cb);
+  fs.mkdir(path.join(sparseConfig.cdn, "img/pods"), 0755, true, cb);
+
+  aesSetup();
 }
 
 function aesSetup() {
@@ -143,7 +209,7 @@ function aesSetup() {
   }
 
   // throw warning that this step will invalidate any existing encrypted data
-  inquirer.prompt(aesWarn, function(answer) {
+  prompt(aesWarn, function(answer) {
     if (!answer.aesContinue) {
       console.log('Aborted');
       process.exit(0);
@@ -168,7 +234,7 @@ function userSetup() {
     message : 'API Username (HTTP Basic Auth Username, default "' + defaultUsername + '") :'
   }
 
-  inquirer.prompt(userInstall, function(answer) {
+  prompt(userInstall, function(answer) {
     if ('' === answer.username) {
       answer.username = defaultUsername;
     }
@@ -184,7 +250,7 @@ function userSetup() {
         message : 'API Password (HTTP Basic Auth Password, default "' + token + '") :'
       }
 
-      inquirer.prompt(userInstallPW, function(answer) {
+      prompt(userInstallPW, function(answer) {
         if ('' === answer.password) {
           answer.password = token;
         }
@@ -197,7 +263,7 @@ function userSetup() {
           message : 'Administrator email (default "root@localhost") :'
         }
 
-        inquirer.prompt(userInstallEmail, function(answer) {
+        prompt(userInstallEmail, function(answer) {
           if ('' === answer.email) {
             answer.email = 'root@localhost';
           }
@@ -334,7 +400,7 @@ function auxServers() {
     message : 'Mongo connect string (see http://docs.mongodb.org/manual/reference/connection-string). Default "' + valDefault + '" :'
   };
 
-  inquirer.prompt(serverSetupMongo, function(answer) {
+  prompt(serverSetupMongo, function(answer) {
     if ('' === answer.mongoConnectString) {
       answer.mongoConnectString = valDefault;
     }

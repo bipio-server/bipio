@@ -21,8 +21,8 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 
-// always look to local config
-process.env.NODE_CONFIG_DIR = __dirname + '/../config';
+process.env.NODE_CONFIG_DIR =
+  process.env.NODE_CONFIG_DIR || __dirname + '/../config';
 process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 // includes
 var app = {
@@ -48,8 +48,8 @@ GLOBAL.CFG_CDN = envConfig.cdn;
 GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
-GLOBAL.DATA_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.datadir,
-GLOBAL.CDN_DIR = GLOBAL.SERVER_ROOT + '/../' + envConfig.cdn;
+GLOBAL.DATA_DIR = envConfig.dataDir;
+GLOBAL.CDN_DIR = envConfig.cdn;
 
 // attach general helpers to the app
 app.helper = helper;
