@@ -80,8 +80,8 @@
         },
         "defaultExchange": "public_inbound"
     },
-    "datadir" : "/data",
-    "cdn": "/data/cdn",
+    "datadir" : "data",
+    "cdn": "data/cdn",
     "k": {
     },
     "auth" : {

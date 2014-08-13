@@ -29,6 +29,8 @@ sparseFile = __dirname + '/../config/config.json-dist',
 defs = require('../config/defs'),
 mongoose = require('mongoose');
 
+var pkg = require('../package.json');
+
 // load sparse config
 var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
 appEnv = process.env.NODE_ENV;
@@ -71,7 +73,7 @@ process.on('uncaughtException', function(err) {
 var targetConfig = path.resolve(__dirname, '../config/' + appEnv + '.json');
 
 function writeConfig(next) {
-  fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 4), function(err) {
+  fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 2), function(err) {
     if (err) {
       console.log(err);
       process.exit(0);
@@ -364,7 +366,28 @@ function auxServers() {
 
 if (!fs.existsSync(targetConfig)) {
   domainSelect();
-} else {
-  // @todo add any migrations 
-  console.log('Nothing To Do')
+  
+} else { 
+  // to test - bump the 'pkg.version' variable to your intended npm version,
+  // then run 'make install'  
+  var migrationFile = path.resolve(__dirname + '/../migrations/' + pkg.version);
+  if (fs.existsSync(migrationFile)) {
+    var migration = require(migrationFile);
+    if (migration && migration.run) {
+      process.HEADLESS = true;
+      var bootstrap = require(__dirname + '/../src/bootstrap');      
+      bootstrap.app.dao.on('ready', function(readyQueue) {
+        migration.run(bootstrap.app, targetConfig, function(msg, msgLevel) {
+          bootstrap.app.logmessage(msg || 'Done', msgLevel);
+          console.log('*** Installed ' + pkg.version);
+          process.exit(0);
+        });
+      });
+    } else {
+      console.error('No migration index.js or no "run" method found in ' + migrationFile);
+    }
+  } else {
+    // @todo add any migrations 
+    console.log('Nothing To Do');
+  }
 }
