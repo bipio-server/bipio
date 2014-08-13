@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.2.41",
+  "version": "0.2.42",
   "scripts": {
     "start": "node src/server.js",
     "install": "make install"
