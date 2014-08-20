@@ -141,8 +141,6 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 #### via npm
 
     npm install -g bipio
-    export NODE_CONFIG_DIR=<path_to_your_config_directory>
-    bipio-setup
     bipio
 
 #### via git
@@ -150,7 +148,11 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
     git clone git@github.com:bipio-server/bipio.git
     cd bipio
     make install
-    node .
+    node . (or `npm start`)
+
+When setting BipIO up for the first time, the install process will enter interactive mode unless the NODE_CONFIG_DIR environment variable has been set.
+
+    export NODE_CONFIG_DIR=<path_to_your_config_directory>
 
 Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
 during the install process to get a basically sane server running that you can play with.
