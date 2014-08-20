@@ -58,22 +58,27 @@ if (program.add) {
     mode = 'remove';
     podName = program.remove;
 }
+
+function modulePath(name) {
+    var podPath = require.resolve(name);
+    var node_modules = podPath.split(name).slice(0, -1).join(name); 
+    return path.join(node_modules, name);
+}
+
 try {
-    pod = require('bip-pod-' + podName);
+    pod = require("bip-pod-" + podName);
+    podPath = modulePath("bip-pod-" + podName); 
 } catch (Err) {
     console.log(Err.toString());
     console.log('Trying literal module name...');
-    pod = require(podName)
+    pod = require(podName);
+    podPath = modulePath(podName);
 }
 
-var appEnv = process.env.NODE_ENV;
-if (appEnv === 'development' || !appEnv) {
-    appEnv = 'default';
-}
-
-if (pod && pod._name) {
-    var configFile = path.resolve(__dirname + '/../config/' + appEnv + '.json'),
-      corpusFile = path.resolve(__dirname + '/node_modules/bip-pod-' + podName + '/corpus.json');
+if (pod && podPath) {
+    var 
+      configFile = GLOBAL.CFG.getConfigSources()[0].name,
+      corpusFile = path.join(podPath, 'corpus.json');
 
     console.log('Installing "' + podName + '" POD');
 
@@ -82,7 +87,7 @@ if (pod && pod._name) {
     config = pod._config || {};
 
     if (currentConfig) {
-        var imgDir = __dirname + '/../data/cdn/img/pods';
+        var imgDir = GLOBAL.CDN_DIR + '/img/pods';
         if (!fs.existsSync(imgDir)) {
             helper.mkdir_p(imgDir);
 
@@ -113,9 +118,9 @@ if (pod && pod._name) {
             console.log('Wrote to ' + configFile);
         } else {
             console.log('Skipped write. Nothing to change');
-            var podIcon = __dirname + '/../node_modules/bip-pod-' + podName + '/' + podName + '.png';
+            var podIcon = path.join(podPath, podName + '.png');
             if (fs.existsSync(podIcon)) {
-                fs.createReadStream(podIcon).pipe(fs.createWriteStream(imgDir + '/' + podName + '.png'));
+                fs.createReadStream(podIcon).pipe(fs.createWriteStream(path.join(imgDir, podName + '.png')));
                 console.log('Icon Synced');
             }
         }

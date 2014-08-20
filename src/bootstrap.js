@@ -21,8 +21,8 @@
  
  */
 
-// always look to local config
-process.env.NODE_CONFIG_DIR = __dirname + '/../config';
+process.env.NODE_CONFIG_DIR =
+  process.env.NODE_CONFIG_DIR || __dirname + '/../config';
 process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 // includes
 var app = {
@@ -48,7 +48,6 @@ GLOBAL.CFG_CDN = envConfig.cdn;
 GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
-
 //
 GLOBAL.DATA_DIR = path.resolve((0 === envConfig.datadir.indexOf('/')
     ? envConfig.datadir
