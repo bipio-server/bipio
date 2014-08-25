@@ -171,7 +171,7 @@ If you're going the `git pull` route and want to save this step, create a git 'p
     cp ./tools/post-merge .git/hooks
     chmod ug+x .git/hooks/post-merge
 
-This will automatically install any missind dependencies every time you `git pull`
+This will automatically install any missing dependencies every time you `git pull`
 
 ### Crons
 
