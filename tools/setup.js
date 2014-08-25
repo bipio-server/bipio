@@ -153,7 +153,7 @@ function portSelect() {
 }
 
 function datadirSelect() {
-  var valDefault = path.resolve(__dirname + "/.." + sparseConfig.datadir);
+  var valDefault = path.resolve(__dirname + "/../" + sparseConfig.datadir);
   var datadirSelect = {
     type : 'input',
     name : 'datadir',
