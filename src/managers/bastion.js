@@ -536,7 +536,7 @@ Bastion.prototype.channelProcess = function(struct) {
             function(err, exports, contentParts, transferredBytes) {
               if (!err && exports) {
 
-                var newImports = struct.imports
+                var newImports = app._.clone(struct.imports)
                 newImports.local = exports;
 
                 // any channel which pushes data outside the system
