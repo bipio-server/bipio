@@ -22,14 +22,18 @@
  * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
  */
 var inquirer = require("inquirer"),
-fs = require('node-fs'),
-path = require('path'),
-crypto = require('crypto'),
-sparseFile = __dirname + '/../config/config.json-dist',
-defs = require('../config/defs'),
-mongoose = require('mongoose');
+  fs = require('node-fs'),
+  path = require('path'),
+  crypto = require('crypto'),
+  defs = require('../config/defs'),
+  mongoose = require('mongoose'),
+  pkg = require('../package.json'),
+  sparseFile = path.resolve(
+    process.env.BIPIO_SPARSE_CONFIG ?
+    process.env.BIPIO_SPARSE_CONFIG :
+    __dirname + '/../config/config.json-dist');
 
-var pkg = require('../package.json');
+process.env.HEADLESS = true;
 
 // Select prompt
 if (process.env.HEADLESS) {
@@ -39,7 +43,7 @@ if (process.env.HEADLESS) {
     if (select.type == "input")
       answer[select.name] = '';
     else if (select.type == "confirm")
-      answer[select.name] = true; 
+      answer[select.name] = true;
     cb(answer);
   };
 } else {
@@ -47,9 +51,18 @@ if (process.env.HEADLESS) {
 }
 
 // load sparse config
-var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
-appEnv = process.env.NODE_ENV;
+// point to alternate sparse config template
 
+if (!fs.existsSync(sparseFile)) {
+  console.error('Sparse Config ' + sparseFile + ' not found');
+  process.exit(1);
+}
+
+console.log('Reading Sparse Config At ' + sparseFile);
+var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
+  appEnv = process.env.NODE_ENV;
+
+// bipip bootstrap globals
 GLOBAL.DEFS = defs;
 GLOBAL.app = {
   logmessage : function(err, loglevel) {
@@ -62,6 +75,7 @@ GLOBAL.app = {
 }
 GLOBAL.CFG = sparseConfig;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
+// ----------
 
 sparseConfig.timezone = process.env.SYSTEM_TZ;
 
@@ -90,8 +104,8 @@ var targetConfig = path.resolve(
 function writeConfig(next) {
   fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 2), function(err) {
     if (err) {
-      console.log(err);
-      process.exit(0);
+      console.error(err);
+      process.exit(1);
     } else {
       console.log("\nConfig written to : " + targetConfig + "\n");
       console.log("IMPORTANT : Ensure to remember your API password\n");
@@ -295,8 +309,8 @@ function _createAccount(dao, next) {
 
   dao.create(account, function(err, modelName, result) {
     if (err) {
-      console.log(err);
-      process.exit(0);
+      console.error(err);
+      process.exit(1);
     } else {
       _createAuth(
         dao,
@@ -323,8 +337,8 @@ function _createAuth(dao, accountInfo, next) {
 
   dao.create(accountAuth, function(err, modelName, result) {
     if (err) {
-      console.log(err);
-      process.exit(0);
+      console.error(err);
+      process.exit(1);
     } else {
       _createDomain(dao, accountInfo, next);
     }
@@ -341,11 +355,11 @@ function _createDomain(dao, accountInfo, next) {
       _available : true
     }, accountInfo);
 
-  dao.create(domain, function(err, modelName, result) {    
+  dao.create(domain, function(err, modelName, result) {
     // skip name lookup errors
     if (err && err.code !== 'ENOTFOUND') {
-      console.log(err);
-      process.exit(0);
+      console.error(err);
+      process.exit(1);
     } else {
       // upgrade to vanity
       dao.updateColumn('domain', { id : result.id}, { type : 'vanity'});
@@ -373,13 +387,13 @@ function _createOptions(dao, domainId, accountInfo, next) {
         time : 0
       },
       bip_expire_behaviour: 'pause',
-      timezone : 'America/New_York' // @todo get from system, configurable
+      timezone : sparseConfig.timezone
     }, accountInfo);
 
   dao.create(accountOptions, function(err, modelName, result) {
     if (err) {
-      console.log(err);
-      process.exit(0);
+      console.error(err);
+      process.exit(1);
     } else {
       next();
     }
@@ -412,8 +426,8 @@ function auxServers() {
     console.log('trying ' + sparseConfig.dbMongo.connect + ' Ctrl-C to quit');
     GLOBAL.CFG = sparseConfig;
 
-    var Dao = require(__dirname + '/../src/managers/dao');    
-    var dao = new Dao(sparseConfig,  function(message) {      
+    var Dao = require(__dirname + '/../src/managers/dao');
+    var dao = new Dao(sparseConfig,  function(message) {
       writeConfig(function() {
         var bootstrap = require(__dirname + '/../src/bootstrap');
         _createAccount(bootstrap.app.dao, function() {
@@ -432,16 +446,16 @@ function auxServers() {
 
 if (!fs.existsSync(targetConfig)) {
   domainSelect();
-  
-} else { 
+
+} else {
   // to test - bump the 'pkg.version' variable to your intended npm version,
-  // then run 'make install'  
+  // then run 'make install'
   var migrationFile = path.resolve(__dirname + '/../migrations/' + pkg.version);
   if (fs.existsSync(migrationFile)) {
     var migration = require(migrationFile);
     if (migration && migration.run) {
       process.HEADLESS = true;
-      var bootstrap = require(__dirname + '/../src/bootstrap');      
+      var bootstrap = require(__dirname + '/../src/bootstrap');
       bootstrap.app.dao.on('ready', function(readyQueue) {
         migration.run(bootstrap.app, targetConfig, function(msg, msgLevel) {
           bootstrap.app.logmessage(msg || 'Done', msgLevel);
@@ -453,7 +467,7 @@ if (!fs.existsSync(targetConfig)) {
       console.error('No migration index.js or no "run" method found in ' + migrationFile);
     }
   } else {
-    // @todo add any migrations 
+    // @todo add any migrations
     console.log('Nothing To Do');
   }
 }
