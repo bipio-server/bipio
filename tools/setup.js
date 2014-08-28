@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env nodejs
 /**
  *
  * The Bipio API Server
@@ -32,8 +32,6 @@ var inquirer = require("inquirer"),
     process.env.BIPIO_SPARSE_CONFIG ?
     process.env.BIPIO_SPARSE_CONFIG :
     __dirname + '/../config/config.json-dist');
-
-process.env.HEADLESS = true;
 
 // Select prompt
 if (process.env.HEADLESS) {
