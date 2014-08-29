@@ -150,7 +150,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
     make install
     node . (or `npm start`)
 
-When setting BipIO up for the first time, the install process will enter interactive mode unless the NODE_CONFIG_DIR environment variable has been set.
+When setting BipIO up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
 
     export NODE_CONFIG_DIR=<path_to_your_config_directory>
 
