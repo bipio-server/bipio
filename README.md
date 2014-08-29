@@ -160,6 +160,10 @@ during the install process to get a basically sane server running that you can p
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
 /etc/init and reconfigured to suit your environment.
 
+If you have a more complex deployment environment and the packaged sparse config doesn't suit, don't worry!  Set the environment variable BIPIO_SPARSE_CONFIG to the path of your preferred config file, and it will use that instead.
+
+For a non-interactive setup (ie: make install without any user interaction) - set environment variable HEADLESS=true
+
 ## Updating
 
 Updating BipIO via `npm` will resolve any new dependencies for you, however if you're checking out from the repository 
