@@ -276,4 +276,4 @@ Please log issues to the [repository issue tracker](https://github.com/bipio-ser
 Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3. 
 
 If you'd like to integrate BipIO with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License for Bipio,
-please [reach me](mailto:support@beta.bip.io)
+please [reach us](mailto:hello@bip.io)
