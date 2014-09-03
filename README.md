@@ -7,6 +7,8 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
+Imagine you can send a single standard JSON payload and have a limitless bunch of API's orchestrate at your command.  That's what BipIO does.
+
 BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
 based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  Bips come in a variety of flavors for performing useful work - WebHooks/Sockets, Email, and Event Triggers.
