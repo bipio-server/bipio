@@ -7,6 +7,13 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
+Imagine you can send a single standard payload and have a limitless bunch of API's orchestrate at your command.  
+
+That's what BipIO does.
+
+----
+
+
 BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
 based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  Bips come in a variety of flavors for performing useful work - WebHooks/Sockets, Email, and Event Triggers.
@@ -150,7 +157,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
     make install
     node . (or `npm start`)
 
-When setting BipIO up for the first time, the install process will enter interactive mode unless the NODE_CONFIG_DIR environment variable has been set.
+When setting BipIO up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
 
     export NODE_CONFIG_DIR=<path_to_your_config_directory>
 
@@ -159,6 +166,10 @@ during the install process to get a basically sane server running that you can p
 
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
 /etc/init and reconfigured to suit your environment.
+
+If you have a more complex deployment environment and the packaged sparse config doesn't suit, don't worry!  Set the environment variable BIPIO_SPARSE_CONFIG to the path of your preferred config file, and it will use that instead.
+
+For a non-interactive setup (ie: make install without any user interaction) - set environment variable HEADLESS=true
 
 ## Updating
 
@@ -272,4 +283,4 @@ Please log issues to the [repository issue tracker](https://github.com/bipio-ser
 Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3. 
 
 If you'd like to integrate BipIO with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License for Bipio,
-please [reach me](mailto:support@beta.bip.io)
+please [reach us](mailto:hello@bip.io)
