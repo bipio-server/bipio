@@ -18,7 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
  */
 var util        = require('util'),
   helper      = require('../lib/helper'),
@@ -58,7 +57,9 @@ function Dao(config, log, next) {
     'account_option' : require('../models/account_option').AccountOption,
 
     'stats_account' : require('../models/stats_account').StatsAccount,
-    'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork
+    'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork,
+
+    'migration' : require('../models/migration').Migration
   }
 
   this.models = { };
@@ -115,7 +116,7 @@ AccountInfo.prototype = {
 
 Dao.prototype._createUser = function(username, emailAddress, password, next) {
   var self = this;
-  
+
   // ----- CREATE ACCOUNT
   var account = self.modelFactory(
     'account',
@@ -130,7 +131,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
     if (err) {
       next(err);
 
-    } else {            
+    } else {
       // -----CREATE AUTH
       var accountInfo = {
         user : {
@@ -142,19 +143,19 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
           }
         }
       };
-      
+
       var accountAuth = self.modelFactory(
         'account_auth',
         {
           username : username,
           password : password,
-          type : 'token'          
+          type : 'token'
         }, accountInfo);
 
       self.create(accountAuth, function(err, modelName, accountResult) {
         if (err) {
           next(err);
-          
+
         } else {
           // ----- CREATE DOMAIN
           var domain = self.modelFactory(
@@ -165,7 +166,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
               _available : true
             }, accountInfo);
 
-          self.create(domain, function(err, modelName, domainResult) {    
+          self.create(domain, function(err, modelName, domainResult) {
             // skip name lookup errors
             if (err && err.code !== 'ENOTFOUND') {
               next(err);
@@ -194,19 +195,19 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
             }
           });
         }
-      });          
+      });
     }
   });
 }
 
 Dao.prototype.createUser = function(username, emailAddress, password, next) {
   var self = this;
-  
+
   if (app.helper.isFunction(password)) {
     next = password;
     password = null;
   }
-  
+
   if (username && emailAddress) {
     // check user exists
     self.find('account', { username : username }, function(err, result) {
@@ -221,10 +222,10 @@ Dao.prototype.createUser = function(username, emailAddress, password, next) {
           crypto.randomBytes(16, function(ex, buf) {
             self._createUser(username, emailAddress, buf.toString('hex'), next);
           });
-        }        
+        }
       }
     });
-  }  
+  }
 }
 
 Dao.prototype.getAccountStruct = function(authModel, next) {
@@ -422,15 +423,15 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
 
   var client = ldap.createClient(config.server),
     search = app._.clone(config.search);
-    
+
   if (search.filter) {
     search.filter = search.filter.replace(/{{username}}/, username);
   }
-  
+
   client.search(base, search, function(err, res) {
     if (err) {
       next(err);
-    } else {    
+    } else {
       res.on('searchEntry', function(entry) {
         //console.log('entry: ', entry.object));
         client.bind(entry.dn, password, function(err, res) {
@@ -442,7 +443,7 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
               {
                 username : username
               },
-              function(err, acctResult) {          
+              function(err, acctResult) {
                 if (!err && (null != acctResult)) {
 
                   var filter = {
@@ -476,19 +477,19 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                 }
               }
             );
-          }          
+          }
         });
       });
-      
+
       res.on('error', function(err) {
         next(err.message);
       });
-      
+
       /*
       res.on('searchReference', function(referral) {
       });
-      
-      res.on('end', function(err) {        
+
+      res.on('end', function(err) {
       });
       */
     }
