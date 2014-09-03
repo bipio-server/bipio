@@ -7,7 +7,9 @@ BipIO is Billion Instructions Per I/O - For People and Robots.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
-Imagine you can send a single standard JSON payload and have a limitless bunch of API's orchestrate at your command.  That's what BipIO does.
+Imagine you can send a single standard JSON payload and have a limitless bunch of API's orchestrate at your command.  
+
+That's what BipIO does.
 
 ----
 
