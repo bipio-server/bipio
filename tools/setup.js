@@ -221,9 +221,9 @@ function aesSetup() {
     name : 'aesContinue',
     message :
       (sparseConfig.k['1']
-        ? "WARNING: Sparse Config contains an AES key override"
+        ? "WARNING: Sparse Config contains an AES key override."
         : "WARNING: Generating new AES key at version 1.")
-      + "Any currently encrypted data may be invalidated. 'no' will give you the opportunity to patch any current keys; Continue?"
+      + " Any currently encrypted data may be invalidated. 'no' will give you the opportunity to patch any current keys; Continue?"
 
   }
 
