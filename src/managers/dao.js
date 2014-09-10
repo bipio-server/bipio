@@ -475,11 +475,11 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
 
                 // if user auths off ldap and option set, auto create
                 // local account
-                } else if (!acctResult && config.auto_sync && config.sync_mail_field) {
+                } else if (!acctResult && config.auto_sync && config.auto_sync.mail_field) {
                   var emailAddress;
 
                   for (var i = 0; i < entry.attributes.length; i++) {
-                    if (config.sync_mail_field === entry.attributes[i].type) {
+                    if (config.auto_sync.mail_field === entry.attributes[i].type) {
                       emailAddress = entry.attributes[i].vals.pop();
                       break;
                     }
