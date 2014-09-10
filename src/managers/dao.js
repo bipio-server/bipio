@@ -190,7 +190,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
                 }, accountInfo);
 
               self.create(accountOptions, function(err, modelName, result) {
-                next(err, accountInfo.user.id);
+                next(err, accountResult);
               });
             }
           });
@@ -472,6 +472,35 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                       next(true, resultModel);
                     }
                   });
+
+                // if user auths off ldap and option set, auto create
+                // local account
+                } else if (!acctResult && config.auto_sync && config.sync_mail_field) {
+                  var emailAddress;
+
+                  for (var i = 0; i < entry.attributes.length; i++) {
+                    if (config.sync_mail_field === entry.attributes[i].type) {
+                      emailAddress = entry.attributes[i].vals.pop();
+                      break;
+                    }
+                  }
+
+                  if (emailAddress) {
+                    self.createUser(username, emailAddress, null, function(err, authModel) {
+                      self.getAccountStruct(authModel, function(err, accountInfo) {
+                        if (undefined == activeDomainId) {
+                          accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                        } else {
+                          accountInfo.user.activeDomainId = activeDomainId;
+                        }
+                        next(false, accountInfo);
+                      });
+                    });
+
+                  } else {
+                    next('No Email field found to sync for ' + username + ', skipping auth', null);
+                  }
+
                 } else {
                   next(true, null);
                 }
