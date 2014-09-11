@@ -1,7 +1,7 @@
 BipIO
 =========
 
-Welcome to the [BipIO](https://bip.io) API Server.  
+Welcome to the [BipIO](https://bip.io) API Server (Arya 0.2)
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
