@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
  * REST API Server bootstrap
@@ -30,7 +30,7 @@ var bootstrap = require(__dirname + '/bootstrap'),
   cluster = require('cluster'),
   express = require('express'),
   restapi = express();
-  
+
   session = require('express-session'),
   cookieParser = require('cookie-parser'),
   bodyParser = require('body-parser'),
@@ -41,9 +41,8 @@ var bootstrap = require(__dirname + '/bootstrap'),
   passport = require('passport'),
   cron = require('cron'),
   MongoStore = require('connect-mongo')({ session : session});
-  connectUtils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
   domain = require('domain');
-  
+
 // export app everywhere
 module.exports.app = app;
 
@@ -51,7 +50,7 @@ module.exports.app = app;
  * express bodyparser looks broken or too strict.
  */
 function xmlBodyParser(req, res, next) {
-  var enc = connectUtils.mime(req);
+  var enc = helper.getMime(req);
   if (req._body) return next();
   req.body = req.body || {};
 
@@ -128,7 +127,7 @@ restapi.use(passport.session());
 restapi.set('jsonp callback', true );
 restapi.disable('x-powered-by');
 
-if (cluster.isMaster) { 
+if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
   var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
   app.logmessage('BIPIO:STARTED:' + new Date());
@@ -223,22 +222,22 @@ if (cluster.isMaster) {
   );
 
   if (process.env.BIP_DUMP_HEAPS) {
-    var heapdump = require('heapdump');  
+    var heapdump = require('heapdump');
     setInterval(function() {
       var f = '/tmp/bipio_' + workerId + '_' + Date.now() + '.heapsnapshot';
       console.log('Writing ' + f);
       console.log(require.cache);
       heapdump.writeSnapshot(f);
     }, 60000);
-  }  
+  }
 
   app.dao.on('ready', function(dao) {
-    var server;    
-    
-    require('./router').init(restapi, dao);    
-    
+    var server;
+
+    require('./router').init(restapi, dao);
+
     restapi.use(function(err, req, res, next) {
-       
+
         var rDomain = domain.create();
 
         res.on('close', function () {
@@ -263,20 +262,20 @@ if (cluster.isMaster) {
 
             killtimer.unref();
 
-            app.bastion.close();            
+            app.bastion.close();
             server.close();
             cluster.worker.disconnect();
           }
 
           rDomain.dispose();
-          
+
         } else {
           rDomain.run(next);
         }
       });
-    
+
     server = restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
-      
+
       // drop readme's from memory
       var rCache = require.cache;
       for (var k in rCache) {
@@ -284,7 +283,7 @@ if (cluster.isMaster) {
           delete rCache[k].exports.readme;
         }
       }
-      
+
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
   });

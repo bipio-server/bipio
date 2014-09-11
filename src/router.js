@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public Licenpse
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
  *
@@ -34,7 +34,6 @@ var dao,
   connect     = require('connect'),
   helper      = require('./lib/helper'),
   uuid            = require('node-uuid'),
-  utils = require(__dirname + '/../node_modules/connect/lib/utils.js'),
   cdn      = require('./lib/cdn'),
   // restful models
   restResources = ['bip', 'channel', 'domain', 'account_option'],
@@ -216,7 +215,7 @@ function getClientInfo(req, txId) {
     'proto' : 'http',
     'reply_to' : '',
     'method' : req.method,
-    'content_type' : utils.mime(req),
+    'content_type' : helper.getMime(req),
     'encoding' : req.encoding
   };
 }
@@ -485,7 +484,7 @@ module.exports = {
       client = getClientInfo(req, txId),
       files = [],
       contentParts = {},
-      contentType = utils.mime(req),
+      contentType = helper.getMime(req),
       encoding = req.encoding,
       statusMap = {
         'success' : 200,

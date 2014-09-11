@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var    bcrypt      = require('bcrypt'),
 crypto = require('crypto'),
@@ -499,7 +499,7 @@ var helper = {
     var blacklist = CFG.server.public_interfaces;
     this.resolveHost(host, function(err, aRecords, resolvedHost) {
       var inBlacklist = false;
-      if (!err) {       
+      if (!err) {
         if (whitelist) {
           for (var i = 0; i < whitelist.length; i++) {
             if (resolvedHost === whitelist[i]) {
@@ -514,10 +514,17 @@ var helper = {
       next(err, inBlacklist, aRecords);
     });
   },
-  
+
   jsonPath : function(obj, path) {
     return JSONPath.eval(obj, path);
+  },
+
+  getMime : function(req) {
+    var str = req.headers['content-type'] || ''
+      , i = str.indexOf(';');
+    return ~i ? str.slice(0, i) : str;
   }
+
 }
 
 //

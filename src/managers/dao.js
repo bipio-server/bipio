@@ -432,7 +432,18 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
     if (err) {
       next(err);
     } else {
+
+      var foundMatch = false,
+        notFoundMsg = 'Not Found';
+
+      res.on('end', function() {
+        if (!foundMatch) {
+          next(notFoundMsg, null);
+        }
+      });
+
       res.on('searchEntry', function(entry) {
+        foundMatch = true;
         //console.log('entry: ', entry.object));
         client.bind(entry.dn, password, function(err, res) {
           if (err) {
@@ -469,7 +480,7 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                       });
 
                     } else {
-                      next(true, resultModel);
+                      next(notFoundMsg, resultModel);
                     }
                   });
 
@@ -477,7 +488,6 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                 // local account
                 } else if (!acctResult && config.auto_sync && config.auto_sync.mail_field) {
                   var emailAddress;
-
                   for (var i = 0; i < entry.attributes.length; i++) {
                     if (config.auto_sync.mail_field === entry.attributes[i].type) {
                       emailAddress = entry.attributes[i].vals.pop();
@@ -502,7 +512,7 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                   }
 
                 } else {
-                  next(true, null);
+                  next(notFoundMsg, null);
                 }
               }
             );
@@ -513,14 +523,6 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
       res.on('error', function(err) {
         next(err.message);
       });
-
-      /*
-      res.on('searchReference', function(referral) {
-      });
-
-      res.on('end', function(err) {
-      });
-      */
     }
   });
 }
