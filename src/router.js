@@ -885,7 +885,9 @@ module.exports = {
       var authorization = req.headers.authorization;
 
       if (!authorization) {
-        res.status(401).end();
+        res.statusCode = 401;
+        res.setHeader('WWW-Authenticate', 'Basic realm="Authorization Required"');
+        res.end('Unauthorized')
         return;
       }
 
