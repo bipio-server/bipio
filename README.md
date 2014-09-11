@@ -1,21 +1,21 @@
 BipIO
 =========
 
-Welcome to the [BipIO](https://bip.io) API Server.  
+Welcome to the [BipIO](https://bip.io) API Server (Arya 0.2)
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
-[![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
-
-Imagine you can send a single standard payload and have a limitless bunch of API's orchestrate at your command.  
+Imagine you can send a single standard payload and have a limitless host of API's orchestrate at your command.  
 
 That's what BipIO does.
+
+[![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
 ----
 
 
 BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
-based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
+based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex workflows and message hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  Bips come in a variety of flavors for performing useful work - WebHooks/Sockets, Email, and Event Triggers.
 
 It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
