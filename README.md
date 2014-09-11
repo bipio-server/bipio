@@ -5,11 +5,11 @@ Welcome to the [BipIO](https://bip.io) API Server (Arya 0.2)
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
-[![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
-
 Imagine you can send a single standard payload and have a limitless host of API's orchestrate at your command.  
 
 That's what BipIO does.
+
+[![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 
 ----
 
