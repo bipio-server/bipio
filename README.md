@@ -15,7 +15,7 @@ That's what BipIO does.
 
 
 BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
-based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex automated workflows and message distribution hubs with 3rd party API's and
+based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex workflows and message hubs with 3rd party API's and
 [RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  Bips come in a variety of flavors for performing useful work - WebHooks/Sockets, Email, and Event Triggers.
 
 It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
