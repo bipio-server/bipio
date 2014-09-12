@@ -24,6 +24,8 @@ BipIO can be installed alongside your existing open source app or prototype for 
 
 Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates, or `/join #bipio` on [Freenode IRC](https://freenode.net).
 
+For a technical deep-dive, don't be afraid to use [The Wiki](https://github.com/bipio-server/bipio/wiki) - it's open to contributors
+
 ### Concept
 
 If you're familiar with Yahoo Pipes, IFTTT, Zapier, Mulesoft - the concept is a little similar.   BipIO is a message transformation hub for connecting API's and creating an internet of things that matter to you.  Over time and as more people use the system it builds a corpus of transformation data that serve as 'hints' for use by other community members in their own integrations.  Complete configurations can also be shared openly by different users and systems allowing for the instant installation of common workflows.
