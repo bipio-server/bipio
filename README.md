@@ -1,4 +1,4 @@
-BipIO
+<a href="https://bip.io"><img align="left" width="48" src="https://2.gravatar.com/avatar/b4063abdf67036bdff26845fe2adcf69?d=https%3A%2F%2Fidenticons.github.com%2F7bad9441c4612b497d9d071c244f21cc.png&r=x&s=140" style="float:left;margin-right:20px"/></a>   BipIO
 =========
 
 Welcome to the [BipIO](https://bip.io) API Server (Arya 0.2)
