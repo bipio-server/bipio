@@ -1,4 +1,4 @@
-BipIO
+BipIO <a href="https://bip.io"><img align="right" width="48" src="https://2.gravatar.com/avatar/b4063abdf67036bdff26845fe2adcf69?d=https%3A%2F%2Fidenticons.github.com%2F7bad9441c4612b497d9d071c244f21cc.png&r=x&s=140" style="float:right"/></a>
 =========
 
 Welcome to the [BipIO](https://bip.io) API Server (Arya 0.2)
@@ -22,8 +22,9 @@ It's a RESTful JSON API that supports account level namespacing and multiple dom
 
 BipIO can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
-Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates.  
+Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates, or `/join #bipio` on [Freenode IRC](https://freenode.net).
 
+For a technical deep-dive, don't be afraid to use [The Wiki](https://github.com/bipio-server/bipio/wiki) - it's open to contributors
 
 ### Concept
 
