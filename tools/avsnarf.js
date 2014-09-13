@@ -3,8 +3,8 @@
  *
  * The Bipio API Server
  *
- * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * @author Michael Pearson <michael@bip.io>
+ * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
+ * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
 var dao      = require('../src/bootstrap');
 
 // given an image url and account id, attaches the account avatar
 var url = process.argv[3],
     ownerId = process.argv[2];
-    
+
 if (!url || !ownerId) {
     console.log('Usage : node avsnarf.js {owner id} {url}');
     process.exit(1);
@@ -35,11 +35,11 @@ if (!url || !ownerId) {
 console.log('fetching avatar...');
 dao.getAvRemote(ownerId, url, true, function(err, response) {
     if (!err) {
-        console.log("OK!");        
-        console.log(response);        
+        console.log("OK!");
+        console.log(response);
     } else {
         console.log(response);
-        console.log('Error');        
+        console.log('Error');
     }
-    process.exit(0);        
+    process.exit(0);
 });

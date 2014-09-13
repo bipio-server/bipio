@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.2.48",
+  "version": "0.2.50",
   "scripts": {
     "start": "node src/server.js",
     "test": "make test",
@@ -58,6 +58,7 @@
     "inquirer": ">=0.2.4",
     "ipaddr.js": ">=0.1.2",
     "json-middleware": "^1.0.2",
+    "jsonwebtoken": "^1.1.1",
     "ldapjs": "^0.7.1",
     "memwatch": "^0.2.2",
     "method-override": "^1.0.0",

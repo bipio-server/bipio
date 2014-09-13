@@ -84,8 +84,9 @@
     "cdn": "data/cdn",
     "k": {
     },
+    "jwtKey" : "",
     "auth" : {
-      "type" : "native"      
+      "type" : "native"
     },
     "pods": {
       "email" : {

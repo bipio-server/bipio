@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 
 process.env.NODE_CONFIG_DIR =
@@ -65,7 +65,7 @@ app._ = underscore;
 
 app.isMaster = cluster.isMaster;
 
-memwatch.on('leak', function(info) { 
+memwatch.on('leak', function(info) {
   app.logmessage(info, 'error');
 });
 
@@ -76,12 +76,16 @@ if ('development' ===  process.env.NODE_ENV) {
 
 // logger
 app.logmessage = function(message, loglevel) {
+  if ('error' === loglevel) {
+    console.trace(message);
+  }
+
   var obj = helper.isObject(message);
   if (!obj) {
     if (message && message.trim) {
       message = message.trim();
     }
-    
+
     if (!message) {
       return;
     }
@@ -93,23 +97,25 @@ app.logmessage = function(message, loglevel) {
   if (!obj && winston) {
     winston.log(loglevel || 'info', message);
   } else {
-    console.log(message);
-  }
-
-  if ('error' === loglevel && 'development' ===  process.env.NODE_ENV) {
-    console.trace(message);
+    if ('error' === loglevel) {
+     console.trace(message);
+    } else {
+      console.log(message);
+    }
   }
 }
 
+/*
 // exception catchall
 process.addListener('uncaughtException', function (err, stack) {
   var message = 'Caught exception: ' + err + '\n' + err.stack;
   if (app && app.logmessage) {
     app.logmessage(message);
   } else {
-    console.log(message);
+    console.trace(message);
   }
 });
+*/
 
 if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   GLOBAL.CFG.server.public_interfaces = [];

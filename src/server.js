@@ -41,7 +41,8 @@ var bootstrap = require(__dirname + '/bootstrap'),
   passport = require('passport'),
   cron = require('cron'),
   MongoStore = require('connect-mongo')({ session : session});
-  domain = require('domain');
+  domain = require('domain'),
+  jwt = require('jsonwebtoken');
 
 // export app everywhere
 module.exports.app = app;
@@ -78,6 +79,58 @@ function xmlBodyParser(req, res, next) {
   });
 }
 
+function _jwtDeny(res, extra) {
+  res.status(403).send('Invalid X-JWT-Signature ' + (extra ? '- ' + extra : ''));
+}
+
+// if user has provided a jwt header, try to parse
+function jwtConfirm(req, res, next) {
+  var masq = req.header('x-user-delegate'),
+    token = req.header('x-jwt-signature'),
+    structedMethods = [ 'POST', 'PUT', 'PATCH'],
+    payload = {};
+
+  if (token) {
+    if (structedMethods.indexOf(req.method)) {
+      payload = req.body;
+    }
+
+    try {
+      jwt.verify(token, GLOBAL.CFG.jwtKey, function(err, decoded) {
+        var remoteHost = req.header('X-Forwarded-For') || req.connection.remoteAddress;
+        if (err) {
+          app.logmessage(err.message + ' (IP ' + remoteHost + ')');
+          _jwtDeny(res, err.message);
+        } else {
+          try {
+            if (decoded.path === req.originalUrl
+              && JSON.stringify(decoded.body) === JSON.stringify(req.body)) {
+
+              if (decoded.user === masq) {
+                req.masqUser = masq;
+              }
+
+              next();
+            } else {
+              _jwtDeny(res);
+            }
+          } catch (e) {
+            app.logmessage(e.message, 'error');
+            _jwtDeny(res, e.message);
+          }
+        }
+      });
+    } catch (e) {
+      // jsonwebtoken doesn't catch parse errors by itself.
+      app.logmessage(e.message, 'error');
+      _jwtDeny(res, e.message);
+    }
+
+  } else {
+    next();
+  }
+}
+
 function setCORS(req, res, next) {
   res.header('Access-Control-Allow-Origin', req.headers.origin);
   res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || '*');
@@ -102,6 +155,8 @@ restapi.use(function(err, req, res, next) {
 
 restapi.use(bodyParser.urlencoded({ extended : true }));
 restapi.use(bodyParser.json());
+restapi.use(jwtConfirm);
+
 restapi.use(setCORS);
 restapi.use(methodOverride());
 restapi.use(cookieParser());
@@ -237,7 +292,7 @@ if (cluster.isMaster) {
     require('./router').init(restapi, dao);
 
     restapi.use(function(err, req, res, next) {
-
+      next();
         var rDomain = domain.create();
 
         res.on('close', function () {

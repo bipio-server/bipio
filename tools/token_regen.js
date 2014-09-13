@@ -3,8 +3,8 @@
  *
  * The Bipio API Server
  *
- * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * @author Michael Pearson <michael@bip.io>
+ * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
+ * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
 /**
  * Regenerates a token for an account id
@@ -37,14 +37,14 @@ var accountId = process.argv[2],
   dao = bootstrap.app.dao,
   modelName = 'account_auth';
 
-dao.on('ready', function(dao) {  
+dao.on('ready', function(dao) {
   crypto.randomBytes(16, function(ex, buf) {
     var token = buf.toString('hex');
     setTimeout(function() {
       dao.find(
       modelName,
       {
-        owner_id : accountId, 
+        owner_id : accountId,
         type : 'token'
       },
       function(err, result) {
@@ -53,7 +53,7 @@ dao.on('ready', function(dao) {
           console.log(result);
         } else {
           result.password = token;
-          
+
           /*
           dao.update(
             modelName,
@@ -68,11 +68,11 @@ dao.on('ready', function(dao) {
                 console.log('done');
                 process.exit(0);
               }
-            }            
+            }
           );
           */
           // DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
-          
+
           dao.updateProperties(
             modelName,
             result.id,
@@ -94,5 +94,5 @@ dao.on('ready', function(dao) {
       }
     );
     }, 2000);
-  });  
+  });
 });

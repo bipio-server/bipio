@@ -3,8 +3,8 @@
  *
  * The Bipio API Server
  *
- * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * @author Michael Pearson <michael@bip.io>
+ * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
+ * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
 /**
  * Expires bips which have reached their end-life by time
@@ -33,6 +33,6 @@ var bootstrap = require(__dirname + '/../src/bootstrap');
     } else {
         console.log('DONE');
     }
-    
+
     process.exit(0);
 });

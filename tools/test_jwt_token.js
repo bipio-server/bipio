@@ -21,22 +21,37 @@
  *
  * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
-/**
- * Triggers unpaused trigger bips.
- */
-process.HEADLESS = true;
-var bootstrap = require(__dirname + '/../src/bootstrap');
-bootstrap.app.bastion.on('readyQueue', function(readyQueue) {
-    if (readyQueue == 'queue_jobs') {
-        app.logmessage('BIP-TRIGGER:Trigger Queue Discovered:queue_jobs');
-        bootstrap.app.dao.triggerAll(function(err, msg) {
-            if (err) {
-                app.logmessage('BIP-TRIGGER:' + err + ' ' + msg);
-            } else {
-                app.logmessage(msg);
-                app.logmessage('BIP-TRIGGER:DONE');
-            }
-            process.exit(0);
-        });
-    }
-});
+ /**
+  * Creates a testable X-JWT-Signature header for BipIO
+  */
+
+var jwt = require('jsonwebtoken'),
+	fs = require('fs'),
+	path = require('path'),
+	configPath,
+	config,
+	expireMinutes,
+	options = {},
+  appEnv = process.env.NODE_ENV;
+
+if (appEnv === 'development' || !appEnv) {
+  appEnv = 'default';
+}
+
+configPath = path.resolve(
+  process.env.NODE_CONFIG_DIR || path.join(__dirname, '../config/'),
+  appEnv + '.json'
+);
+
+config = JSON.parse(fs.readFileSync(configPath));
+
+if (!process.argv[2]) {
+  console.log('Usage - test_jwt_token payload (expiryMinutes)');
+  process.exit(0);
+}
+
+if (process.argv[3]) {
+	options.expiresInMinutes = process.argv[3];
+}
+
+console.log(jwt.sign(JSON.parse(process.argv[2]), config.jwtKey, options));

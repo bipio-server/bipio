@@ -3,8 +3,8 @@
  *
  * The Bipio API Server
  *
- * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * @author Michael Pearson <michael@bip.io>
+ * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
+ * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
 /**
  * Installs the singletons for a pod against accounts which do not currently
@@ -61,13 +61,13 @@ if (program.add) {
 
 function modulePath(name) {
     var podPath = require.resolve(name);
-    var node_modules = podPath.split(name).slice(0, -1).join(name); 
+    var node_modules = podPath.split(name).slice(0, -1).join(name);
     return path.join(node_modules, name);
 }
 
 try {
     pod = require("bip-pod-" + podName);
-    podPath = modulePath("bip-pod-" + podName); 
+    podPath = modulePath("bip-pod-" + podName);
 } catch (Err) {
     console.log(Err.toString());
     console.log('Trying literal module name...');
@@ -76,7 +76,7 @@ try {
 }
 
 if (pod && podPath) {
-    var 
+    var
       configFile = GLOBAL.CFG.getConfigSources()[0].name,
       corpusFile = path.join(podPath, 'corpus.json');
 

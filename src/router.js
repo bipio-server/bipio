@@ -3,7 +3,7 @@
  * The Bipio API Server
  *
  * @author Michael Pearson <github@m.bip.io>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,16 +29,15 @@ app = module.parent.exports.app;
 
 var dao,
   bastion,
-  util        = require('util'),
-  express     = require('express'),
-  connect     = require('connect'),
-  helper      = require('./lib/helper'),
-  uuid            = require('node-uuid'),
-  cdn      = require('./lib/cdn'),
+  util    = require('util'),
+  express = require('express'),
+  connect = require('connect'),
+  helper  = require('./lib/helper'),
+  uuid    = require('node-uuid'),
+  cdn     = require('./lib/cdn'),
   // restful models
   restResources = ['bip', 'channel', 'domain', 'account_option'],
   modelPublicFilter;
-
 
 function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
   var result = {};
@@ -117,7 +116,7 @@ function publicFilter(modelName, modelStruct) {
  * if fails, defers to http basic auth.
  */
 function restAuthWrapper(req, res, next) {
-  if (req.session.account && req.session.account.host === getClientInfo(req).host) {
+  if (req.session.account && req.session.account.host === getClientInfo(req).host && !req.masqUser) {
     dao.getAccountStruct(req.session.account, function(err, accountInfo) {
       if (!err) {
         req.remoteUser = req.user = accountInfo;
@@ -128,7 +127,7 @@ function restAuthWrapper(req, res, next) {
     });
   } else {
     return connect.basicAuth(function(user, pass, next) {
-      dao.checkAuth(user, pass, 'token', next);
+      dao.checkAuth(user, pass, 'token', next, false, null, req.masqUser);
     })(req, res, next);
   }
 }
@@ -234,6 +233,7 @@ var restAction = function(req, res) {
 
   // User is authenticated and the requested model is marked as restful?
   if (undefined != owner_id && helper.indexOf(restResources, resourceName) != -1) {
+
     if (rMethod == 'POST' || rMethod == 'PUT') {
       // hack for bips, inject a referer note if no note has been sent
       if (resourceName == 'bip') {
@@ -433,7 +433,7 @@ function bipAuthWrapper(req, res, cb) {
             } else if (result.config.auth == 'token') {
               // account token auth
               connect.basicAuth(function(user, pass, cb){
-                dao.checkAuth(user, pass, 'token', cb);
+                dao.checkAuth(user, pass, 'token', cb, false, null, req.masqUser);
               })(req, res, cb);
 
             } else if (result.config.auth == 'basic') {
@@ -924,7 +924,7 @@ module.exports = {
 
           res.send(publicFilter('account_option', result.user.settings));
         }
-      });
+      }, false, null, req.masqUser);
     });
 
     express.get('/logout', function(req, res) {

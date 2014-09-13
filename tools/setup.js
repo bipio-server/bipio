@@ -3,8 +3,8 @@
  *
  * The Bipio API Server
  *
- * @author Michael Pearson <michael@cloudspark.com.au>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * @author Michael Pearson <michael@bip.io>
+ * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * A Bipio Commercial OEM License may be obtained via enquiries@cloudspark.com.au
+ * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
 var inquirer = require("inquirer"),
   fs = require('node-fs'),
@@ -60,6 +60,10 @@ console.log('Reading Sparse Config At ' + sparseFile);
 var sparseConfig = JSON.parse(fs.readFileSync(sparseFile)),
   appEnv = process.env.NODE_ENV;
 
+if (appEnv === 'development' || !appEnv) {
+  appEnv = 'default';
+}
+
 // bipip bootstrap globals
 GLOBAL.DEFS = defs;
 GLOBAL.app = {
@@ -82,13 +86,17 @@ if ('EDT' === sparseConfig.timezone) {
   sparseConfig.timezone = 'EST';
 }
 
+// Session Secret
 crypto.randomBytes(48, function(ex, buf) {
   sparseConfig.server.sessionSecret = buf.toString('hex');
 });
 
-if (appEnv === 'development' || !appEnv) {
-  appEnv = 'default';
-}
+// JWT Signing Key
+crypto.randomBytes(48, function(ex, buf) {
+  sparseConfig.jwtKey = buf.toString('hex');
+});
+
+
 
 process.on('uncaughtException', function(err) {
   console.error(err);

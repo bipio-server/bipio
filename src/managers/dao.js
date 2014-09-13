@@ -228,6 +228,18 @@ Dao.prototype.createUser = function(username, emailAddress, password, next) {
   }
 }
 
+Dao.prototype.getAccountStructByUsername = function(username, next) {
+  var self = this;
+  this.find('account', { username : username }, function(err, result) {
+    if (err) {
+      next(err);
+    } else {
+      result.owner_id = result.id;
+      self.getAccountStruct(result, next);
+    }
+  });
+}
+
 Dao.prototype.getAccountStruct = function(authModel, next) {
   var self = this,
   resultModel = { // session usable abstract model of the account
@@ -243,20 +255,6 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
   // finally, try to pull out the users auth token and account options
   step(
     function loadAcctInfo() {
-      /*
-      if ('token' !== authModel.type) {
-        self.find(
-          'account_auth',
-          {
-            'owner_id' : authModel.owner_id,
-            'type' : 'token'
-          },
-          this.parallel()
-          );
-      } else {
-        this.parallel()(false, authModel);
-      }
-*/
       self.find(
         'account_option',
         {
@@ -337,11 +335,6 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
         resultModel.domains = domainModels;
         resultModel.channels = channelModels;
         resultModel.settings = options;
-/*
-        var model = self.modelFactory('account_auth', auth);
-        resultModel.settings.api_token = model.getPassword();
-        resultModel.settings.api_token_auth = 'Basic ' + (new Buffer(authModel.username + ':' + model.getPassword()).toString('base64'));
-  */
       }
 
       var accountInfo = new AccountInfo(resultModel);
@@ -354,7 +347,7 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
 /*
  *  Native local MongoDB lookup
  */
-Dao.prototype._checkAuthNative = function(username, password, type, next, asOwnerId, activeDomainId) {
+Dao.prototype._checkAuthNative = function(username, password, type, next, asOwnerId, activeDomainId, masquerade) {
   var self = this;
   var filter = {};
 
@@ -382,18 +375,24 @@ Dao.prototype._checkAuthNative = function(username, password, type, next, asOwne
 
             if (asOwnerId || authModel.cmpPassword(password)) {
 
-              authModel.username = acctResult.username;
-              authModel.name = acctResult.name;
-              authModel.is_admin = acctResult.is_admin;
-
-              self.getAccountStruct(authModel, function(err, accountInfo) {
+              var acctCallback = function(err, accountInfo) {
                 if (undefined == activeDomainId) {
                   accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
                 } else {
                   accountInfo.user.activeDomainId = activeDomainId;
                 }
                 next(false, accountInfo);
-              });
+              };
+
+              if (masquerade && acctResult.is_admin) {
+                self.getAccountStructByUsername(masquerade, acctCallback);
+              } else {
+                authModel.username = acctResult.username;
+                authModel.name = acctResult.name;
+                authModel.is_admin = acctResult.is_admin;
+                self.getAccountStruct(authModel, acctCallback);
+              }
+
             } else {
               next(true, resultModel);
             }
@@ -411,7 +410,7 @@ Dao.prototype._checkAuthNative = function(username, password, type, next, asOwne
 /**
  * LDAP Auth
  */
-Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerId, activeDomainId) {
+Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerId, activeDomainId, masquerade) {
   var config = this.authStrategy.config,
     base = config.base,
     self = this;
@@ -466,18 +465,24 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                     var resultModel = null;
                     if (!isErr && null != result) {
                       var authModel = self.modelFactory('account_auth', result);
-                      authModel.username = acctResult.username;
-                      authModel.name = acctResult.name;
-                      authModel.is_admin = acctResult.is_admin;
 
-                      self.getAccountStruct(authModel, function(err, accountInfo) {
+                      var acctCallback = function(err, accountInfo) {
                         if (undefined == activeDomainId) {
                           accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
                         } else {
                           accountInfo.user.activeDomainId = activeDomainId;
                         }
                         next(false, accountInfo);
-                      });
+                      };
+
+                      if (masquerade && acctResult.is_admin) {
+                        self.getAccountStructByUsername(masquerade, acctCallback);
+                      } else {
+                        authModel.username = acctResult.username;
+                        authModel.name = acctResult.name;
+                        authModel.is_admin = acctResult.is_admin;
+                        self.getAccountStruct(authModel, acctCallback);
+                      }
 
                     } else {
                       next(notFoundMsg, resultModel);
@@ -497,14 +502,25 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
 
                   if (emailAddress) {
                     self.createUser(username, emailAddress, null, function(err, authModel) {
-                      self.getAccountStruct(authModel, function(err, accountInfo) {
+
+                      var acctCallback = function(err, accountInfo) {
                         if (undefined == activeDomainId) {
                           accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
                         } else {
                           accountInfo.user.activeDomainId = activeDomainId;
                         }
                         next(false, accountInfo);
-                      });
+                      };
+
+                      if (masquerade && acctResult.is_admin) {
+                        self.getAccountStructByUsername(masquerade, acctCallback);
+                      } else {
+                        authModel.username = acctResult.username;
+                        authModel.name = acctResult.name;
+                        authModel.is_admin = acctResult.is_admin;
+                        self.getAccountStruct(authModel, acctCallback);
+                      }
+
                     });
 
                   } else {
@@ -530,8 +546,7 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
 /**
  *
  */
-Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, activeDomainId) {
-
+Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, activeDomainId, masquerade) {
   // ldap does not support ownerId/domainId lookups at this point
   // @todo add ldap attributes map to ownerid/domainid
   if ('ldap' === this.authStrategy.type && !asOwnerId && 'token' === type) {
