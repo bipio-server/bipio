@@ -515,9 +515,9 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                       if (masquerade && acctResult.is_admin) {
                         self.getAccountStructByUsername(masquerade, acctCallback);
                       } else {
-                        authModel.username = acctResult.username;
-                        authModel.name = acctResult.name;
-                        authModel.is_admin = acctResult.is_admin;
+                        authModel.username = username;
+                        authModel.name = username
+                        authModel.is_admin = false;
                         self.getAccountStruct(authModel, acctCallback);
                       }
 
