@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
  *
@@ -104,6 +104,10 @@ var BipModel = {
     return '';
   },
 
+  links : function() {
+    return [];
+  },
+
   decorate : function() {
 
   },
@@ -122,6 +126,7 @@ var BipModel = {
     helper.copyProperties(src, this, true, this.getPropNamesAsArray());
     if (undefined != accountInfo && this.id) {
       this._repr = this.repr(accountInfo);
+      this._links = this.links(accountInfo);
     }
     this._href = this.href();
   },
@@ -236,7 +241,7 @@ var BipModel = {
   getValidators : function(attr) {
     var validators,
       schema = this.getEntitySchema();
-      
+
     if (schema[attr] && schema[attr].validate) {
       validators = schema[attr].validate;
     }

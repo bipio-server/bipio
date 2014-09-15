@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var baseConverter = require('base-converter'),
 djs = require('datejs'),
@@ -61,17 +61,17 @@ function endLifeParse(end_life) {
   }
 
   if (end_life.time !== '0' && end_life.time !== 0 && end_life.time !== '') {
-    try {     
+    try {
       d = new Date(Date.parse(end_life.time));
       if (d.getTime() != 0) {
         end_life.time = Math.floor(d.getTime() / 1000);
       }
-    } catch (e) {      
+    } catch (e) {
     }
-    
+
   } else {
     end_life.time = 0;
-  } 
+  }
 
 
   return end_life;
@@ -91,12 +91,58 @@ Bip.repr = function(accountInfo) {
     domainName += ':' + CFG.server.port;
   }
 
-  if (this.type == 'http') {
+  if (this.type === 'http') {
     repr = CFG.proto_public + domainName + '/bip/http/' + this.name;
   } else if (this.type == 'smtp') {
     repr = this.name + '@' + domainName;
   }
   return repr;
+}
+
+Bip.links = function(accountInfo) {
+  var links = [];
+  if (this.type === 'http') {
+    var schema = {
+      'href' : this.repr(accountInfo),
+      'rel' : '_repr',
+      'encType' : 'application/json',
+      "schema" : {
+        "properties" : {
+        },
+        "required" : []
+      }
+    };
+
+    for (var sCID in this.hub) {
+      if (this.hub.hasOwnProperty(sCID) && this.hub[sCID].transforms) {
+        for (var eCID in this.hub[sCID].transforms) {
+          if (this.hub[sCID].transforms.hasOwnProperty(eCID)) {
+            for (var attr in this.hub[sCID].transforms[eCID]) {
+              var tokens = this.hub[sCID].transforms[eCID][attr].match(app.helper.regActionSource),
+                key;
+
+              for (var i = 0; i < tokens.length; i++ ) {
+                key = tokens[i].replace(app.helper.regActionSource, '$3');
+                if (key && !schema.schema.properties[key]) {
+                  schema.schema.properties[key] = {
+                    type : "string",
+                    name : key
+                  };
+                  schema.schema.required.push(key);
+                }
+              }
+            }
+          }
+        }
+
+      }
+    }
+
+    // traverse transforms, extract attributes
+    links.push(schema);
+
+  }
+  return links;
 }
 
 Bip.entityName = 'bip';
@@ -260,10 +306,10 @@ Bip.entitySchema = {
       for (var src in hub) {
         if (hub.hasOwnProperty(src)) {
           for (var cid in hub[src].transforms) {
-            if (hub[src].transforms.hasOwnProperty(cid)) {    
+            if (hub[src].transforms.hasOwnProperty(cid)) {
               for (var k in hub[src].transforms[cid]) {
                 hub[src].transforms[cid][k] = hub[src].transforms[cid][k].trim();
-              }              
+              }
             }
           }
         }
@@ -689,7 +735,7 @@ Bip.preSave = function(accountInfo, next) {
     async.parallel(transformUnpack, function(err) {
       next(err, self);
     });
-  } else {    
+  } else {
     next(false, this);
   }
 };
@@ -763,11 +809,11 @@ Bip.postSave = function(accountInfo, next, isNew) {
       owner_id : accountInfo.user.id,
       code : 'bip_create'
     } );
-    
+
     // if its a new trigger, then run it
     if ('trigger' === this.type && !this.paused) {
       app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, this);
-    }    
+    }
   }
 
   next(false, this.getEntityName(), this);

@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 
 /**
@@ -63,11 +63,11 @@ var uuid        = require('node-uuid'),
  */
 function DaoMongo(config, log, next) {
   var self = this;
-  
+
   events.EventEmitter.call(this);
-  
+
   this._log = log;
-  
+
   var options = {
     server : {},
     replset : {}
@@ -91,7 +91,7 @@ function DaoMongo(config, log, next) {
 
   if (!mongooseOpen) {
     mongoose.connect(config.dbMongo.connect, options);
-  } 
+  }
 }
 
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
@@ -137,15 +137,16 @@ DaoMongo.prototype.getModelPublicFilters = function() {
 
 DaoMongo.prototype.getModelReadableProps = function(modelName) {
   var modelPublicFilters = this.models[modelName]['class'].getRenderablePropsArray();
-  
+
   modelPublicFilters.push('_repr');
+  modelPublicFilters.push('_links');
   modelPublicFilters.push('_href');
   modelPublicFilters.push('_renderers');
   modelPublicFilters.push('status');
   modelPublicFilters.push('message');
   modelPublicFilters.push('code');
   modelPublicFilters.push('errors');
-  
+
   return modelPublicFilters;
 }
 
@@ -182,9 +183,9 @@ DaoMongo.prototype.registerModel = function(modelClass) {
   });
 
   //
-  
+
   var model = this.modelFactory(modelClass.getEntityName());
-  
+
   // swap out 'object' types for mixed.  This lets us separate mongoose
   // from our actual models
   var modelSchema = model.getEntitySchema();
@@ -226,12 +227,12 @@ DaoMongo.prototype.registerModel = function(modelClass) {
   // register mongoose schema
   try {
     mongoose.model(modelClass.getEntityName(), container[modelName]['schema']);
-  } catch (e) {    
+  } catch (e) {
     if (e.name !== 'OverwriteModelError') {
       throw new Exception(e);
     }
   }
-  
+
   return container;
 }
 
@@ -347,7 +348,7 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
   schema = this.models[modelName]['class'].getEntitySchema();
 
   var model = helper.copyProperties(srcModel, mongoModel, true);
-  
+
   // mongoose doesn't look to apply defaults prior to validation??
   for (var key in schema) {
     if (schema.hasOwnProperty(key) ) {
@@ -405,12 +406,12 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
         next(err, model.getEntityName(), model, 500);
         return;
       }
-      
+
       var mongoModel = self.toMongoModel(model);
 
       mongoModel.save(function(err) {
         if (err) {
-          self._log(err, 'error');          
+          self._log(err, 'error');
           if (next) {
 
             // conflict? Then load the record and return the payload
@@ -449,7 +450,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
               } else {
                 errResp = err;
               }
-              
+
               next(self.errorParse(err, model), model.getEntityName(), errResp, self.errorMap(err) );
             //}
           }
@@ -472,7 +473,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
         return model;
       });
     });
-    
+
   } else {
     this._log('Error: create(): cannot save item', 'error');
     if (next) {
@@ -493,7 +494,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
       next(err, model.getEntityName(), model, 500);
       return;
     }
-    
+
     MongooseClass.update(filter, model.toObj(), function(err) {
       if (err) {
         if (next) {
@@ -602,7 +603,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
   nowTime = helper.nowUTCSeconds();
 
   // create model container
-  model = this.modelFactory(modelName, props, accountInfo);  
+  model = this.modelFactory(modelName, props, accountInfo);
   if (model) {
     model.id = id;
     var mongoModel = this.toMongoModel(model);
@@ -629,7 +630,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         // create a model and then cast it back to plain'ol/JSON
         // so that setter middleware is applied :|
         var cleanModel = mongoModel.toJSON();
-        delete cleanModel._id;        
+        delete cleanModel._id;
         self._update(modelName, self.getObjectIdFilter(mongoModel, accountInfo), cleanModel, accountInfo, next);
       }
     });
@@ -830,9 +831,9 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
       }
 
       query.exec(function (err, results) {
-        var model, 
+        var model,
           modelPublicFilter = self.getModelReadableProps(modelName);
-        
+
         if (err) {
           self._log('Error: list(): ' + err);
           if (callback) {
@@ -841,11 +842,11 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         } else {
           // convert to models
           var modelStruct, realResult = [], publicModel, publicAttribute;
-          
+
           for (key in results) {
             model = self.modelFactory(modelName, results[key], accountInfo);
             modelStruct = model.toObj();
-            
+
             publicModel = {};
             for (var i = 0; i < modelPublicFilter.length; i++) {
               publicAttribute = modelPublicFilter[i];
@@ -989,7 +990,7 @@ DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
 DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
   var model = this.modelFactory(modelName, {}, accountInfo),
     self = this;
-    
+
   this.get(model, id, accountInfo, function(err, modelName, result) {
     if (err) {
       next.apply(self, arguments);
@@ -1019,7 +1020,7 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
         mongoModel[k] = undefined;
       }
       setProperties[k] = mongoModel[k];
-    }    
+    }
   }
 
   var updateCols = {

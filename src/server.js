@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 /**
  *
  * The Bipio API Server
@@ -20,10 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
-
- */
-/**
- * REST API Server bootstrap
  */
 var bootstrap = require(__dirname + '/bootstrap'),
   app = bootstrap.app,
@@ -139,7 +134,11 @@ function setCORS(req, res, next) {
   next();
 }
 
-// express preflight
+
+//
+// ------ LOAD EXPRESS MIDDLEWARE
+//
+
 restapi.use(multer({ dest : GLOBAL.DATA_DIR + '/tmp' }));
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {
@@ -161,8 +160,7 @@ restapi.use(setCORS);
 restapi.use(methodOverride());
 restapi.use(cookieParser());
 
-// required for some oauth provders
-
+// required for some oauth providers
 restapi.use(session({
   key : 'sid',
   resave : false,
@@ -179,9 +177,14 @@ restapi.use(session({
 
 restapi.use(passport.initialize());
 restapi.use(passport.session());
+
 restapi.set('jsonp callback', true );
 restapi.disable('x-powered-by');
 
+
+//
+// ------ START CLUSTER
+//
 if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
   var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
