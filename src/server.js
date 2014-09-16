@@ -295,7 +295,6 @@ if (cluster.isMaster) {
     require('./router').init(restapi, dao);
 
     restapi.use(function(err, req, res, next) {
-      next();
         var rDomain = domain.create();
 
         res.on('close', function () {
