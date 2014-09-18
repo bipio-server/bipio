@@ -98,6 +98,7 @@
       "flow" : {},
       "syndication" : {},
       "http" : {},
-      "time" : {}
+      "time" : {},
+      "math" : {}
     }
 }

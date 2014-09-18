@@ -609,7 +609,6 @@ Channel.getPodTokens = function() {
       ret.action = tokens[1];
       ret._struct = pods[ret.pod];
       ret.getSchema = function(key) {
-        //var ptr = pods[this.pod]['_schemas'][this.action];
         var ptr = JSON.parse(JSON.stringify(pods[this.pod].getSchema(this.action)));
         if (key && ptr[key]) {
           return ptr[key];

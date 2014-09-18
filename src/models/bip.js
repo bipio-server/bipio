@@ -121,14 +121,16 @@ Bip.links = function(accountInfo) {
               var tokens = this.hub[sCID].transforms[eCID][attr].match(app.helper.regActionSource),
                 key;
 
-              for (var i = 0; i < tokens.length; i++ ) {
-                key = tokens[i].replace(app.helper.regActionSource, '$3');
-                if (key && !schema.schema.properties[key]) {
-                  schema.schema.properties[key] = {
-                    type : "string",
-                    name : key
-                  };
-                  schema.schema.required.push(key);
+              if (tokens) {
+                for (var i = 0; i < tokens.length; i++ ) {
+                  key = tokens[i].replace(app.helper.regActionSource, '$3');
+                  if (key && !schema.schema.properties[key]) {
+                    schema.schema.properties[key] = {
+                      type : "string",
+                      name : key
+                    };
+                    schema.schema.required.push(key);
+                  }
                 }
               }
             }

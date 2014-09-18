@@ -39,6 +39,7 @@
     "bip-pod-syndication": ">=0.0.1",
     "bip-pod-templater": ">=0.0.1",
     "bip-pod-time": ">=0.0.1",
+    "bip-pod-math": ">=0.0.1",
     "body-parser": "^1.0.2",
     "clone": ">=0.1.0",
     "commander": ">=2.0.0",
