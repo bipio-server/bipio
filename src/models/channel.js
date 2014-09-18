@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
  *
@@ -76,7 +76,7 @@ Channel.entitySchema = {
     renderable: true,
     required : true,
     writable: true,
-    set : function(action) {            
+    set : function(action) {
       var podAction = Channel.getPodTokens(action);
       if (podAction.ok()) {
         this.config = pods[podAction.pod].importGetDefaults(podAction.action);
@@ -174,7 +174,7 @@ function validAction(value) {
   if (ok) {
     var tTokens = value.split('.');
     var pod = tTokens[0], podAction = tTokens[1];
-   
+
     ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
   }
   return ok;
@@ -257,7 +257,7 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
           // it doesn't matter too much if people inject 'undefined'
           // into their transform template...
           key = String(key).replace(
-            new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'), 
+            new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'),
             flattenedExports[ exp ]
           );
         }
@@ -383,10 +383,10 @@ Channel.rpc = function(renderer, query, client, req, res) {
         }
       });
     })(podTokens.name, podTokens.action, renderer, query, client, req, res);
-    
+
   } else if ('issuer_token' === pods[podTokens.name]._authType) {
-    
-    
+
+
     (function(podName, action, renderer, query, client, req, res) {
       pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password) {
         if (!err && (username || password)) {
@@ -442,7 +442,7 @@ Channel.pod = function(podName) {
   } else if (this.action && '' !== this.action) {
     tokens = this.action.split('.');
     ret = schema = pods[tokens[0]];
-      
+
   } else {
     ret = pods;
   }
@@ -504,7 +504,7 @@ Channel.postSave = function(accountInfo, next, isNew) {
   }
 
   this.accountInfo = undefined;
-  accountInfo.user.channels.set(this);    
+  accountInfo.user.channels.set(this);
 
   // channels behave a little differently, they can have postponed availability
   // after creation, which the pod actions themselves might want to dictate.
@@ -521,21 +521,21 @@ Channel.postSave = function(accountInfo, next, isNew) {
             }
           };
           pods[podName].setup(action, channel, accountInfo, auth, next);
-        // not authenticated? Then we can't perform setup so drop this 
+        // not authenticated? Then we can't perform setup so drop this
         // channel
         } else if (!oAuthToken) {
-          self._dao.remove('channel', self.id, accountInfo, function() {            
+          self._dao.remove('channel', self.id, accountInfo, function() {
             next('Channel could not authenticate', 'channel', {
               message : 'Channel could not authenticate'
-            }, 500);  
+            }, 500);
           });
-                  
+
         }
       });
     })(this, podName, action, accountInfo, next);
-    
+
   } else if ('issuer_token' === pods[podName]._authType) {
-    
+
     (function(channel, podName, action, accountInfo, next) {
       pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password, key) {
         if (!err && (username || password || key)) {
@@ -546,28 +546,28 @@ Channel.postSave = function(accountInfo, next, isNew) {
               password : password
             }
           };
-          
+
           pods[podName].setup(action, channel, accountInfo, auth, next);
-          
+
         } else {
-          // not authenticated? Then we can't perform setup so drop this 
+          // not authenticated? Then we can't perform setup so drop this
           // channel
           self._dao.remove('channel', self.id, accountInfo, function() {
             next(true, 'channel', {
               message : 'No Issuer Token bound for this Channel'
-            }, 403);  
+            }, 403);
           });
         }
       });
     })(this, podName, action, accountInfo, next);
-    
+
   } else {
     pods[podName].setup(action, this, accountInfo, next);
   }
 
   if (isNew) {
     GLOBAL.app.bastion.createJob(DEFS.JOB_USER_STAT, {
-      owner_id : accountInfo.user.id, 
+      owner_id : accountInfo.user.id,
       type : 'channels_total'
     } );
   }
@@ -577,17 +577,17 @@ Channel.postSave = function(accountInfo, next, isNew) {
  * Checks whether any bips are pointed to this channel and if not,
  * calls any pod teardowns.
  */
-Channel.preRemove = function(id, accountInfo, next) { 
+Channel.preRemove = function(id, accountInfo, next) {
   var tTokens = this.action.split('.'),
   podName = tTokens[0], action = tTokens[1],
   self = this;
 
   this.getBips(id, accountInfo, function(err, results) {
     // removing channel where it has bips, conflict
-    if (!err && results && results.length > 0) {           
+    if (!err && results && results.length > 0) {
       next('Channel still has Bips attached', 'channel', {
         message : 'Channel still has Bips attached'
-      }, 409);           
+      }, 409);
     } else {
       pods[podName].teardown(action, self, accountInfo, function(err) {
         next(err, 'channel', self);
@@ -610,7 +610,7 @@ Channel.getPodTokens = function() {
       ret._struct = pods[ret.pod];
       ret.getSchema = function(key) {
         //var ptr = pods[this.pod]['_schemas'][this.action];
-        var ptr = pods[this.pod].getSchema(this.action);
+        var ptr = JSON.parse(JSON.stringify(pods[this.pod].getSchema(this.action)));
         if (key && ptr[key]) {
           return ptr[key];
         }
@@ -681,7 +681,7 @@ Channel.testImport = function(importName) {
 /**
  *
  * Gets configured Bips for this channel
- * 
+ *
  */
 Channel.getBips = function(channelId, accountInfo, next) {
   this._dao.getBipsByChannelId(channelId, accountInfo, next);
@@ -715,7 +715,7 @@ Channel.getRendererUrl = function(renderer, accountInfo) {
         ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
       } else {
         ret = accountInfo.getDefaultDomainStr(true) + '/rpc/pod/' + action.name + '/' + action.action + '/' + renderer;
-      }            
+      }
     }
   }
 
@@ -737,7 +737,7 @@ Channel.attachRenderer = function(accountInfo) {
           _href : accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/invoke'
         }
       };
-      
+
       for (var idx in rStruct.renderers) {
         this._renderers[idx] = rStruct.renderers[idx]
         this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
@@ -761,8 +761,6 @@ Channel.repr = function(accountInfo) {
     repr = pods[action.pod].repr(action.action, this);
     this.attachRenderer(accountInfo);
   }
-
-
 
   return repr;
 }

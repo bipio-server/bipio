@@ -75,7 +75,6 @@ function publicFilter(modelName, modelStruct) {
     modelPublicFilters = [];
   }
 
-
   // always allow representations and meta data
   modelPublicFilters.push('_repr');
   modelPublicFilters.push('_href');
@@ -116,7 +115,7 @@ function publicFilter(modelName, modelStruct) {
  * if fails, defers to http basic auth.
  */
 function restAuthWrapper(req, res, next) {
-  if (req.session.account && req.session.account.host === getClientInfo(req).host && !req.masqUser) {
+  if (!req.header('authorization') && req.session.account && req.session.account.host === getClientInfo(req).host && !req.masqUser) {
     dao.getAccountStruct(req.session.account, function(err, accountInfo) {
       if (!err) {
         req.remoteUser = req.user = accountInfo;
