@@ -996,7 +996,13 @@ DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
       next.apply(self, arguments);
     } else {
       self.updateProperties(modelName, result.id, props, function(err) {
-        next(err, modelName, {});
+        if (err) {
+          next(err, modelName, {});
+        } else {
+          self.get(model, id, accountInfo, function(err, modelName, result) {
+            next(err, modelName, result);
+          });
+        }
       });
     }
   })

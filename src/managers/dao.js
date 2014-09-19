@@ -520,7 +520,6 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                         authModel.is_admin = false;
                         self.getAccountStruct(authModel, acctCallback);
                       }
-
                     });
 
                   } else {
@@ -549,7 +548,7 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
 Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, activeDomainId, masquerade) {
   // ldap does not support ownerId/domainId lookups at this point
   // @todo add ldap attributes map to ownerid/domainid
-  if ('ldap' === this.authStrategy.type && !asOwnerId && 'token' === type) {
+  if ('ldap' === this.authStrategy.type && !asOwnerId && 'token' === type && 'admin' !== username) {
     this._checkAuthLDAP.apply(this, arguments);
   } else {
     this._checkAuthNative.apply(this, arguments);
