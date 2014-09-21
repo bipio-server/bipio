@@ -23,9 +23,11 @@ var util        = require('util'),
   helper      = require('../lib/helper'),
   cdn         = require('../lib/cdn'),
   crypto = require('crypto'),
-  step        = require('../lib/step'),
-  async       = require('async'),
+  step        = require('../lib/step'), // @todo deprecate, use Q
+  async       = require('async'), // @todo deprecate, use Q
+  Q           = require('q')
   fs          = require('fs'),
+  path        = require('path'),
   time        = require('time'),
   DaoMongo    = require('./dao-mongo.js')
   ldap = require('ldapjs');
@@ -58,8 +60,6 @@ function Dao(config, log, next) {
 
     'stats_account' : require('../models/stats_account').StatsAccount,
     'stats_account_network' : require('../models/stats_account_network').StatsAccountNetwork,
-
-    'migration' : require('../models/migration').Migration
   }
 
   this.models = { };
@@ -1718,4 +1718,135 @@ DaoMongo.prototype.getModelPrototype = function() {
   return this._modelPrototype;
 }
 
+DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
+  var migrationPath = path.resolve(__dirname + '/../../migrations/'),
+    newVersionInt = app.helper.versionToInt(newVersion),
+    // @deprecate default pinned first migration version (+1)
+    lastMigration = app.helper.versionToInt('0.2.45'),
+    migrations = {};
+
+  var self = this;
+
+  // get last migration
+  this.findFilter('migration', {}, function (err, results) {
+
+
+    if (err) {
+      next(err);
+    } else {
+      for (var i = 0; i < results.length; i++) {
+        if (results[i].versionInt > lastMigration) {
+          lastMigration = results[i].versionInt;
+        }
+      }
+
+      // enumerate available migrations
+      fs.readdir(migrationPath, function(err, files) {
+        var pkgInt,
+          migration,
+          migrationFile,
+          orderedMigrations,
+          deferred,
+          promises = [];
+
+        if (err) {
+          next(err);
+        } else {
+          // normalize versions
+          for (var i = 0; i < files.length; i++) {
+            pkgInt = app.helper.versionToInt(files[i]);
+            if (!isNaN(pkgInt)) {
+              migrations[pkgInt] = files[i];
+            }
+          }
+
+          // get ordered keys
+          orderedMigrations = Object.keys(migrations).sort();
+
+          for (var i = 0; i < orderedMigrations.length; i++) {
+            if (orderedMigrations[i] > lastMigration) {
+              migrationFile = path.resolve(migrationPath + '/' + migrations[orderedMigrations[i]] );
+              lastMigration = orderedMigrations[i];
+
+              if (fs.existsSync(migrationFile)) {
+                migration = require(migrationFile);
+                if (migration && migration.run) {
+                  deferred = Q.defer();
+
+                  promises.push(deferred.promise);
+
+                  (function(deferred, migration, runVersion, runVersionInt) {
+
+                    migration.run(app, targetConfig, function(msg, msgLevel) {
+                      console.log('Running ' + runVersion);
+                      app.logmessage(msg || 'Done', msgLevel);
+                      if ('error' === msgLevel) {
+                        deferred.reject(msg);
+                      } else {
+
+                        // save migration
+                        self.create(
+                          self.modelFactory('migration', {
+                            version : runVersion,
+                            versionInt : runVersionInt
+                          })
+                        );
+
+                        deferred.resolve('Installed ' + runVersion );
+                      }
+                    });
+                  })(deferred, migration, migrations[orderedMigrations[i]], orderedMigrations[i]);
+
+                } else {
+                  next('No migration index.js or no "run" method found in ' + migrationFile);
+                }
+              }
+
+            }
+          }
+
+          if (promises.length) {
+            Q.all(promises).then(function(messages) {
+
+              next(false, messages.join('\n') );
+            },
+            function() {
+              next.apply(next, arguments);
+            });
+          } else {
+            next('Nothing To Do');
+          }
+        }
+      });
+    }
+  });
+}
+
+
 module.exports = Dao;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

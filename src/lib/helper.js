@@ -524,6 +524,17 @@ var helper = {
     var str = req.headers['content-type'] || ''
       , i = str.indexOf(';');
     return ~i ? str.slice(0, i) : str;
+  },
+
+  versionToInt : function(pkgVersion) {
+    var newVersionInt = pkgVersion.split('.').map(function(token) {
+      var i = Number(token);
+      if (!isNaN(i) && token < 10) {
+        i = '0' + i;
+      }
+      return i;
+    });
+    return Number(newVersionInt.join(''));
   }
 
 }

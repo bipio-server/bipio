@@ -463,26 +463,20 @@ if (!fs.existsSync(targetConfig)) {
   domainSelect();
 
 } else {
-  // to test - bump the 'pkg.version' variable to your intended npm version,
-  // then run 'make install'
-  var migrationFile = path.resolve(__dirname + '/../migrations/' + pkg.version);
-  if (fs.existsSync(migrationFile)) {
-    var migration = require(migrationFile);
-    if (migration && migration.run) {
-      process.HEADLESS = true;
-      var bootstrap = require(__dirname + '/../src/bootstrap');
-      bootstrap.app.dao.on('ready', function(readyQueue) {
-        migration.run(bootstrap.app, targetConfig, function(msg, msgLevel) {
-          bootstrap.app.logmessage(msg || 'Done', msgLevel);
-          console.log('*** Installed ' + pkg.version);
-          process.exit(0);
-        });
-      });
-    } else {
-      console.error('No migration index.js or no "run" method found in ' + migrationFile);
-    }
-  } else {
-    // @todo add any migrations
-    console.log('Nothing To Do');
-  }
+
+  process.HEADLESS = true;
+  var bootstrap = require(__dirname + '/../src/bootstrap');
+  bootstrap.app.dao.on('ready', function() {
+
+    bootstrap.app.dao.registerModel(require('../src/models/migration').Migration);
+
+    bootstrap.app.dao.runMigrations(pkg.version, targetConfig, function(err, result) {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(result);
+      }
+      process.exit(0);
+    });
+  });
 }

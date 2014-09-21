@@ -399,6 +399,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
   var self = this, resp;
   var nowTime = helper.nowUTCSeconds();
   if (model) {
+
     model[ model.getEntityIndex() ] = uuid();
     model[ model.getEntityCreated() ] = nowTime;
     model.preSave(accountInfo, function(err, model) {

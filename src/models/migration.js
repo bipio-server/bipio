@@ -20,26 +20,30 @@
  *
  */
 var BipModel = require('./prototype.js').BipModel;
-
 var Migration = Object.create(BipModel);
 
 Migration.entityName = 'migration';
-Migration.uniqueKeys = ['owner_id'],
 Migration.entitySchema = {
     id: {
         type: String,
-        renderable: true,
+        renderable: false,
         writable: false
+    },
+    zone : {
+        type : String,
+        renderable : false,
+        writable : false,
+        "default" : "system"
     },
     version : {
         type: String,
-        renderable: true,
-        writable: true
+        renderable: false,
+        writable: false
     },
-    status : {
-        type: String,
-        renderable: true,
-        writable: true
+    versionInt : {
+        type: Number,
+        renderable: false,
+        writable: false
     }
 };
 
