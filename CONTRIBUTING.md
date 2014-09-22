@@ -49,6 +49,12 @@ top of things.  It's not personal, just important that we're all speaking the sa
 * Submit a pull request to the bipio repository in the bipio-server organization.
 * Update your Github issue to mark that you have submitted code and are ready for it to be reviewed, be sure to reference the issue number in your forked commit message (Status: Ready for Merge).
 
+## Migrations
+
+[Migrations](http://en.wikipedia.org/wiki/Software_modernization) is the mechanism BipIO uses to upgrade itself when its software version changes.  To create a migration, create the file `migrations/<% pkg.version%>/index.js`.
+
+[Example Migration](https://github.com/bipio-server/bipio/blob/master/migrations/0.2.50/index.js)
+ 
 ## Submitting Changes to Pods
 
 Changes to Pods (ie: bip-pod-? repositories in the Github bipio-server organization) should follow the same steps as above, however issues should be logged and tracked for each individual pod repository.
