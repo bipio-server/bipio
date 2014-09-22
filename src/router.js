@@ -639,7 +639,7 @@ module.exports = {
       }
     });
 
-    express.get('/rpc/pod/:pod/render/:method', restAuthWrapper, function(req, res) {
+    express.get('/rpc/pod/:pod/render/:method/:arg?', restAuthWrapper, function(req, res) {
       (function(req, res) {
         var method = req.params.method
         accountInfo = req.remoteUser,
@@ -651,6 +651,10 @@ module.exports = {
 
         if (pod && method) {
           req.remoteUser = accountInfo;
+
+          if (req.params.arg) {
+            req.query._requestArg = req.params.arg;
+          }
 
           channel.rpc(
             method,
