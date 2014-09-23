@@ -828,4 +828,19 @@ Bip.postSave = function(accountInfo, next, isNew) {
   next(false, this.getEntityName(), this);
 };
 
+// ensure we have an up to date channel index
+Bip.prePatch = function(patch, accountInfo, next) {
+
+  for (var k in patch) {
+    if (patch.hasOwnProperty(k)) {
+      this[k] = patch[k];
+    }
+  }
+  this._createChannelIndex();
+
+  patch._channel_idx = this._channel_idx;
+
+  next(false, this.getEntityName(), patch);
+};
+
 module.exports.Bip = Bip;

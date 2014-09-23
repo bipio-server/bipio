@@ -575,7 +575,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
               var model = self.modelFactory(modelName, {}, accountInfo);
               model.populate(result, accountInfo);
               next(false, model.getEntityName(), model);
-            /*
+/*
                           model.postSave(accountInfo, function(err, modelName, retModel, code) {
                                next(
                                    self.errorParse(err, model),
@@ -583,7 +583,8 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
                                    model
                                );
                            });
-                          */
+*/
+
             }
           });
       }
@@ -989,19 +990,30 @@ DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
 };
 
 DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
-  var model = this.modelFactory(modelName, {}, accountInfo),
+  var model = this.modelFactory(modelName, props, accountInfo),
     self = this;
 
   this.get(model, id, accountInfo, function(err, modelName, result) {
     if (err) {
       next.apply(self, arguments);
     } else {
-      self.updateProperties(modelName, result.id, props, function(err) {
+
+      var model = self.modelFactory(modelName, result);
+
+      model.prePatch(props, accountInfo, function(err, modelName, patch) {
+
         if (err) {
-          next(err, modelName, {});
+          next(err, model.getEntityName(), model, 500);
         } else {
-          self.get(model, id, accountInfo, function(err, modelName, result) {
-            next(err, modelName, result);
+
+          self.updateProperties(modelName, result.id, patch, function(err) {
+            if (err) {
+              next(err, modelName, {});
+            } else {
+              self.get(model, id, accountInfo, function(err, modelName, result) {
+                next(err, modelName, result);
+              });
+            }
           });
         }
       });

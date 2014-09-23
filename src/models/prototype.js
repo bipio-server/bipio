@@ -160,6 +160,10 @@ var BipModel = {
     cb(false, this.getEntityName(), this)
   },
 
+  prePatch : function(patch, accountInfo, cb) {
+    cb(false, this.getEntityName(), patch);
+  },
+
   getIdValue: function() {
     return this.id;
   },

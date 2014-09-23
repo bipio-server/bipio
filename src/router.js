@@ -670,6 +670,37 @@ module.exports = {
       })(req, res);
     });
 
+    express.get('/rpc/render/pod/:pod/:method/:arg?', restAuthWrapper, function(req, res) {
+      (function(req, res) {
+        var method = req.params.method
+        accountInfo = req.remoteUser,
+        channel = dao.modelFactory('channel', {
+          owner_id : accountInfo.user.id,
+          action : req.params.pod + '.'
+        }),
+        pod = channel.getPods(req.params.pod);
+
+        if (pod && method) {
+          req.remoteUser = accountInfo;
+
+          if (req.params.arg) {
+            req.query._requestArg = req.params.arg;
+          }
+
+          channel.rpc(
+            method,
+            req.query,
+            getClientInfo(req),
+            req,
+            res
+            );
+
+        } else {
+          res.status(404).end();
+        }
+      })(req, res);
+    });
+
     /**
       * Pass through an RPC call to a pod
       */
