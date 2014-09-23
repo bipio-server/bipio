@@ -93,6 +93,7 @@ Bip.repr = function(accountInfo) {
 
   if (this.type === 'http') {
     repr = CFG.proto_public + domainName + '/bip/http/' + this.name;
+
   } else if (this.type == 'smtp') {
     repr = this.name + '@' + domainName;
   }
@@ -188,9 +189,13 @@ Bip.entitySchema = {
     validate : [
     {
       validator : function(val, next) {
-        next( /^(smtp|http|trigger)$/i.test(val) );
+        if (CFG.server.smtp_bips) {
+          next( /^(smtp|http|trigger)$/i.test(val) );
+        } else {
+          next( /^(http|trigger)$/i.test(val) );
+        }
       },
-      msg : 'Expected "smtp", "http" or "trigger"'
+      msg : 'Unexpected Bip Type'
     }
     ],
     set : function(type) {
@@ -597,32 +602,6 @@ Bip.exports = {
     }
   },
 
-  'smtp' : {
-    properties : {
-      'subject' : {
-        type : 'string',
-        description: 'Message Subject'
-      },
-
-      'body_text' : {
-        type : 'string',
-        description: 'Text Message Body'
-      },
-
-      'body_html' : {
-        type : 'string',
-        description: 'HTML Message Body'
-      },
-
-      'reply_to' : {
-        type : 'string',
-        description: 'Sender'
-      }
-    },
-    definitions : {
-  }
-  },
-
   // http export helpers
   'http' : {
     properties : {
@@ -646,6 +625,34 @@ Bip.exports = {
     definitions : {
   }
   }
+}
+
+if (CFG.server.smtp_bips) {
+  Bip.exports.smtp = {
+    properties : {
+      'subject' : {
+        type : 'string',
+        description: 'Message Subject'
+      },
+
+      'body_text' : {
+        type : 'string',
+        description: 'Text Message Body'
+      },
+
+      'body_html' : {
+        type : 'string',
+        description: 'HTML Message Body'
+      },
+
+      'reply_to' : {
+        type : 'string',
+        description: 'Sender'
+      }
+    },
+    definitions : {
+    }
+  };
 }
 
 Bip._createChannelIndex = function() {

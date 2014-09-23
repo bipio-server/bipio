@@ -15,7 +15,8 @@
         "port": 5000,
         "host" : "127.0.0.1",
         "sessionSecret" : "",
-        "forks": 1
+        "forks": 1,
+        "smtp_bips" : false
     },
     "mailer": {
         "host": "localhost",
