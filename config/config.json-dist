@@ -99,6 +99,8 @@
       "syndication" : {},
       "http" : {},
       "time" : {},
-      "math" : {}
+      "math" : {},
+      "html" : {},
+      "crypto" : {}
     }
 }

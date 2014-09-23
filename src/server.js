@@ -279,16 +279,6 @@ if (cluster.isMaster) {
     }
   );
 
-  if (process.env.BIP_DUMP_HEAPS) {
-    var heapdump = require('heapdump');
-    setInterval(function() {
-      var f = '/tmp/bipio_' + workerId + '_' + Date.now() + '.heapsnapshot';
-      console.log('Writing ' + f);
-      console.log(require.cache);
-      heapdump.writeSnapshot(f);
-    }, 60000);
-  }
-
   app.dao.on('ready', function(dao) {
     var server;
 

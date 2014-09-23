@@ -40,7 +40,9 @@ envConfig   = require('config'),
 cluster     = require('cluster'),
 os          = require('os'),
 ipaddr = require('ipaddr.js'),
-memwatch = require('memwatch');
+memwatch = require('memwatch'),
+heapdump = require('heapdump');
+
 
 // globals
 GLOBAL.app = app;
@@ -67,6 +69,12 @@ app.isMaster = cluster.isMaster;
 
 memwatch.on('leak', function(info) {
   app.logmessage(info, 'error');
+
+  if (process.env.BIP_DUMP_HEAPS) {
+    var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
+    console.log('Writing Heap Snapshot ' + f);
+    heapdump.writeSnapshot(f);
+  }
 });
 
 // heap profiling.
@@ -89,9 +97,9 @@ app.logmessage = function(message, loglevel) {
     if (!message) {
       return;
     }
-    message = (app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':' + message;
+    message = (app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':' + message;
   } else {
-    app.logmessage((app.workerId ? process.pid : '#WORKER' + app.workerId) + ':' + (new Date()).getTime() + ':OBJECT', loglevel);
+    app.logmessage((app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':OBJECT', loglevel);
   }
 
   if (!obj && winston) {
