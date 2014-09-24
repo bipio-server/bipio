@@ -273,7 +273,7 @@ function userSetup() {
     credentials.username = answer.username.replace("\s_+", '');
 
     crypto.randomBytes(16, function(ex, buf) {
-      var token = buf.toString('hex');
+      var token = process.env.BIPIO_ADMIN_PASSWORD || buf.toString('hex');
 
       var userInstallPW = {
         type : 'input',
