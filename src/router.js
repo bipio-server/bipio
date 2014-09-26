@@ -591,7 +591,7 @@ module.exports = {
                 res.status(404).end();
               } else {
                 req.remoteUser = accountResult;
-                var channel = dao.modelFactory('channel', result);
+                var channel = dao.modelFactory('channel', result, accountResult);
 
                 channel.rpc(
                   req.params.renderer,

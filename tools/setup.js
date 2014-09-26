@@ -92,11 +92,11 @@ crypto.randomBytes(48, function(ex, buf) {
 });
 
 // JWT Signing Key
-crypto.randomBytes(48, function(ex, buf) {
-  sparseConfig.jwtKey = buf.toString('hex');
-});
-
-
+if (!sparseConfig.jwtKey)) {
+  crypto.randomBytes(48, function(ex, buf) {
+    sparseConfig.jwtKey = buf.toString('hex');
+  });
+}
 
 process.on('uncaughtException', function(err) {
   console.error(err);
