@@ -98,8 +98,8 @@ function jwtConfirm(req, res, next) {
           _jwtDeny(res, err.message);
         } else {
           try {
-            if (decoded.path === req.originalUrl
-              && JSON.stringify(decoded.body) === JSON.stringify(req.body)) {
+            if (decoded.path === req.originalUrl) {
+              // && JSON.stringify(decoded.body) === JSON.stringify(req.body)) {
 
               if (decoded.user === masq) {
                 req.masqUser = masq;
