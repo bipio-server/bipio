@@ -69,6 +69,11 @@ function Dao(config, log, next) {
 
   if (config.auth && config.auth.type) {
     this.authStrategy = config.auth;
+
+    if ('ldap' === this.authStrategy.type) {
+      this._ldapClient = ldap.createClient(this.authStrategy.config.server);
+    }
+
   } else {
     this.authStrategy = {
       type : 'native'
@@ -420,8 +425,9 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
     return;
   }
 
-  var client = ldap.createClient(config.server),
-    search = app._.clone(config.search);
+  var client = this._ldapClient,
+    search = app._.clone(config.search),
+    bind = true;
 
   if (search.filter) {
     search.filter = search.filter.replace(/{{username}}/, username);
@@ -443,10 +449,12 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
 
       res.on('searchEntry', function(entry) {
         foundMatch = true;
-        //console.log('entry: ', entry.object));
-        client.bind(entry.dn, password, function(err, res) {
+
+        client.compare(entry.dn, 'userPassword', password, function(err, pass ) {
           if (err) {
             next(err);
+          } else if (!pass) {
+            next('Not Authorized')
           } else {
             self.find(
               'account',
@@ -533,6 +541,7 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
             );
           }
         });
+
       });
 
       res.on('error', function(err) {

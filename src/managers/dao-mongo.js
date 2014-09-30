@@ -80,7 +80,12 @@ function DaoMongo(config, log, next) {
   mongoose.connection.on('error', function(err) {
     log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
     log(err, 'error');
-    self.emit('error', err);
+    if (/missing hostname/i.test(err.message)) {
+      log('Exiting...', 'error');
+      process.exit(0);
+    } else {
+      self.emit('error', err);
+    }
   });
 
   mongoose.connection.on('open', function() {
@@ -90,7 +95,10 @@ function DaoMongo(config, log, next) {
   });
 
   if (!mongooseOpen) {
-    mongoose.connect(config.dbMongo.connect, options);
+    try {
+      mongoose.connect(config.dbMongo.connect, options);
+    } catch (e) {
+    }
   }
 }
 
