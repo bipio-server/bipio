@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
  *
@@ -32,21 +32,22 @@ sprintf = require('sprintf').sprintf,
 uuid    = require('node-uuid'),
 helper = require('../lib/helper'),
 events = require('events'),
+heapdump = require('heapdump'),
 eventEmitter = new events.EventEmitter();
 
 //    msgpack = require('msgpack');
 
 function Bastion(dao, noConsume, cb) {
   var self = this;
-  
+
   this.consumerTags = {};
-  
+
   events.EventEmitter.call(this);
 
   if (!cb && !noConsume) {
     cb = this.consumeLoop()
   }
-  
+
   this._dao = dao;
 
   var eventWrapper = function(readyQueue) {
@@ -55,7 +56,7 @@ function Bastion(dao, noConsume, cb) {
 
   //this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
   this._queue = new Rabbit(CFG.rabbit, noConsume ? eventWrapper : cb);
-  
+
   return this;
 }
 
@@ -253,7 +254,12 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 
     } else if (jobPacket.name == DEFS.JOB_BIP_ACTIVITY) {
       this._dao.bipLog(jobPacket.data);
+    } else if (jobPacket.name === DEFS.JOB_HEAP_DUMP && CFG.dumpKey && jobPacket.data.key === CFG.dumpKey && process.pid === jobPacket.data.pid) {
+      var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
+      app.logmessage('Writing Heap Snapshot ' + f);
+      heapdump.writeSnapshot(f);
     } else {
+      console.log(jobPacket);
       app.logmessage('BASTION:MALFORMED PACKET', 'error');
     }
   }

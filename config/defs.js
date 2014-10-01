@@ -33,7 +33,9 @@ var defs = {
 
     JOB_BIP_SET_DEFAULTS : 'transformDefaults',
 
-    JOB_SET_DEFAULT_SPACE : 'spaceDefault'
+    JOB_SET_DEFAULT_SPACE : 'spaceDefault',
+
+    JOB_HEAP_DUMP : 'heapDump'
 };
 
 module.exports = defs;
