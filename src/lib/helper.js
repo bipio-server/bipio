@@ -74,7 +74,7 @@ var helper = {
     var retStr = helper.sanitize(str).xss();
     retStr = helper.sanitize(retStr).trim();
     if (!noEscape) {
-      retStr = helper.sanitize(retStr).escape();
+      //retStr = helper.sanitize(retStr).escape();
     }
     //retStr = helper.sanitize(retStr).entityEncode();
     return retStr;
