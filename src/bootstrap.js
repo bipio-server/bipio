@@ -43,6 +43,7 @@ ipaddr = require('ipaddr.js'),
 memwatch = require('memwatch'),
 heapdump = require('heapdump');
 
+require('ssl-root-cas/latest').inject();
 
 // globals
 GLOBAL.app = app;
@@ -67,6 +68,7 @@ app._ = underscore;
 
 app.isMaster = cluster.isMaster;
 
+/*
 memwatch.on('leak', function(info) {
   app.logmessage(info, 'error');
 
@@ -76,6 +78,7 @@ memwatch.on('leak', function(info) {
     heapdump.writeSnapshot(f);
   }
 });
+*/
 
 // heap profiling.
 if ('development' ===  process.env.NODE_ENV) {

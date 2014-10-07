@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var BipModel = require('./prototype.js').BipModel;
 
@@ -38,7 +38,7 @@ AccountOption.uniqueKeys = ['owner_id'],
             type: String,
             index: true,
             renderable: false,
-            writable: false            
+            writable: false
         },
 
         bip_hub: {
@@ -136,13 +136,13 @@ AccountOption.uniqueKeys = ['owner_id'],
             type: String,
             renderable: true,
             writable: true,
-            validate : [ 
+            validate : [
                 {
                     validator : BipModel.validators.notempty,
                     msg : "Cannot be empty"
                 },
                 {
-                    validator : function(val, next) {                   
+                    validator : function(val, next) {
                         next(this.getAccountInfo().user.domains.test(val));
                     },
                     msg : 'Domain Not Found'
@@ -231,6 +231,11 @@ AccountOption.uniqueKeys = ['owner_id'],
             type: String,
             renderable: true,
             writable: false
+        },
+        remote_settings : {
+            type : Object,
+            renderable : true,
+            writable : true
         }
     };
 

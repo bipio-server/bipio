@@ -497,7 +497,7 @@ module.exports = {
         files = cdn.normedMeta('express', txId, req.files);
       }
 
-      (function(req, res, bipName, domain, client, files) {
+//      (function(req, res, bipName, domain, client, files) {
         GLOBAL.app.bastion.bipUnpack(
           'http',
           bipName,
@@ -557,7 +557,7 @@ module.exports = {
             }
           },
           statusMap);
-      })(req, res, bipName, domain, client, files);
+//      })(req, res, bipName, domain, client, files);
     });
 
     express.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req, res) {
@@ -954,6 +954,10 @@ module.exports = {
             name : result.user.name,
             is_admin : result.user.is_admin,
             host : getClientInfo(req).host
+          }
+
+          if (result._remoteBody) {
+            result.user.settings['remote_settings'] = result._remoteBody || {};
           }
 
           res.send(publicFilter('account_option', result.user.settings));

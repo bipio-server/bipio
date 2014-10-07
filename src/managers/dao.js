@@ -29,6 +29,7 @@ var util        = require('util'),
   fs          = require('fs'),
   path        = require('path'),
   time        = require('time'),
+  request     = require('request'),
   DaoMongo    = require('./dao-mongo.js')
   ldap = require('ldapjs');
 
@@ -412,6 +413,130 @@ Dao.prototype._checkAuthNative = function(username, password, type, next, asOwne
   );
 }
 
+
+/*
+ *  Remote HTTP Basic Auth
+ */
+Dao.prototype._checkAuthRemoteBasic = function(username, password, type, next, asOwnerId, activeDomainId, masquerade) {
+  var self = this;
+  var filter = {};
+  var config = this.authStrategy.config;
+
+  request.get(
+    {
+      "url" : config.url,
+      "auth" : {
+        "user" : username,
+        "pass" : password,
+        "sendImmediately" : true
+      }
+    },
+    function(err, res, body) {
+      if (err) {
+        next(err);
+      } else if (200 !== res.statusCode) {
+        next('Not Authorized');
+      } else {
+        self.find(
+          'account',
+          {
+            username : username
+          },
+          function(err, acctResult) {
+            if (!err && (null != acctResult)) {
+
+              var filter = {
+                'owner_id' : acctResult.id,
+                'type' : type
+              }
+
+              self.find('account_auth', filter, function(isErr, result) {
+                var resultModel = null;
+                if (!isErr && null != result) {
+                  var authModel = self.modelFactory('account_auth', result);
+
+                  var acctCallback = function(err, accountInfo) {
+                    if (undefined == activeDomainId) {
+                      accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                    } else {
+                      accountInfo.user.activeDomainId = activeDomainId;
+                    }
+
+                    try {
+                      accountInfo._remoteBody = JSON.parse(body);
+                    } catch (e) {
+                      accountInfo._remoteBody = body;
+                    }
+
+                    next(false, accountInfo);
+                  };
+
+                  if (masquerade && acctResult.is_admin) {
+                    self.getAccountStructByUsername(masquerade, acctCallback);
+                  } else {
+                    authModel.username = acctResult.username;
+                    authModel.name = acctResult.name;
+                    authModel.is_admin = acctResult.is_admin;
+                    self.getAccountStruct(authModel, acctCallback);
+                  }
+
+                } else {
+                  next(notFoundMsg, resultModel);
+                }
+              });
+
+            // if user auths off ldap and option set, auto create
+            // local account
+            } else if (!acctResult && config.auto_sync && config.auto_sync.mail_field) {
+              var emailAddress = body[config.auto_sync.mail_field];
+
+              // if no email address found, create a local dummy
+              if (!emailAddress) {
+                emailAddress = 'noreply@' + username + '.' + CFG.domain;
+              }
+
+              self.createUser(username, emailAddress, null, function(err, authModel) {
+
+                var acctCallback = function(err, accountInfo) {
+
+                  accountInfo._remoteBody = app._.clone(body);
+
+                  if (undefined == activeDomainId) {
+                    accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                  } else {
+                    accountInfo.user.activeDomainId = activeDomainId;
+                  }
+
+                  try {
+                    accountInfo._remoteBody = JSON.parse(body);
+                  } catch (e) {
+                    accountInfo._remoteBody = body;
+                  }
+
+                  next(false, accountInfo);
+                };
+
+                if (masquerade && acctResult.is_admin) {
+                  self.getAccountStructByUsername(masquerade, acctCallback);
+                } else {
+                  authModel.username = username;
+                  authModel.name = username
+                  authModel.is_admin = false;
+                  self.getAccountStruct(authModel, acctCallback);
+                }
+              });
+
+            } else {
+              next(notFoundMsg, null);
+            }
+          }
+        );
+      }
+    }
+  );
+}
+
+
 /**
  * LDAP Auth
  */
@@ -541,7 +666,6 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
             );
           }
         });
-
       });
 
       res.on('error', function(err) {
@@ -559,6 +683,8 @@ Dao.prototype.checkAuth = function(username, password, type, cb, asOwnerId, acti
   // @todo add ldap attributes map to ownerid/domainid
   if ('ldap' === this.authStrategy.type && !asOwnerId && 'token' === type && 'admin' !== username) {
     this._checkAuthLDAP.apply(this, arguments);
+  } else if ('http_basic' === this.authStrategy.type && !asOwnerId && 'token' === type && 'admin' !== username) {
+    this._checkAuthRemoteBasic.apply(this, arguments);
   } else {
     this._checkAuthNative.apply(this, arguments);
   }
@@ -885,6 +1011,7 @@ Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
 
   if (listBy) {
     regExp = new RegExp(listBy + '\.*', 'i');
+
     filter.manifest = {
       '$regex' : regExp
     }
@@ -1195,9 +1322,14 @@ Dao.prototype.expireAll = function(next) {
 
     if (!err && results) {
       for (var i = 0; i < results.length; i++) {
-        tzNowTime = Math.floor(
-          new time.Date().setTimezone(results[i].timezone).getTime() / 1000
-          );
+        try {
+          tzNowTime = Math.floor(
+            new time.Date().setTimezone(results[i].timezone).getTime() / 1000
+            );
+        } catch (e) {
+          app.logmessage(results[i].owner_id + ' : ' + e, 'error');
+          tzNowTime = Math.floor(new time.Date().getTime() / 1000);
+        }
 
         filter = {
           paused : false,

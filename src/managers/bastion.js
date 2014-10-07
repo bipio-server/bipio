@@ -292,7 +292,7 @@ Bastion.prototype.domainBipUnpack = function(name, domain, container, type, cb, 
  * rabbit for consumption by a Bastion worker.
  *
  */
-Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbParameterMap) {
+Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cbParameterMap) {
   var self = this;
   var filter = {
     'type' : type,
@@ -313,7 +313,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
     filter.domain_id = domainId;
   }
 
-  (function(accountInfo, client, filter, next) {
+//  (function(accountInfo, client, filter, next) {
     self._dao.findFilter('bip',
       filter,
       function(err, bipResults) {
@@ -344,15 +344,15 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
 
             if (bipResult.end_life) {
               // convert bip expiry to user timezone
-              var endTime = Math.floor(
-                new Date(
-                  parseInt(bipResult.end_life.time * 1)
-                  ).setTimezone(accountInfo.user.settings.timezone).getTime()),
-              endImp =  parseInt(bipResult.end_life.imp * 1),
-              now, expired = false;
+              var tzTime = new Date(parseInt(bipResult.end_life.time * 1))
+                  .setTimezone(accountInfo.user.settings.timezone).getTime(),
+                endTime = Math.floor(tzTime),
+                nowTime = new Date().getTime() / 1000,
+                endImp =  parseInt(bipResult.end_life.imp * 1),
+                now, expired = false;
 
               if (endTime > 0) {
-                now = Math.floor(new Date().getTime() / 1000);
+                now = Math.floor(nowTime);
                 // if its an integer, then treat as a timestamp
                 if (!isNaN(endTime)) {
                   // expired? then pause
@@ -422,7 +422,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, cb, cbPa
           }
         }
       });
-  })(accountInfo, client, filter, cb);
+//  })(accountInfo, client, filter, cb);
 }
 
 /**
