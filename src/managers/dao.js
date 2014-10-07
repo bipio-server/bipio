@@ -488,46 +488,52 @@ Dao.prototype._checkAuthRemoteBasic = function(username, password, type, next, a
             // if user auths off ldap and option set, auto create
             // local account
             } else if (!acctResult && config.auto_sync && config.auto_sync.mail_field) {
-              var emailAddress = body[config.auto_sync.mail_field];
+              var emailAddress;
 
               // if no email address found, create a local dummy
-              if (!emailAddress) {
+              if ('none' === config.auto_sync.mail_field) {
                 emailAddress = 'noreply@' + username + '.' + CFG.domain;
+              } else {
+                emailAddress = app.helper.jsonPath(body, config.auto_sync.mail_field);
               }
 
-              self.createUser(username, emailAddress, null, function(err, authModel) {
+              if (emailAddress) {
+                self.createUser(username, emailAddress, null, function(err, authModel) {
 
-                var acctCallback = function(err, accountInfo) {
+                  var acctCallback = function(err, accountInfo) {
 
-                  accountInfo._remoteBody = app._.clone(body);
+                    accountInfo._remoteBody = app._.clone(body);
 
-                  if (undefined == activeDomainId) {
-                    accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                    if (undefined == activeDomainId) {
+                      accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                    } else {
+                      accountInfo.user.activeDomainId = activeDomainId;
+                    }
+
+                    try {
+                      accountInfo._remoteBody = JSON.parse(body);
+                    } catch (e) {
+                      accountInfo._remoteBody = body;
+                    }
+
+                    next(false, accountInfo);
+                  };
+
+                  if (masquerade && acctResult.is_admin) {
+                    self.getAccountStructByUsername(masquerade, acctCallback);
                   } else {
-                    accountInfo.user.activeDomainId = activeDomainId;
+                    authModel.username = username;
+                    authModel.name = username
+                    authModel.is_admin = false;
+                    self.getAccountStruct(authModel, acctCallback);
                   }
+                });
 
-                  try {
-                    accountInfo._remoteBody = JSON.parse(body);
-                  } catch (e) {
-                    accountInfo._remoteBody = body;
-                  }
-
-                  next(false, accountInfo);
-                };
-
-                if (masquerade && acctResult.is_admin) {
-                  self.getAccountStructByUsername(masquerade, acctCallback);
-                } else {
-                  authModel.username = username;
-                  authModel.name = username
-                  authModel.is_admin = false;
-                  self.getAccountStruct(authModel, acctCallback);
-                }
-              });
-
+              } else {
+                next(notFoundMsg, null);
+              }
             } else {
-              next(notFoundMsg, null);
+              next('No Email field found to sync for ' + username + ', skipping auth', null);
             }
           }
         );
@@ -626,10 +632,16 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                 // local account
                 } else if (!acctResult && config.auto_sync && config.auto_sync.mail_field) {
                   var emailAddress;
-                  for (var i = 0; i < entry.attributes.length; i++) {
-                    if (config.auto_sync.mail_field === entry.attributes[i].type) {
-                      emailAddress = entry.attributes[i].vals.pop();
-                      break;
+
+                  // if no email address found, create a local dummy
+                  if ('none' === config.auto_sync.mail_field) {
+                    emailAddress = 'noreply@' + username + '.' + CFG.domain;
+                  } else {
+                    for (var i = 0; i < entry.attributes.length; i++) {
+                      if (config.auto_sync.mail_field === entry.attributes[i].type) {
+                        emailAddress = entry.attributes[i].vals.pop();
+                        break;
+                      }
                     }
                   }
 
