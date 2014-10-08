@@ -237,8 +237,8 @@ Dao.prototype.createUser = function(username, emailAddress, password, next) {
 Dao.prototype.getAccountStructByUsername = function(username, next) {
   var self = this;
   this.find('account', { username : username }, function(err, result) {
-    if (err) {
-      next(err);
+    if (err || !result) {
+      next(err ? err : "Not Found");
     } else {
       result.owner_id = result.id;
       self.getAccountStruct(result, next);
@@ -350,6 +350,8 @@ Dao.prototype.getAccountStruct = function(authModel, next) {
     );
 }
 
+// --- Authorizations
+
 /*
  *  Native local MongoDB lookup
  */
@@ -382,12 +384,16 @@ Dao.prototype._checkAuthNative = function(username, password, type, next, asOwne
             if (asOwnerId || authModel.cmpPassword(password)) {
 
               var acctCallback = function(err, accountInfo) {
-                if (undefined == activeDomainId) {
-                  accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                if (err) {
+                  next(err);
                 } else {
-                  accountInfo.user.activeDomainId = activeDomainId;
+                  if (undefined == activeDomainId) {
+                    accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                  } else {
+                    accountInfo.user.activeDomainId = activeDomainId;
+                  }
+                  next(false, accountInfo);
                 }
-                next(false, accountInfo);
               };
 
               if (masquerade && acctResult.is_admin) {
@@ -456,19 +462,23 @@ Dao.prototype._checkAuthRemoteBasic = function(username, password, type, next, a
                   var authModel = self.modelFactory('account_auth', result);
 
                   var acctCallback = function(err, accountInfo) {
-                    if (undefined == activeDomainId) {
-                      accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                    if (err) {
+                      next(err);
                     } else {
-                      accountInfo.user.activeDomainId = activeDomainId;
-                    }
+                      if (undefined == activeDomainId) {
+                        accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                      } else {
+                        accountInfo.user.activeDomainId = activeDomainId;
+                      }
 
-                    try {
-                      accountInfo._remoteBody = JSON.parse(body);
-                    } catch (e) {
-                      accountInfo._remoteBody = body;
-                    }
+                      try {
+                        accountInfo._remoteBody = JSON.parse(body);
+                      } catch (e) {
+                        accountInfo._remoteBody = body;
+                      }
 
-                    next(false, accountInfo);
+                      next(false, accountInfo);
+                    }
                   };
 
                   if (masquerade && acctResult.is_admin) {
@@ -501,22 +511,25 @@ Dao.prototype._checkAuthRemoteBasic = function(username, password, type, next, a
                 self.createUser(username, emailAddress, null, function(err, authModel) {
 
                   var acctCallback = function(err, accountInfo) {
-
-                    accountInfo._remoteBody = app._.clone(body);
-
-                    if (undefined == activeDomainId) {
-                      accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                    if (err) {
+                      next(err);
                     } else {
-                      accountInfo.user.activeDomainId = activeDomainId;
-                    }
+                      accountInfo._remoteBody = app._.clone(body);
 
-                    try {
-                      accountInfo._remoteBody = JSON.parse(body);
-                    } catch (e) {
-                      accountInfo._remoteBody = body;
-                    }
+                      if (undefined == activeDomainId) {
+                        accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                      } else {
+                        accountInfo.user.activeDomainId = activeDomainId;
+                      }
 
-                    next(false, accountInfo);
+                      try {
+                        accountInfo._remoteBody = JSON.parse(body);
+                      } catch (e) {
+                        accountInfo._remoteBody = body;
+                      }
+
+                      next(false, accountInfo);
+                    }
                   };
 
                   if (masquerade && acctResult.is_admin) {
@@ -606,12 +619,16 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                       var authModel = self.modelFactory('account_auth', result);
 
                       var acctCallback = function(err, accountInfo) {
-                        if (undefined == activeDomainId) {
-                          accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                        if (err) {
+                          next(err);
                         } else {
-                          accountInfo.user.activeDomainId = activeDomainId;
+                          if (undefined == activeDomainId) {
+                            accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                          } else {
+                            accountInfo.user.activeDomainId = activeDomainId;
+                          }
+                          next(false, accountInfo);
                         }
-                        next(false, accountInfo);
                       };
 
                       if (masquerade && acctResult.is_admin) {
@@ -649,12 +666,16 @@ Dao.prototype._checkAuthLDAP = function(username, password, type, next, asOwnerI
                     self.createUser(username, emailAddress, null, function(err, authModel) {
 
                       var acctCallback = function(err, accountInfo) {
-                        if (undefined == activeDomainId) {
-                          accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                        if (err) {
+                          next(err);
                         } else {
-                          accountInfo.user.activeDomainId = activeDomainId;
+                          if (undefined == activeDomainId) {
+                            accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
+                          } else {
+                            accountInfo.user.activeDomainId = activeDomainId;
+                          }
+                          next(false, accountInfo);
                         }
-                        next(false, accountInfo);
                       };
 
                       if (masquerade && acctResult.is_admin) {
