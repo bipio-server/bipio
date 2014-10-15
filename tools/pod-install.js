@@ -27,6 +27,7 @@
  */
 process.HEADLESS = true;
 var program = require('commander'),
+    inquirer = require('inquirer'),
     fs = require('fs'),
     path = require('path'),
     os = require('os'),
@@ -51,9 +52,13 @@ if (program.add && program.remove) {
 
 var mode, podName;
 
+var  configEnvName, configEnv;
+
 if (program.add) {
     mode = 'add';
     podName = program.add;
+    configEnvName = "BIP_POD_CONFIG_" + podName.toUpperCase();
+        console.log(typeof configEnvName);
 } else if (program.remove) {
     mode = 'remove';
     podName = program.remove;
@@ -63,6 +68,57 @@ function modulePath(name) {
     var podPath = require.resolve(name);
     var node_modules = podPath.split(name).slice(0, -1).join(name);
     return path.join(node_modules, name);
+}
+
+// Select prompt
+
+if (process.env[configEnvName]) {
+  var prompt = function (select, cb) {
+    console.log(select.message);
+    var answer = {};
+    if (select.type == "input")
+      answer[select.name] = '';
+    else if (select.type == "confirm")
+      answer[select.name] = true;
+    cb(answer);
+  };
+} else {
+  var prompt = inquirer.prompt;
+}
+
+
+function oauthSelect(config) {
+    var oauthClientValues = [ 
+    {
+        type : 'input',
+        name : 'oAuthClientID',
+        message : 'Oauth Client ID'
+    },
+    {
+        type : 'input',
+        name : 'oAuthClientSecret',
+        message : 'Oauth Client Secret'   
+    }
+    ]
+
+
+    inquirer.prompt(oauthClientValues, function(answers) {
+        config.oauth.clientID = answers.oAuthClientID;
+        config.oauth.clientSecret = answers.oAuthClientSecret;
+    });
+
+}
+
+
+function testq() {
+    var oauthClientID = {
+        type : 'input',
+        name : 'oAuthClientID',
+        message : 'Test Question'
+    };
+    inquirer.prompt(oauthClientID, function(answer) {
+        console.log(" horray, you said " + answer.oAuthClientID);
+    });
 }
 
 try {
@@ -85,6 +141,13 @@ if (pod && podPath) {
     // load local
     var currentConfig = JSON.parse(fs.readFileSync(configFile)),
     config = pod._config || {};
+    
+    if (process.env[configEnvName]) {
+        console.log("Found environment options. Using those.");
+        configEnv = JSON.parse(process.env[configEnvName]);
+    } else {
+        configEnv = {};
+    }
 
     if (currentConfig) {
         var imgDir = GLOBAL.CDN_DIR + '/img/pods';
@@ -99,10 +162,46 @@ if (pod && podPath) {
         var actionDone = false;
         if (mode === 'add' && !currentConfig.pods[pod._name]) {
             currentConfig.pods[pod._name] = config;
-            /*
+
+        if (config.oauth) {
+            if (configEnv.length) {
+                // config.oauth = configEnv.oauth;   // works instead? 
+                config.oauth.clientID = configEnv.oauth.clientID || "ERROR LOADING CLIENT ID";
+                config.oauth.clientSecret = configEnv.oauth.clientSecret || "ERROR LOADING CLIENT SECRET";
+            } else {
+                //oauthSelect(config);
+                var oauthClientId = {
+                    type : 'input',
+                    name : 'oAuthClientID',
+                    message : 'Oauth Client ID'
+                };
+                var oauthClientSecret = {
+                    type : 'input',
+                    name : 'oAuthClientSecret',
+                    message : 'Oauth Client Secret'   
+                };
+
+                inquirer.prompt(oauthClientId, function(answers) {
+                    config.oauth.clientID = answers.oAuthClientID;
+                });
+
+                inquirer.prompt(oauthClientSecret, function(answers) {
+                    config.oauth.clientSecret = answers.oAuthClientSecret;
+                });
+
+               //testq();
+            }
+        }
+
+        if (config.api_key) {
+            config.api_key.key = "API_KEY_GOES_HERE";
+        }
+
+
+/*
             if (config.oauth && config.oauth.callbackURL) {
               currentConfig.pods[pod._name].oauth.callbackURL = currentConfig.proto_public
-                + currentConfig.domain_public
+                + currentConfig.oauth_config
                 + config.oauth.callbackURL;
             }
             */
