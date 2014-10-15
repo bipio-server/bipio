@@ -1040,13 +1040,21 @@ Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
   var pageSize = pageSize || 10,
     page = page || 1,
     orderBy = orderBy || 'recent',
-    filter = {}, regExp;
+    filter = {};
 
   if (listBy) {
-    regExp = new RegExp(listBy + '\.*', 'i');
+    var tokens = listBy.split(':');
+    var searchTerms = tokens[1];
 
-    filter.manifest = {
-      '$regex' : regExp
+/*
+    filter.name = {
+      '$regex' : searchTerms,
+      '$options' : 'i'
+    };
+*/
+    filter.note = {
+      '$regex' : searchTerms,
+      '$options' : 'i'
     }
   }
 
