@@ -202,16 +202,67 @@ Channel.staticChildInit = function() {
  *  - no transforms, exports = import (do not need to explicitly transform 1:1)
  *
  */
-Channel._transform = function(adjacentExports, transforms, client, bip) {
+
+Channel._transform = function(adjacentExports, transforms, actionImports) {
+  var self = this,
+    pod = this.getPodTokens();
+    actionImports = actionImports || pods[pod.name].getImports(pod.action), // expected imports
+    resolvedImports = {}; // final imports for the channel
+
+  app._.each(transforms, function(transform, key) {
+    var literalMatch = ("" === transform.replace(helper.regActionUUID, '').trim());
+
+
+    var matches = transform.match(helper.regActionUUID),
+      matchMap = {},
+      mapKeys;
+
+    app._.each(matches, function(matchStr) {
+      var pathResult;
+
+      matchStrNorm = matchStr.replace(/\[%|\s|%\]/g, ''),
+      pathExp = matchStrNorm.replace(/#/, '.');
+
+      pathResult = app.helper.jsonPath(adjacentExports, pathExp);
+
+      matchMap[matchStr] = pathResult.length === 1 ? pathResult.shift() : pathResult;
+    });
+
+    mapKeys = Object.keys(matchMap);
+
+    // forward object substructure
+    if (mapKeys.length && literalMatch) {
+      resolvedImports[key] = matchMap[mapKeys[0]];
+    } else {
+      app._.each(matchMap, function(value, key) {
+        var dataStruct = app.helper.isObject(value) || app.helper.isArray(value),
+          repl = new RegExp(app.helper.escapeRegExp(key), 'g');
+
+        try {
+          transform = transform.replace(repl, dataStruct ? JSON.stringify(value) : value);
+        } catch (err) {
+          GLOBAL.app.logmessage(err, 'error');
+        }
+      });
+      resolvedImports[key] = transform;
+    }
+  });
+
+  return helper.naturalize(resolvedImports);
+}
+
+Channel._transformOLD = function(adjacentExports, transforms, actionImports) {
   var self = this,
   pod = this.getPodTokens();
-  actionImports = pods[pod.name].getImports(pod.action), // expected imports
+  actionImports = actionImports || pods[pod.name].getImports(pod.action), // expected imports
   resolvedImports = {}, // final imports for the channel
   localKey = 'local#'
   //
   // flattens adjacent exports so that we have a dot notation form to directly
   // matched against.
   flattenedExports = helper.flattenObject(adjacentExports, '#');
+
+  console.log('flattened exports', flattenedExports);
 
   // copy action Imports into resolved Imports, with empty values or exact
   // matches
@@ -288,7 +339,7 @@ Channel._transform = function(adjacentExports, transforms, client, bip) {
 Channel.invoke = function(adjacentExports, transforms, client, contentParts, next) {
   var self = this;
 
-  var transformedImports = this._transform(adjacentExports, transforms, client),
+  var transformedImports = this._transform(adjacentExports, transforms),
   podTokens = this.getPodTokens(),
   podName = podTokens.name;
   /*

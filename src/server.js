@@ -283,7 +283,7 @@ if (cluster.isMaster) {
     var server;
 
     require('./router').init(restapi, dao);
-
+/*
     restapi.use(function(err, req, res, next) {
         var rDomain = domain.create();
 
@@ -320,7 +320,7 @@ if (cluster.isMaster) {
           rDomain.run(next);
         }
       });
-
+*/
     server = restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
 
       // drop readme's from memory
