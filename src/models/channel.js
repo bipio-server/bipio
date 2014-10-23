@@ -210,10 +210,8 @@ Channel._transform = function(adjacentExports, transforms, actionImports) {
     resolvedImports = {}; // final imports for the channel
 
   app._.each(transforms, function(transform, key) {
-    var literalMatch = ("" === transform.replace(helper.regActionUUID, '').trim());
-
-
-    var matches = transform.match(helper.regActionUUID),
+    var literalMatch = ("" === transform.replace(helper.regActionUUID, '').trim()),
+      matches = transform.match(helper.regActionUUID),
       matchMap = {},
       mapKeys;
 
@@ -251,86 +249,6 @@ Channel._transform = function(adjacentExports, transforms, actionImports) {
   return helper.naturalize(resolvedImports);
 }
 
-Channel._transformOLD = function(adjacentExports, transforms, actionImports) {
-  var self = this,
-  pod = this.getPodTokens();
-  actionImports = actionImports || pods[pod.name].getImports(pod.action), // expected imports
-  resolvedImports = {}, // final imports for the channel
-  localKey = 'local#'
-  //
-  // flattens adjacent exports so that we have a dot notation form to directly
-  // matched against.
-  flattenedExports = helper.flattenObject(adjacentExports, '#');
-
-  console.log('flattened exports', flattenedExports);
-
-  // copy action Imports into resolved Imports, with empty values or exact
-  // matches
-  for (var localImport in actionImports) {
-    resolvedImports[localImport] = (flattenedExports[localKey + localImport] ?
-      flattenedExports[localKey + localImport] :
-      ''
-      );
-  }
-
-  if (Object.keys(transforms).length) {
-    var key;
-    var tplPattern;
-
-    for (var dst in transforms) {
-      //key = transforms[dst][i];
-      key = transforms[dst];
-
-      if ('' === resolvedImports[dst] || undefined === resolvedImports[dst]) {
-        resolvedImports[dst] = '';
-      }
-
-      // match explicit key
-      if (flattenedExports[key]) {
-        importVal = flattenedExports[key];
-
-      // match 'local. derived key'
-      } else if (flattenedExports[localKey + key]) {
-        importVal = flattenedExports[localKey + key];
-
-      } else {
-        // no exact match? Try and template it. Template engines are
-        // too insecure, so we roll a basic pattern match only for
-        // [% attribute %] or [% _bip.attribute %] or whatever
-        for (var exp in flattenedExports) {
-          // if local expressin in exports, then drop it and try to match
-          if (/^local#/.test(exp)) {
-            expLocal = exp.replace(/^local#/, '');
-          } else {
-            expLocal = exp;
-          }
-
-          // it doesn't matter too much if people inject 'undefined'
-          // into their transform template...
-          key = String(key).replace(
-            new RegExp("\\[%(\\s*?)(" + expLocal + '|' + exp + ")(\\s*?)%\\]", 'g'),
-            flattenedExports[ exp ]
-          );
-        }
-
-        // empty any unresolved key
-        key = String(key).replace(
-          helper.regActionUUID,
-          ''
-        );
-
-        importVal = key;
-      }
-      resolvedImports[dst] += importVal;
-
-    }
-  } else {
-    resolvedImports = adjacentExports;
-  }
-
-  return helper.naturalize(resolvedImports);
-}
-
 /**
  *
  * Applies transforms to imports for this channel and invokes this channel
@@ -342,14 +260,6 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   var transformedImports = this._transform(adjacentExports, transforms),
   podTokens = this.getPodTokens(),
   podName = podTokens.name;
-  /*
-console.log('adjacent exports :');
-console.log('ID ' + this.id);
-console.log(adjacentExports);
-console.log('transformed');
-console.log(transformedImports);
-console.log('---');
-*/
 
   // attach bip and client configs
   var sysImports = {
@@ -393,6 +303,7 @@ console.log('---');
     pods[podName].invoke(podTokens.action, this, transformedImports, sysImports, contentParts, next);
   }
 }
+
 Channel.rpc = function(renderer, query, client, req, res) {
   var self = this,
   podTokens = this.getPodTokens();

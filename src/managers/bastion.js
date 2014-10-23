@@ -169,12 +169,12 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                     };
 
                     self.channelDistribute(
-                      jobPacket.data,
+                      app._.clone(jobPacket.data),
                       'source',
                       '',
                       '',
                       normedExports,
-                      clientStruct,
+                      app._.clone(clientStruct),
                       content_parts
                       );
                   }
@@ -518,6 +518,7 @@ Bastion.prototype.channelProcess = function(struct) {
     };
 
     struct.imports._bip = app._.clone(struct.bip);
+    struct.imports._client = app._.clone(struct.client);
 
     this._dao.find(
       'channel',
