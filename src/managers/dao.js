@@ -1289,19 +1289,18 @@ Dao.prototype.triggerAll = function(next) {
       numResults = results.length;
       numProcessed = 0;
       for (var i = 0; i < numResults; i++) {
-        (function(trigger) {
-          app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, trigger);
-          numProcessed++;
 
-          app.logmessage('DAO:Trigger:' + trigger.id + ':' + numProcessed + ':' + numResults);
+        app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, results[i]);
+        numProcessed++;
 
-          if (numProcessed >= (numResults - 1)) {
-            // the amqp lib has stopped giving us queue publish acknowledgements?
-            setTimeout(function() {
-              next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-            }, 1000);
-          }
-        })(results[i]);
+        app.logmessage('DAO:Trigger:' + results[i].id + ':' + numProcessed + ':' + numResults);
+
+        if (numProcessed >= (numResults - 1)) {
+          // the amqp lib has stopped giving us queue publish acknowledgements?
+          setTimeout(function() {
+            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+          }, 1000);
+        }
       }
     } else {
       next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^

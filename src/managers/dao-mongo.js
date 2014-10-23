@@ -896,9 +896,9 @@ DaoMongo.prototype.find = function(modelName, filter, next) {
   });
 };
 
-DaoMongo.prototype.findFilter = function(modelName, filter, next) {
+DaoMongo.prototype.findFilter = function(modelName, filter, next, projection) {
   var self = this;
-  mongoose.model(modelName).find(filter, function (err, result) {
+  mongoose.model(modelName).find(filter, projection || {}, function (err, result) {
     if (err) {
       self._log('Error: findFilter(): ' + err, 'error');
     }
