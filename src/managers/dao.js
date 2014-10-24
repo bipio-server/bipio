@@ -1294,15 +1294,19 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
   }
 
   this.findFilter('bip', filter, function(err, results) {
+    var payload;
     if (!err && results && results.length) {
       numResults = results.length;
       numProcessed = 0;
+
       for (var i = 0; i < numResults; i++) {
-        results[i].socketTrigger = isSocket;
-        app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, results[i]);
+        payload = app._.clone(results[i])._doc;
+        payload.socketTrigger = isSocket;
+
+        app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
         numProcessed++;
 
-        app.logmessage('DAO:Trigger:' + results[i].id + ':' + numProcessed + ':' + numResults);
+        app.logmessage('DAO:Trigger:' + payload.id + ':' + numProcessed + ':' + numResults);
 
         if (numProcessed >= (numResults - 1)) {
           // the amqp lib has stopped giving us queue publish acknowledgements?
