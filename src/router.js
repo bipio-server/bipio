@@ -214,7 +214,8 @@ function getClientInfo(req, txId) {
     'reply_to' : '',
     'method' : req.method,
     'content_type' : helper.getMime(req),
-    'encoding' : req.encoding
+    'encoding' : req.encoding,
+    'headers' : req.headers
   };
 }
 
@@ -237,13 +238,17 @@ var restAction = function(req, res) {
       // hack for bips, inject a referer note if no note has been sent
       if (resourceName == 'bip') {
         var referer = getReferer(req);
+
         if (null != referer) {
           if (undefined == req.body.note) {
             req.body.note = 'via ' + referer.url_tokens.hostname;
           }
 
           // inject the referer favico
-          if (undefined == req.body.icon && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public.replace(/:\d*$/, '')) ) {
+          if (undefined == req.body.icon
+              && -1 === referer.url_tokens.hostname.indexOf(CFG.domain.replace(/:\d*$/, ''))
+              && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public.replace(/:\d*$/, ''))
+              ) {
             postSave = function(err, modelName, retModel, code ) {
               if (!err && retModel.icon == '') {
                 // @todo defer to out of band job
@@ -497,67 +502,66 @@ module.exports = {
         files = cdn.normedMeta('express', txId, req.files);
       }
 
-//      (function(req, res, bipName, domain, client, files) {
-        GLOBAL.app.bastion.bipUnpack(
-          'http',
-          bipName,
-          req.remoteUser,
-          client,
-          function(status, message, bip) {
-            var exports = {
-              'source' : {}
-            };
+      GLOBAL.app.bastion.bipUnpack(
+        'http',
+        bipName,
+        req.remoteUser,
+        client,
+        function(status, message, bip) {
+          var exports = {
+            'source' : {}
+          };
 
-            if (!message){
-              message = '';
-            }
+          if (!message){
+            message = '';
+          }
 
-            // setup source exports for this bip
-            if (bip && bip.config.exports && bip.config.exports.length > 0) {
-              var exportLen = bip.config.exports.length,
-              key;
+          // setup source exports for this bip
+          if (bip && bip.config.exports && bip.config.exports.length > 0) {
+            var exportLen = bip.config.exports.length,
+            key;
 
-              for (var i = 0; i < exportLen; i++) {
-                key = bip.config.exports[i];
-                if (req.query[key]) {
-                  exports.source[key] = req.query[key];
-                }
+            for (var i = 0; i < exportLen; i++) {
+              key = bip.config.exports[i];
+              if (req.query[key]) {
+                exports.source[key] = req.query[key];
               }
-            } else {
-              exports.source = ('GET' === req.method) ? req.query : req.body;
+            }
+          } else {
+            exports.source = ('GET' === req.method) ? req.query : req.body;
 
-              //exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
-              exports.source._body = req.rawBody;
+            //exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
+            exports.source._body = req.rawBody;
+          }
+
+          var restReponse = true;
+          // forward to bastion
+          if (status == statusMap.success) {
+            exports._client = client;
+            exports._bip = bip;
+
+            // Renderer Invoke, send a repsonse
+            if (bip.config.renderer) {
+              // get channel
+              channelRender(
+                bip.owner_id,
+                bip.config.renderer.channel_id,
+                bip.config.renderer.renderer,
+                req,
+                res
+                );
+              restReponse = false;
             }
 
-            var restReponse = true;
-            // forward to bastion
-            if (status == statusMap.success) {
-              exports._client = client;
-              exports._bip = bip;
+            GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);
+          }
 
-              // Renderer Invoke, send a repsonse
-              if (bip.config.renderer) {
-                // get channel
-                channelRender(
-                  bip.owner_id,
-                  bip.config.renderer.channel_id,
-                  bip.config.renderer.renderer,
-                  req,
-                  res
-                  );
-                restReponse = false;
-              }
+          if (restReponse) {
+            restResponse(res)( status === statusMap.fail, undefined, message, status);
+          }
+        },
+        statusMap);
 
-              GLOBAL.app.bastion.bipFire(bip, exports, client, contentParts, files);
-            }
-
-            if (restReponse) {
-              restResponse(res)( status === statusMap.fail, undefined, message, status);
-            }
-          },
-          statusMap);
-//      })(req, res, bipName, domain, client, files);
     });
 
     express.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req, res) {

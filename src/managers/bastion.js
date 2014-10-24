@@ -113,7 +113,6 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             _files : []
           },
           imports = {
-            'local' : {},
              _bip : app._.clone(jobPacket.data)
           },
           transforms = {},
@@ -125,7 +124,8 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             'reply_to' : '',
             'method' : 'man',
             'content_type' : '',
-            'encoding' : ''
+            'encoding' : '',
+            'headers' : {}
           };
 
           imports._client = clientStruct;
@@ -136,53 +136,59 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             app.logmessage('Channel has disappeared [' + cid + ']', 'info');
           } else {
             invokeChannel = self._dao.modelFactory('channel', result);
-            invokeChannel.invoke(
-              imports, // imports
-              transforms, // transforms
-              clientStruct, // client
-              contentParts, // content parts
-              function(err, exports, content_parts, transferSizeBytes) {
-                var normedExports = {};
-                transferSizeBytes = transferSizeBytes || 0;
-                for (var key in exports) {
-                  normedExports['source#' + key] = exports[key];
-                }
-                if (!err) {
-                  if (exports) {
-                    self._dao.accumulate('bip', imports._bip, '_imp_actual');
 
-                    app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                      owner_id : result.owner_id,
-                      type : 'traffic_inbound_mb',
-                      inc : sprintf('%.4f', (transferSizeBytes / (1024 * 1024)) )
-                    });
-
-                    app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                      owner_id : result.owner_id,
-                      type : 'delivered_bip_inbound'
-                    });
-
-                    // translate trigger exports
-                    // into bip #source hub key.
-                    var v = {
-                      'source' : exports
-                    };
-
-                    self.channelDistribute(
-                      app._.clone(jobPacket.data),
-                      'source',
-                      '',
-                      '',
-                      normedExports,
-                      app._.clone(clientStruct),
-                      content_parts
-                      );
+            if (!invokeChannel.isSocket() ) {
+              invokeChannel.invoke(
+                imports, // imports
+                transforms, // transforms
+                clientStruct, // client
+                contentParts, // content parts
+                function(err, exports, content_parts, transferSizeBytes) {
+                  var normedExports = {};
+                  transferSizeBytes = transferSizeBytes || 0;
+                  for (var key in exports) {
+                    normedExports['source#' + key] = exports[key];
                   }
-                }
-              });
+
+                  normedExports['source'] = app._.clone(exports);
+
+                  if (!err) {
+                    if (exports) {
+                      self._dao.accumulate('bip', imports._bip, '_imp_actual');
+
+                      app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                        owner_id : result.owner_id,
+                        type : 'traffic_inbound_mb',
+                        inc : sprintf('%.4f', (transferSizeBytes / (1024 * 1024)) )
+                      });
+
+                      app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                        owner_id : result.owner_id,
+                        type : 'delivered_bip_inbound'
+                      });
+
+                      // translate trigger exports
+                      // into bip #source hub key.
+                      var v = {
+                        'source' : exports
+                      };
+
+                      self.channelDistribute(
+                        app._.clone(jobPacket.data),
+                        'source',
+                        '',
+                        '',
+                        normedExports,
+                        app._.clone(clientStruct),
+                        content_parts
+                      );
+                    }
+                  }
+                });
+            }
           }
         }
-        );
+      );
 
     // exit process
     } else if (jobPacket.name == DEFS.SIG_RESTART) {
@@ -327,7 +333,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cb
         } else {
           for (var i = 0; i < numResults; i++) {
             bipResult = bipResults[i];
-            if (client && bipResult.binder.length > 0) {
+            if (client && bipResult.binder && bipResult.binder.length > 0) {
               if (bipResult.binder[0] == 'first') {
                 firstBinder = true;
               }

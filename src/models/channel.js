@@ -411,6 +411,19 @@ Channel.pod = function(podName) {
   return ret;
 }
 
+Channel.isSocket = function() {
+  var ret = false, pod;
+  if (this.action && '' !== this.action) {
+    tokens = this.action.split('.');
+    pod = pods[tokens[0]];
+    if (pod) {
+      ret = pod.isSocket(tokens[1]);
+    }
+  }
+
+  return ret;
+}
+
 Channel.hasRenderer = function(renderer) {
   var tokens = this.action.split('.'),
   pod = this.pod(tokens[0]);

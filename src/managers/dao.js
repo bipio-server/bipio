@@ -1277,12 +1277,21 @@ Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
  * Trigger all trigger bips
  *
  */
-Dao.prototype.triggerAll = function(next) {
+Dao.prototype.triggerAll = function(next, filterExtra) {
   var self = this,
   filter = {
     type : 'trigger',
     paused : false
-  };
+  }, fkeys;
+
+  if (filterExtra) {
+    fKeys = Object.keys(filterExtra);
+    for (var i = 0; i < fKeys.length; i++) {
+      if (filterExtra.hasOwnProperty(fKeys[i])) {
+        filter[fKeys[i]] = filterExtra[fKeys[i]];
+      }
+    }
+  }
 
   this.findFilter('bip', filter, function(err, results) {
     if (!err && results && results.length) {
@@ -1304,6 +1313,33 @@ Dao.prototype.triggerAll = function(next) {
       }
     } else {
       next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
+    }
+  });
+}
+
+Dao.prototype.triggerByChannelAction = function(actionPath, next) {
+  var self = this,
+    filter = {
+      action : actionPath
+    };
+
+  this.findFilter('channel', filter, function(err, results) {
+    var cids = [];
+    if (!err && results && results.length) {
+      for (var i = 0; i < results.length; i++) {
+        cids.push(results[i].id);
+      }
+
+      var bipFilter = {
+        "config.channel_id" : {
+          "$in" : cids
+        }
+      }
+
+      self.triggerAll(next, bipFilter);
+
+    } else {
+      next();
     }
   });
 }
