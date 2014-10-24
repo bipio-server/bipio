@@ -137,7 +137,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
           } else {
             invokeChannel = self._dao.modelFactory('channel', result);
 
-            if (!invokeChannel.isSocket() ) {
+            if (jobPacket.data.socketTrigger || !invokeChannel.isSocket() ) {
               invokeChannel.invoke(
                 imports, // imports
                 transforms, // transforms

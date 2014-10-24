@@ -1277,7 +1277,7 @@ Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
  * Trigger all trigger bips
  *
  */
-Dao.prototype.triggerAll = function(next, filterExtra) {
+Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
   var self = this,
   filter = {
     type : 'trigger',
@@ -1298,7 +1298,7 @@ Dao.prototype.triggerAll = function(next, filterExtra) {
       numResults = results.length;
       numProcessed = 0;
       for (var i = 0; i < numResults; i++) {
-
+        results[i].socketTrigger = isSocket;
         app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, results[i]);
         numProcessed++;
 
@@ -1336,7 +1336,7 @@ Dao.prototype.triggerByChannelAction = function(actionPath, next) {
         }
       }
 
-      self.triggerAll(next, bipFilter);
+      self.triggerAll(next, bipFilter, true);
 
     } else {
       next();
