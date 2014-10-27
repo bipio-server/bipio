@@ -506,14 +506,20 @@ var helper = {
   // tests whether host is in blacklist
   hostBlacklisted : function(host, whitelist, next) {
     var blacklist = CFG.server.public_interfaces;
+
     this.resolveHost(host, function(err, aRecords, resolvedHost) {
       var inBlacklist = false;
       if (!err) {
         if (whitelist) {
-          for (var i = 0; i < whitelist.length; i++) {
-            if (resolvedHost === whitelist[i]) {
-              next(err, [], aRecords);
-              return;
+          if (_.intersection(aRecords, whitelist).length ) {
+            next(err, [], aRecords);
+            return;
+          } else {
+            for (var i = 0; i < whitelist.length; i++) {
+              if (resolvedHost === whitelist[i]) {
+                next(err, [], aRecords);
+                return;
+              }
             }
           }
         }
