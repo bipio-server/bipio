@@ -549,6 +549,13 @@ var helper = {
       return i;
     });
     return Number(newVersionInt.join(''));
+  },
+
+  deriveObject : function(input) {
+    if (!app.helper.isObject(input)) {
+      input = JSON.parse(input);
+    }
+    return input;
   }
 
 }
