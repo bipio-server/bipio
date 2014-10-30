@@ -753,7 +753,7 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
 
   MongoClass.remove(filter, function (err, result) {
     if (err || result == 0) {
-      self._log('Error: remove(): ' + err);
+      self._log('Error: remove(): ' + (err || 'Nothing to Remove') );
       if (next) {
         next(false, null);
         return null;
