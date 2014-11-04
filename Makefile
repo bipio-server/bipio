@@ -4,6 +4,7 @@ TESTS = tests/models/channel.js
 REPORTER = dot
 
 install:
+	./tools/git-setup.sh
 	@SYSTEM_TZ=`/usr/bin/env date +%Z` ./tools/setup.js
 
 test-install:

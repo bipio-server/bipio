@@ -155,4 +155,4 @@ bastion = new require('./managers/bastion');
 
 module.exports.app = app;
 module.exports.app.dao = new dao(CFG, app.logmessage);
-module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLESS);
+module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLESS || process.env.NOCONSUME);

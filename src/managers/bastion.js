@@ -57,6 +57,10 @@ function Bastion(dao, noConsume, cb) {
   //this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
   this._queue = new Rabbit(CFG.rabbit, noConsume ? eventWrapper : cb);
 
+  if (noConsume) {
+    app.logmessage('BASTION:NOCONSUME MODE');
+  }
+
   return this;
 }
 
