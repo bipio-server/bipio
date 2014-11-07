@@ -556,8 +556,39 @@ var helper = {
       input = JSON.parse(input);
     }
     return input;
-  }
+  },
 
+  streamToHash : function(readStream, next) {
+    var hash = crypto.createHash('sha1');
+    hash.setEncoding('hex');
+
+    readStream.on('end', function() {
+        hash.end();
+        next(false, hash.read());
+    });
+
+    readStream.on('error', function(err) {
+      next(err);
+    });
+
+    readStream.pipe(hash);
+  },
+
+  streamToBuffer : function(readStream, next) {
+    var buffers = [];
+    readStream.on('data', function(chunk) {
+        buffers.push(chunk);
+    });
+
+    readStream.on('error', function(err) {
+        next(err);
+    });
+
+    readStream.on('end', function() {
+      next(false, Buffer.concat(buffers));
+
+    });
+  }
 }
 
 //
