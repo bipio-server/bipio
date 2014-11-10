@@ -86,8 +86,10 @@
     "k": {
     },
     "jwtKey" : "",
-    "auth" : {
-      "type" : "native"
+    "modules" : {
+        "auth": {
+            "strategy" : "native"
+        }
     },
     "pods": {
       "email" : {

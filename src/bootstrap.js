@@ -68,6 +68,25 @@ app._ = underscore;
 
 app.isMaster = cluster.isMaster;
 
+app.modules = {};
+
+// load modules
+var mod, ModProto;
+for (k in envConfig.modules) {
+  if (envConfig.modules.hasOwnProperty(k)) {
+    mod =  envConfig.modules[k];
+    ModProto = require(
+      GLOBAL.SERVER_ROOT
+      + '/modules/'
+      + k
+      + '/'
+      + ('native' === mod.strategy ? 'prototype' : mod.strategy)
+      + '.js'
+    );
+    app.modules[k] = new ModProto(mod.config);
+  }
+}
+
 /*
 memwatch.on('leak', function(info) {
   app.logmessage(info, 'error');
@@ -156,3 +175,10 @@ bastion = new require('./managers/bastion');
 module.exports.app = app;
 module.exports.app.dao = new dao(CFG, app.logmessage);
 module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLESS || process.env.NOCONSUME);
+
+// bind dao to modules
+for (var k in app.modules) {
+  if (app.modules.hasOwnProperty(k) && app.modules[k].setDAO) {
+    app.modules[k].setDAO(module.exports.app.dao);
+  }
+}
