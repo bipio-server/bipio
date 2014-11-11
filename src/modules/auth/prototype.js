@@ -10,6 +10,8 @@ function AuthModule(options) {
   this.options = options;
 }
 
+AuthModule.MSG_NOT_AUTHORIZED = MSG_NOT_AUTHORIZED;
+
 AuthModule.prototype = {
   setDAO : function(dao) {
     this.dao = dao;
@@ -175,7 +177,7 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     authModel = this.dao.modelFactory('account_auth', accountAuth);
 
   if (masquerade && account.is_admin) {
-    self.getAccountStructByUsername(masquerade, self.acctCallback);
+    self.getAccountStructByUsername(masquerade, next);
 
   } else {
     authModel.username = account.username;
@@ -225,6 +227,7 @@ AuthModule.prototype._test = function(username, password, options, next) {
         }
 
         dao.find('account_auth', filter, function(isErr, authResult) {
+
           var resultModel = null;
           if (!isErr && null != authResult) {
             var authModel = dao.modelFactory('account_auth', authResult);
@@ -266,15 +269,16 @@ AuthModule.prototype.domainAuth = function(domain, next) {
       next(err);
     } else {
       if (result) {
-
-        self.test(
+        self._test(
           result.owner_id,
           '',
           {
             asOwner : true,
+            acctBind : true,
             domainId : result.id
           },
           function(err, acctResult) {
+            acctResult.domain_id = result.id;
             next(err, acctResult);
           }
         );

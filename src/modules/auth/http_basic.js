@@ -20,7 +20,7 @@ HTTPBasic.prototype.test = function(username, password, options, next) {
     this.__proto__._test.apply(this, arguments);
 
   } else if (!username || !password) {
-    next(MSG_NOT_AUTHORIZED, null);
+    next(self.MSG_NOT_AUTHORIZED, null);
 
   } else {
     request.get(
@@ -69,7 +69,7 @@ HTTPBasic.prototype.test = function(username, password, options, next) {
                     });
 
                   } else {
-                    next(MSG_NOT_AUTHORIZED, resultModel);
+                    next(self.MSG_NOT_AUTHORIZED, resultModel);
                   }
                 });
 
@@ -110,11 +110,11 @@ HTTPBasic.prototype.test = function(username, password, options, next) {
                   });
 
                 } else {
-                  next(MSG_NOT_AUTHORIZED, null);
+                  next(self.MSG_NOT_AUTHORIZED, null);
                 }
               } else {
                 app.logmessage('No Email field found to sync for ' + username + ', skipping auth', 'error');
-                next(MSG_NOT_AUTHORIZED, null);
+                next(self.MSG_NOT_AUTHORIZED, null);
               }
             }
           );

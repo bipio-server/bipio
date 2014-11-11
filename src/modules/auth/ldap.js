@@ -20,11 +20,10 @@ LDAP.prototype.test = function(username, password, options, next) {
     options = this.options;
 
   if ('admin' === username || options.asOwner) {
-    console.log('proto aply..');
     this.__proto__._test.apply(this, arguments);
 
   } else if (!username || !password) {
-    next(MSG_NOT_AUTHORIZED, null);
+    next(self.MSG_NOT_AUTHORIZED, null);
 
   } else {
 
@@ -87,7 +86,7 @@ LDAP.prototype.test = function(username, password, options, next) {
                         });
 
                       } else {
-                        next(MSG_NOT_AUTHORIZED, resultModel);
+                        next(self.MSG_NOT_AUTHORIZED, resultModel);
                       }
                     });
 
@@ -122,11 +121,11 @@ LDAP.prototype.test = function(username, password, options, next) {
                       });
 
                     } else {
-                      next(MSG_NOT_AUTHORIZED, null);
+                      next(self.MSG_NOT_AUTHORIZED, null);
                     }
                   } else {
                     app.logmessage('No Email field found to sync for ' + username + ', skipping auth', 'error');
-                    next(MSG_NOT_AUTHORIZED, null);
+                    next(self.MSG_NOT_AUTHORIZED, null);
                   }
                 }
               );

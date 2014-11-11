@@ -2,6 +2,8 @@
 var fs = require('fs'),
   Migration = {
     run : function(app, configPath, next) {
+//      next();
+//      return;
       var config = JSON.parse(fs.readFileSync(configPath)),
         rootPath = GLOBAL.SERVER_ROOT + '/../',
         delta = false;

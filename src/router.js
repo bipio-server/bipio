@@ -411,7 +411,7 @@ function bipBasicFail(req, res) {
  * HTTP auth on this endpoint unless the bip is explicitly 'none'
  */
 function bipAuthWrapper(req, res, cb) {
-  dao.find('domain', { name : helper.getDomain(req.headers.host, true) }, function(err, domain) {
+  app.modules.auth.domainAuth(helper.getDomain(req.headers.host, true), function(err, acctResult) {
 
     if (err || !domain) {
       // reject always
@@ -421,13 +421,15 @@ function bipAuthWrapper(req, res, cb) {
         'name' : req.params.bip_name,
         'type' : 'http',
         'paused' : false,
-        'domain_id' : domain.id
+        'domain_id' : acctResult.domain_id
       };
 
       dao.find('bip', filter, function(err, result) {
 
         if (!err && result) {
           if (result.config.auth == 'none') {
+            req.remoteUser = acctResult;
+
             cb(false, true);
 
           } else {
@@ -457,8 +459,6 @@ function bipAuthWrapper(req, res, cb) {
     }
   });
 }
-
-
 
 module.exports = {
   init : function(express, _dao) {
@@ -571,39 +571,27 @@ module.exports = {
      * DomainAuth channel renderer
      */
     express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+        var filter = {
+          owner_id: req.remoteUser.getId(),
+          id : req.params.channel_id
+        };
 
-      var domain = helper.getDomain(req.headers.host, true);
-      (function(domain, req, res) {
-        app.modules.auth.domainAuth(domain, function(err, accountResult) {
-          if (err || !accountResult) {
+        dao.find('channel', filter, function(err, result) {
+          if (err || !result) {
             app.logmessage(err, 'error');
-            res.status(403).end();
+            res.status(404).end();
           } else {
-            var filter = {
-              owner_id: accountResult.user.id,
-              id : req.params.channel_id
-            };
+            var channel = dao.modelFactory('channel', result, req.remoteUser);
 
-            dao.find('channel', filter, function(err, result) {
-              if (err || !result) {
-                app.logmessage(err, 'error');
-                res.status(404).end();
-              } else {
-                req.remoteUser = accountResult;
-                var channel = dao.modelFactory('channel', result, accountResult);
-
-                channel.rpc(
-                  req.params.renderer,
-                  req.query,
-                  getClientInfo(req),
-                  req,
-                  res
-                  );
-              }
-            });
+            channel.rpc(
+              req.params.renderer,
+              req.query,
+              getClientInfo(req),
+              req,
+              res
+              );
           }
         });
-      })(domain, req, res);
     });
 
     /**

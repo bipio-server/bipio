@@ -1390,7 +1390,6 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
   // get last migration
   this.findFilter('migration', {}, function (err, results) {
 
-
     if (err) {
       next(err);
     } else {
