@@ -245,7 +245,6 @@ Channel._transform = function(adjacentExports, transforms) {
     }
   });
 
-    console.log("\n\nresolvedImports -> \n", resolvedImports, "\n");
   return helper.naturalize(resolvedImports);
 }
 
