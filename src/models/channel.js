@@ -258,8 +258,9 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   var self = this;
 
   var transformedImports = this._transform(adjacentExports, transforms),
-  podTokens = this.getPodTokens(),
-  podName = podTokens.name;
+    podTokens = this.getPodTokens(),
+    podName = podTokens.name,
+    pod = pods[podName];
 
   // attach bip and client configs
   var sysImports = {
@@ -269,131 +270,52 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
 
   // invoke method
   client.owner_id = this.owner_id;
-  if (pods[podName].isOAuth()) {
-    pods[podName].oAuthGetToken(this.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-      if (!err && oAuthToken) {
-        sysImports.auth = {
-          oauth : {
-            token : oAuthToken,
-            secret : tokenSecret,
-            profile : authProfile
-          }
-        };
-        pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
-      } else {
-        next(err);
-      }
-    });
-  } else if ('issuer_token' === pods[podName]._authType) {
-    pods[podName].authGetIssuerToken(this.owner_id, podName, function(err, username, password, key) {
-      if (!err && (username || password || key)) {
-        sysImports.auth = {
-          issuer_token : {
-            username : username,
-            password : password,
-            key : key
-          }
-        };
-        pods[podName].invoke(podTokens.action, self, transformedImports, sysImports, contentParts, next);
-      } else {
-        next(err);
-      }
-    });
-  } else {
-    pods[podName].invoke(podTokens.action, this, transformedImports, sysImports, contentParts, next);
-  }
-}
 
-Channel.rpc = function(renderer, query, client, req, res) {
-  var self = this,
-  podTokens = this.getPodTokens();
-
-  if (pods[podTokens.name].isOAuth()) {
-    (function(podName, action, renderer, query, client, req, res) {
-      pods[podName].oAuthGetToken(self.owner_id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-        var podTokens = self.getPodTokens();
-
-        if (!err && oAuthToken) {
-          var sysImports = {
-            client : client,
-            auth : {
-              oauth : {
-                token : oAuthToken,
-                secret : tokenSecret,
-                profile : authProfile
-              }
-            }
-          };
-
-          pods[podName].rpc(
-            action,
-            renderer,
-            sysImports,
-            query,
-            self,
-            req,
-            res
-            );
-
-        } else if (err) {
-          GLOBAL.app.logmessage(err, 'error');
-          res.send(403);
-        } else if (!oAuthToken) {
-          res.send(403, {
-            error : 'No OAuth Token bound for this Channel'
-          });
-        }
-      });
-    })(podTokens.name, podTokens.action, renderer, query, client, req, res);
-
-  } else if ('issuer_token' === pods[podTokens.name]._authType) {
-
-
-    (function(podName, action, renderer, query, client, req, res) {
-      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password) {
-        if (!err && (username || password)) {
-          var sysImports = {
-            client : client,
-            auth : {
-              issuer_token : {
-                username : username,
-                password : password
-              }
-            }
-          };
-          pods[podName].rpc(
-              action,
-              renderer,
-              sysImports,
-              query,
-              self,
-              req,
-              res
-              );
-        } else {
-          res.send(403, {
-            error : 'No Issuer Token bound for this Channel'
-          });
-        }
-      });
-    })(podTokens.name, podTokens.action, renderer, query, client, req, res);
-  } else {
-    var sysImports = {
-      client : client,
-      auth : {}
-    };
-    pods[podTokens.name].rpc(
-      podTokens.action,
-      renderer,
-      sysImports,
-      req.query,
-      this,
-      req,
-      res
+  pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
+    if (!err) {
+      pods[podName].invoke(
+        podTokens.action,
+        this,
+        transformedImports,
+        sysImports,
+        contentParts,
+        next
       );
-  }
+    } else {
+      next(err);
+    }
+  });
 }
 
+/**
+ *
+ * passes through an RPC call to a
+ *
+ */
+Channel.rpc = function(rpcName, query, client, req, res) {
+  var self = this,
+    podTokens = this.getPodTokens(),
+    pod = pods[podTokens.name],
+    sysImports = {
+      client : client
+    };
+
+  pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      pods[podTokens.name].rpc(
+        podTokens.action,
+        rpcName,
+        sysImports,
+        req.query,
+        self,
+        req,
+        res
+      );
+    }
+  });
+}
 
 Channel.pod = function(podName) {
   var ret, tokens, schema;
@@ -627,7 +549,9 @@ Channel.getConfig = function() {
   var config = {};
 
   pod = this.getPodTokens();
+
   var podConfig = pods[pod.name].importGetConfig(pod.action);
+
   for (key in podConfig.properties) {
     if (!this.config[key] && podConfig.properties[key]['default']) {
       config[key] = podConfig.properties[key]['default'];
@@ -635,6 +559,7 @@ Channel.getConfig = function() {
       config[key] = this.config[key];
     }
   }
+
   return config;
 }
 
@@ -673,14 +598,15 @@ Channel.getTransformDefault = function(transformSource) {
   if (action.ok()) {
     transform = pods[action.pod].getTransformDefault(transformSource, action.action);
   }
+
   return transform;
 }
 
 Channel.getRendererUrl = function(renderer, accountInfo) {
   var action = this.getPodTokens(),
-  rStruct,
-  ret,
-  cid = this.getIdValue();
+    rStruct,
+    ret,
+    cid = this.getIdValue();
 
   if (action.ok()) {
     rStruct = action.getSchema('renderers');

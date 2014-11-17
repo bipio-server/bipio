@@ -32,9 +32,9 @@ var util        = require('util'),
   request     = require('request'),
   DaoMongo    = require('./dao-mongo.js');
 
-
 function Dao(config, log, next) {
   var self = this;
+
   DaoMongo.apply(this, arguments);
 
   // protocol + base url
@@ -66,7 +66,6 @@ function Dao(config, log, next) {
   for (var key in modelSrc) {
     this.registerModel(modelSrc[key]);
   }
-
 }
 
 util.inherits(Dao, DaoMongo);
@@ -1008,11 +1007,11 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
       resp[key] = pods[key].describe(accountInfo);
 
       // prep the oAuthChecks array for a parallel datasource check
-      if (resp[key].auth.type != 'none') {
+      if (resp[key].auth.type != 'none' && accountInfo) {
         authChecks.push(
           function(podName) {
             return function(cb) {
-              return pods[podName].authStatus( accountInfo.getId(), podName, cb );
+              return pods[podName].authStatus( accountInfo.getId(), cb );
             }
           }(key) // self exec
           );

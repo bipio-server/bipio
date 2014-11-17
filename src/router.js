@@ -604,7 +604,7 @@ module.exports = {
 
       // check that authentication is supported/required by this pod
       if (pod) {
-        if (!pod.oAuthRPC(podName, method, req, res)) {
+        if (!pod.oAuthRPC(method, req, res)) {
           res.status(415).end();
         }
       } else {
@@ -621,7 +621,7 @@ module.exports = {
       method = req.params.auth_method;
 
       // check that authentication is supported/required by this pod
-      if (!pod.issuerTokenRPC(podName, method, req, res)) {
+      if (!pod.issuerTokenRPC(method, req, res)) {
         res.status(415).end();
       }
     });
@@ -649,7 +649,7 @@ module.exports = {
             getClientInfo(req),
             req,
             res
-            );
+          );
 
         } else {
           res.status(404).end();
