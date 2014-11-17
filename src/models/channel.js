@@ -203,10 +203,9 @@ Channel.staticChildInit = function() {
  *
  */
 
-Channel._transform = function(adjacentExports, transforms, actionImports) {
+Channel._transform = function(adjacentExports, transforms) {
   var self = this,
     pod = this.getPodTokens();
-    actionImports = actionImports || pods[pod.name].getImports(pod.action), // expected imports
     resolvedImports = {}; // final imports for the channel
 
   app._.each(transforms, function(transform, key) {
