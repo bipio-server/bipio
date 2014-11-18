@@ -45,6 +45,7 @@ function getDisposition(obj) {
 
 }
 
+
 dao.on('ready', function(dao) {
   dao.describe('pod', null, function(err, modelName, results) {
     var mPath,
@@ -92,9 +93,30 @@ dao.on('ready', function(dao) {
           for (var i = 0; i < podActual._dataSources.length; i++) {
             ds = podActual._dataSources[i];
 
-//            app._.each(ds.entitySchema, function(schema) {
-//              console.log(typeof schema.type);
-//            });
+
+            app._.each(ds.entitySchema, function(schema) {
+              if (schema.type.Inflector) {
+                schema.type = 'string';
+              } else if (/Number/.test(schema.type)) {
+                schema.type = 'number';
+
+              } else if (/Mixed/.test(schema.type)) {
+                schema.type = 'mixed';
+
+              } else if (/Object/.test(schema.type)) {
+                schema.type = 'object';
+
+              } else if (/Array/.test(schema.type)) {
+                schema.type = 'array';
+
+              } else if (/Boolean/.test(schema.type)) {
+                schema.type = 'boolean';
+
+              } else {
+                console.log(schema.type, schema.type instanceof String);
+                process.exit(0);
+              }
+            });
 
             mBody.dataSources[ds.entityName.replace('pod_' + s.name + '_', '')] =
               {
