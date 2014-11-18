@@ -84,7 +84,7 @@ dao.on('ready', function(dao) {
           auth : {
             strategy : s.auth.type
           },
-          renderers : s.renderers,
+          rpcs : s.renderers,
           actions : s.actions
         };
 
@@ -124,7 +124,6 @@ dao.on('ready', function(dao) {
                 keys : ds.compoundKeyContraints ? Object.keys(ds.compoundKeyContraints) : [ ds.entityIndex ]
               };
           }
-
         }
 
 
@@ -182,9 +181,11 @@ dao.on('ready', function(dao) {
             delete action.socket;
             delete action.auth_required;
 
-            if (!Object.keys(action.renderers).length) {
-              delete action.renderers;
+            if (Object.keys(action.renderers).length) {
+              action.rpcs = app._.clone(action.renderers);
             }
+
+            delete action.renderers;
 
           }
         }

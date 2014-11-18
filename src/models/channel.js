@@ -79,6 +79,7 @@ Channel.entitySchema = {
     set : function(action) {
       var podAction = Channel.getPodTokens(action);
       if (podAction.ok()) {
+        // @todo deprecate for getConfigDefaults
         this.config = pods[podAction.pod].importGetDefaults(podAction.action);
       }
       return action;
@@ -184,6 +185,7 @@ function validAction(value) {
 Channel.staticChildInit = function() {
   // initialize each channel pod
   for (var idx in pods) {
+//    pods[idx].init(idx, this.getDao(), CFG.pods[idx] );
     pods[idx].init(this.getDao(), CFG.pods[idx] );
   }
 
@@ -549,6 +551,7 @@ Channel.getConfig = function() {
 
   pod = this.getPodTokens();
 
+  // @todo deprecate for pod.getActionConfig()
   var podConfig = pods[pod.name].importGetConfig(pod.action);
 
   for (key in podConfig.properties) {
