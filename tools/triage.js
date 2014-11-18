@@ -91,6 +91,11 @@ dao.on('ready', function(dao) {
           mBody.dataSources = {};
           for (var i = 0; i < podActual._dataSources.length; i++) {
             ds = podActual._dataSources[i];
+
+//            app._.each(ds.entitySchema, function(schema) {
+//              console.log(typeof schema.type);
+//            });
+
             mBody.dataSources[ds.entityName.replace('pod_' + s.name + '_', '')] =
               {
                 properties : ds.entitySchema,

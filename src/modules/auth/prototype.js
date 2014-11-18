@@ -249,7 +249,7 @@ AuthModule.prototype._test = function(username, password, options, next) {
 }
 
 AuthModule.prototype.test = function(username, password, options, next) {
-  this.__proto__._test.apply(arguments);
+  this.__proto__._test.apply(this, arguments);
 }
 
 
