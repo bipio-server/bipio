@@ -153,10 +153,10 @@ dao.on('ready', function(dao) {
           if (s.actions.hasOwnProperty(a)) {
             action = s.actions[a];
 
-            action.trigger = 'invoke';
-
             if (action.trigger) {
               action.trigger = action.socket ? 'realtime' : 'poll';
+            } else {
+              action.trigger = 'invoke';
             }
 
             // config
