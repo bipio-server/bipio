@@ -59,6 +59,7 @@ dao.on('ready', function(dao) {
     // write manifest for each pod
     for (var podName in results) {
       if (results.hasOwnProperty(podName)) {
+//      if ('syndication' === podName) {
         mPath = GLOBAL.SERVER_ROOT + '/../node_modules/bip-pod-' + podName + '/bpm.json';
 
         s = results[podName];
@@ -152,11 +153,11 @@ dao.on('ready', function(dao) {
           if (s.actions.hasOwnProperty(a)) {
             action = s.actions[a];
 
+            action.trigger = 'invoke';
+
             if (action.trigger) {
               action.trigger = action.socket ? 'realtime' : 'poll';
             }
-
-            action.trigger = 'invoke';
 
             // config
             if (Object.keys(action.config.properties).length) {
