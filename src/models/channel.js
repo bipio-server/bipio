@@ -79,8 +79,7 @@ Channel.entitySchema = {
     set : function(action) {
       var podAction = Channel.getPodTokens(action);
       if (podAction.ok()) {
-        // @todo deprecate for getConfigDefaults
-        this.config = pods[podAction.pod].importGetDefaults(podAction.action);
+        this.config = pods[podAction.pod].getConfigDefaults(podAction.action);
       }
       return action;
     },
@@ -176,7 +175,7 @@ function validAction(value) {
     var tTokens = value.split('.');
     var pod = tTokens[0], podAction = tTokens[1];
 
-    ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
+    ok = (undefined != pods[pod] && undefined != pods[pod].getAction(podAction));
   }
   return ok;
 }
@@ -185,8 +184,7 @@ function validAction(value) {
 Channel.staticChildInit = function() {
   // initialize each channel pod
   for (var idx in pods) {
-//    pods[idx].init(idx, this.getDao(), CFG.pods[idx] );
-    pods[idx].init(this.getDao(), CFG.pods[idx] );
+    pods[idx].init(idx, this.getDao(), CFG.pods[idx] );
   }
 
   return this;
@@ -354,32 +352,33 @@ Channel.hasRenderer = function(renderer) {
 }
 
 Channel.getActionList = function() {
-  var schema, result = [];
+  var actions, result = [];
 
   for (pod in pods) {
-    schema = pods[pod].getSchema();
-    for (action in schema) {
-      // @todo 'admin' actions should be surfaced to admin users
-      if (!schema[action].trigger && !schema[action].admin) {
-        result.push(pod + '.' + action);
+    actions = pods[pod].listActions();
+    if (actions) {
+      for (var i = 0; i < actions.length; i++ ) {
+        result.push(pod + '.' + actions[i].name);
       }
     }
   }
+
   return result;
 }
 
 Channel.getEmitterList = function() {
-  var schema, result = [];
+  var emitters, result = [];
 
   for (pod in pods) {
-    schema = pods[pod].getSchema();
-    for (action in schema) {
-      // @todo 'admin' actions should be surfaced to admin users
-      if (schema[action].trigger && !schema[action].admin) {
-        result.push(pod + '.' + action);
+    emitters = pods[pod].listEmitters();
+    console.log(emitters);
+    if (emitters) {
+      for (var i = 0; i < emitters.length; i++ ) {
+        result.push(pod + '.' + emitters[i].name);
       }
     }
   }
+
   return result;
 }
 
@@ -551,8 +550,7 @@ Channel.getConfig = function() {
 
   pod = this.getPodTokens();
 
-  // @todo deprecate for pod.getActionConfig()
-  var podConfig = pods[pod.name].importGetConfig(pod.action);
+  var podConfig = pods[pod.name].getActionConfig(pod.action);
 
   for (key in podConfig.properties) {
     if (!this.config[key] && podConfig.properties[key]['default']) {
