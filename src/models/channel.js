@@ -332,13 +332,13 @@ Channel.pod = function(podName) {
   return ret;
 }
 
-Channel.isSocket = function() {
+Channel.isRealtime = function() {
   var ret = false, pod;
   if (this.action && '' !== this.action) {
     tokens = this.action.split('.');
     pod = pods[tokens[0]];
     if (pod) {
-      ret = pod.isSocket(tokens[1]);
+      ret = pod.isRealtime(tokens[1]);
     }
   }
 
@@ -492,6 +492,16 @@ Channel.preRemove = function(id, accountInfo, next) {
   });
 }
 
+Channel.getActionSchema = function() {
+  if (this.action) {
+    var tokens = this.action.split('.'),
+      podName = tokens[0],
+      actionName = tokens[1],
+      pod = pods[tokens[0]];
+    return pod.getAction(actionName);
+  }
+}
+
 Channel.getPodTokens = function() {
   var ret = {
     ok : function() {
@@ -623,10 +633,10 @@ Channel.getRendererUrl = function(renderer, accountInfo) {
 
 Channel.attachRenderer = function(accountInfo) {
   var action = this.getPodTokens();
-
+console.log('getting renderers');
   if (action.ok()) {
-    rStruct = action.getSchema();
-    if (rStruct && rStruct.renderers) {
+    rStruct = this.getActionSchema();
+    if (rStruct && rStruct.rpcs) {
       // add global invokers
       this._renderers = {
         'invoke' : {
@@ -636,10 +646,12 @@ Channel.attachRenderer = function(accountInfo) {
           _href : accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/invoke'
         }
       };
-
-      for (var idx in rStruct.renderers) {
-        this._renderers[idx] = rStruct.renderers[idx]
-        this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
+console.log(rStruct.rpcs);
+      for (var idx in rStruct.rpcs) {
+        if (rStruct.rpcs.hasOwnProperty(idx)) {
+          this._renderers[idx] = rStruct.rpcs[idx]
+          this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
+        }
       }
     }
   }
