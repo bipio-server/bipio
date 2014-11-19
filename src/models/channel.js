@@ -356,7 +356,7 @@ Channel.getActionList = function() {
 
   for (pod in pods) {
     actions = pods[pod].listActions();
-    if (actions) {
+    if (actions && actions.length) {
       for (var i = 0; i < actions.length; i++ ) {
         result.push(pod + '.' + actions[i].name);
       }
@@ -371,8 +371,7 @@ Channel.getEmitterList = function() {
 
   for (pod in pods) {
     emitters = pods[pod].listEmitters();
-    console.log(emitters);
-    if (emitters) {
+    if (emitters && emitters.length) {
       for (var i = 0; i < emitters.length; i++ ) {
         result.push(pod + '.' + emitters[i].name);
       }
