@@ -184,6 +184,12 @@ dao.on('ready', function(dao) {
 
             if (Object.keys(action.renderers).length) {
               action.rpcs = app._.clone(action.renderers);
+              // normalize rpc attributes
+              app._.each(action.rpcs, function(rpc) {
+                rpc.title = rpc.description;
+                rpc.description = rpc.description_long;
+                delete rpc.description_long;
+              });
             }
 
             delete action.renderers;
