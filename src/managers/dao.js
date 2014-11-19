@@ -1007,7 +1007,7 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
       resp[key] = pods[key].describe(accountInfo);
 
       // prep the oAuthChecks array for a parallel datasource check
-      if (resp[key].auth.type != 'none' && accountInfo) {
+      if (resp[key].auth.strategy && resp[key].auth.strategy != 'none' && accountInfo) {
         authChecks.push(
           function(podName) {
             return function(cb) {
