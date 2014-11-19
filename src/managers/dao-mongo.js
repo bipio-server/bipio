@@ -149,7 +149,6 @@ DaoMongo.prototype.getModelReadableProps = function(modelName) {
   modelPublicFilters.push('_repr');
   modelPublicFilters.push('_links');
   modelPublicFilters.push('_href');
-  modelPublicFilters.push('_renderers');
   modelPublicFilters.push('status');
   modelPublicFilters.push('message');
   modelPublicFilters.push('code');
@@ -865,7 +864,6 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
               }
             }
             realResult.push(publicModel);
-            //realResult.push(model.toObj());
           }
 
           var resultStruct = {

@@ -78,7 +78,7 @@ function publicFilter(modelName, modelStruct) {
   // always allow representations and meta data
   modelPublicFilters.push('_repr');
   modelPublicFilters.push('_href');
-  modelPublicFilters.push('_renderers');
+  modelPublicFilters.push('_links');
   modelPublicFilters.push('status');
   modelPublicFilters.push('message');
   modelPublicFilters.push('code');

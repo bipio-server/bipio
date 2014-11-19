@@ -190,6 +190,18 @@ Channel.staticChildInit = function() {
   return this;
 };
 
+Channel.getActionTokens = function() {
+  var tokens, retr = {};
+  if (this.action) {
+    tokens = this.action.split('.');
+  }
+
+  return {
+    pod : tokens[0],
+    action : tokens[1]
+  }
+}
+
 /**
  * Transforms adjacentExports into an import usable by this Channel.  Transforms
  * are applied to imports under these conditions
@@ -257,8 +269,8 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   var self = this;
 
   var transformedImports = this._transform(adjacentExports, transforms),
-    podTokens = this.getPodTokens(),
-    podName = podTokens.name,
+    podTokens = this.getActionTokens(),
+    podName = podTokens.pod,
     pod = pods[podName];
 
   // attach bip and client configs
@@ -274,7 +286,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     if (!err) {
       pods[podName].invoke(
         podTokens.action,
-        this,
+        self,
         transformedImports,
         sysImports,
         contentParts,
@@ -293,8 +305,8 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
  */
 Channel.rpc = function(rpcName, query, client, req, res) {
   var self = this,
-    podTokens = this.getPodTokens(),
-    pod = pods[podTokens.name],
+    podTokens = this.getActionTokens(),
+    pod = pods[podTokens.pod],
     sysImports = {
       client : client
     };
@@ -303,7 +315,7 @@ Channel.rpc = function(rpcName, query, client, req, res) {
     if (err) {
       res.status(500).send(err);
     } else {
-      pods[podTokens.name].rpc(
+      pods[podTokens.pod].rpc(
         podTokens.action,
         rpcName,
         sysImports,
@@ -500,8 +512,10 @@ Channel.getActionSchema = function() {
       pod = pods[tokens[0]];
     return pod.getAction(actionName);
   }
+  return null;
 }
 
+// @todo deprecate
 Channel.getPodTokens = function() {
   var ret = {
     ok : function() {
@@ -522,7 +536,6 @@ Channel.getPodTokens = function() {
         return ptr;
       };
       ret.isTrigger = function() {
-        //return pods[this.pod]['_schemas'][this.action].trigger;
         return pods[this.pod].isTrigger(this.action);
       },
       // get all unique keys
@@ -559,7 +572,7 @@ Channel.getConfig = function() {
 
   pod = this.getPodTokens();
 
-  var podConfig = pods[pod.name].getActionConfig(pod.action);
+  var podConfig = pods[pod.name].getActionConfig(action.name);
 
   for (key in podConfig.properties) {
     if (!this.config[key] && podConfig.properties[key]['default']) {
@@ -617,45 +630,14 @@ Channel.getRendererUrl = function(renderer, accountInfo) {
     ret,
     cid = this.getIdValue();
 
-  if (action.ok()) {
-    rStruct = action.getSchema('renderers');
-    if (rStruct[renderer]) {
-      if (cid) {
-        ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
-      } else {
-        ret = accountInfo.getDefaultDomainStr(true) + '/rpc/pod/' + action.name + '/' + action.action + '/' + renderer;
-      }
-    }
+  var action = this.getActionSchema();
+  if (cid && action && action.rpcs[renderer]) {
+    ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
   }
 
   return ret;
 }
 
-Channel.attachRenderer = function(accountInfo) {
-  var action = this.getPodTokens();
-console.log('getting renderers');
-  if (action.ok()) {
-    rStruct = this.getActionSchema();
-    if (rStruct && rStruct.rpcs) {
-      // add global invokers
-      this._renderers = {
-        'invoke' : {
-          description : 'Invoke',
-          description_long : 'Invokes the Channel with ad-hoc imports',
-          contentType : DEFS.CONTENTTYPE_JSON,
-          _href : accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/invoke'
-        }
-      };
-console.log(rStruct.rpcs);
-      for (var idx in rStruct.rpcs) {
-        if (rStruct.rpcs.hasOwnProperty(idx)) {
-          this._renderers[idx] = rStruct.rpcs[idx]
-          this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
-        }
-      }
-    }
-  }
-}
 
 Channel.href = function() {
   return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
@@ -665,15 +647,47 @@ Channel.href = function() {
  * Channel representation
  */
 Channel.repr = function(accountInfo) {
-  var repr = '';
-  var action = this.getPodTokens();
+  var repr = '',
+    tokens;
 
-  if (action.ok()) {
-    repr = pods[action.pod].repr(action.action, this);
-    this.attachRenderer(accountInfo);
+  if (this.action) {
+    tokens = this.getActionTokens();
+    repr = pods[tokens.pod].repr(tokens.action, this);
   }
 
   return repr;
+}
+
+/**
+ * Attaches model links (channel rpcs)
+ *
+ */
+Channel.links = function( accountInfo ) {
+  var action = this.getActionSchema(),
+    rpc,
+    links = [];
+
+  if (accountInfo && action && action.rpcs) {
+    // add global invokers
+    links.push({
+      name : 'invoke',
+      title : 'Invoke',
+      description : 'Invokes the Channel with ad-hoc imports',
+      contentType : DEFS.CONTENTTYPE_JSON,
+      _href : accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/invoke'
+    });
+
+    for (var idx in action.rpcs) {
+      if (action.rpcs.hasOwnProperty(idx)) {
+        rpc = app._.clone(action.rpcs[idx]);
+        rpc.name = idx;
+        rpc._href = this.getRendererUrl(idx, accountInfo);
+        links.push(rpc);
+      }
+    }
+  }
+
+  return links;
 }
 
 Channel.isAvailable = function() {
