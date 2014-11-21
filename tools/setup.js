@@ -316,30 +316,43 @@ function userSetup() {
 }
 
 function _createAccount(dao, next) {
-  var account = dao.modelFactory(
-    'account',
-    {
-      name : credentials.username,
-      username : credentials.username,
-      is_admin : true,
-      email_account : credentials.email
-    });
 
-  dao.create(account, function(err, modelName, result) {
+
+  // check for an existing account
+  dao.findFilter('account', { username : credentials.username}, function(err, result) {
     if (err) {
       console.error(err);
       process.exit(1);
+    } else if (result && result.length) {
+      console.info("USER '" + credentials.username + "' ALREADY EXISTS, SKIPPING USER SETUP");
+      process.exit(0);
     } else {
-      _createAuth(
-        dao,
+      var account = dao.modelFactory(
+        'account',
         {
-          user : {
-            id : result.id
-          }
-        },
-        next);
-    }
+          name : credentials.username,
+          username : credentials.username,
+          is_admin : true,
+          email_account : credentials.email
+        });
 
+      dao.create(account, function(err, modelName, result) {
+        if (err) {
+          console.error(err);
+          process.exit(1);
+        } else {
+          _createAuth(
+            dao,
+            {
+              user : {
+                id : result.id
+              }
+            },
+            next);
+        }
+
+      });
+    }
   });
 }
 
