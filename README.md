@@ -10,7 +10,6 @@ Imagine you can send a single standard payload and have a limitless host of API'
 That's what BipIO does.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
-
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/bipio-server/bipio/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 ----
 
