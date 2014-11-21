@@ -339,7 +339,6 @@ function _createAccount(dao, next) {
         },
         next);
     }
-
   });
 }
 

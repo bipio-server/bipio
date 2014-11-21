@@ -418,56 +418,50 @@ Channel.postSave = function(accountInfo, next, isNew) {
   // after creation, which the pod actions themselves might want to dictate.
   if (pods[podName].isOAuth()) {
     // attach the users credentials for any potential oAuth based channel setup
-    (function(channel, podName, action, accountInfo, next) {
-      pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-        if (!err && oAuthToken) {
-          var auth = {
-            oauth : {
-              token : oAuthToken,
-              secret : tokenSecret,
-              profile : authProfile
-            }
-          };
-          pods[podName].setup(action, channel, accountInfo, auth, next);
+    pods[podName].oAuthGetToken(accountInfo.user.id, function(err, oAuthToken, tokenSecret, authProfile) {
+      if (!err && oAuthToken) {
+        var auth = {
+          oauth : {
+            token : oAuthToken,
+            secret : tokenSecret,
+            profile : authProfile
+          }
+        };
+        pods[podName].setup(action, self, accountInfo, auth, next);
+      // not authenticated? Then we can't perform setup so drop this
+      // channel
+      } else if (!oAuthToken) {
+        self._dao.remove('channel', self.id, accountInfo, function() {
+          next('Channel could not authenticate', 'channel', {
+            message : 'Channel could not authenticate'
+          }, 500);
+        });
+
+      }
+    });
+  } else if ('issuer_token' === pods[podName]._authType) {
+    pods[podName].authGetIssuerToken(self.owner_id, function(err, username, password, key) {
+      if (!err && (username || password || key)) {
+        var auth = {
+          issuer_token : {
+            username : username,
+            key : key,
+            password : password
+          }
+        };
+
+        pods[podName].setup(action, self, accountInfo, auth, next);
+
+      } else {
         // not authenticated? Then we can't perform setup so drop this
         // channel
-        } else if (!oAuthToken) {
-          self._dao.remove('channel', self.id, accountInfo, function() {
-            next('Channel could not authenticate', 'channel', {
-              message : 'Channel could not authenticate'
-            }, 500);
-          });
-
-        }
-      });
-    })(this, podName, action, accountInfo, next);
-
-  } else if ('issuer_token' === pods[podName]._authType) {
-
-    (function(channel, podName, action, accountInfo, next) {
-      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password, key) {
-        if (!err && (username || password || key)) {
-          var auth = {
-            issuer_token : {
-              username : username,
-              key : key,
-              password : password
-            }
-          };
-
-          pods[podName].setup(action, channel, accountInfo, auth, next);
-
-        } else {
-          // not authenticated? Then we can't perform setup so drop this
-          // channel
-          self._dao.remove('channel', self.id, accountInfo, function() {
-            next(true, 'channel', {
-              message : 'No Issuer Token bound for this Channel'
-            }, 403);
-          });
-        }
-      });
-    })(this, podName, action, accountInfo, next);
+        self._dao.remove('channel', self.id, accountInfo, function() {
+          next(true, 'channel', {
+            message : 'No Issuer Token bound for this Channel'
+          }, 403);
+        });
+      }
+    });
 
   } else {
     pods[podName].setup(action, this, accountInfo, next);
