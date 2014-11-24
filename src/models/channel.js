@@ -188,8 +188,7 @@ Channel.staticChildInit = function() {
     pods[idx].init(
       idx,
       this.getDao(),
-      { // app.modules.cdn goes here ?
-      },
+      app.modules.cdn,
       app.logmessage,
       {
         config : CFG.pods[idx],
