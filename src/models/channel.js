@@ -190,11 +190,10 @@ Channel.staticChildInit = function() {
       this.getDao(),
       { // app.modules.cdn goes here ?
       },
-      {
-        // app.logger goes here?
-      },
+      app.logmessage,
       {
         config : CFG.pods[idx],
+        blacklist : CFG.server.public_interfaces,
         baseUrl : self._dao.getBaseUrl()
       }
     );
