@@ -386,9 +386,9 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cb
               : accountInfo.user.settings.bip_expire_behaviour;
 
               if ('delete' === expireBehavior) {
-                self._dao.deleteBip(bipResult, accountInfo, cb(cbParameterMap.fail, err), client.id);
+                self._dao.deleteBip(bipResult, accountInfo, next(cbParameterMap.fail, err), client.id);
               } else {
-                self._dao.pauseBip(bipResult, cb(cbParameterMap.fail, err), true, client.id);
+                self._dao.pauseBip(bipResult, next(cbParameterMap.fail, err), true, client.id);
               }
             } else {
               // add bip metadata to the container
