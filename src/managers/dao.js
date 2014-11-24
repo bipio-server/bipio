@@ -42,6 +42,8 @@ function Dao(config, log, next) {
   this.cdn = cdn;
   this._modelPrototype = require('../models/prototype.js').BipModel;
 
+
+  // @todo refactor to not rely on mongoose models
   var modelSrc = {
     // mapper
     'bip' : require('../models/bip').Bip,
@@ -64,7 +66,7 @@ function Dao(config, log, next) {
 
   this.models = { };
   for (var key in modelSrc) {
-    this.registerModel(modelSrc[key]);
+    this.registerModelClass(modelSrc[key]);
   }
 }
 
@@ -311,10 +313,6 @@ Dao.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, next) {
     }
   });
 };
-
-Dao.prototype.webFinger = function(emailAddress, next) {
-  next();
-}
 
 Dao.prototype.shareBip = function(bip, cb) {
   var self = this,

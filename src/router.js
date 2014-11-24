@@ -472,6 +472,7 @@ module.exports = {
     express.delete( '/rest/:resource_name/:id', restAuthWrapper, restAction);
     express.patch( '/rest/:resource_name/:id', restAuthWrapper, restAction);
     express.options('*', function(req, res) {
+console.log('hit options route');
       res.status(200).end();
     });
 

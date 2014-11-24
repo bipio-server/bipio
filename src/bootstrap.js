@@ -70,6 +70,10 @@ app.isMaster = cluster.isMaster;
 
 app.modules = {};
 
+app.getConfig = function() {
+  return envConfig;
+}
+
 // load modules
 var mod, ModProto;
 for (k in envConfig.modules) {

@@ -52,8 +52,9 @@
  */
 var uuid        = require('node-uuid'),
   mongoose    = require('mongoose'),
-  helper      = require('../lib/helper')
-  time        = require('time');
+  helper      = require('../lib/helper'),
+  extend = require('extend'),
+  time        = require('time'),
   events = require('events'),
   eventEmitter = new events.EventEmitter(),
   mongooseOpen = false;
@@ -161,13 +162,18 @@ DaoMongo.prototype.getModelWritableProps = function(modelName) {
   return this.models[modelName]['class'].getWritablePropsArray();
 }
 
+DaoMongo.prototype.registerModel = function(modelObj) {
+  extend(true, modelObj, Object.create(this.getModelPrototype()));
+  this.registerModelClass(modelObj);
+}
+
 /**
- *
+ * @todo - deprecate, should automatically extend mongoose model
  * Initializes a model and binds it to a Mongoose schema
  *
  * @param modelClass model prototype
  */
-DaoMongo.prototype.registerModel = function(modelClass) {
+DaoMongo.prototype.registerModelClass = function(modelClass) {
   var modelName = modelClass.getEntityName(), validators, numValidators;
   var container = this.models;
 

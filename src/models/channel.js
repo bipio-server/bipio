@@ -182,9 +182,22 @@ function validAction(value) {
 
 // Pod Binder
 Channel.staticChildInit = function() {
+  var self = this;
   // initialize each channel pod
   for (var idx in pods) {
-    pods[idx].init(idx, this.getDao(), CFG.pods[idx] );
+    pods[idx].init(
+      idx,
+      this.getDao(),
+      { // app.modules.cdn goes here ?
+      },
+      {
+        // app.logger goes here?
+      },
+      {
+        config : CFG.pods[idx],
+        baseUrl : self._dao.getBaseUrl()
+      }
+    );
   }
 
   return this;
