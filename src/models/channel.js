@@ -276,7 +276,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     if (!err) {
       pods[podName].invoke(
         podTokens.action,
-        this,
+        self,
         transformedImports,
         sysImports,
         contentParts,
