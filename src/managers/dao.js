@@ -1019,9 +1019,9 @@ Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
           });
         } else if ('oauth' === authType) {
           next(false, {
-            'token' : authRecord.getUsername(),
-            'secret' : authRecord.getPassword(),
-            'profile' : authRecord.getKey()
+            'token' : authRecord.getPassword(),
+            'secret' : authRecord.getOAuthRefresh(),
+            'profile' : authRecord.getOauthProfile()
           });
         }
       }
