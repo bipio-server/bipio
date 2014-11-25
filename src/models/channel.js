@@ -193,7 +193,10 @@ Channel.staticChildInit = function() {
       {
         config : CFG.pods[idx],
         blacklist : CFG.server.public_interfaces,
-        baseUrl : self._dao.getBaseUrl()
+        baseUrl : self._dao.getBaseUrl(),
+        cdnPublicBaseURL : CFG.cdn_public + '/pods/',
+        emitterBaseURL :  (CFG.site_emitter || CFG.website_public) + '/emitter',
+        timezone : CFG.timezone
       }
     );
   }
@@ -413,7 +416,7 @@ Channel.getEmitterList = function() {
 Channel.postSave = function(accountInfo, next, isNew) {
   var tTokens = this.action.split('.'),
   podName = tTokens[0], action = tTokens[1],
-  self = this;
+  self = this, authType =  pods[podName].getAuthType();
 
   if (undefined == podName || undefined == action) {
     // throw a constraint crit
@@ -427,53 +430,28 @@ Channel.postSave = function(accountInfo, next, isNew) {
 
   // channels behave a little differently, they can have postponed availability
   // after creation, which the pod actions themselves might want to dictate.
-  if (pods[podName].isOAuth()) {
-    // attach the users credentials for any potential oAuth based channel setup
-    pods[podName].oAuthGetToken(accountInfo.user.id, function(err, oAuthToken, tokenSecret, authProfile) {
-      if (!err && oAuthToken) {
-        var auth = {
-          oauth : {
-            token : oAuthToken,
-            secret : tokenSecret,
-            profile : authProfile
-          }
-        };
-        pods[podName].setup(action, self, accountInfo, auth, next);
-      // not authenticated? Then we can't perform setup so drop this
-      // channel
-      } else if (!oAuthToken) {
-        self._dao.remove('channel', self.id, accountInfo, function() {
-          next('Channel could not authenticate', 'channel', {
-            message : 'Channel could not authenticate'
-          }, 500);
-        });
 
-      }
-    });
-  } else if ('issuer_token' === pods[podName]._authType) {
-    pods[podName].authGetIssuerToken(self.owner_id, function(err, username, password, key) {
-      if (!err && (username || password || key)) {
-        var auth = {
-          issuer_token : {
-            username : username,
-            key : key,
-            password : password
-          }
-        };
+  if (authType && 'none' !== authType) {
+    self._dao.getPodAuthTokens(accountInfo.user.id, pods[podName], function(err, authStruct) {
+      if (err) {
+        next(err, 'channel', { message : err }, 500);
+      } else if (!authStruct) {
+        next(
+          'Channel not authenticate',
+          'channel',
+          {
+            message : 'Channel not authenticated'
+          },
+          500
+        );
 
-        pods[podName].setup(action, self, accountInfo, auth, next);
-
+        // @todo - set channel availability to false
       } else {
-        // not authenticated? Then we can't perform setup so drop this
-        // channel
-        self._dao.remove('channel', self.id, accountInfo, function() {
-          next(true, 'channel', {
-            message : 'No Issuer Token bound for this Channel'
-          }, 403);
-        });
+        var auth = {};
+        auth[authType] = authStruct;
+        pods[podName].setup(action, self, accountInfo, auth, next);
       }
     });
-
   } else {
     pods[podName].setup(action, this, accountInfo, next);
   }

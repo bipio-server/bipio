@@ -393,7 +393,7 @@ DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo
         model.getEntityName(),
         model,
         self.errorMap(err)
-        );
+      );
     }
   });
 }
@@ -411,8 +411,8 @@ DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo
 DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
   var self = this, resp;
   var nowTime = helper.nowUTCSeconds();
-  if (model) {
 
+  if (model) {
     model[ model.getEntityIndex() ] = uuid();
     model[ model.getEntityCreated() ] = nowTime;
     model.preSave(accountInfo, function(err, model) {

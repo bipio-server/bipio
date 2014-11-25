@@ -986,6 +986,49 @@ Dao.prototype.getBipsByChannelId = function(channelId, accountInfo, next) {
 
 // --------------------------------------------------------------------- UTILITY
 
+Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
+    // describe all pods
+    var self = this,
+      authType = pod.getAuthType(),
+      filter = {
+        owner_id : owner_id
+      };
+
+    if ('issuer_token' === authType) {
+      filter.auth_provider = pod.getName();
+    } else if ('oauth' === authType) {
+      filter.oauth_provider = pod.getName();
+    } else {
+      next();
+      return;
+    }
+
+    this.find('account_auth', filter, function(err, result) {
+      var authRecord;
+      if (err) {
+        next(err);
+      } else if (!result) {
+        next();
+      } else {
+        authRecord = self.modelFactory('account_auth', result);
+        if ('issuer_token' === authType) {
+          next(false, {
+            'username' : authRecord.getUsername(),
+            'password' : authRecord.getPassword(),
+            'key' : authRecord.getKey()
+          });
+        } else if ('oauth' === authType) {
+          next(false, {
+            'token' : authRecord.getUsername(),
+            'secret' : authRecord.getPassword(),
+            'profile' : authRecord.getKey()
+          });
+        }
+      }
+    });
+
+}
+
 Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
   var modelClass, resp = {}, exports = {};
 
