@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
  *
@@ -36,7 +36,8 @@ function Rabbit(cfg, next) {
   var opt = {
     host: cfg.host,
     login: cfg.auth.username,
-    password : cfg.auth.password
+    password : cfg.auth.password,
+    noDelay : true
   };
 
   if ('' !== cfg.vhost) {
@@ -89,7 +90,7 @@ function Rabbit(cfg, next) {
     app.logmessage('RABBIT:' + err, 'error');
   });
 
-  this.amqpConn.connect();
+  //this.amqpConn.connect();
 }
 
 Rabbit.prototype.produce = function(xName, route, payload, cb) {
