@@ -130,7 +130,7 @@ var credentials = {
 };
 
 function domainSelect() {
-  var valDefault = sparseConfig.domain_public;
+  var valDefault = sparseConfig.domain;
   var domainSelect = {
     type : 'input',
     name : 'defaultDomain',
@@ -141,7 +141,7 @@ function domainSelect() {
     if ('' === answer.defaultDomain) {
       answer.defaultDomain = valDefault;
     }
-    sparseConfig.domain_public = answer.defaultDomain;
+    sparseConfig.domain = answer.defaultDomain;
     portSelect();
   });
 }
@@ -150,7 +150,7 @@ function portSelect() {
   var valDefault = sparseConfig.server.port;
 
   // if user has selected a hostname port, then use that
-  var hostTokens = sparseConfig.domain_public.split(':'),
+  var hostTokens = sparseConfig.domain.split(':'),
   port = Number(hostTokens.pop());
 
   if (!isNaN(port)) {
@@ -168,6 +168,7 @@ function portSelect() {
       answer.defaultPort = valDefault;
     }
     sparseConfig.server.port = answer.defaultPort;
+    sparseConfig.domain_public = sparseConfig.domain + ':' + sparseConfig.server.port;
     datadirSelect();
   });
 }
