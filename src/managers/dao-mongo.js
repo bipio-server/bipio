@@ -417,8 +417,13 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
       }
 
       var mongoModel = self.toMongoModel(model);
-
-      mongoModel.save(function(err) {
+	  
+	  mongoModel.validate(function (err) {
+		if (err) {
+          next(err, model.getEntityName(), err, 500);
+          return;
+		}
+		mongoModel.save(function(err) {
         if (err) {
           self._log(err, 'error');
           if (next) {
@@ -481,6 +486,8 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
 
         return model;
       });
+	  });
+     
     });
 
   } else {
