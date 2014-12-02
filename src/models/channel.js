@@ -196,7 +196,8 @@ Channel.staticChildInit = function() {
         baseUrl : self._dao.getBaseUrl(),
         cdnPublicBaseURL : CFG.cdn_public + '/pods/',
         emitterBaseURL :  (CFG.site_emitter || CFG.website_public) + '/emitter',
-        timezone : CFG.timezone
+        timezone : CFG.timezone,
+        isMaster : app.isMaster
       }
     );
   }
@@ -555,7 +556,7 @@ Channel.getConfig = function() {
 
   pod = this.getPodTokens();
 
-  var podConfig = pods[pod.name].getActionConfig(action.name);
+  var podConfig = pods[pod.name].getActionConfig(pod.action);
 
   for (key in podConfig.properties) {
     if (!this.config[key] && podConfig.properties[key]['default']) {

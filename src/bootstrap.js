@@ -160,6 +160,8 @@ if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   }
 }
 
+
+
 // validate config
 if (/^http(s?):\/\//i.test(envConfig.domain_public)) {
   envConfig.domain_public = envConfig.domain_public.replace(/^http(s?):\/\//, '');

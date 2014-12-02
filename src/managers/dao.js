@@ -1019,7 +1019,7 @@ Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
           });
         } else if ('oauth' === authType) {
           next(false, {
-            'token' : authRecord.getPassword(),
+            'access_token' : authRecord.getPassword(),
             'secret' : authRecord.getOAuthRefresh(),
             'profile' : authRecord.getOauthProfile()
           });
