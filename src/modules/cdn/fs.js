@@ -51,7 +51,9 @@ FsProto.prototype = {
 
       var readStream = fs.createReadStream(srcFile.localpath);
 
-      next(null, srcFile, readStream);
+      self.normalize(srcFile.localpath, function(err, struct) {
+        next(err, struct, readStream);
+      });
     }
   },
 

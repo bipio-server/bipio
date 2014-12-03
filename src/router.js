@@ -491,15 +491,9 @@ module.exports = {
       bipName = req.params.bip_name,
       domain = helper.getDomain(req.headers.host, true);
 
-/*
-      console.log('FILES : ', req.files);
-*/
-
       _.each(req.files, function(file) {
         files.push(file);
       })
-
-      console.log(files);
 
       GLOBAL.app.bastion.bipUnpack(
         'http',
