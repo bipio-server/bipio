@@ -213,14 +213,6 @@ var helper = {
     return validator.check;
   },
 
-  exists : function(path, cb) {
-    return (fs.exists || path.exists)(path, cb);
-  },
-
-  existsSync : function(path) {
-    return (fs.existsSync || path.existsSync)(path);
-  },
-
   copyProperty : function(src, dst, overrideDst, propName) {
     var srcActual;
 
