@@ -18,52 +18,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
-
  */
 
-process.env.NODE_CONFIG_DIR =
-  process.env.NODE_CONFIG_DIR || __dirname + '/../config';
-process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
+
 // includes
 var app = {
-  workerId : ':PID:' + process.pid
-},
-sugar       = require('sugar'),
-util        = require('util'),
-underscore  = require('underscore'),
-winston     = require('winston'),
-helper      = require('./lib/helper'),
-cdn         = require('./lib/cdn'),
-path        = require('path'),
-defs        = require('../config/defs'),
-envConfig   = require('config'),
-cluster     = require('cluster'),
-os          = require('os'),
-ipaddr = require('ipaddr.js'),
-memwatch = require('memwatch'),
-heapdump = require('heapdump');
+    workerId : ':PID:' + process.pid
+  },
+  sugar       = require('sugar'),
+  util        = require('util'),
+  underscore  = require('underscore'),
+  winston     = require('winston'),
+  helper      = require('./lib/helper'),
+  path        = require('path'),
+  defs        = require('../config/defs'),
+  envConfig   = require('config'),
+  cluster     = require('cluster'),
+  os          = require('os'),
+  ipaddr = require('ipaddr.js'),
+  memwatch = require('memwatch'),
+  heapdump = require('heapdump');
 
 require('ssl-root-cas/latest').inject();
 
+process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
+
+process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
+
 // globals
 GLOBAL.app = app;
-GLOBAL.CFG_CDN = envConfig.cdn;
 GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
-//
-GLOBAL.DATA_DIR = path.resolve((0 === envConfig.datadir.indexOf('/')
-    ? envConfig.datadir
-    : GLOBAL.SERVER_ROOT + '/../' + envConfig.datadir));
-
-//
-GLOBAL.CDN_DIR = path.resolve(0 === envConfig.cdn.indexOf('/')
-    ? envConfig.cdn
-    : GLOBAL.SERVER_ROOT + '/../' + envConfig.cdn);
 
 // attach general helpers to the app
 app.helper = helper;
-app.cdn = cdn;
 app._ = underscore;
 
 app.isMaster = cluster.isMaster;
@@ -84,7 +73,7 @@ for (k in envConfig.modules) {
       + '/modules/'
       + k
       + '/'
-      + ('native' === mod.strategy ? 'prototype' : mod.strategy)
+      + mod.strategy
       + '.js'
     );
     app.modules[k] = new ModProto(mod.config);

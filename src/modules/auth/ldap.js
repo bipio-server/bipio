@@ -1,5 +1,5 @@
 
-var proto = require('./prototype'),
+var proto = require('./native'),
   ldap = require('ldapjs');
 
 function LDAP(options) {

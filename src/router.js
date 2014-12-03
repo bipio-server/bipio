@@ -34,7 +34,6 @@ var dao,
   connect = require('connect'),
   helper  = require('./lib/helper'),
   uuid    = require('node-uuid'),
-  cdn     = require('./lib/cdn'),
   // restful models
   restResources = ['bip', 'channel', 'domain', 'account_option'],
   modelPublicFilter;
@@ -492,10 +491,15 @@ module.exports = {
       bipName = req.params.bip_name,
       domain = helper.getDomain(req.headers.host, true);
 
-      if (req.files && Object.keys(req.files).length > 0) {
-        // normalize file struct
-        files = cdn.normedMeta('express', txId, req.files);
-      }
+/*
+      console.log('FILES : ', req.files);
+*/
+
+      _.each(req.files, function(file) {
+        files.push(file);
+      })
+
+      console.log(files);
 
       GLOBAL.app.bastion.bipUnpack(
         'http',

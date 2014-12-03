@@ -1,5 +1,5 @@
 
-var proto = require('./prototype');
+var proto = require('./native');
 
 function HTTPBasic(options) {
   this.options = options;
