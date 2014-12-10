@@ -138,7 +138,7 @@ function setCORS(req, res, next) {
 // ------ LOAD EXPRESS MIDDLEWARE
 //
 
-restapi.use(app.modules.cdn.HTTPFormHandler());
+restapi.use(app.modules.cdn.utils.HTTPFormHandler());
 
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {

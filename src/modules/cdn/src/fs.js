@@ -1,125 +1,154 @@
 var fs = require('fs'),
 	path = require('path')
-	regex = /[^\\/]+\.[^\\/]+$/;
+	regex = /[^\\/]+\.[^\\/]+$/,
+	multer = require('multer'),
+	mime = require('mime');
 
-function FsProto() {};
+function FsProto(options) {
+	if (options && options.data_dir) {
+		this.dataDir = options.data_dir;
+
+		this.tmpDir = options.data_dir + '/tmp';
+		this.permDir = options.data_dir + '/perm';
+	}
+
+	if (options && options.cdn_dir) this.cdnDir = options.cdn_dir;
+};
 
 FsProto.prototype = {
 
-	// Fs_Cdn.save(@string dstFileName, @string srcFileName OR @object readStream, @function next)
+	/*
+	 * Saves a file from a string or readStream, and returns file object
+	 *
+	 * dest: string or object
+	 * source: string or readStream
+	 * options: object [optional]
+	 * next: function(string err, object file)
+	 */
+
 	save: function() {
-		var self = this;
-		if (arguments[0] && arguments[1] && typeof arguments[0] === 'string' && typeof arguments[arguments.length-1] === 'function' && self.parse_path(arguments[0])) {
-			var dstFileName = arguments[0],
-				next = arguments[arguments.length-1],
-				readStream = ((typeof arguments[1] === 'string') ?  fs.createReadStream(arguments[1]) : arguments[1]);
 
-			var writeStream = fs.createWriteStream(dstFileName);
+		var self = this,
+			dest = arguments[0],
+			source = arguments[1],
+			options = (arguments[2] ? arguments[2] : null),
+			next = arguments[arguments.length-1],
+			destPath = ((typeof dest === 'object') ? dest.localpath : dest);
+		
+		if (self.parse_path(destPath, (self.dataDir ? self.dataDir : null))) {
+			var readStream = ((typeof source === 'string') ? fs.createReadStream(source) : source),
+				writeStream = fs.createWriteStream(destPath);
 
-			writeStream.on('error', next);
-
-			writeStream.on('finish', next);
+			writeStream.on('error', callback);
+			writeStream.on('finish', function(err) {
+				if (err) next(err)
+				self.utils.normalize(destPath, next);
+		  	});
 
 			readStream.pipe(writeStream);
 		}
 	},
 
+	/*
+	 * Gets a file from a fileStruct and returns a new fileStruct and readStream
+	 *
+	 * source: string or object
+	 * next: function(string err, object file, readStream)
+	 */
+
 	get: function() {
-		var self = this;
-		if (arguments[0] && typeof arguments[0] === 'string' && arguments[1] && typeof arguments[arguments.length-1] === 'function') {
-			var srcFileName = arguments[0],
-				next = arguments[arguments.length-1],
-				writeStream = ((typeof arguments[1] === 'string') ? fs.createWriteStream(arguments[1]) : arguments[1]);
-				
-				var readStream = fs.createReadStream(srcFileName);
+		
+		var self = this,
+			source = arguments[0],
+			next = arguments[arguments.length-1],
+			srcPath = ((typeof source === 'object') ? source.localpath : source),
+			readStream = fs.createReadStream(srcPath);
 
-				writeStream.on('error', next);
-
-				writeStream.on('finish', next);
-
-				readStream.pipe(writeStream);
-		}
+		self.utils.normalize(srcPath, function(err, struct) {
+			next(err, struct, readStream);
+		});
 	},
+
+	/*
+	 * Lists all files in directory path
+	 *
+	 * file: string or object
+	 * next: function(string err, array files)
+	 */
 
 	list: function() {
-		if (arguments[0] && typeof arguments[0] === 'string' && typeof arguments[arguments.length-1] === 'function') {
+		
+		var file = arguments[0],
+			filePath = ((typeof file === 'object') ? file.localpath : file),
+			next = arguments[arguments.length-1];
 
-			var filePath = arguments[0],
-				next = arguments[arguments.length-1];
+		  if (filePath.match(regex)) next("list() cannot be called on files, only directories.");
 
-			if (filePath.match(regex)) next("list() cannot be called on files, only directories.");
+		  fs.exists(filePath, function(exists) {
+			  if (exists) {
+				fs.readdir(filePath, function (err, files) {
+				  if (err) next(err);
 
-			fs.exists(filePath, function(exists) {
-			    if (exists) {
-			    	fs.readdir(filePath, function (err, files) {
-					    if (err) next(err);
+				  var results = [];
 
-					    var results = [];
+				  files.map(function (file) {
+					  return path.join(filePath, file);
+				  }).filter(function (file) {
+					  return fs.statSync(file).isFile();
+				  }).forEach(function (file) {
+				  	(self.utils.normalize(filePath, function(err, fileStruct) {
+				  		results.push(fileStruct)
+				  	});)(results, filePath)
+				  });
 
-					    files.map(function (file) {
-					        return path.join(filePath, file);
-					    }).filter(function (file) {
-					        return fs.statSync(file).isFile();
-					    }).forEach(function (file) {
-					    	results.push(file.replace(filePath, ""));
-					    });
-
-					    next(null, results)
-					});
-			    }
-			    else {
-			    	next("Directory does not exist.");
-			    }
-			});
-		}
+				  next(null, results)
+			  });
+			  }
+			  else {
+				next("Directory does not exist.");
+			  }
+		  });
 	},
+
+	/*
+	 * Removes file from filesystem
+	 *
+	 * file: string or object
+	 * next: function(string err, boolean success)
+	 */
 
 	remove: function() {
-		if (arguments[0] && typeof arguments[0] === 'string' && typeof arguments[arguments.length-1] === 'function') {
-			var filePath = arguments[0],
-				next = arguments[arguments.length-1];
-			fs.exists(filePath, function(exists) {
-			    if (exists) {
-			    	fs.unlink(filePath, next);
-			    }
-			    else {
-			    	next("File does not exist.");
-			    }
-			});
-		}
+
+		var file = arguments[0],
+			filePath = ((typeof file === 'object') ? file.localpath : file),
+			next = arguments[arguments.length-1];
+
+		fs.exists(filePath, function(exists) {
+			if (exists) fs.unlink(filePath, next);
+			else next("File does not exist.");
+		});
 	},
+
+	/*
+	 * Finds file in filesystem
+	 *
+	 * file: string or object
+	 * next: function(string err, object file)
+	 */
 
 	find: function() {
-		if (arguments[0] && typeof arguments[0] === 'string' && typeof arguments[arguments.length-1] === 'function') {
-			var filePath = arguments[0],
-				next = arguments[arguments.length-1];
-			fs.exists(filePath, function(exists) {
-			    if (exists) {
-			    	fs.stat(filePath, next);
-			    }
-			    else {
-			    	next("File does not exist.");
-			    }
-			});
-		}
+
+		var file = arguments[0],
+			filePath = ((typeof file === 'object') ? file.localpath : file),
+			next = arguments[arguments.length-1];
+		
+		fs.exists(filePath, function(exists) {
+			if (exists) self.utils.normalize(filePath, next);
+			else next("File does not exist.");
+		});
 	},
 
-	parse_path: function(path, root) {
-		var directories = path.split('/'), 
-			directory = directories.shift(),
-			root = ( root || '' ) + directory + '/',
-			self = this;
-
-		if (directory.match(regex)) return true;
-
-		try { 
-			fs.mkdirSync(root);
-		} catch (err) {
-			if (!fs.statSync(root).isDirectory()) throw new Error(err);
-		}
-		
-		return !directories.length || self.parse_path(directories.join('/'), root);
-	}
+	utils: require('./utils')
 
 };
 
