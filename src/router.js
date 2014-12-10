@@ -244,7 +244,7 @@ var restAction = function(req, res) {
           }
 
           // inject the referer favico
-          if (true || undefined == req.body.icon
+          if (undefined == req.body.icon
               && -1 === referer.url_tokens.hostname.indexOf(CFG.domain.replace(/:\d*$/, ''))
               && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public.replace(/:\d*$/, ''))
               ) {
