@@ -244,20 +244,19 @@ var restAction = function(req, res) {
           }
 
           // inject the referer favico
-          if (undefined == req.body.icon
+          if (true || undefined == req.body.icon
               && -1 === referer.url_tokens.hostname.indexOf(CFG.domain.replace(/:\d*$/, ''))
               && -1 === referer.url_tokens.hostname.indexOf(CFG.domain_public.replace(/:\d*$/, ''))
               ) {
             postSave = function(err, modelName, retModel, code ) {
               if (!err && retModel.icon == '') {
-                // @todo defer to out of band job
-                iconUri = dao.getBipRefererIcon(retModel.id, 'http://' + referer.url_tokens.hostname, true);
-
-                if (iconUri) {
-                  dao.updateColumn('bip', retModel.id, {
-                    icon : iconUri
-                  });
-                }
+                app.helper.syncFavicon(referer.url_tokens.href, function(err, icoURL) {
+                  if (!err) {
+                    dao.updateColumn('bip', retModel.id, {
+                      icon : icoURL
+                    });
+                  }
+                });
               }
             }
           }

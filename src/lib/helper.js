@@ -37,6 +37,7 @@ uuid = require('node-uuid'),
 ipaddr = require('ipaddr.js'),
 rimraf = require('rimraf'),
 _ = require('underscore'),
+htmlparser = require('htmlparser2'),
 JSONPath = require('JSONPath');
 
 var helper = {
@@ -549,6 +550,83 @@ var helper = {
     }
     return input;
   },
+
+  // retrieves the favicon for a site url
+  resolveFavicon : function(url, next) {
+    var self = this,
+      tokens = this.tldtools.extract(url),
+      host = tokens.url_tokens.protocol + '//' + tokens.url_tokens.host,
+      fileSuffix = '.ico',
+      favUrlDefault = host + '/favicon' + fileSuffix;
+
+    request(host, function(err, res, body) {
+      var favUrl;
+
+      if (err) {
+        next(err);
+      } else {
+        if (res.headers.link && /rel=icon/.test(res.headers.link) ) {
+          favUrl = res.headers.link.replace(/<|>.*$/g, '');
+        }
+
+        var p = new htmlparser.Parser({
+          onopentag : function(name, attrs) {
+            if ('link' === name) {
+              if (attrs.href && /icon/i.test(attrs.rel)) {
+                favUrl = (0 === attrs.href.indexOf('/') ? (host + attrs.href) : attrs.href);
+              }
+            }
+          }
+        });
+
+        p.write(body);
+        p.end();
+
+        if (!favUrl) {
+          favUrl = favUrlDefault;
+        }
+
+        suffix = '.' + favUrl.split('.').pop().replace(/\?.*$/, '');
+        hostHash = self.strHash(host) + suffix
+
+        next(false, favUrl, suffix, hostHash);
+      }
+    });
+
+  },
+
+  /**
+   *
+   */
+  syncFavicon : function(url, next) {
+    var cdnPath = 'icofactory',
+      cdnUrl;
+
+    this.resolveFavicon(url, function(err, favUrl, hashPath) {
+      if (err) {
+        next(err);
+      } else {
+        app.modules.cdn.save(
+          CFG.CDN_DIR + '/img/' + cdnPath + '/' + hashPath,
+          request(favUrl),
+          {
+            persist : true
+          },
+          function(err, struct) {
+            if (err) {
+              next(err);
+            } else {
+              next(
+                false,
+                CFG.cdn_public + '/' + cdnPath + '/' + hashPath
+              );
+            }
+          }
+        );
+      }
+    });
+  },
+
 }
 
 //

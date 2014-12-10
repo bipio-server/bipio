@@ -375,7 +375,7 @@ Channel.isRealtime = function() {
 Channel.hasRenderer = function(renderer) {
   var tokens = this.action.split('.'),
   pod = this.pod(tokens[0]);
-  return pod.isRenderer(tokens[1]);
+  return pod.isRenderer(tokens[1], renderer);
 }
 
 Channel.getActionList = function() {

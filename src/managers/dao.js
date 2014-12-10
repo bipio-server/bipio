@@ -657,59 +657,6 @@ Dao.prototype.bipLog = function(payload) {
 
 /**
  *
- * Given a referer, attempts to call out to the site and discover a usable
- * image which we can normalise and store. (favicon.ico for now)
- *
- * Where the icon already exists locally, we return a cached link to the site CDN
- * icon factory of /static/img/cdn/icofactory/{referer hash}.ico
- *
- * @param string bip id
- * @param string referer FQDN - including protocol
- */
-Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
-  var iconUri,
-  fileSuffix = '.ico',
-  ok = true,
-  iconSource = referer.replace("https", 'http') + '/favicon' + fileSuffix,
-  cdnPath = 'icofactory',
-  jobPayload;
-
-  if (referer) {
-    // create hash
-    var hashFile = helper.strHash(iconSource) + fileSuffix,
-    dDir = DATA_DIR + '/cdn/img/' + cdnPath + '/',
-    filePath = dDir + hashFile,
-    cdnUri = CFG.cdn_public + '/' + cdnPath + '/' + hashFile;
-
-    jobPayload = {
-      bip_id : bipId,
-      referer_icon_path : iconSource,
-      dst_file : filePath,
-      icon_uri : cdnUri
-    };
-
-    // !!warning!! sync check
-    if (helper.existsSync(filePath)) {
-      iconUri = cdnUri;
-      if (cb) {
-        cb(false, jobPayload);
-      }
-    } else {
-      if (!blocking) {
-        // @todo stubbed. Queue not yet implemented
-        app.bastion.createJob(DEFS.JOB_ATTACH_REFERER_ICON, jobPayload);
-      } else {
-        // for testing purposes
-        this._jobAttachBipRefererIcon(jobPayload, cb);
-      }
-    }
-  }
-  return iconUri;
-}
-
-
-/**
- *
  * Trigger all trigger bips
  *
  */

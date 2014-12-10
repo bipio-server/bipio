@@ -35,7 +35,7 @@ FsProto.prototype = {
 			next = arguments[arguments.length-1],
 			destPath = ((typeof dest === 'object') ? dest.localpath : dest);
 
-		if (self.parse_path(destPath, (self.dataDir ? self.dataDir : null))) {
+		if (self.utils.parse_path(destPath, (self.dataDir ? self.dataDir : null))) {
 			var readStream = ((typeof source === 'string') ? fs.createReadStream(source) : source),
 				writeStream = fs.createWriteStream(destPath);
 
@@ -147,6 +147,43 @@ FsProto.prototype = {
 			else next("File does not exist.");
 		});
 	},
+
+  _favicoHandler : function(res, host, next) {
+    var favUrl = null;
+
+    if (res.headers.link && /rel=icon/.test(res.headers.link) ) {
+      favUrl = res.headers.link.replace(/<|>.*$/g, '');
+    }
+
+    var p = new htmlparser.Parser({
+      onopentag : function(name, attrs) {
+        if ('link' === name) {
+          if (attrs.href && /icon/.test(attrs.rel)) {
+            favUrl = attrs.href;
+          }
+        }
+      }
+    });
+
+    var body = '';
+    res.on('data', function (chunk) {
+      if (!favUrl) {
+        p.write(chunk);
+      }
+    });
+
+    res.on('end', function() {
+      var suffix, hashFile;
+      if (favUrl) {
+        suffix = '.' + favUrl.split('.').pop().replace(/\?.*$/, '');
+        hashFile = app.helper.strHash(host) + suffix
+      }
+
+      p.end();
+      next(favUrl, suffix, hashFile);
+    });
+  },
+
 
 	utils: require('./utils')
 
