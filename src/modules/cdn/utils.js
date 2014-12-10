@@ -1,3 +1,6 @@
+var mkdirp = require('mkdirp'),
+  path = require('path');
+
 module.exports = {
   HTTPFormHandler : function() {
     return multer({
@@ -10,21 +13,15 @@ module.exports = {
     });
   },
 
-  parse_path: function(path, root) {
-    var directories = path.split('/'),
-      directory = directories.shift(),
-      root = ( root || '' ) + directory + '/',
-      self = this;
+  parse_path: function(relPath, root, next) {
+    var relPathRegexp = /\.\./g,
+      mode = null, // @todo permissions mask?
+      localPath = path.resolve( (root + '/' + relPath).replace(relPathRegexp, '')),
+      basePath = path.dirname(localPath);
 
-    if (directory.match(regex)) return true;
-
-    try {
-      fs.mkdirSync(root);
-    } catch (err) {
-      if (!fs.statSync(root).isDirectory()) throw new Error(err);
-    }
-
-    return !directories.length || self.parse_path(directories.join('/'), root);
+    mkdirp(basePath, mode, function(err) {
+      next(err, localPath);
+    });
   },
 
   gzip_compress: function() {

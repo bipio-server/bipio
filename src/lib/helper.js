@@ -589,7 +589,7 @@ var helper = {
         suffix = '.' + favUrl.split('.').pop().replace(/\?.*$/, '');
         hostHash = self.strHash(host) + suffix
 
-        next(false, favUrl, suffix, hostHash);
+        next(false, favUrl, hostHash);
       }
     });
 
@@ -607,7 +607,7 @@ var helper = {
         next(err);
       } else {
         app.modules.cdn.save(
-          CFG.CDN_DIR + '/img/' + cdnPath + '/' + hashPath,
+          '/cdn/img/' + cdnPath + '/' + hashPath,
           request(favUrl),
           {
             persist : true
