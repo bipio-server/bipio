@@ -558,14 +558,13 @@ var helper = {
     var cdnPath = 'icofactory',
       tokens = this.tldtools.extract(url),
       cdnUrl,
-      self = this,
-      tokens = this.tldtools.extract(url);
+      self = this;
 
-    favitest(url, function(err, favUrl, suffix) {
+    favitest(url, function(err, favUrl, suffix, domain) {
       if (err) {
         next(err);
       } else {
-        var hashPath = self.strHash(tokens.url_tokens.host) + suffix;
+        var hashPath = self.strHash(domain) + suffix;
         app.modules.cdn.save(
           '/cdn/img/' + cdnPath + '/' + hashPath,
           request(favUrl),
