@@ -2,17 +2,13 @@ var fs = require('fs'),
   path = require('path')
   regex = /[^\\/]+\.[^\\/]+$/,
   multer = require('multer'),
-  mime = require('mime');
+  mime = require('mime'),
+  zlib = require('zlib');
 
 function FsProto(options) {
-  if (options && options.data_dir) {
-    this.dataDir = options.data_dir;
-
-    this.tmpDir = options.data_dir + '/tmp';
-    this.permDir = options.data_dir + '/perm';
-  }
-
-  if (options && options.cdn_dir) this.cdnDir = options.cdn_dir;
+  this.dataDir = options.data_dir;
+  this.tmpDir = options.data_dir + '/tmp';
+  this.permDir = options.data_dir + '/perm';
 };
 
 FsProto.prototype = {
@@ -25,37 +21,56 @@ FsProto.prototype = {
    * options: object [optional]
    * next: function(string err, object file)
    */
+
   save: function() {
+
     var self = this,
       dest = arguments[0],
       source = arguments[1],
-      options = (arguments[2] ? arguments[2] : null),
+      options  = (arguments[2] ? arguments[2] : null),
       next = arguments[arguments.length-1],
-      destPath = ((typeof dest === 'object') ? dest.localpath : dest);
+      compress = options && options.compress,
+      append = options && options.append,
+      destPath = ((typeof dest === 'object') ? dest.localpath : dest),
+      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
+      writeOptions = {};
 
-    self.utils.parse_path(
-      destPath,
-      (self.dataDir ? self.dataDir : null),
-      function(err, localPath) {
+    if (compress) {
+      destPath += '.zip';
+    }
+
+    if (append) {
+      writeOptions.flags = 'a';
+    }
+
+    var readStream = ((typeof source === 'string') ? fs.createReadStream(source) : source);
+    readStream.pause();
+
+    self.utils.parse_path(destPath, rootDir, function(err, path) {
+      if (err) {
+        next(err);
+      }
+
+      var writeStream = fs.createWriteStream(path, writeOptions);
+
+      writeStream.on('error', next);
+      writeStream.on('finish', function(err) {
         if (err) {
           next(err);
         } else {
-          var readStream = ((typeof source === 'string') ? fs.createReadStream(source) : source),
-            writeStream = fs.createWriteStream(localPath);
 
-          writeStream.on('error', next);
-          writeStream.on('finish', function(err) {
-            if (err) {
-              next(err)
-            } else {
-              self.utils.normalize(localPath, next);
-            }
-          });
-
-          readStream.pipe(writeStream);
+          self.utils.normalize(path, next);
         }
+      });
+
+      if (compress) {
+        var gzip = zlib.createGzip();
+        readStream.pipe(gzip).pipe(writeStream);
+      } else {
+        readStream.pipe(writeStream);
       }
-    );
+      readStream.resume();
+    });
   },
 
   /*
@@ -105,7 +120,7 @@ FsProto.prototype = {
           }).filter(function (file) {
             return fs.statSync(file).isFile();
           }).forEach(function (file) {
-            (self.utils.normalize(filePath, function(err, fileStruct) {
+            (self.utils.normalize(file.name, function(err, fileStruct) {
               results.push(fileStruct)
             }))(results, filePath)
           });
@@ -156,7 +171,6 @@ FsProto.prototype = {
       else next("File does not exist.");
     });
   },
-
 
   utils: require('./utils')
 

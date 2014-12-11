@@ -56,6 +56,7 @@
     "express": ">=4.0.0",
     "express-session": "^1.0.4",
     "extend": "^2.0.0",
+    "favitest": "^1.0.3",
     "heapdump": "^0.2.9",
     "htmlparser2": ">=3.4.0",
     "imagemagick": ">=0.1.3",

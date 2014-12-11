@@ -34,6 +34,7 @@ module.exports = {
 
   normalize: function(filePath, next) {
     var self = this;
+
     fs.stat(filePath, function(err, stats) {
       if (err) next(err);
       next(null, {

@@ -37,8 +37,8 @@ uuid = require('node-uuid'),
 ipaddr = require('ipaddr.js'),
 rimraf = require('rimraf'),
 _ = require('underscore'),
-htmlparser = require('htmlparser2'),
-JSONPath = require('JSONPath');
+JSONPath = require('JSONPath'),
+favitest = require('favitest');
 
 var helper = {
 
@@ -551,61 +551,21 @@ var helper = {
     return input;
   },
 
-  // retrieves the favicon for a site url
-  resolveFavicon : function(url, next) {
-    var self = this,
-      tokens = this.tldtools.extract(url),
-      host = tokens.url_tokens.protocol + '//' + tokens.url_tokens.host,
-      fileSuffix = '.ico',
-      favUrlDefault = host + '/favicon' + fileSuffix;
-
-    request(host, function(err, res, body) {
-      var favUrl;
-
-      if (err) {
-        next(err);
-      } else {
-        if (res.headers.link && /rel=icon/.test(res.headers.link) ) {
-          favUrl = res.headers.link.replace(/<|>.*$/g, '');
-        }
-
-        var p = new htmlparser.Parser({
-          onopentag : function(name, attrs) {
-            if ('link' === name) {
-              if (attrs.href && /icon/i.test(attrs.rel)) {
-                favUrl = (0 === attrs.href.indexOf('/') ? (host + attrs.href) : attrs.href);
-              }
-            }
-          }
-        });
-
-        p.write(body);
-        p.end();
-
-        if (!favUrl) {
-          favUrl = favUrlDefault;
-        }
-
-        suffix = '.' + favUrl.split('.').pop().replace(/\?.*$/, '');
-        hostHash = self.strHash(host) + suffix
-
-        next(false, favUrl, hostHash);
-      }
-    });
-
-  },
-
   /**
    *
    */
   syncFavicon : function(url, next) {
     var cdnPath = 'icofactory',
-      cdnUrl;
+      tokens = this.tldtools.extract(url),
+      cdnUrl,
+      self = this,
+      tokens = this.tldtools.extract(url);
 
-    this.resolveFavicon(url, function(err, favUrl, hashPath) {
+    favitest(url, function(err, favUrl, suffix) {
       if (err) {
         next(err);
       } else {
+        var hashPath = self.strHash(tokens.url_tokens.host) + suffix;
         app.modules.cdn.save(
           '/cdn/img/' + cdnPath + '/' + hashPath,
           request(favUrl),
