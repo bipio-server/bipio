@@ -82,14 +82,17 @@
         },
         "defaultExchange": "public_inbound"
     },
-    "datadir" : "data",
-    "cdn": "data/cdn",
-    "k": {
-    },
+    "k": {},
     "jwtKey" : "",
     "modules" : {
         "auth": {
-            "strategy" : "native"
+          "strategy" : "native"
+        },
+        "cdn" : {
+          "strategy" : "fs",
+          "config" : {
+            "data_dir" : "data"
+          }
         }
     },
     "pods": {
