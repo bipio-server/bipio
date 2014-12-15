@@ -6,15 +6,15 @@ var fs = require('fs'),
 
       /*
 
-      rename config : "cdn_public": "http://localhost/static/img/cdn",
-      to : "cdn_public": "http://localhost/static",
+      ** rename config : "cdn_public": "http://localhost/static/img/cdn",
+        to : "cdn_public": "http://localhost/static",
 
       add notice :
       **NOTICE*** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : {derived cdn path}
 
 
 
-      add config :
+      ** add config :
 
       "cdn" : {
         "strategy" : "fs",
@@ -24,12 +24,15 @@ var fs = require('fs'),
       }
 
 
-      remove configs :
+      ** remove configs :
 
       cdn
       datadir
 
 
+      ** copy last 15 days of track_subscribe data into pod_syndication_subscibe_dups
+
+      ** drop track_subscribes collection
 
 
       */

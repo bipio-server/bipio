@@ -40,6 +40,7 @@
  *  accumulate(modelName, props, accumulator, inc)
  *  accumulateFilter(modelName, filter, accumulator)
  *  updateColumn(modelName, filter, props, next)
+ *  expire(modelName, maxTime, next)
  *
  * Factories
  *
@@ -957,6 +958,15 @@ DaoMongo.prototype.accumulateFilter = function(modelName, filter, accumulator, s
 
   // increment it
   MongoModel.update( filter, incUpdate, { upsert : upsert } ).exec(next);
+};
+
+// expire a model
+DaoMongo.prototype.expire = function(modelName, filter, maxTime, next) {
+  filter.created = {
+    '$lt' : maxTime
+  };
+
+  this.removeFilter(modelName, filter, next);
 };
 
 /**
