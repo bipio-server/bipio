@@ -555,7 +555,7 @@ var helper = {
    *
    */
   syncFavicon : function(url, next) {
-    var cdnPath = 'icofactory',
+    var cdnPath = '/cdn/img/icofactory',
       tokens = this.tldtools.extract(url),
       cdnUrl,
       self = this;
@@ -565,8 +565,9 @@ var helper = {
         next(err);
       } else {
         var hashPath = self.strHash(domain) + suffix;
+        cdnPath += '/' + hashPath;
         app.modules.cdn.save(
-          '/cdn/img/' + cdnPath + '/' + hashPath,
+          cdnPath,
           request(favUrl),
           {
             persist : true
@@ -577,7 +578,7 @@ var helper = {
             } else {
               next(
                 false,
-                CFG.cdn_public + '/' + cdnPath + '/' + hashPath
+                CFG.cdn_public + '/' + cdnPath
               );
             }
           }
