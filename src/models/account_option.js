@@ -255,15 +255,9 @@ AccountOption.entityValidators = {
 
 }
 
+
+/*
 AccountOption.preSave = function(accountInfo, next) {
-  /*
-    // if the model avatar entity is a tainted external URL, then normalize it and
-    // fire off a job to pull down an updated URL
-    if ('' == this.avatar && oldModel) {
-        this.avatar = oldModel.avatar;
-    }
-*/
-//    if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || (this.avatar != oldModel.avatar && /^http/.test(this.avatar) )) {
     if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || /^http/.test(this.avatar) ) {
         if (this.avatar) {
             this._dao.getAvRemote(this.owner_id, this.avatar, true, function(err, result) {
@@ -274,6 +268,7 @@ AccountOption.preSave = function(accountInfo, next) {
     }
     next(false, this);
 }
+*/
 
 function endLifeParse(end_life) {
     var imp = parseInt(end_life.imp);

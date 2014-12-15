@@ -96,7 +96,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
   app.logmessage('BASTION:REC:NAME:' + jobPacket.name, 'info');
   if (jobPacket.name) {
     if (jobPacket.name == DEFS.JOB_ATTACH_REFERER_ICON) {
-      this._dao._jobAttachBipRefererIcon( jobPacket.data, this.jobRunnerAlert );
+//      this._dao._jobAttachBipRefererIcon( jobPacket.data, this.jobRunnerAlert );
 
     //
     } else if (jobPacket.name == DEFS.JOB_USER_NOTIFICATION) {

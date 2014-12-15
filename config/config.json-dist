@@ -3,7 +3,7 @@
     "domain": "localhost",
     "domain_public" : "localhost:5000",
     "website_public": "http://localhost",
-    "cdn_public": "http://localhost/static/img/cdn",
+    "cdn_public": "http://localhost/static",
     "site_emitter": "https://bip.io",
     "proto_public": "http://",
     "crons" : {

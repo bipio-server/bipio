@@ -931,6 +931,20 @@ Dao.prototype.getBipsByChannelId = function(channelId, accountInfo, next) {
   this.findFilter('bip', filter, next);
 }
 
+
+Dao.prototype.updateChannelIcon = function(channel, URL) {
+  channel.config.icon = URL;
+  this.updateColumn(
+    'channel',
+    {
+      id : channel.id
+    },
+    {
+      config : channel.config
+    }
+  );
+}
+
 // --------------------------------------------------------------------- UTILITY
 
 Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
@@ -1271,6 +1285,7 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
         next(true, resp);
       } else {
         cdn.resize({
+
           srcPath : newDst,
           dstPath : newDst,
           width : 125,
@@ -1288,6 +1303,7 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
  *
  * @todo - convert to png
  */
+ /*
 Dao.prototype.getAvRemote = function(ownerId, avUrl, blocking, cb) {
   var iconUri,
   fileSuffix = '.ico',
@@ -1315,14 +1331,15 @@ Dao.prototype.getAvRemote = function(ownerId, avUrl, blocking, cb) {
     this._jobAttachUserAvatarIcon(jobPayload, cb);
   }
 }
-
+*/
 
 /**
  * Deferred job to attach a 3rd party icon to the given bip after saving to the CDN
  *
- * @todo move this into a jobRunner class (bsation)
+ * @todo move this into a jobRunner class (bastion)
  *
  */
+ /*
 Dao.prototype._jobAttachBipRefererIcon = function(payload, next) {
   var bipId = payload.bip_id,
   dstFile = payload.dst_file,
@@ -1360,6 +1377,7 @@ Dao.prototype._jobAttachBipRefererIcon = function(payload, next) {
     }
   });
 }
+*/
 
 DaoMongo.prototype.getModelPrototype = function() {
   return this._modelPrototype;

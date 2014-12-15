@@ -194,8 +194,8 @@ Channel.staticChildInit = function() {
         config : CFG.pods[idx],
         blacklist : CFG.server.public_interfaces,
         baseUrl : self._dao.getBaseUrl(),
-        cdnPublicBaseURL : CFG.cdn_public + '/pods/',
-        cdnBasePath : CDN_DIR,
+        cdnPublicBaseURL : CFG.cdn_public,
+        cdnBasePath : 'cdn',
         emitterBaseURL :  (CFG.site_emitter || CFG.website_public) + '/emitter',
         timezone : CFG.timezone,
         isMaster : app.isMaster
