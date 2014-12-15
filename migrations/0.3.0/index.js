@@ -9,6 +9,10 @@ var fs = require('fs'),
       rename config : "cdn_public": "http://localhost/static/img/cdn",
       to : "cdn_public": "http://localhost/static",
 
+      add notice :
+      **NOTICE*** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : {derived cdn path}
+
+
 
       add config :
 
@@ -24,6 +28,9 @@ var fs = require('fs'),
 
       cdn
       datadir
+
+
+
 
       */
 
