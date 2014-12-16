@@ -2,45 +2,16 @@ var fs = require('fs'),
   Migration = {
     run : function(app, configPath, next) {
 
-      // pseudo
+      // @see https://wotdotio.atlassian.net/browse/BIP-146
 
-      /*
-
-      ** rename config : "cdn_public": "http://localhost/static/img/cdn",
-        to : "cdn_public": "http://localhost/static",
-
-      add notice :
-      **NOTICE*** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : {derived cdn path}
-
-
-
-      ** add config :
-
-      "cdn" : {
-        "strategy" : "fs",
-        "config" : {
-          "data_dir" : "derived from datadir"
-        }
-      }
-
-
-      ** remove configs :
-
-      cdn
-      datadir
-
-
-      ** copy last 15 days of track_subscribe data into pod_syndication_subscibe_dups
-
-      ** drop track_subscribes collection
-
-
-      */
 
 
 
       next();
       return;
+
+
+      // sample config migration :
 
 
       var config = JSON.parse(fs.readFileSync(configPath)),
