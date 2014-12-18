@@ -174,9 +174,9 @@ function portSelect() {
 }
 
 function datadirSelect() {
-  var valDefault = (0 === sparseConfig.datadir.indexOf('/')
+  var valDefault = (0 === sparseConfig.modules.cdn.config.data_dir.indexOf('/')
     ? sparseConfig.datadir
-    : path.resolve(__dirname + "/../" + sparseConfig.datadir));
+    : path.resolve(__dirname + "/../" + sparseConfig.modules.cdn.config.data_dir));
 
   var datadirSelect = {
     type : 'input',
@@ -194,7 +194,7 @@ function datadirSelect() {
 }
 
 function cdnSelect() {
-  var valDefault = path.join(sparseConfig.datadir, "/cdn");
+  var valDefault = path.join(sparseConfig.modules.cdn.config.data_dir, "/cdn");
   var cndSelect = {
     type : 'input',
     name : 'cdn',
