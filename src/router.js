@@ -566,8 +566,33 @@ module.exports = {
 
     /**
      * DomainAuth channel renderer
+     * @deprecated /rpc/render/channel/:channel_id/:renderer
      */
     express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+        var filter = {
+          owner_id: req.remoteUser.getId(),
+          id : req.params.channel_id
+        };
+
+        dao.find('channel', filter, function(err, result) {
+          if (err || !result) {
+            app.logmessage(err, 'error');
+            res.status(404).end();
+          } else {
+            var channel = dao.modelFactory('channel', result, req.remoteUser);
+
+            channel.rpc(
+              req.params.renderer,
+              req.query,
+              getClientInfo(req),
+              req,
+              res
+              );
+          }
+        });
+    });
+
+    express.get('/rpc/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
         var filter = {
           owner_id: req.remoteUser.getId(),
           id : req.params.channel_id
