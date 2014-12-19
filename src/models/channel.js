@@ -458,7 +458,6 @@ Channel.postSave = function(accountInfo, next, isNew) {
     });
   } else {
     pods[podName].setup(action, this, accountInfo, function(err) {
-      console.log('CHANNEL SETUP COMPLETE');
       next(err, 'channel', self);
     });
   }
