@@ -27,10 +27,13 @@ FsProto.prototype = {
     var self = this,
       dest = arguments[0],
       source = arguments[1],
+      buffer = ((arguments[1] instanceof Buffer) ? arguments[1] : null)
       options  = (arguments[2] ? arguments[2] : null),
       next = arguments[arguments.length-1],
       compress = options && options.compress,
       append = options && options.append,
+      header = options && options.header,
+      write = options && options.write,
       destPath = ((typeof dest === 'object') ? dest.localpath : dest),
       rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       writeOptions = {};
@@ -43,8 +46,13 @@ FsProto.prototype = {
       writeOptions.flags = 'a';
     }
 
-    var readStream = ((typeof source === 'string') ? fs.createReadStream(source) : source);
-    readStream.pause();
+    if (write && buffer) {
+      var readStream = null
+    }
+    else {
+      var readStream = ((typeof source === 'string') ? fs.createReadStream(source) : source);
+      readStream.pause();
+    }
 
     self.utils.parse_path(destPath, rootDir, function(err, path) {
       if (err) {
@@ -53,23 +61,35 @@ FsProto.prototype = {
 
       var writeStream = fs.createWriteStream(path, writeOptions);
 
+      if (header) {
+        var headerStream = new Stream();
+        headerStream.on('data', function(data) {
+          writeStream.write(data);
+        });
+
+        headerStream.emit('data', options.header);
+      }
+
       writeStream.on('error', next);
       writeStream.on('finish', function(err) {
-        if (err) {
-          next(err);
-        } else {
-
-          self.utils.normalize(path, next);
-        }
-      });
+        if (err) next(err);
+        else self.utils.normalize(path, next);
+        });
 
       if (compress) {
         var gzip = zlib.createGzip();
         readStream.pipe(gzip).pipe(writeStream);
-      } else {
+        readStream.resume();
+      } else if (readStream) {
         readStream.pipe(writeStream);
+        readStream.resume();
       }
-      readStream.resume();
+
+      if (buffer) {
+        writeStream.write(buffer);
+        writeStream.end();
+      }
+
     });
   },
 

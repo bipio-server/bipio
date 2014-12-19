@@ -451,11 +451,16 @@ Channel.postSave = function(accountInfo, next, isNew) {
       } else {
         var auth = {};
         auth[authType] = authStruct;
-        pods[podName].setup(action, self, accountInfo, auth, next);
+        pods[podName].setup(action, self, accountInfo, auth, function(err) {
+          next(err, 'channel', self);
+        });
       }
     });
   } else {
-    pods[podName].setup(action, this, accountInfo, next);
+    pods[podName].setup(action, this, accountInfo, function(err) {
+      console.log('CHANNEL SETUP COMPLETE');
+      next(err, 'channel', self);
+    });
   }
 
   if (isNew) {
