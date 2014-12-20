@@ -789,7 +789,7 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
  */
 DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orderBy, filter, callback) {
   var owner_id = accountInfo ? accountInfo.user.id : undefined;
-  var self = this, cacheKey = 'slist_' + modelName + '_' + owner_id + '_' + page + '_' + page_size;
+  var self = this;
   var mongoFilter = {
     'owner_id' : owner_id
   }
@@ -876,7 +876,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
           var resultStruct = {
             'page' : page,
             'page_size' : page_size,
-            'num_pages' : (Math.ceil( count / page_size )),
+            'num_pages' : page_size ? (Math.ceil( count / page_size )) : 1,
             'order_by' : orderBy,
             'total' : count,
             'data' : realResult

@@ -168,7 +168,7 @@ var restResponse = function(res) {
         app.logmessage('Error response propogated without code', 'warning');
       }
 
-      res.send(code, payload);
+      res.status(code).send({ message : error });
       return;
     } else {
       if (!results) {
@@ -185,7 +185,7 @@ var restResponse = function(res) {
     if (contentType == DEFS.CONTENTTYPE_JSON) {
       res.status(!code ? '200' : code).jsonp(payload);
     } else {
-      res.send(!code ? '200' : code, payload);
+      res.status(!code ? '200' : code).send(payload);
     }
     return;
   }
@@ -334,7 +334,7 @@ var restAction = function(req, res) {
         page = 1,
         order_by = 'recent';
 
-        if (undefined != req.query.page_size) {
+        if (undefined != req.query.page_size && req.query.page_size) {
           page_size = parseInt(req.query.page_size);
         }
 
@@ -360,6 +360,7 @@ var restAction = function(req, res) {
             }
           }
         }
+
         dao.list(resourceName, accountInfo, page_size, page, order_by, filter, restResponse(res));
       }
     }
