@@ -800,6 +800,13 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
   }
 }
 
+Bip.preRemove = function(id, accountInfo, next) {
+  var self = this;
+  this._dao.removeBipDupTracking(id, function(err) {
+    next(err, 'bip', self);
+  });
+}
+
 Bip.postSave = function(accountInfo, next, isNew) {
   this.normalizeTransformDefaults(accountInfo, function(payload) {
     if (payload.transform && Object.keys(payload.transform).length > 0) {

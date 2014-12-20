@@ -314,6 +314,69 @@ Dao.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, next) {
   });
 };
 
+/**
+ *
+ * Finds and removes duplicate tracking for bipid / channel index pairs
+ */
+Dao.prototype.removeBipDupTracking = function(bipId, next) {
+  var promises = [],
+    deferred,
+    self = this;
+
+  // get bip
+  this.find(
+    'bip',
+    {
+      id : bipId
+    },
+    function(err, result) {
+      if (err) {
+        next(err);
+      } else {
+        for (var i = 0; i < result._channel_idx.length; i++)  {
+
+          deferred = app.Q.defer();
+          promises.push(deferred.promise);
+
+          (function(channelId, deferred) {
+            var modelName = 'channel';
+            self.find(modelName, { id : channelId }, function(err, channel) {
+              var cModel, pod;
+              if (err) {
+                deferred.reject(err);
+              } else {
+                cModel = self.modelFactory(modelName, channel);
+                pod = cModel.getPod();
+
+                if (pod.getTrackDuplicates()) {
+                  pod.dupRemove(bipId, cModel, function(err) {
+                    if (err) {
+                      deferred.reject(err);
+                    } else {
+                      deferred.resolve();
+                    }
+                  });
+                } else {
+                  deferred.resolve();
+                }
+              }
+            });
+          })(result._channel_idx[i], deferred);
+        }
+
+        app.Q.all(promises).then(
+          function() {
+            next();
+          },
+          function(err) {
+            next(err);
+          }
+        );
+      }
+    });
+
+}
+
 Dao.prototype.shareBip = function(bip, cb) {
   var self = this,
   modelName = 'bip_share',

@@ -546,6 +546,14 @@ Channel.getPodTokens = function() {
   return ret;
 }
 
+Channel.getPod = function() {
+  var tokens = this.action.split('.'),
+    podName = tokens[0],
+    actionName = tokens[1];
+
+  return pods[tokens[0]];
+}
+
 Channel.getPods = function(name) {
   if (name && pods[name]) {
     return pods[name];

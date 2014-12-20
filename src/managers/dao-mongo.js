@@ -758,20 +758,15 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
   MongoClass = mongoose.model(modelName);
 
   MongoClass.remove(filter, function (err, result) {
-    if (err || result == 0) {
-      self._log('Error: remove(): ' + (err || 'Nothing to Remove') );
-      if (next) {
-        next(false, null);
-        return null;
+    if (next) {
+      if (err) {
+        next(err);
+      } else {
+        next(false, modelName, {
+          'status' : 'OK'
+        });
       }
     }
-
-    if (next) {
-      next(false, modelName, {
-        'status' : 'OK'
-      });
-    }
-    return result;
   });
 };
 

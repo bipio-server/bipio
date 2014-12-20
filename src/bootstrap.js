@@ -35,6 +35,7 @@ var app = {
   envConfig   = require('config'),
   cluster     = require('cluster'),
   os          = require('os'),
+  Q          = require('q'),
   ipaddr = require('ipaddr.js'),
   memwatch = require('memwatch'),
   heapdump = require('heapdump');
@@ -54,7 +55,7 @@ GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 // attach general helpers to the app
 app.helper = helper;
 app._ = underscore;
-
+app.Q = Q;
 app.isMaster = cluster.isMaster;
 
 app.modules = {};
