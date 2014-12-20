@@ -180,9 +180,9 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     self.getAccountStructByUsername(masquerade, next);
 
   } else {
-    authModel.username = account.username;
-    authModel.name = account.name;
-    authModel.is_admin = account.is_admin;
+    accountAuth.username = account.username;
+    accountAuth.name = account.name;
+    accountAuth.is_admin = account.is_admin;
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
       if (undefined == activeDomainId) {
