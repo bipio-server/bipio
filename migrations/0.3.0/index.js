@@ -1,4 +1,5 @@
 var fs = require('fs'),
+  path = require('path'),
   Migration = {
     run : function(app, configPath, next) {
 
