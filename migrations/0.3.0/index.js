@@ -2,33 +2,25 @@ var fs = require('fs'),
   Migration = {
     run : function(app, configPath, next) {
 
-      // @see https://wotdotio.atlassian.net/browse/BIP-146
-
-
-
-
-      next();
-      return;
-
-
       // sample config migration :
-
 
       var config = JSON.parse(fs.readFileSync(configPath)),
         rootPath = GLOBAL.SERVER_ROOT + '/../',
         delta = false;
 
-      if (!config.modules) {
-        config.modules = {};
-        delta = true;
-      }
+      config.cdn_public = config.cdn_public.replace(/\/img\/cdn/, '');
 
-      // example
-      if (!config.modules.auth && config.auth) {
-        config.modules.auth = {};
-        config.modules.auth.strategy = config.auth.type;
-        config.modules.auth.config = app._.clone(config.auth.config);
-        delete config.auth;
+      console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.cdn_public + "`");
+
+      if (typeof config.cdn === 'string') {
+        config.cdn = {
+          "strategy" : "fs",
+          "config" : {
+            "data_dir" : config.datadir
+          }
+        }
+        delete config.datadir
+        delete config.cdn
         delta = true;
       }
 
