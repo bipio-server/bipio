@@ -1,0 +1,7 @@
+{
+    "provider" : "rackspace",
+    "data_dir" : "/Users/alfonso/Projects/fs-cdn/test/files",
+    "username" : "alfonso.gober",
+    "apiKey" : "d4d20bccc03947f3b885c5a8226b9445",
+    "container" : "bipio-beta-test"
+}

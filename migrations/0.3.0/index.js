@@ -24,6 +24,52 @@ var fs = require('fs'),
         delta = true;
       }
 
+      var minTime = new Date()).getTime() - (30 * 24 * 60 * 60 * 1000);
+
+      app.dao.findFilter('pod_syndication_track_subscribe', { created: { $gt: minTime } }, function(err, result) {
+        if (err) next(err);
+
+        var model = {},
+          modelName = 'pod_syndication_dup';
+
+        for (var i=0; i<result.length; i++) {
+
+          model = dao.modelFactory(modelName, {
+                 owner_id : result[i].owner_id,
+                 channel_id : result[i].channel_id,
+                 created: result[i].created,
+                 value : result[i].guid,
+                 bip_id : result[i].bip_id,
+                 last_update : result[i].last_update
+               });
+
+          app.dao.create(model);
+        }
+
+      });
+
+      app.dao.findFilter('pod_soundcloud_track_favorite', { created: { $gt: minTime } }, function(err, result) {
+        if (err) next(err);
+
+        var model = {},
+          modelName = 'pod_soundcloud_dup';
+
+        for (var i=0; i<result.length; i++) {
+
+          model = dao.modelFactory(modelName, {
+                 owner_id : result[i].owner_id,
+                 channel_id : result[i].channel_id,
+                 created: result[i].created,
+                 value : result[i].track_id,
+                 bip_id : result[i].bip_id,
+                 last_update : result[i].last_update
+               });
+
+          app.dao.create(model);
+        }
+        
+      });
+
       if (delta) {
         fs.writeFile(configPath , JSON.stringify(config, null, 2), function(err) {
           if (err) {
