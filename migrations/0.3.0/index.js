@@ -10,8 +10,6 @@ var fs = require('fs'),
 
       config.cdn_public = config.cdn_public.replace(/\/img\/cdn/, '');
 
-      console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.cdn_public + "`");
-
       if (typeof config.cdn === 'string') {
         config.cdn = {
           "strategy" : "fs",
@@ -21,6 +19,7 @@ var fs = require('fs'),
         }
         delete config.datadir
         delete config.cdn
+        console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.cdn.config.data_dir + "`");
         delta = true;
       }
 
