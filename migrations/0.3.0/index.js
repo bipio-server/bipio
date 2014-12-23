@@ -14,7 +14,7 @@ var fs = require('fs'),
         config.cdn = {
           "strategy" : "fs",
           "config" : {
-            "data_dir" : config.datadir
+            "data_dir" : path.resolve((0 === config.datadir.indexOf('/') ? config.datadir : path.resolve(__dirname) + '/../' + config.datadir))
           }
         }
         delete config.datadir
