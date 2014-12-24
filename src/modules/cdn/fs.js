@@ -7,10 +7,9 @@ var fs = require('fs'),
   Stream = require('stream');
 
 function FsProto(options) {
-  this.dataDir = options.data_dir;
+  this.dataDir = path.resolve((0 === options.data_dir.indexOf('/') ? options.data_dir : options.basePath + '/../' + options.data_dir));
   this.tmpDir = options.data_dir + '/tmp';
   this.permDir = options.data_dir + '/perm';
-  this.global_root = options.basePath;
 };
 
 FsProto.prototype = {
@@ -37,7 +36,7 @@ FsProto.prototype = {
       header = options && options.header,
       write = options && options.write,
       destPath = ((typeof dest === 'object') ? dest.localpath : dest),
-      rootDir = self.global_root + ((options && options.persist) ? self.permDir : self.tmpDir),
+      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       writeOptions = {};
 
     if (compress) {
@@ -108,7 +107,7 @@ FsProto.prototype = {
     var self = this,
       source = arguments[0],
       options  = (arguments[1] ? arguments[1] : null),
-      rootDir = self.global_root + ((options && options.persist) ? self.permDir : self.tmpDir),
+      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       next = arguments[arguments.length-1],
       srcPath = ((typeof source === 'object') ? source.localpath : rootDir + source),
       readStream = fs.createReadStream(srcPath);
@@ -172,7 +171,7 @@ FsProto.prototype = {
     var file = arguments[0],
       filePath = ((typeof file === 'object') ? file.localpath : file),
       options  = (arguments[1] ? arguments[1] : null),
-      rootDir = self.global_root + ((options && options.persist) ? self.permDir : self.tmpDir),
+      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       next = arguments[arguments.length-1];
 
     fs.exists(rootDir + filePath, function(exists) {
