@@ -98,19 +98,8 @@
     }
   },
   "pods": {
-    "email": {
-      "mailer": {
-        "host": "localhost"
-      }
-    },
-    "templater": {},
-    "flow": {},
     "syndication": {},
-    "http": {},
-    "time": {},
-    "math": {},
-    "html": {},
-    "crypto": {}
+    "soundcloud": {}
   },
   "datadir": "/Users/alfonso/Projects/BIP-139/bipio/data",
   "cdn": "/Users/alfonso/Projects/BIP-139/bipio/data/cdn"

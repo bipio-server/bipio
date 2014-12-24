@@ -30,62 +30,65 @@ var fs = require('fs'),
       if (config.hasOwnProperty("cdn")) delete config.cdn;
 
       // Handle database migration
+      if (config.pods.hasOwnProperty("syndication")) {
+        app.dao.list('pod_syndication_track_subscribe', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
+          if (err) syndicationMigration.reject(new Error(err));
+          else {
+            var model = {},
+              modelName = 'pod_syndication_dup';
 
-      app.dao.list('pod_syndication_track_subscribe', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, result) {
-        if (err) syndicationMigration.reject(new Error(err));
-        else {
-          var model = {},
-            modelName = 'pod_syndication_dup';
+            for (var i=0; i<result.data.length; i++) {
+              model = app.dao.modelFactory(modelName, {
+                     owner_id : result.data[i].owner_id,
+                     channel_id : result.data[i].channel_id,
+                     created: result.data[i].created,
+                     value : result.data[i].guid,
+                     bip_id : result.data[i].bip_id,
+                     last_update : result.data[i].last_update
+                   });
 
-          for (var i=0; i<result.data.length; i++) {
-            model = app.dao.modelFactory(modelName, {
-                   owner_id : result.data[i].owner_id,
-                   channel_id : result.data[i].channel_id,
-                   created: result.data[i].created,
-                   value : result.data[i].guid,
-                   bip_id : result.data[i].bip_id,
-                   last_update : result.data[i].last_update
-                 });
-
-            (function(model, syndicationMigration, isLast) {
-                app.dao.create(model, function(err) {
-                  if (err) syndicationMigration.reject(new Error(err));
-                  else if (isLast) {
-                    syndicationMigration.resolve();
-                  }
-                })
-              });)(model, syndicationMigration, i === result.length-1)
+              (function(model, syndicationMigration, isLast) {
+                  app.dao.create(model, function(err) {
+                    if (err) syndicationMigration.reject(new Error(err));
+                    else if (isLast) {
+                      syndicationMigration.resolve();
+                    }
+                  });
+                })(model, syndicationMigration, i === result.length-1)
+            }
           }
-        }
-      });
+        });
+      }
 
-      app.dao.findFilter('pod_soundcloud_track_favorite', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, result) {
-        if (err) soundcloudMigration.reject(new Error(err));
-        else {
-          var model = {},
-            modelName = 'pod_soundcloud_dup';
+      if (config.pods.hasOwnProperty("soundcloud")) {
+        app.dao.findFilter('pod_soundcloud_track_favorite', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
+          if (err) soundcloudMigration.reject(new Error(err));
+          else {
+            var model = {},
+              modelName = 'pod_soundcloud_dup';
 
-          for (var i=0; i<result.data.length; i++) {
-            model = app.dao.modelFactory(modelName, {
-                   owner_id : result.data[i].owner_id,
-                   channel_id : result.data[i].channel_id,
-                   created: result.data[i].created,
-                   value : result.data[i].track_id,
-                   bip_id : result.data[i].bip_id,
-                   last_update : result.data[i].last_update
-                 });
+            for (var i=0; i<result.data.length; i++) {
+              model = app.dao.modelFactory(modelName, {
+                     owner_id : result.data[i].owner_id,
+                     channel_id : result.data[i].channel_id,
+                     created: result.data[i].created,
+                     value : result.data[i].track_id,
+                     bip_id : result.data[i].bip_id,
+                     last_update : result.data[i].last_update
+                   });
 
-            (function(model, soundcloudMigration, isLast) {
-                app.dao.create(model, function(err) {
-                  if (err) soundcloudMigration.reject(new Error(err));
-                  else if (isLast) {
-                    soundcloudMigration.resolve();
-                  }
-                })
-              });)(model, soundcloudMigration, i === result.length-1)
+              (function(model, soundcloudMigration, isLast) {
+                  app.dao.create(model, function(err) {
+                    if (err) soundcloudMigration.reject(new Error(err));
+                    else if (isLast) {
+                      soundcloudMigration.resolve();
+                    }
+                  });
+                })(model, soundcloudMigration, i === result.length-1)
+            }
           }
-        }
-      });
+        });
+      }
 
       Q.all(promises).then(function(results) {
         if (delta) {
