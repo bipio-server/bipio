@@ -1,5 +1,5 @@
 var fs = require('fs'),
-  path = require('path')
+  path = require('path'),
   regex = /[^\\/]+\.[^\\/]+$/,
   multer = require('multer'),
   mime = require('mime'),
@@ -10,6 +10,7 @@ function FsProto(options) {
   this.dataDir = options.data_dir;
   this.tmpDir = options.data_dir + '/tmp';
   this.permDir = options.data_dir + '/perm';
+  this.global_root = options.basePath;
 };
 
 FsProto.prototype = {
@@ -36,7 +37,7 @@ FsProto.prototype = {
       header = options && options.header,
       write = options && options.write,
       destPath = ((typeof dest === 'object') ? dest.localpath : dest),
-      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
+      rootDir = self.global_root + ((options && options.persist) ? self.permDir : self.tmpDir),
       writeOptions = {};
 
     if (compress) {
@@ -73,27 +74,24 @@ FsProto.prototype = {
 
       writeStream.on('error', next);
       writeStream.on('finish', function(err) {
-        if (err) {
-          next(err);
-        } else {
-          self.utils.normalize(path, next);
-        }
-      });
+        if (err) next(err);
+        else self.utils.normalize(path, next);
+        });
 
       if (compress) {
         var gzip = zlib.createGzip();
         readStream.pipe(gzip).pipe(writeStream);
         readStream.resume();
-      }
+      } 
       else if (readStream) {
         readStream.pipe(writeStream);
         readStream.resume();
       }
-
+      
       if (buffer) {
         writeStream.write(buffer.toString(), null, function() {
           writeStream.end();
-        });
+              });
       }
     });
   },
@@ -110,7 +108,7 @@ FsProto.prototype = {
     var self = this,
       source = arguments[0],
       options  = (arguments[1] ? arguments[1] : null),
-      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
+      rootDir = self.global_root + ((options && options.persist) ? self.permDir : self.tmpDir),
       next = arguments[arguments.length-1],
       srcPath = ((typeof source === 'object') ? source.localpath : rootDir + source),
       readStream = fs.createReadStream(srcPath);
@@ -174,7 +172,7 @@ FsProto.prototype = {
     var file = arguments[0],
       filePath = ((typeof file === 'object') ? file.localpath : file),
       options  = (arguments[1] ? arguments[1] : null),
-      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
+      rootDir = self.global_root + ((options && options.persist) ? self.permDir : self.tmpDir),
       next = arguments[arguments.length-1];
 
     fs.exists(rootDir + filePath, function(exists) {
