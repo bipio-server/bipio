@@ -19,7 +19,7 @@ var fs = require('fs'),
         config.modules.cdn = {
           "strategy" : "fs",
           "config" : {
-            "data_dir" : path.resolve((0 === config.datadir.indexOf('/') ? config.datadir : path.resolve(__dirname) + '/../' + config.datadir))
+            "data_dir" : config.datadir
           }
         }
         console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.cdn.config.data_dir + "`");
