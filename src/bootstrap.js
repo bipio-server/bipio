@@ -69,6 +69,12 @@ var mod, ModProto;
 for (k in envConfig.modules) {
   if (envConfig.modules.hasOwnProperty(k)) {
     mod =  envConfig.modules[k];
+
+    // pass through server environments
+    if (mod.config) {
+      mod.config.basePath = GLOBAL.SERVER_ROOT;
+    }
+
     ModProto = require(
       GLOBAL.SERVER_ROOT
       + '/modules/'

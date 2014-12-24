@@ -3,7 +3,8 @@ var fs = require('fs'),
   regex = /[^\\/]+\.[^\\/]+$/,
   multer = require('multer'),
   mime = require('mime'),
-  zlib = require('zlib');
+  zlib = require('zlib'),
+  Stream = require('stream');
 
 function FsProto(options) {
   this.dataDir = options.data_dir;
@@ -46,7 +47,7 @@ FsProto.prototype = {
       writeOptions.flags = 'a';
     }
 
-    if (write && buffer) {
+    if (buffer) {
       var readStream = null
     }
     else {
@@ -72,24 +73,28 @@ FsProto.prototype = {
 
       writeStream.on('error', next);
       writeStream.on('finish', function(err) {
-        if (err) next(err);
-        else self.utils.normalize(path, next);
-        });
+        if (err) {
+          next(err);
+        } else {
+          self.utils.normalize(path, next);
+        }
+      });
 
       if (compress) {
         var gzip = zlib.createGzip();
         readStream.pipe(gzip).pipe(writeStream);
         readStream.resume();
-      } else if (readStream) {
+      }
+      else if (readStream) {
         readStream.pipe(writeStream);
         readStream.resume();
       }
 
       if (buffer) {
-        writeStream.write(buffer);
-        writeStream.end();
+        writeStream.write(buffer.toString(), null, function() {
+          writeStream.end();
+        });
       }
-
     });
   },
 
@@ -104,8 +109,10 @@ FsProto.prototype = {
 
     var self = this,
       source = arguments[0],
+      options  = (arguments[1] ? arguments[1] : null),
+      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       next = arguments[arguments.length-1],
-      srcPath = ((typeof source === 'object') ? source.localpath : source),
+      srcPath = ((typeof source === 'object') ? source.localpath : rootDir + source),
       readStream = fs.createReadStream(srcPath);
 
     self.utils.normalize(srcPath, function(err, struct) {
@@ -158,6 +165,7 @@ FsProto.prototype = {
    * Removes file from filesystem
    *
    * file: string or object
+   * options: object
    * next: function(string err, boolean success)
    */
 
@@ -165,9 +173,11 @@ FsProto.prototype = {
 
     var file = arguments[0],
       filePath = ((typeof file === 'object') ? file.localpath : file),
+      options  = (arguments[1] ? arguments[1] : null),
+      rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       next = arguments[arguments.length-1];
 
-    fs.exists(filePath, function(exists) {
+    fs.exists(rootDir + filePath, function(exists) {
       if (exists) fs.unlink(filePath, next);
       else next("File does not exist.");
     });
