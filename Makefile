@@ -1,6 +1,7 @@
 # TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
 # TESTS = tests/*.js tests/managers/*.js
-TESTS = tests/models/channel.js
+# TESTS = tests/models/channel.js
+TESTS = tests/migrations/0.3.0.js
 REPORTER = dot
 
 install:

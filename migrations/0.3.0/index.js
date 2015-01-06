@@ -22,18 +22,25 @@ var fs = require('fs'),
             "data_dir" : config.datadir
           }
         }
-        console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.cdn.config.data_dir + "`");
+        console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.modules.cdn.config.data_dir + "`");
         delta = true;
       }
 
-      if (config.hasOwnProperty("datadir")) delete config.datadir
-      if (config.hasOwnProperty("cdn")) delete config.cdn;
+      if (config.hasOwnProperty("datadir")) {
+        delete config.datadir;
+        delta = true;
+      }
+      if (config.hasOwnProperty("cdn")) {
+        delete config.cdn;
+        delta = true;
+      }
 
       // Handle database migration
       if (config.pods.hasOwnProperty("syndication")) {
         app.dao.list('pod_syndication_track_subscribe', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
           if (err) syndicationMigration.reject(new Error(err));
           else {
+            console.log("Migrating Syndication subscription data from the last 30 days (if any)...");
             var model = {},
               modelName = 'pod_syndication_dup';
 
@@ -51,19 +58,21 @@ var fs = require('fs'),
                   app.dao.create(model, function(err) {
                     if (err) syndicationMigration.reject(new Error(err));
                     else if (isLast) {
+                      console.log("...Syndication Migration finished.");
                       syndicationMigration.resolve();
                     }
                   });
-                })(model, syndicationMigration, i === result.length-1)
+                })(model, syndicationMigration, i === result.data.length-1)
             }
           }
         });
       }
 
       if (config.pods.hasOwnProperty("soundcloud")) {
-        app.dao.findFilter('pod_soundcloud_track_favorite', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
+        app.dao.list('pod_soundcloud_track_favorite', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
           if (err) soundcloudMigration.reject(new Error(err));
           else {
+            console.log("Migrating Soundcloud favorites data from the last 30 days (if any)...");
             var model = {},
               modelName = 'pod_soundcloud_dup';
 
@@ -81,10 +90,11 @@ var fs = require('fs'),
                   app.dao.create(model, function(err) {
                     if (err) soundcloudMigration.reject(new Error(err));
                     else if (isLast) {
+                      console.log("...Soundcloud Migration finished.");
                       soundcloudMigration.resolve();
                     }
                   });
-                })(model, soundcloudMigration, i === result.length-1)
+                })(model, soundcloudMigration, i === result.data.length-1)
             }
           }
         });
@@ -92,7 +102,7 @@ var fs = require('fs'),
 
       Q.all(promises).then(function(results) {
         if (delta) {
-          fs.writeFile(configPath , JSON.stringify(config, null, 2), function(err) {
+          fs.writeFile(configPath, JSON.stringify(config, null, 2), function(err) {
             if (err) {
               next(err, 'error');
             } else {
