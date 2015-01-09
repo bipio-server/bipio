@@ -352,7 +352,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cb
               }
             }
 
-            bipResult.checkExpiry(accountInfo, client, cbParameterMap)
+            bipResult.checkExpiry(accountInfo, client, cbParameterMap, next)
             // add bip metadata to the container
             next(
               cbParameterMap.success,
