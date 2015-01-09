@@ -89,16 +89,12 @@
   "modules": {
     "auth": {
       "strategy": "native"
-    },
-    "cdn": {
-      "strategy": "fs",
-      "config": {
-        "data_dir": "/Users/alfonso/Projects/BIP-139/bipio/data"
-      }
     }
   },
   "pods": {
     "syndication": {},
     "soundcloud": {}
-  }
+  },
+  "datadir": "/Users/alfonso/Projects/BIP-139/bipio/data",
+  "cdn": "/Users/alfonso/Projects/BIP-139/bipio/data/cdn"
 }
