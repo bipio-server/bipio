@@ -850,7 +850,7 @@ Bip.prePatch = function(patch, accountInfo, next) {
   next(false, this.getEntityName(), patch);
 };
 
-Bip.checkExpiry = function(accountInfo, client, cbParameterMap, cb) {
+Bip.checkExpiry = function(accountInfo, next) {
   if (this.end_life) {
     // convert bip expiry to user timezone
     var tzTime = new Date(parseInt(this.end_life.time * 1))
@@ -879,17 +879,7 @@ Bip.checkExpiry = function(accountInfo, client, cbParameterMap, cb) {
     }
   }
 
-  if (expired) {
-    expireBehavior = (this.end_life.action && '' !== this.end_life.action)
-    ? this.end_life.action
-    : accountInfo.user.settings.bip_expire_behaviour;
-
-    if ('delete' === expireBehavior) {
-      self._dao.deleteBip(this, accountInfo, cb(cbParameterMap.fail, err), client.id);
-    } else {
-      self._dao.pauseBip(this, cb(cbParameterMap.fail, err), true, client.id);
-    }
-  }
+  next(null, expired);
 };
 
 module.exports.Bip = Bip;

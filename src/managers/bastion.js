@@ -352,44 +352,56 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cb
               }
             }
 
-            bipResult.checkExpiry(accountInfo, client, cbParameterMap, next)
-            // add bip metadata to the container
-            next(
-              cbParameterMap.success,
-              {
-                'status' : 'OK'
-              },
-              // we don't need the whole bip packet.
-              {
-                id : bipResult.id,
-                hub : bipResult.hub,
-                owner_id : bipResult.owner_id,
-                config : bipResult.config,
-                name : bipResult.name,
-                type : bipResult.type
-              });
+            bipResult.checkExpiry(accountInfo, function(err, expired) {
+              if (expired) {
+                expireBehavior = (bipResult.end_life.action && '' !== bipResult.end_life.action) ? bipResult.end_life.action : accountInfo.user.settings.bip_expire_behaviour;
 
-            // update accumulator
-            self._dao.accumulate('bip', bipResult, '_imp_actual');
-
-            // if this bip is waiting for a binding, then set it
-            if (firstBinder) {
-              var bindTo;
-              if (bipResult.type == 'smtp') {
-                bindTo = client.reply_to;
-              } else {
-                bindTo = client.host;
-              }
-
-              // just incase
-              bindTo = helper.sanitize(bindTo).xss();
-
-              self._dao.updateColumn('bip', bipResult.id, [ bindTo ], function(err, result) {
-                if (err) {
-                  console.log(err);
+                if ('delete' === expireBehavior) {
+                  self._dao.deleteBip(bipResult, accountInfo, next(cbParameterMap.fail, err), client.id);
+                } else {
+                  self._dao.pauseBip(bipResult, next(cbParameterMap.fail, err), true, client.id);
                 }
-              });
-            }
+              }
+              else {
+                // add bip metadata to the container
+                next(
+                  cbParameterMap.success,
+                  {
+                    'status' : 'OK'
+                  },
+                  // we don't need the whole bip packet.
+                  {
+                    id : bipResult.id,
+                    hub : bipResult.hub,
+                    owner_id : bipResult.owner_id,
+                    config : bipResult.config,
+                    name : bipResult.name,
+                    type : bipResult.type
+                  });
+
+                // update accumulator
+                self._dao.accumulate('bip', bipResult, '_imp_actual');
+
+                // if this bip is waiting for a binding, then set it
+                if (firstBinder) {
+                  var bindTo;
+                  if (bipResult.type == 'smtp') {
+                    bindTo = client.reply_to;
+                  } else {
+                    bindTo = client.host;
+                  }
+
+                  // just incase
+                  bindTo = helper.sanitize(bindTo).xss();
+
+                  self._dao.updateColumn('bip', bipResult.id, [ bindTo ], function(err, result) {
+                    if (err) {
+                      console.log(err);
+                    }
+                  });
+                }
+              }
+            });
           }
         }
       });
