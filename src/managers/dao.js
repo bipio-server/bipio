@@ -223,10 +223,10 @@ Dao.prototype.createBip = function(struct, accountInfo, next, postSave) {
   this.create(model, next, accountInfo, postSave);
 }
 
-Dao.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
+Dao.prototype.deleteBip = function(props, accountInfo, next, transactionId) {
   this.remove('bip', props.id, accountInfo, function(err, result) {
     if (err) {
-      app.logmessage(err, 'error');
+      next(err);
     } else {
       var jobPacket = {
         owner_id : props.owner_id,
@@ -240,11 +240,12 @@ Dao.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
         jobPacket.code = 'bip_deleted_manual';
       }
       app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+      next(false, props);
     }
   })
 }
 
-Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
+Dao.prototype.pauseBip = function(props, pause, next, transactionId) {
   // default pause (true == unpause)
   if (undefined == pause) {
     pause = true;
@@ -258,7 +259,9 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
       'paused' : pause
     },
     function(err) {
-      if (!err) {
+      if (err) {
+        next(err);
+      } else {
         var jobPacket = {
           owner_id : props.owner_id,
           bip_id : props.id
@@ -273,6 +276,7 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
         }
 
         app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+        next(false, props);
       }
     }
     );

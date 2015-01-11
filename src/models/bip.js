@@ -850,7 +850,9 @@ Bip.prePatch = function(patch, accountInfo, next) {
   next(false, this.getEntityName(), patch);
 };
 
-Bip.checkExpiry = function(accountInfo, next) {
+Bip.checkExpiry = function(next) {
+  var accountInfo = this.getAccountInfo();
+
   if (this.end_life) {
     // convert bip expiry to user timezone
     var tzTime = new Date(parseInt(this.end_life.time * 1))
@@ -858,7 +860,9 @@ Bip.checkExpiry = function(accountInfo, next) {
       endTime = Math.floor(tzTime),
       nowTime = new Date().getTime() / 1000,
       endImp =  parseInt(this.end_life.imp * 1),
-      now, expired = false, self = this;
+      now,
+      expired = false,
+      self = this;
 
     if (endTime > 0) {
       now = Math.floor(nowTime);
@@ -879,7 +883,21 @@ Bip.checkExpiry = function(accountInfo, next) {
     }
   }
 
-  next(null, expired);
+  next(expired);
 };
+
+Bip.expire = function(transationId, next) {
+  var accountInfo = this.getAccountInfo(),
+    expireBehavior = (this.end_life.action && '' !== this.end_life.action)
+      ? this.end_life.action
+      : accountInfo.user.settings.bip_expire_behaviour;
+
+  if ('delete' === expireBehavior) {
+    this._dao.deleteBip(this, accountInfo, next, transationId);
+  } else {
+    this._dao.pauseBip(this, true, next, transationId);
+  }
+}
+
 
 module.exports.Bip = Bip;

@@ -411,8 +411,7 @@ function bipBasicFail(req, res) {
  */
 function bipAuthWrapper(req, res, cb) {
   app.modules.auth.domainAuth(helper.getDomain(req.headers.host, true), function(err, acctResult) {
-
-    if (err || !domain) {
+    if (err) {
       // reject always
       bipBasicFail(req, res);
     } else {
@@ -424,7 +423,6 @@ function bipAuthWrapper(req, res, cb) {
       };
 
       dao.find('bip', filter, function(err, result) {
-
         if (!err && result) {
           if (result.config.auth == 'none') {
             req.remoteUser = acctResult;
@@ -453,6 +451,8 @@ function bipAuthWrapper(req, res, cb) {
               }
             })(req, res, cb);
           }
+        } else {
+          bipBasicFail(req, res);
         }
       });
     }
@@ -493,21 +493,17 @@ module.exports = {
 
       _.each(req.files, function(file) {
         files.push(file);
-      })
+      });
 
       GLOBAL.app.bastion.bipUnpack(
         'http',
         bipName,
         req.remoteUser,
         client,
-        function(status, message, bip) {
+        function(err, bip) {
           var exports = {
             'source' : {}
           };
-
-          if (!message){
-            message = '';
-          }
 
           // setup source exports for this bip
           if (bip && bip.config.exports && bip.config.exports.length > 0) {
@@ -529,7 +525,7 @@ module.exports = {
 
           var restReponse = true;
           // forward to bastion
-          if (status == statusMap.success) {
+          if (!err) {
             exports._client = client;
             exports._bip = bip;
 
@@ -550,10 +546,9 @@ module.exports = {
           }
 
           if (restReponse) {
-            restResponse(res)( status === statusMap.fail, undefined, message, status);
+            restResponse(res)( err, undefined, {}, err ? 404 : 200);
           }
-        },
-        statusMap);
+        });
 
     });
 
