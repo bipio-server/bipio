@@ -36,6 +36,7 @@ var fs = require('fs'),
       }
 
       // Handle database migration
+      /*
       if (config.pods.hasOwnProperty("syndication")) {
         app.dao.list('pod_syndication_track_subscribe', null, 0, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
           if (err) syndicationMigration.reject(new Error(err));
@@ -99,8 +100,9 @@ var fs = require('fs'),
           }
         });
       }
+      */
 
-      Q.all(promises).then(function(results) {
+//      Q.all(promises).then(function(results) {
         if (delta) {
           fs.writeFile(configPath, JSON.stringify(config, null, 2), function(err) {
             if (err) {
@@ -110,13 +112,15 @@ var fs = require('fs'),
               next();
             }
           });
-        } 
+        }
         else {
           next('Nothing To Do');
         }
+        /*
       }, function(err) {
         next(err);
       });
+*/
     }
   }
 

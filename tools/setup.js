@@ -481,7 +481,7 @@ if (!fs.existsSync(targetConfig)) {
 
 } else {
 
-  process.HEADLESS = true;
+  //process.HEADLESS = true;
   var bootstrap = require(__dirname + '/../src/bootstrap');
   bootstrap.app.dao.on('ready', function() {
 
