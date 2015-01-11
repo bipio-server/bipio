@@ -1,9 +1,9 @@
 {
     "site_name" : "BipIO",
     "domain": "localhost",
-    "domain_public": "localhost:5000",
+    "domain_public" : "localhost:5000",
     "website_public": "http://localhost",
-    "cdn_public": "http://localhost/static/img/cdn",
+    "cdn_public": "http://localhost/static",
     "site_emitter": "https://bip.io",
     "proto_public": "http://",
     "crons" : {
@@ -82,14 +82,17 @@
         },
         "defaultExchange": "public_inbound"
     },
-    "datadir" : "data",
-    "cdn": "data/cdn",
-    "k": {
-    },
+    "k": {},
     "jwtKey" : "",
     "modules" : {
         "auth": {
-            "strategy" : "native"
+          "strategy" : "native"
+        },
+        "cdn" : {
+          "strategy" : "fs",
+          "config" : {
+            "data_dir" : "data"
+          }
         }
     },
     "pods": {

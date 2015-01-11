@@ -25,7 +25,7 @@ var defs = {
     JOB_USER_STAT_IN_MB : 'userStatInMB',
     JOB_USER_STAT_OUT_MB : 'userStatOutMB',
 
-    JOB_ATTACH_REFERER_ICON : 'attachBipRefererIcon',
+//    JOB_ATTACH_REFERER_ICON : 'attachBipRefererIcon',
 
     JOB_BIP_TRIGGER : 'bipTrigger',
 

@@ -37,7 +37,8 @@ uuid = require('node-uuid'),
 ipaddr = require('ipaddr.js'),
 rimraf = require('rimraf'),
 _ = require('underscore'),
-JSONPath = require('JSONPath');
+JSONPath = require('JSONPath'),
+favitest = require('favitest');
 
 var helper = {
 
@@ -211,14 +212,6 @@ var helper = {
 
   validator : function() {
     return validator.check;
-  },
-
-  exists : function(path, cb) {
-    return (fs.exists || path.exists)(path, cb);
-  },
-
-  existsSync : function(path) {
-    return (fs.existsSync || path.existsSync)(path);
   },
 
   copyProperty : function(src, dst, overrideDst, propName) {
@@ -558,37 +551,42 @@ var helper = {
     return input;
   },
 
-  streamToHash : function(readStream, next) {
-    var hash = crypto.createHash('sha1');
-    hash.setEncoding('hex');
+  /**
+   *
+   */
+  syncFavicon : function(url, next) {
+    var cdnPath = '/cdn/img/icofactory',
+      tokens = this.tldtools.extract(url),
+      cdnUrl,
+      self = this;
 
-    readStream.on('end', function() {
-        hash.end();
-        next(false, hash.read());
+    favitest(url, function(err, favUrl, suffix, domain) {
+      if (err) {
+        next(err);
+      } else {
+        var hashPath = self.strHash(domain) + suffix;
+        cdnPath += '/' + hashPath;
+        app.modules.cdn.save(
+          cdnPath,
+          request(favUrl),
+          {
+            persist : true
+          },
+          function(err, struct) {
+            if (err) {
+              next(err);
+            } else {
+              next(
+                false,
+                CFG.cdn_public + '/' + cdnPath
+              );
+            }
+          }
+        );
+      }
     });
-
-    readStream.on('error', function(err) {
-      next(err);
-    });
-
-    readStream.pipe(hash);
   },
 
-  streamToBuffer : function(readStream, next) {
-    var buffers = [];
-    readStream.on('data', function(chunk) {
-        buffers.push(chunk);
-    });
-
-    readStream.on('error', function(err) {
-        next(err);
-    });
-
-    readStream.on('end', function() {
-      next(false, Buffer.concat(buffers));
-
-    });
-  }
 }
 
 //

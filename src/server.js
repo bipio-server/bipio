@@ -134,12 +134,12 @@ function setCORS(req, res, next) {
   next();
 }
 
-
 //
 // ------ LOAD EXPRESS MIDDLEWARE
 //
 
-restapi.use(multer({ dest : GLOBAL.DATA_DIR + '/tmp' }));
+restapi.use(app.modules.cdn.utils.HTTPFormHandler());
+
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {
   if (err.status == 400) {
@@ -246,7 +246,8 @@ if (cluster.isMaster) {
 
     // oAuth refresh
     app.logmessage('DAO:Starting OAuth Refresh', 'info');
-    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
+//    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
+    var oauthRefreshJob = new cron.CronJob('0 */1 * * * *', function() {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);
 

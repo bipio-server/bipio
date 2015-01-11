@@ -40,6 +40,7 @@
  *  accumulate(modelName, props, accumulator, inc)
  *  accumulateFilter(modelName, filter, accumulator)
  *  updateColumn(modelName, filter, props, next)
+ *  expire(modelName, maxTime, next)
  *
  * Factories
  *
@@ -52,8 +53,9 @@
  */
 var uuid        = require('node-uuid'),
   mongoose    = require('mongoose'),
-  helper      = require('../lib/helper')
-  time        = require('time');
+  helper      = require('../lib/helper'),
+  extend = require('extend'),
+  time        = require('time'),
   events = require('events'),
   eventEmitter = new events.EventEmitter(),
   mongooseOpen = false;
@@ -149,7 +151,6 @@ DaoMongo.prototype.getModelReadableProps = function(modelName) {
   modelPublicFilters.push('_repr');
   modelPublicFilters.push('_links');
   modelPublicFilters.push('_href');
-  modelPublicFilters.push('_renderers');
   modelPublicFilters.push('status');
   modelPublicFilters.push('message');
   modelPublicFilters.push('code');
@@ -162,13 +163,18 @@ DaoMongo.prototype.getModelWritableProps = function(modelName) {
   return this.models[modelName]['class'].getWritablePropsArray();
 }
 
+DaoMongo.prototype.registerModel = function(modelObj) {
+  extend(true, modelObj, Object.create(this.getModelPrototype()));
+  this.registerModelClass(modelObj);
+}
+
 /**
- *
+ * @todo - deprecate, should automatically extend mongoose model
  * Initializes a model and binds it to a Mongoose schema
  *
  * @param modelClass model prototype
  */
-DaoMongo.prototype.registerModel = function(modelClass) {
+DaoMongo.prototype.registerModelClass = function(modelClass) {
   var modelName = modelClass.getEntityName(), validators, numValidators;
   var container = this.models;
 
@@ -388,7 +394,7 @@ DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo
         model.getEntityName(),
         model,
         self.errorMap(err)
-        );
+      );
     }
   });
 }
@@ -406,10 +412,10 @@ DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo
 DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
   var self = this, resp;
   var nowTime = helper.nowUTCSeconds();
-  if (model) {
 
+  if (model) {
     model[ model.getEntityIndex() ] = uuid();
-    model[ model.getEntityCreated() ] = nowTime;
+    if ( !model[ model.getEntityCreated() ] ) model[ model.getEntityCreated() ] = nowTime;
     model.preSave(accountInfo, function(err, model) {
       if (err) {
         next(err, model.getEntityName(), model, 500);
@@ -752,20 +758,15 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
   MongoClass = mongoose.model(modelName);
 
   MongoClass.remove(filter, function (err, result) {
-    if (err || result == 0) {
-      self._log('Error: remove(): ' + (err || 'Nothing to Remove') );
-      if (next) {
-        next(false, null);
-        return null;
+    if (next) {
+      if (err) {
+        next(err);
+      } else {
+        next(false, modelName, {
+          'status' : 'OK'
+        });
       }
     }
-
-    if (next) {
-      next(false, modelName, {
-        'status' : 'OK'
-      });
-    }
-    return result;
   });
 };
 
@@ -783,7 +784,7 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
  */
 DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orderBy, filter, callback) {
   var owner_id = accountInfo ? accountInfo.user.id : undefined;
-  var self = this, cacheKey = 'slist_' + modelName + '_' + owner_id + '_' + page + '_' + page_size;
+  var self = this;
   var mongoFilter = {
     'owner_id' : owner_id
   }
@@ -865,13 +866,12 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
               }
             }
             realResult.push(publicModel);
-            //realResult.push(model.toObj());
           }
 
           var resultStruct = {
             'page' : page,
             'page_size' : page_size,
-            'num_pages' : (Math.ceil( count / page_size )),
+            'num_pages' : page_size ? (Math.ceil( count / page_size )) : 1,
             'order_by' : orderBy,
             'total' : count,
             'data' : realResult
@@ -953,6 +953,15 @@ DaoMongo.prototype.accumulateFilter = function(modelName, filter, accumulator, s
 
   // increment it
   MongoModel.update( filter, incUpdate, { upsert : upsert } ).exec(next);
+};
+
+// expire a model
+DaoMongo.prototype.expire = function(modelName, filter, maxTime, next) {
+  filter.created = {
+    '$lt' : maxTime
+  };
+
+  this.removeFilter(modelName, filter, next);
 };
 
 /**

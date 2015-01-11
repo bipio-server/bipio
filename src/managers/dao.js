@@ -42,6 +42,8 @@ function Dao(config, log, next) {
   this.cdn = cdn;
   this._modelPrototype = require('../models/prototype.js').BipModel;
 
+
+  // @todo refactor to not rely on mongoose models
   var modelSrc = {
     // mapper
     'bip' : require('../models/bip').Bip,
@@ -64,7 +66,7 @@ function Dao(config, log, next) {
 
   this.models = { };
   for (var key in modelSrc) {
-    this.registerModel(modelSrc[key]);
+    this.registerModelClass(modelSrc[key]);
   }
 }
 
@@ -221,10 +223,10 @@ Dao.prototype.createBip = function(struct, accountInfo, next, postSave) {
   this.create(model, next, accountInfo, postSave);
 }
 
-Dao.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
+Dao.prototype.deleteBip = function(props, accountInfo, next, transactionId) {
   this.remove('bip', props.id, accountInfo, function(err, result) {
     if (err) {
-      app.logmessage(err, 'error');
+      next(err);
     } else {
       var jobPacket = {
         owner_id : props.owner_id,
@@ -238,11 +240,12 @@ Dao.prototype.deleteBip = function(props, accountInfo, cb, transactionId) {
         jobPacket.code = 'bip_deleted_manual';
       }
       app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+      next(false, props);
     }
   })
 }
 
-Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
+Dao.prototype.pauseBip = function(props, pause, next, transactionId) {
   // default pause (true == unpause)
   if (undefined == pause) {
     pause = true;
@@ -256,7 +259,9 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
       'paused' : pause
     },
     function(err) {
-      if (!err) {
+      if (err) {
+        next(err);
+      } else {
         var jobPacket = {
           owner_id : props.owner_id,
           bip_id : props.id
@@ -271,6 +276,7 @@ Dao.prototype.pauseBip = function(props, cb, pause, transactionId) {
         }
 
         app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+        next(false, props);
       }
     }
     );
@@ -312,8 +318,67 @@ Dao.prototype.setDefaultBip = function(bipId, targetModel, accountInfo, next) {
   });
 };
 
-Dao.prototype.webFinger = function(emailAddress, next) {
-  next();
+/**
+ *
+ * Finds and removes duplicate tracking for bipid / channel index pairs
+ */
+Dao.prototype.removeBipDupTracking = function(bipId, next) {
+  var promises = [],
+    deferred,
+    self = this;
+
+  // get bip
+  this.find(
+    'bip',
+    {
+      id : bipId
+    },
+    function(err, result) {
+      if (err) {
+        next(err);
+      } else {
+        for (var i = 0; i < result._channel_idx.length; i++)  {
+
+          deferred = app.Q.defer();
+          promises.push(deferred.promise);
+
+          (function(channelId, deferred) {
+            var modelName = 'channel';
+            self.find(modelName, { id : channelId }, function(err, channel) {
+              var cModel, pod;
+              if (err) {
+                deferred.reject(err);
+              } else {
+                cModel = self.modelFactory(modelName, channel);
+                pod = cModel.getPod();
+
+                if (pod.getTrackDuplicates()) {
+                  pod.dupRemove(bipId, cModel, function(err) {
+                    if (err) {
+                      deferred.reject(err);
+                    } else {
+                      deferred.resolve();
+                    }
+                  });
+                } else {
+                  deferred.resolve();
+                }
+              }
+            });
+          })(result._channel_idx[i], deferred);
+        }
+
+        app.Q.all(promises).then(
+          function() {
+            next();
+          },
+          function(err) {
+            next(err);
+          }
+        );
+      }
+    });
+
 }
 
 Dao.prototype.shareBip = function(bip, cb) {
@@ -659,59 +724,6 @@ Dao.prototype.bipLog = function(payload) {
 
 /**
  *
- * Given a referer, attempts to call out to the site and discover a usable
- * image which we can normalise and store. (favicon.ico for now)
- *
- * Where the icon already exists locally, we return a cached link to the site CDN
- * icon factory of /static/img/cdn/icofactory/{referer hash}.ico
- *
- * @param string bip id
- * @param string referer FQDN - including protocol
- */
-Dao.prototype.getBipRefererIcon = function(bipId, referer, blocking, cb) {
-  var iconUri,
-  fileSuffix = '.ico',
-  ok = true,
-  iconSource = referer.replace("https", 'http') + '/favicon' + fileSuffix,
-  cdnPath = 'icofactory',
-  jobPayload;
-
-  if (referer) {
-    // create hash
-    var hashFile = helper.strHash(iconSource) + fileSuffix,
-    dDir = DATA_DIR + '/cdn/img/' + cdnPath + '/',
-    filePath = dDir + hashFile,
-    cdnUri = CFG.cdn_public + '/' + cdnPath + '/' + hashFile;
-
-    jobPayload = {
-      bip_id : bipId,
-      referer_icon_path : iconSource,
-      dst_file : filePath,
-      icon_uri : cdnUri
-    };
-
-    // !!warning!! sync check
-    if (helper.existsSync(filePath)) {
-      iconUri = cdnUri;
-      if (cb) {
-        cb(false, jobPayload);
-      }
-    } else {
-      if (!blocking) {
-        // @todo stubbed. Queue not yet implemented
-        app.bastion.createJob(DEFS.JOB_ATTACH_REFERER_ICON, jobPayload);
-      } else {
-        // for testing purposes
-        this._jobAttachBipRefererIcon(jobPayload, cb);
-      }
-    }
-  }
-  return iconUri;
-}
-
-
-/**
- *
  * Trigger all trigger bips
  *
  */
@@ -732,26 +744,56 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
   }
 
   this.findFilter('bip', filter, function(err, results) {
-    var payload;
     if (!err && results && results.length) {
       numResults = results.length;
       numProcessed = 0;
 
       for (var i = 0; i < numResults; i++) {
-        payload = app._.clone(results[i])._doc;
-        payload.socketTrigger = isSocket;
 
-        app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
-        numProcessed++;
+        (function(bipResult) {
 
-        app.logmessage('DAO:Trigger:' + payload.id + ':' + numProcessed + ':' + numResults);
+          // get user account
+          self.findFilter(
+            'account_option',
+            {
+              owner_id : bipResult.owner_id
+            },
+            function(err, results) {
+              if (!err && results && results.length === 1) {
+                // set up a pseudo account Info
+                var accountInfo = {
+                  user : {
+                    settings : results[0]
+                  }
+                }
+                          // check expiry
+                var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+                bipModel.checkExpiry(function(expired) {
+                  if (expired) {
+                    bipModel.expire(client.id, next);
+                  } else {
+                    var payload = app._.clone(bipResult)._doc;
+                    payload.socketTrigger = isSocket;
 
-        if (numProcessed >= (numResults - 1)) {
-          // the amqp lib has stopped giving us queue publish acknowledgements?
-          setTimeout(function() {
-            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-          }, 1000);
-        }
+                    app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+                    numProcessed++;
+
+                    app.logmessage('DAO:Trigger:' + payload.id + ':' + numProcessed + ':' + numResults);
+
+                    if (numProcessed >= (numResults - 1)) {
+                      // the amqp lib has stopped giving us queue publish acknowledgements?
+                      setTimeout(function() {
+                        next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+                      }, 1000);
+                    }
+                  }
+                });
+              }
+
+            }
+          );
+        })(results[i]);
+
       }
     } else {
       next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
@@ -986,7 +1028,64 @@ Dao.prototype.getBipsByChannelId = function(channelId, accountInfo, next) {
   this.findFilter('bip', filter, next);
 }
 
+
+Dao.prototype.updateChannelIcon = function(channel, URL) {
+  channel.config.icon = URL;
+  this.updateColumn(
+    'channel',
+    {
+      id : channel.id
+    },
+    {
+      config : channel.config
+    }
+  );
+}
+
 // --------------------------------------------------------------------- UTILITY
+
+Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
+    // describe all pods
+    var self = this,
+      authType = pod.getAuthType(),
+      filter = {
+        owner_id : owner_id
+      };
+
+    if ('issuer_token' === authType) {
+      filter.auth_provider = pod.getName();
+    } else if ('oauth' === authType) {
+      filter.oauth_provider = pod.getName();
+    } else {
+      next();
+      return;
+    }
+
+    this.find('account_auth', filter, function(err, result) {
+      var authRecord;
+      if (err) {
+        next(err);
+      } else if (!result) {
+        next();
+      } else {
+        authRecord = self.modelFactory('account_auth', result);
+        if ('issuer_token' === authType) {
+          next(false, {
+            'username' : authRecord.getUsername(),
+            'password' : authRecord.getPassword(),
+            'key' : authRecord.getKey()
+          });
+        } else if ('oauth' === authType) {
+          next(false, {
+            'access_token' : authRecord.getPassword(),
+            'secret' : authRecord.getOAuthRefresh(),
+            'profile' : authRecord.getOauthProfile()
+          });
+        }
+      }
+    });
+
+}
 
 Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
   var modelClass, resp = {}, exports = {};
@@ -1007,7 +1106,7 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
       resp[key] = pods[key].describe(accountInfo);
 
       // prep the oAuthChecks array for a parallel datasource check
-      if (resp[key].auth.type != 'none' && accountInfo) {
+      if (resp[key].auth.strategy && resp[key].auth.strategy != 'none' && accountInfo) {
         authChecks.push(
           function(podName) {
             return function(cb) {
@@ -1283,6 +1382,7 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
         next(true, resp);
       } else {
         cdn.resize({
+
           srcPath : newDst,
           dstPath : newDst,
           width : 125,
@@ -1300,6 +1400,7 @@ Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
  *
  * @todo - convert to png
  */
+ /*
 Dao.prototype.getAvRemote = function(ownerId, avUrl, blocking, cb) {
   var iconUri,
   fileSuffix = '.ico',
@@ -1327,14 +1428,15 @@ Dao.prototype.getAvRemote = function(ownerId, avUrl, blocking, cb) {
     this._jobAttachUserAvatarIcon(jobPayload, cb);
   }
 }
-
+*/
 
 /**
  * Deferred job to attach a 3rd party icon to the given bip after saving to the CDN
  *
- * @todo move this into a jobRunner class (bsation)
+ * @todo move this into a jobRunner class (bastion)
  *
  */
+ /*
 Dao.prototype._jobAttachBipRefererIcon = function(payload, next) {
   var bipId = payload.bip_id,
   dstFile = payload.dst_file,
@@ -1372,6 +1474,7 @@ Dao.prototype._jobAttachBipRefererIcon = function(payload, next) {
     }
   });
 }
+*/
 
 DaoMongo.prototype.getModelPrototype = function() {
   return this._modelPrototype;

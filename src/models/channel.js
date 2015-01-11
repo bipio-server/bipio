@@ -79,8 +79,7 @@ Channel.entitySchema = {
     set : function(action) {
       var podAction = Channel.getPodTokens(action);
       if (podAction.ok()) {
-        // @todo deprecate for getConfigDefaults
-        this.config = pods[podAction.pod].importGetDefaults(podAction.action);
+        this.config = pods[podAction.pod].getConfigDefaults(podAction.action);
       }
       return action;
     },
@@ -176,21 +175,48 @@ function validAction(value) {
     var tTokens = value.split('.');
     var pod = tTokens[0], podAction = tTokens[1];
 
-    ok = (undefined != pods[pod] && undefined != pods[pod].getSchema(podAction));
+    ok = (undefined != pods[pod] && undefined != pods[pod].getAction(podAction));
   }
   return ok;
 }
 
 // Pod Binder
 Channel.staticChildInit = function() {
+  var self = this;
   // initialize each channel pod
   for (var idx in pods) {
-//    pods[idx].init(idx, this.getDao(), CFG.pods[idx] );
-    pods[idx].init(this.getDao(), CFG.pods[idx] );
+    pods[idx].init(
+      idx,
+      this.getDao(),
+      app.modules.cdn,
+      app.logmessage,
+      {
+        config : CFG.pods[idx],
+        blacklist : CFG.server.public_interfaces,
+        baseUrl : self._dao.getBaseUrl(),
+        cdnPublicBaseURL : CFG.cdn_public,
+        cdnBasePath : 'cdn',
+        emitterBaseURL :  (CFG.site_emitter || CFG.website_public) + '/emitter',
+        timezone : CFG.timezone,
+        isMaster : app.isMaster
+      }
+    );
   }
 
   return this;
 };
+
+Channel.getActionTokens = function() {
+  var tokens, retr = {};
+  if (this.action) {
+    tokens = this.action.split('.');
+  }
+
+  return {
+    pod : tokens[0],
+    action : tokens[1]
+  }
+}
 
 /**
  * Transforms adjacentExports into an import usable by this Channel.  Transforms
@@ -259,8 +285,8 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   var self = this;
 
   var transformedImports = this._transform(adjacentExports, transforms),
-    podTokens = this.getPodTokens(),
-    podName = podTokens.name,
+    podTokens = this.getActionTokens(),
+    podName = podTokens.pod,
     pod = pods[podName];
 
   // attach bip and client configs
@@ -295,8 +321,8 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
  */
 Channel.rpc = function(rpcName, query, client, req, res) {
   var self = this,
-    podTokens = this.getPodTokens(),
-    pod = pods[podTokens.name],
+    podTokens = this.getActionTokens(),
+    pod = pods[podTokens.pod],
     sysImports = {
       client : client
     };
@@ -305,7 +331,7 @@ Channel.rpc = function(rpcName, query, client, req, res) {
     if (err) {
       res.status(500).send(err);
     } else {
-      pods[podTokens.name].rpc(
+      pods[podTokens.pod].rpc(
         podTokens.action,
         rpcName,
         sysImports,
@@ -334,13 +360,13 @@ Channel.pod = function(podName) {
   return ret;
 }
 
-Channel.isSocket = function() {
+Channel.isRealtime = function() {
   var ret = false, pod;
   if (this.action && '' !== this.action) {
     tokens = this.action.split('.');
     pod = pods[tokens[0]];
     if (pod) {
-      ret = pod.isSocket(tokens[1]);
+      ret = pod.isRealtime(tokens[1]);
     }
   }
 
@@ -350,36 +376,36 @@ Channel.isSocket = function() {
 Channel.hasRenderer = function(renderer) {
   var tokens = this.action.split('.'),
   pod = this.pod(tokens[0]);
-  return pod.isRenderer(tokens[1]);
+  return pod.isRenderer(tokens[1], renderer);
 }
 
 Channel.getActionList = function() {
-  var schema, result = [];
+  var actions, result = [];
 
   for (pod in pods) {
-    schema = pods[pod].getSchema();
-    for (action in schema) {
-      // @todo 'admin' actions should be surfaced to admin users
-      if (!schema[action].trigger && !schema[action].admin) {
-        result.push(pod + '.' + action);
+    actions = pods[pod].listActions();
+    if (actions && actions.length) {
+      for (var i = 0; i < actions.length; i++ ) {
+        result.push(pod + '.' + actions[i].name);
       }
     }
   }
+
   return result;
 }
 
 Channel.getEmitterList = function() {
-  var schema, result = [];
+  var emitters, result = [];
 
   for (pod in pods) {
-    schema = pods[pod].getSchema();
-    for (action in schema) {
-      // @todo 'admin' actions should be surfaced to admin users
-      if (schema[action].trigger && !schema[action].admin) {
-        result.push(pod + '.' + action);
+    emitters = pods[pod].listEmitters();
+    if (emitters && emitters.length) {
+      for (var i = 0; i < emitters.length; i++ ) {
+        result.push(pod + '.' + emitters[i].name);
       }
     }
   }
+
   return result;
 }
 
@@ -392,7 +418,7 @@ Channel.getEmitterList = function() {
 Channel.postSave = function(accountInfo, next, isNew) {
   var tTokens = this.action.split('.'),
   podName = tTokens[0], action = tTokens[1],
-  self = this;
+  self = this, authType =  pods[podName].getAuthType();
 
   if (undefined == podName || undefined == action) {
     // throw a constraint crit
@@ -406,61 +432,34 @@ Channel.postSave = function(accountInfo, next, isNew) {
 
   // channels behave a little differently, they can have postponed availability
   // after creation, which the pod actions themselves might want to dictate.
-  if (pods[podName].isOAuth()) {
-    // attach the users credentials for any potential oAuth based channel setup
-    (function(channel, podName, action, accountInfo, next) {
-      pods[podName].oAuthGetToken(accountInfo.user.id, podName, function(err, oAuthToken, tokenSecret, authProfile) {
-        if (!err && oAuthToken) {
-          var auth = {
-            oauth : {
-              token : oAuthToken,
-              secret : tokenSecret,
-              profile : authProfile
-            }
-          };
-          pods[podName].setup(action, channel, accountInfo, auth, next);
-        // not authenticated? Then we can't perform setup so drop this
-        // channel
-        } else if (!oAuthToken) {
-          self._dao.remove('channel', self.id, accountInfo, function() {
-            next('Channel could not authenticate', 'channel', {
-              message : 'Channel could not authenticate'
-            }, 500);
-          });
 
-        }
-      });
-    })(this, podName, action, accountInfo, next);
+  if (authType && 'none' !== authType) {
+    self._dao.getPodAuthTokens(accountInfo.user.id, pods[podName], function(err, authStruct) {
+      if (err) {
+        next(err, 'channel', { message : err }, 500);
+      } else if (!authStruct) {
+        next(
+          'Channel not authenticate',
+          'channel',
+          {
+            message : 'Channel not authenticated'
+          },
+          500
+        );
 
-  } else if ('issuer_token' === pods[podName]._authType) {
-
-    (function(channel, podName, action, accountInfo, next) {
-      pods[podName].authGetIssuerToken(self.owner_id, podName, function(err, username, password, key) {
-        if (!err && (username || password || key)) {
-          var auth = {
-            issuer_token : {
-              username : username,
-              key : key,
-              password : password
-            }
-          };
-
-          pods[podName].setup(action, channel, accountInfo, auth, next);
-
-        } else {
-          // not authenticated? Then we can't perform setup so drop this
-          // channel
-          self._dao.remove('channel', self.id, accountInfo, function() {
-            next(true, 'channel', {
-              message : 'No Issuer Token bound for this Channel'
-            }, 403);
-          });
-        }
-      });
-    })(this, podName, action, accountInfo, next);
-
+        // @todo - set channel availability to false
+      } else {
+        var auth = {};
+        auth[authType] = authStruct;
+        pods[podName].setup(action, self, accountInfo, auth, function(err) {
+          next(err, 'channel', self);
+        });
+      }
+    });
   } else {
-    pods[podName].setup(action, this, accountInfo, next);
+    pods[podName].setup(action, this, accountInfo, function(err) {
+      next(err, 'channel', self);
+    });
   }
 
   if (isNew) {
@@ -494,6 +493,18 @@ Channel.preRemove = function(id, accountInfo, next) {
   });
 }
 
+Channel.getActionSchema = function() {
+  if (this.action) {
+    var tokens = this.action.split('.'),
+      podName = tokens[0],
+      actionName = tokens[1],
+      pod = pods[tokens[0]];
+    return pod.getAction(actionName);
+  }
+  return null;
+}
+
+// @todo deprecate
 Channel.getPodTokens = function() {
   var ret = {
     ok : function() {
@@ -514,7 +525,6 @@ Channel.getPodTokens = function() {
         return ptr;
       };
       ret.isTrigger = function() {
-        //return pods[this.pod]['_schemas'][this.action].trigger;
         return pods[this.pod].isTrigger(this.action);
       },
       // get all unique keys
@@ -536,6 +546,14 @@ Channel.getPodTokens = function() {
   return ret;
 }
 
+Channel.getPod = function() {
+  var tokens = this.action.split('.'),
+    podName = tokens[0],
+    actionName = tokens[1];
+
+  return pods[tokens[0]];
+}
+
 Channel.getPods = function(name) {
   if (name && pods[name]) {
     return pods[name];
@@ -551,8 +569,7 @@ Channel.getConfig = function() {
 
   pod = this.getPodTokens();
 
-  // @todo deprecate for pod.getActionConfig()
-  var podConfig = pods[pod.name].importGetConfig(pod.action);
+  var podConfig = pods[pod.name].getActionConfig(pod.action);
 
   for (key in podConfig.properties) {
     if (!this.config[key] && podConfig.properties[key]['default']) {
@@ -610,43 +627,14 @@ Channel.getRendererUrl = function(renderer, accountInfo) {
     ret,
     cid = this.getIdValue();
 
-  if (action.ok()) {
-    rStruct = action.getSchema('renderers');
-    if (rStruct[renderer]) {
-      if (cid) {
-        ret = accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + cid + '/' + renderer;
-      } else {
-        ret = accountInfo.getDefaultDomainStr(true) + '/rpc/pod/' + action.name + '/' + action.action + '/' + renderer;
-      }
-    }
+  var action = this.getActionSchema();
+  if (cid && action && action.rpcs[renderer]) {
+    ret = accountInfo.getDefaultDomainStr(true) + '/rpc/channel/' + cid + '/' + renderer;
   }
 
   return ret;
 }
 
-Channel.attachRenderer = function(accountInfo) {
-  var action = this.getPodTokens();
-
-  if (action.ok()) {
-    rStruct = action.getSchema();
-    if (rStruct && rStruct.renderers) {
-      // add global invokers
-      this._renderers = {
-        'invoke' : {
-          description : 'Invoke',
-          description_long : 'Invokes the Channel with ad-hoc imports',
-          contentType : DEFS.CONTENTTYPE_JSON,
-          _href : accountInfo.getDefaultDomainStr(true) + '/rpc/render/channel/' + this.getIdValue() + '/invoke'
-        }
-      };
-
-      for (var idx in rStruct.renderers) {
-        this._renderers[idx] = rStruct.renderers[idx]
-        this._renderers[idx]._href = this.getRendererUrl(idx, accountInfo);
-      }
-    }
-  }
-}
 
 Channel.href = function() {
   return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
@@ -656,15 +644,47 @@ Channel.href = function() {
  * Channel representation
  */
 Channel.repr = function(accountInfo) {
-  var repr = '';
-  var action = this.getPodTokens();
+  var repr = '',
+    tokens;
 
-  if (action.ok()) {
-    repr = pods[action.pod].repr(action.action, this);
-    this.attachRenderer(accountInfo);
+  if (this.action) {
+    tokens = this.getActionTokens();
+    repr = pods[tokens.pod].repr(tokens.action, this);
   }
 
   return repr;
+}
+
+/**
+ * Attaches model links (channel rpcs)
+ *
+ */
+Channel.links = function( accountInfo ) {
+  var action = this.getActionSchema(),
+    rpc,
+    links = [];
+
+  if (accountInfo && action && action.rpcs) {
+    // add global invokers
+    links.push({
+      name : 'invoke',
+      title : 'Invoke',
+      description : 'Invokes the Channel with ad-hoc imports',
+      contentType : DEFS.CONTENTTYPE_JSON,
+      _href : accountInfo.getDefaultDomainStr(true) + '/rpc/channel/' + this.getIdValue() + '/invoke'
+    });
+
+    for (var idx in action.rpcs) {
+      if (action.rpcs.hasOwnProperty(idx)) {
+        rpc = app._.clone(action.rpcs[idx]);
+        rpc.name = idx;
+        rpc._href = this.getRendererUrl(idx, accountInfo);
+        links.push(rpc);
+      }
+    }
+  }
+
+  return links;
 }
 
 Channel.isAvailable = function() {

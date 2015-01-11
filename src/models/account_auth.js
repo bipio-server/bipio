@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var bcrypt      = require('bcrypt'),
 crypto = require('crypto'),
@@ -57,7 +57,7 @@ function AESDecrypt(cryptedStr, autoPadding) {
   cypher = crypted.substr(17);
 
   var decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    
+
   if (!autoPadding) {
     autoPadding = false;
   }
@@ -81,16 +81,16 @@ function pwHash(pwValue) {
 
 function cryptSave(value) {
   var crypted = value;
-    
-  // passwords get 
+
+  // passwords get
   if (this.type == 'login_primary' || this.type == 'login_sub') {
     app.logmessage('Trying to write login primary to account_auth [' + this.id + ']', 'error');
     throw new Error('Bad Type');
   } else if (this.type !== 'token_invite') {
     crypted = AESCrypt(value);
   }
-    
-  return crypted;   
+
+  return crypted;
 }
 
 function cryptSaveObj(value) {
@@ -122,7 +122,7 @@ AccountAuth.entitySchema = {
     index: true,
     renderable: true,
     writable: false
-  },    
+  },
   password: {
     type: String,
     renderable: false,
@@ -192,7 +192,7 @@ AccountAuth.cmpPassword = function(passwordTainted) {
         return bcrypt.compareSync(passwordTainted, password);
     */
   // AES
-  if (this.type == 'token') {   
+  if (this.type == 'token') {
     return passwordTainted == password;
   }
   return false;

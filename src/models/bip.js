@@ -800,6 +800,13 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
   }
 }
 
+Bip.preRemove = function(id, accountInfo, next) {
+  var self = this;
+  this._dao.removeBipDupTracking(id, function(err) {
+    next(err, 'bip', self);
+  });
+}
+
 Bip.postSave = function(accountInfo, next, isNew) {
   this.normalizeTransformDefaults(accountInfo, function(payload) {
     if (payload.transform && Object.keys(payload.transform).length > 0) {
@@ -842,5 +849,55 @@ Bip.prePatch = function(patch, accountInfo, next) {
 
   next(false, this.getEntityName(), patch);
 };
+
+Bip.checkExpiry = function(next) {
+  var accountInfo = this.getAccountInfo();
+
+  if (this.end_life) {
+    // convert bip expiry to user timezone
+    var tzTime = new Date(parseInt(this.end_life.time * 1))
+        .setTimezone(accountInfo.user.settings.timezone).getTime(),
+      endTime = Math.floor(tzTime),
+      nowTime = new Date().getTime() / 1000,
+      endImp =  parseInt(this.end_life.imp * 1),
+      now,
+      expired = false,
+      self = this;
+
+    if (endTime > 0) {
+      now = Math.floor(nowTime);
+      // if its an integer, then treat as a timestamp
+      if (!isNaN(endTime)) {
+        // expired? then pause
+        if (now >= endTime) {
+          // pause this bip
+          expired = true;
+        }
+      }
+    }
+
+    if (endImp > 0) {
+      if (this._imp_actual && this._imp_actual >= endImp) {
+        expired = true;
+      }
+    }
+  }
+
+  next(expired);
+};
+
+Bip.expire = function(transationId, next) {
+  var accountInfo = this.getAccountInfo(),
+    expireBehavior = (this.end_life.action && '' !== this.end_life.action)
+      ? this.end_life.action
+      : accountInfo.user.settings.bip_expire_behaviour;
+
+  if ('delete' === expireBehavior) {
+    this._dao.deleteBip(this, accountInfo, next, transationId);
+  } else {
+    this._dao.pauseBip(this, true, next, transationId);
+  }
+}
+
 
 module.exports.Bip = Bip;

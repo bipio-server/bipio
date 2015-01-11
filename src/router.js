@@ -34,7 +34,6 @@ var dao,
   connect = require('connect'),
   helper  = require('./lib/helper'),
   uuid    = require('node-uuid'),
-  cdn     = require('./lib/cdn'),
   // restful models
   restResources = ['bip', 'channel', 'domain', 'account_option'],
   modelPublicFilter;
@@ -78,7 +77,7 @@ function publicFilter(modelName, modelStruct) {
   // always allow representations and meta data
   modelPublicFilters.push('_repr');
   modelPublicFilters.push('_href');
-  modelPublicFilters.push('_renderers');
+  modelPublicFilters.push('_links');
   modelPublicFilters.push('status');
   modelPublicFilters.push('message');
   modelPublicFilters.push('code');
@@ -169,7 +168,7 @@ var restResponse = function(res) {
         app.logmessage('Error response propogated without code', 'warning');
       }
 
-      res.send(code, payload);
+      res.status(code).send({ message : error });
       return;
     } else {
       if (!results) {
@@ -186,7 +185,7 @@ var restResponse = function(res) {
     if (contentType == DEFS.CONTENTTYPE_JSON) {
       res.status(!code ? '200' : code).jsonp(payload);
     } else {
-      res.send(!code ? '200' : code, payload);
+      res.status(!code ? '200' : code).send(payload);
     }
     return;
   }
@@ -251,14 +250,13 @@ var restAction = function(req, res) {
               ) {
             postSave = function(err, modelName, retModel, code ) {
               if (!err && retModel.icon == '') {
-                // @todo defer to out of band job
-                iconUri = dao.getBipRefererIcon(retModel.id, 'http://' + referer.url_tokens.hostname, true);
-
-                if (iconUri) {
-                  dao.updateColumn('bip', retModel.id, {
-                    icon : iconUri
-                  });
-                }
+                app.helper.syncFavicon(referer.url_tokens.href, function(err, icoURL) {
+                  if (!err) {
+                    dao.updateColumn('bip', retModel.id, {
+                      icon : icoURL
+                    });
+                  }
+                });
               }
             }
           }
@@ -336,7 +334,7 @@ var restAction = function(req, res) {
         page = 1,
         order_by = 'recent';
 
-        if (undefined != req.query.page_size) {
+        if (undefined != req.query.page_size && req.query.page_size) {
           page_size = parseInt(req.query.page_size);
         }
 
@@ -362,6 +360,7 @@ var restAction = function(req, res) {
             }
           }
         }
+
         dao.list(resourceName, accountInfo, page_size, page, order_by, filter, restResponse(res));
       }
     }
@@ -412,8 +411,7 @@ function bipBasicFail(req, res) {
  */
 function bipAuthWrapper(req, res, cb) {
   app.modules.auth.domainAuth(helper.getDomain(req.headers.host, true), function(err, acctResult) {
-
-    if (err || !domain) {
+    if (err) {
       // reject always
       bipBasicFail(req, res);
     } else {
@@ -425,7 +423,6 @@ function bipAuthWrapper(req, res, cb) {
       };
 
       dao.find('bip', filter, function(err, result) {
-
         if (!err && result) {
           if (result.config.auth == 'none') {
             req.remoteUser = acctResult;
@@ -454,6 +451,8 @@ function bipAuthWrapper(req, res, cb) {
               }
             })(req, res, cb);
           }
+        } else {
+          bipBasicFail(req, res);
         }
       });
     }
@@ -492,24 +491,19 @@ module.exports = {
       bipName = req.params.bip_name,
       domain = helper.getDomain(req.headers.host, true);
 
-      if (req.files && Object.keys(req.files).length > 0) {
-        // normalize file struct
-        files = cdn.normedMeta('express', txId, req.files);
-      }
+      _.each(req.files, function(file) {
+        files.push(file);
+      });
 
       GLOBAL.app.bastion.bipUnpack(
         'http',
         bipName,
         req.remoteUser,
         client,
-        function(status, message, bip) {
+        function(err, bip) {
           var exports = {
             'source' : {}
           };
-
-          if (!message){
-            message = '';
-          }
 
           // setup source exports for this bip
           if (bip && bip.config.exports && bip.config.exports.length > 0) {
@@ -531,7 +525,7 @@ module.exports = {
 
           var restReponse = true;
           // forward to bastion
-          if (status == statusMap.success) {
+          if (!err) {
             exports._client = client;
             exports._bip = bip;
 
@@ -552,10 +546,14 @@ module.exports = {
           }
 
           if (restReponse) {
-            restResponse(res)( status === statusMap.fail, undefined, message, status);
+            var bipResp = { status : 'OK' };
+            if (err) {
+              bipResp.status = 'ERROR';
+              bipResp.message = err;
+            }
+            restResponse(res)( err, undefined, bipResp, err ? 404 : 200);
           }
-        },
-        statusMap);
+        });
 
     });
 
@@ -569,8 +567,33 @@ module.exports = {
 
     /**
      * DomainAuth channel renderer
+     * @deprecated /rpc/render/channel/:channel_id/:renderer
      */
     express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+        var filter = {
+          owner_id: req.remoteUser.getId(),
+          id : req.params.channel_id
+        };
+
+        dao.find('channel', filter, function(err, result) {
+          if (err || !result) {
+            app.logmessage(err, 'error');
+            res.status(404).end();
+          } else {
+            var channel = dao.modelFactory('channel', result, req.remoteUser);
+
+            channel.rpc(
+              req.params.renderer,
+              req.query,
+              getClientInfo(req),
+              req,
+              res
+              );
+          }
+        });
+    });
+
+    express.get('/rpc/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
         var filter = {
           owner_id: req.remoteUser.getId(),
           id : req.params.channel_id

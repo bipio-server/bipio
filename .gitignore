@@ -7,3 +7,5 @@ config/haraka
 data
 config/runtime.json
 npm-debug.log
+sftp_config.json
+.DS_Store

@@ -141,7 +141,7 @@ function setCORS(req, res, next) {
 // ------ LOAD EXPRESS MIDDLEWARE
 //
 
-restapi.use(multer({ dest : GLOBAL.DATA_DIR + '/tmp' }));
+restapi.use(app.modules.cdn.utils.HTTPFormHandler());
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {
   if (err.status == 400) {

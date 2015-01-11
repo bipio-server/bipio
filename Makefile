@@ -1,6 +1,7 @@
 # TESTS = tests/*.js tests/managers/*.js  tests/models/*.js
 # TESTS = tests/*.js tests/managers/*.js
-TESTS = tests/models/channel.js
+# TESTS = tests/models/channel.js
+TESTS = tests/migrations/0.3.0.js
 REPORTER = dot
 
 install:
@@ -8,7 +9,7 @@ install:
 	@SYSTEM_TZ=`/usr/bin/env date +%Z` ./tools/setup.js
 
 test-install:
-	@NODE_ENV=testing ./tools/setup.js
+	@NODE_ENV=test ./tools/setup.js
 
 clean:
 	rm ./config/*.json
@@ -17,7 +18,7 @@ clean:
 # --debug
 # --debug-brk
 test:
-	@NODE_ENV=testing ./node_modules/.bin/mocha \
+	@NODE_ENV=test ./node_modules/.bin/mocha \
 		--reporter $(REPORTER) \
 		--timeout 600 \
 		$(TESTS)

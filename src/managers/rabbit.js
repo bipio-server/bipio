@@ -90,7 +90,7 @@ function Rabbit(cfg, next) {
     app.logmessage('RABBIT:' + err, 'error');
   });
 
-  //this.amqpConn.connect();
+//  this.amqpConn.connect();
 }
 
 Rabbit.prototype.produce = function(xName, route, payload, cb) {

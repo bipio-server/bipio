@@ -96,7 +96,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
   app.logmessage('BASTION:REC:NAME:' + jobPacket.name, 'info');
   if (jobPacket.name) {
     if (jobPacket.name == DEFS.JOB_ATTACH_REFERER_ICON) {
-      this._dao._jobAttachBipRefererIcon( jobPacket.data, this.jobRunnerAlert );
+//      this._dao._jobAttachBipRefererIcon( jobPacket.data, this.jobRunnerAlert );
 
     //
     } else if (jobPacket.name == DEFS.JOB_USER_NOTIFICATION) {
@@ -141,7 +141,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
           } else {
             invokeChannel = self._dao.modelFactory('channel', result);
 
-            if (jobPacket.data.socketTrigger || !invokeChannel.isSocket() ) {
+            if (jobPacket.data.socketTrigger || !invokeChannel.isRealtime() ) {
               invokeChannel.invoke(
                 imports, // imports
                 transforms, // transforms
@@ -301,8 +301,14 @@ Bastion.prototype.domainBipUnpack = function(name, domain, container, type, cb, 
  * This interface is primarily used by the protocol proxy before forwarding onto
  * rabbit for consumption by a Bastion worker.
  *
+ *
+ * @param string type bip type
+ * @param string name bip name (optional)
+ * @param AccountInfo accountInfo owner account struct
+ * @param Object client client info
+ * @param function next callback(err)
  */
-Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cbParameterMap) {
+Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
   var self = this;
   var filter = {
     'type' : type,
@@ -323,116 +329,82 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next, cb
     filter.domain_id = domainId;
   }
 
-//  (function(accountInfo, client, filter, next) {
-    self._dao.findFilter('bip',
-      filter,
-      function(err, bipResults) {
-        var firstBinder = false,
-        bipResult,
-        expireBehavior,
-        numResults = bipResults.length;
+  self._dao.findFilter('bip',
+    filter,
+    function(err, bipResults) {
+      var firstBinding = false,
+      bipResult,
+      expireBehavior,
+      numResults = bipResults.length;
 
-        if (err || numResults == 0) {
-          next(cbParameterMap.fail, err);
-        } else {
-          for (var i = 0; i < numResults; i++) {
-            bipResult = bipResults[i];
-            if (client && bipResult.binder && bipResult.binder.length > 0) {
-              if (bipResult.binder[0] == 'first') {
-                firstBinder = true;
-              }
-
-              if (!firstBinder) {
-                if (
-                  !helper.inArray(bipResult.binder, client.host) &&
-                  !(client.reply_to && helper.inArray(bipResult.binder, client.reply_to)) ) {
-                  next(cbParameterMap.fail, "Not Authorized");
-                  return;
-                }
-              }
+      if (err || numResults == 0) {
+        next(err || "Not Found");
+      } else {
+        for (var i = 0; i < numResults; i++) {
+          bipResult = bipResults[i];
+          // check soft ACL
+          if (client && bipResult.binder && bipResult.binder.length > 0) {
+            if (bipResult.binder[0] == 'first') {
+              firstBinding = true;
             }
 
-            if (bipResult.end_life) {
-              // convert bip expiry to user timezone
-              var tzTime = new Date(parseInt(bipResult.end_life.time * 1))
-                  .setTimezone(accountInfo.user.settings.timezone).getTime(),
-                endTime = Math.floor(tzTime),
-                nowTime = new Date().getTime() / 1000,
-                endImp =  parseInt(bipResult.end_life.imp * 1),
-                now, expired = false;
-
-              if (endTime > 0) {
-                now = Math.floor(nowTime);
-                // if its an integer, then treat as a timestamp
-                if (!isNaN(endTime)) {
-                  // expired? then pause
-                  if (now >= endTime) {
-                    // pause this bip
-                    expired = true;
-                  }
-                }
-              }
-
-              if (endImp > 0) {
-                if (bipResult._imp_actual && bipResult._imp_actual >= endImp) {
-                  expired = true;
-                }
-              }
-            }
-
-            if (expired) {
-              expireBehavior = (bipResult.end_life.action && '' !== bipResult.end_life.action)
-              ? bipResult.end_life.action
-              : accountInfo.user.settings.bip_expire_behaviour;
-
-              if ('delete' === expireBehavior) {
-                self._dao.deleteBip(bipResult, accountInfo, next(cbParameterMap.fail, err), client.id);
-              } else {
-                self._dao.pauseBip(bipResult, next(cbParameterMap.fail, err), true, client.id);
-              }
-            } else {
-              // add bip metadata to the container
-              next(
-                cbParameterMap.success,
-                {
-                  'status' : 'OK'
-                },
-                // we don't need the whole bip packet.
-                {
-                  id : bipResult.id,
-                  hub : bipResult.hub,
-                  owner_id : bipResult.owner_id,
-                  config : bipResult.config,
-                  name : bipResult.name,
-                  type : bipResult.type
-                });
-
-              // update accumulator
-              self._dao.accumulate('bip', bipResult, '_imp_actual');
-
-              // if this bip is waiting for a binding, then set it
-              if (firstBinder) {
-                var bindTo;
-                if (bipResult.type == 'smtp') {
-                  bindTo = client.reply_to;
-                } else {
-                  bindTo = client.host;
-                }
-
-                // just incase
-                bindTo = helper.sanitize(bindTo).xss();
-
-                self._dao.updateColumn('bip', bipResult.id, [ bindTo ], function(err, result) {
-                  if (err) {
-                    console.log(err);
-                  }
-                });
+            if (!firstBinding) {
+              if (!helper.inArray(bipResult.binder, client.host)
+                  && !(client.reply_to && helper.inArray(bipResult.binder, client.reply_to)) ) {
+                next("Not Authorized");
+                return;
               }
             }
           }
+
+          (function(bipResult, client, firstBinding, next) {
+            var bipModel = self._dao.modelFactory('bip', bipResult, accountInfo);
+            bipModel.checkExpiry(function(expired) {
+              if (expired) {
+                bipModel.expire(client.id, next);
+              } else {
+                // add bip metadata to the container
+                next(
+                  false,
+                  // we don't need the whole bip packet.
+                  {
+                    id : bipModel.id,
+                    hub : bipModel.hub,
+                    owner_id : bipModel.owner_id,
+                    config : bipModel.config,
+                    name : bipModel.name,
+                    type : bipModel.type
+                  });
+
+                // update accumulator
+                self._dao.accumulate('bip', bipResult, '_imp_actual');
+
+                // if this bip is waiting for a binding, then set it.
+                // can't bind triggers
+                if ('trigger' !== bipModel.type && firstBinding) {
+                  var bindTo;
+                  if (bipModel.type == 'smtp') {
+                    bindTo = client.reply_to;
+                  } else {
+                    bindTo = client.host;
+                  }
+
+                  // just incase
+                  bindTo = helper.sanitize(bindTo).xss();
+
+                  self._dao.updateColumn('bip', bipModel.id, [ bindTo ], function(err, result) {
+                    if (err) {
+                      app.logmessage(err, 'error');
+                    }
+                  });
+                }
+              }
+            });
+          })(bipResult, client, firstBinding, next);
         }
-      });
-//  })(accountInfo, client, filter, cb);
+      }
+    });
+
 }
 
 /**
