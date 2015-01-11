@@ -546,7 +546,12 @@ module.exports = {
           }
 
           if (restReponse) {
-            restResponse(res)( err, undefined, {}, err ? 404 : 200);
+            var bipResp = { status : 'OK' };
+            if (err) {
+              bipResp.status = 'ERROR';
+              bipResp.message = err;
+            }
+            restResponse(res)( err, undefined, bipResp, err ? 404 : 200);
           }
         });
 

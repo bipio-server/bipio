@@ -744,26 +744,56 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
   }
 
   this.findFilter('bip', filter, function(err, results) {
-    var payload;
     if (!err && results && results.length) {
       numResults = results.length;
       numProcessed = 0;
 
       for (var i = 0; i < numResults; i++) {
-        payload = app._.clone(results[i])._doc;
-        payload.socketTrigger = isSocket;
 
-        app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
-        numProcessed++;
+        (function(bipResult) {
 
-        app.logmessage('DAO:Trigger:' + payload.id + ':' + numProcessed + ':' + numResults);
+          // get user account
+          self.findFilter(
+            'account_option',
+            {
+              owner_id : bipResult.owner_id
+            },
+            function(err, results) {
+              if (!err && results && results.length === 1) {
+                // set up a pseudo account Info
+                var accountInfo = {
+                  user : {
+                    settings : results[0]
+                  }
+                }
+                          // check expiry
+                var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+                bipModel.checkExpiry(function(expired) {
+                  if (expired) {
+                    bipModel.expire(client.id, next);
+                  } else {
+                    var payload = app._.clone(bipResult)._doc;
+                    payload.socketTrigger = isSocket;
 
-        if (numProcessed >= (numResults - 1)) {
-          // the amqp lib has stopped giving us queue publish acknowledgements?
-          setTimeout(function() {
-            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-          }, 1000);
-        }
+                    app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+                    numProcessed++;
+
+                    app.logmessage('DAO:Trigger:' + payload.id + ':' + numProcessed + ':' + numResults);
+
+                    if (numProcessed >= (numResults - 1)) {
+                      // the amqp lib has stopped giving us queue publish acknowledgements?
+                      setTimeout(function() {
+                        next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+                      }, 1000);
+                    }
+                  }
+                });
+              }
+
+            }
+          );
+        })(results[i]);
+
       }
     } else {
       next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
