@@ -1,7 +1,7 @@
 BipIO <a href="https://bip.io"><img align="right" width="48" src="https://2.gravatar.com/avatar/b4063abdf67036bdff26845fe2adcf69?d=https%3A%2F%2Fidenticons.github.com%2F7bad9441c4612b497d9d071c244f21cc.png&r=x&s=140" style="float:right"/></a>
 =========
 
-Welcome to the [BipIO](https://bip.io) API Server (Arya 0.2)
+Welcome to the [BipIO](https://bip.io) API Server (Sansa 0.3)
 
 BipIO is Billion Instructions Per I/O - For People and Robots.  
 
