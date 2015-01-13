@@ -980,6 +980,30 @@ module.exports = {
       res.status(200).end();
     });
 
+	express.get('/status', function(req, res) {
+    	var serverStatus = {}; 
+   
+    	// get server version number:
+		serverStatus['version'] = bipioVersion;
+    
+    	// get rabbitmq connection status
+    	if (app.bastion.isRabbitConnected) {
+			serverStatus['rabbitmq'] = "connected";
+		} else {
+			serverStatus['rabbitmq'] = "error";
+		};  
+
+		// get mongodb connection status
+		if (app.dao.getConnection().readyState) {
+			serverStatus['mongodb'] = "connected";
+		} else {
+			serverStatus['mongodb'] = "error";
+		};  
+
+		res.status(200).send(serverStatus);
+
+	});
+
     express.all('*', function(req, res, next) {
       if (req.method == 'OPTIONS') {
         res.status(200).end();

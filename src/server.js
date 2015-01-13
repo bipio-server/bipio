@@ -37,7 +37,8 @@ var bootstrap = require(__dirname + '/bootstrap'),
   cron = require('cron'),
   MongoStore = require('connect-mongo')({ session : session});
   domain = require('domain'),
-  jwt = require('jsonwebtoken');
+  jwt = require('jsonwebtoken'),
+  bipioVersion = require('../package.json').version;
 
 // export app everywhere
 module.exports.app = app;
@@ -171,7 +172,7 @@ restapi.use(session({
   },
   secret: GLOBAL.CFG.server.sessionSecret,
   store: new MongoStore({
-    mongoose_connection : app.dao.getConnection()
+    mongooseConnection : app.dao.getConnection()
   })
 }));
 
