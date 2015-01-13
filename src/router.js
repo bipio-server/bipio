@@ -982,12 +982,12 @@ module.exports = {
 
 	express.get('/status', function(req, res) {
     	var serverStatus = {}; 
-   
-    	// get server version number:
+    	
+		// get server version number:
 		serverStatus['version'] = bipioVersion;
     
     	// get rabbitmq connection status
-    	if (app.bastion.isRabbitConnected) {
+    	if (app.bastion.isRabbitConnected()) {
 			serverStatus['rabbitmq'] = "connected";
 		} else {
 			serverStatus['rabbitmq'] = "error";
