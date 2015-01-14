@@ -42,6 +42,10 @@ var fs = require('fs'),
         app.dao.list('pod_syndication_track_subscribe', null, 100, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, results) {
             
           if (err) syndicationMigration.reject(new Error(err));
+          else if (results.num_pages === 0) {
+            console.log("...Syndication Migration finished.");
+            syndicationMigration.resolve();
+          };
           else {
             console.log("Migrating Syndication subscription data from the last 30 days (if any)...");
 
@@ -78,6 +82,10 @@ var fs = require('fs'),
       if (config.pods.hasOwnProperty("soundcloud")) {
         app.dao.list('pod_soundcloud_track_favorite', null, 100, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, results) {
           if (err) soundcloudMigration.reject(new Error(err));
+          else if (results.num_pages === 0) {
+            console.log("...Soundcloud Migration finished.");
+            soundcloudMigration.resolve();
+          }
           else {
             console.log("Migrating Soundcloud favorites data from the last 30 days (if any)...");
 
