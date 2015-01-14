@@ -15,64 +15,80 @@ describe('Migration', function() {
 			fs.writeFile(targetConfig, JSON.stringify(config, null, 2), done);
 		});
 
-		it('Creates a pod_syndication_track_subscribe entry with current timestamp', function(done) {
-			app.dao.create(app.dao.modelFactory('pod_syndication_track_subscribe', {
-               owner_id : Math.random().toString(36).slice(2),
-               channel_id : Math.random().toString(36).slice(2),
-               created: new Date().getTime(),
-               guid : Math.random().toString(36).slice(2),
-               bip_id : Math.random().toString(36).slice(2),
-               last_update : new Date().getTime()
-             }),
-			function(err, modelName, retModel, code) {
-				if (err) throw new Error(err);
-				done();	
-			});
+		it('Creates 500 pod_syndication_track_subscribe entries with current timestamps', function(done) {
+			for (var i=1; i<=500; i++) {
+				(function(isLast) {
+					app.dao.create(app.dao.modelFactory('pod_syndication_track_subscribe', {
+		               owner_id : Math.random().toString(36).slice(2),
+		               channel_id : Math.random().toString(36).slice(2),
+		               created: new Date().getTime(),
+		               guid : Math.random().toString(36).slice(2),
+		               bip_id : Math.random().toString(36).slice(2),
+		               last_update : new Date().getTime()
+		             }),
+					function(err, modelName, retModel, code) {
+						if (err) throw new Error(err);
+						if (isLast) done();	
+					});
+				})(i === 500);
+			}
 		});
 
-		it('Creates a pod_syndication_track_subscribe entry with 90-day-old timestamp', function(done) {
-			app.dao.create(app.dao.modelFactory('pod_syndication_track_subscribe', {
-               owner_id : Math.random().toString(36).slice(2),
-               channel_id : Math.random().toString(36).slice(2),
-               created: new Date().getTime() - (90 * 24 * 60 * 60 * 1000),
-               guid : Math.random().toString(36).slice(2),
-               bip_id : Math.random().toString(36).slice(2),
-               last_update : new Date().getTime()
-             }),
-			function(err) {
-				if (err) throw new Error(err);
-				done();
-			});
+		it('Creates 500 pod_syndication_track_subscribe entries with 90-day-old timestamps', function(done) {
+			for (var i=1; i<=500; i++) {
+				(function(isLast) {
+					app.dao.create(app.dao.modelFactory('pod_syndication_track_subscribe', {
+		               owner_id : Math.random().toString(36).slice(2),
+		               channel_id : Math.random().toString(36).slice(2),
+		               created: new Date().getTime() - (90 * 24 * 60 * 60 * 1000),
+		               guid : Math.random().toString(36).slice(2),
+		               bip_id : Math.random().toString(36).slice(2),
+		               last_update : new Date().getTime()
+		             }),
+					function(err) {
+						if (err) throw new Error(err);
+						if (isLast) done();
+					});
+				})(i === 500);
+			}	
 		});
 
-		it('Creates a pod_soundcloud_track_favorite entry with current timestamp', function(done) {
-			app.dao.create(app.dao.modelFactory('pod_soundcloud_track_favorite', {
-               owner_id : Math.random().toString(36).slice(2),
-               channel_id : Math.random().toString(36).slice(2),
-               created: new Date().getTime(),
-               track_id : Math.random().toString(36).slice(2),
-               bip_id : Math.random().toString(36).slice(2),
-               last_update : new Date().getTime()
-             }),
-			function(err) {
-				if (err) throw new Error(err);
-				done();	
-			});
+		it('Creates 500 pod_soundcloud_track_favorite entries with current timestamps', function(done) {
+			for (var i=1; i<=500; i++) {
+				(function(isLast) {
+					app.dao.create(app.dao.modelFactory('pod_soundcloud_track_favorite', {
+		               owner_id : Math.random().toString(36).slice(2),
+		               channel_id : Math.random().toString(36).slice(2),
+		               created: new Date().getTime(),
+		               track_id : Math.random().toString(36).slice(2),
+		               bip_id : Math.random().toString(36).slice(2),
+		               last_update : new Date().getTime()
+		             }),
+					function(err) {
+						if (err) throw new Error(err);
+						if (isLast) done();	
+					});
+				})(i === 500);
+			}	
 		});
 
-		it('Creates a pod_soundcloud_track_favorite entry with 90-day-old timestamp', function(done) {
-			app.dao.create(app.dao.modelFactory('pod_soundcloud_track_favorite', {
-               owner_id : Math.random().toString(36).slice(2),
-               channel_id : Math.random().toString(36).slice(2),
-               created: new Date().getTime() - (90 * 24 * 60 * 60 * 1000),
-               track_id : Math.random().toString(36).slice(2),
-               bip_id : Math.random().toString(36).slice(2),
-               last_update : new Date().getTime()
-             }),
-			function(err) {
-				if (err) throw new Error(err);
-				done();
-			});
+		it('Creates 500 pod_soundcloud_track_favorite entries with 90-day-old timestamps', function(done) {
+			for (var i=1; i<=500; i++) {
+				(function(isLast) {
+					app.dao.create(app.dao.modelFactory('pod_soundcloud_track_favorite', {
+		               owner_id : Math.random().toString(36).slice(2),
+		               channel_id : Math.random().toString(36).slice(2),
+		               created: new Date().getTime() - (90 * 24 * 60 * 60 * 1000),
+		               track_id : Math.random().toString(36).slice(2),
+		               bip_id : Math.random().toString(36).slice(2),
+		               last_update : new Date().getTime()
+		             }),
+					function(err) {
+						if (err) throw new Error(err);
+						if (isLast) done();
+					});
+				})(i === 500);
+			}
 		});
 
 		it('Runs the migration', function(done) {
@@ -82,20 +98,20 @@ describe('Migration', function() {
 			});
 		});
 
-		it('Checks for the existence of 1 pod_syndication_dup entry', function(done) {
+		it('Checks for the existence of 500 pod_syndication_dup entries', function(done) {
 			app.dao.findFilter('pod_syndication_dup', {}, function(err, result) {
 				if (err) throw new Error(err);
 				should.exist(result);
-				//result.should.have.length(1)
+				result.should.have.length(500)
 				done();
 			});
 		});
 
-		it('Checks for the existence of 1 pod_soundcloud_dup entry', function(done) {
+		it('Checks for the existence of 500 pod_soundcloud_dup entries', function(done) {
 			app.dao.findFilter('pod_soundcloud_dup', {}, function(err, result) {
 				if (err) throw new Error(err);
 				should.exist(result);
-				//result.should.have.length(1)
+				result.should.have.length(500)
 				done();
 			});
 		});
@@ -108,13 +124,13 @@ describe('Migration', function() {
 
 		it('Cleans up test data', function(done) {
 			app.dao.removeFilter('pod_syndication_dup', {}, function(err, result) {
-				if (err) throw new Error(err);
+				if (err) console.log(err);
 				app.dao.removeFilter('pod_soundcloud_dup', {}, function(err, result) {
-					if (err) throw new Error(err);
+					if (err) console.log(err);
 					app.dao.removeFilter('pod_syndication_track_subscribe', {}, function(err, result) {
-						if (err) throw new Error(err);
+						if (err) console.log(err);
 						app.dao.removeFilter('pod_soundcloud_track_favorite', {}, function(err, result) {
-							if (err) throw new Error(err);
+							if (err) console.log(err);
 							done();
 						});
 					});

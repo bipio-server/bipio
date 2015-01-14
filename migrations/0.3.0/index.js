@@ -21,7 +21,7 @@ var fs = require('fs'),
           "config" : {
             "data_dir" : config.datadir
           }
-        }
+        };
         console.log("**NOTICE** `cdn_public` URL has changed, please update any of your site cdn symlinks to point to : `" + config.modules.cdn.config.data_dir + "`");
         delta = true;
       }
@@ -38,86 +38,119 @@ var fs = require('fs'),
       // Handle database migration
 
       if (config.pods.hasOwnProperty("syndication")) {
-
+        
         app.dao.list('pod_syndication_track_subscribe', null, 100, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, results) {
             
-          if (err) syndicationMigration.reject(new Error(err));
+          if (err) {
+            syndicationMigration.reject(new Error(err));
+          }
           else if (results.num_pages === 0) {
             console.log("...Syndication Migration finished.");
             syndicationMigration.resolve();
-          };
+          }
           else {
+            var syndPromises = [];
             console.log("Migrating Syndication subscription data from the last 30 days (if any)...");
 
-            for (var i=1; i<=results.num_pages; i++) {
+            for (var index=1; index<=results.num_pages; index++) {
+
               (function(pageNum, syndicationMigration, isLastPage) {
                 app.dao.list('pod_syndication_track_subscribe', null, 100, pageNum, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
                   for (var i=0; i<result.data.length; i++) {
-                    var model = app.dao.modelFactory('pod_syndication_dup', {
-                           owner_id : result.data[i].owner_id,
-                           channel_id : result.data[i].channel_id,
-                           created: result.data[i].created,
-                           value : result.data[i].guid,
-                           bip_id : result.data[i].bip_id,
-                           last_update : result.data[i].last_update
-                         });
-
-                    (function(model, syndicationMigration, isLast) {
+                    
+                    var syndicationItem = Q.defer();
+                    syndPromises.push(syndicationItem.promise);
+                    
+                    (function(ind, item, deferred, promises, migration, isLast) {
+                      var model = app.dao.modelFactory('pod_syndication_dup', {
+                             owner_id : item.owner_id,
+                             channel_id : item.channel_id,
+                             created: item.created,
+                             value : item.guid,
+                             bip_id : item.bip_id,
+                             last_update : item.last_update
+                           });
+                    
                       app.dao.create(model, function(err) {
-                        if (err) syndicationMigration.reject(new Error(err));
-                        else if (isLastPage && isLast) {
-                          console.log("...Syndication Migration finished.");
-                          syndicationMigration.resolve();
+                        if (err) {
+                          deferred.reject(new Error(err));
+                        }
+                        else {
+                          deferred.resolve(true);
                         }
                       });
-                    })(model, syndicationMigration, i === result.data.length-1)
+
+                      if (promises.length === result.total) {
+                        Q.all(promises).then(function(results) {
+                          console.log("Syndication migration finished. Total copied: " + results.length);
+                          migration.resolve();
+                        });
+                      }
+
+                    })(i, result.data[i], syndicationItem, syndPromises, syndicationMigration, i === result.data.length-1);
                   }
-                }
-              })(i, syndicationMigration, i === results.num_pages)
+                });
+              })(index, syndicationMigration, index === results.num_pages);
             }
           }
         });
       }
 
       if (config.pods.hasOwnProperty("soundcloud")) {
+
         app.dao.list('pod_soundcloud_track_favorite', null, 100, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, results) {
-          if (err) soundcloudMigration.reject(new Error(err));
+            
+          if (err) {
+            soundcloudMigration.reject(new Error(err));
+          }
           else if (results.num_pages === 0) {
-            console.log("...Soundcloud Migration finished.");
+            console.log("...Soundcloud Migration finished. Nothing to copy.");
             soundcloudMigration.resolve();
           }
           else {
-            console.log("Migrating Soundcloud favorites data from the last 30 days (if any)...");
+            var scPromises = [];
+            console.log("Migrating Soundcloud subscription data from the last 30 days (if any)...");
 
-            for (var i=1; i<=results.num_pages; i++) {
-              
+            for (var index=1; index<=results.num_pages; index++) {
+
               (function(pageNum, soundcloudMigration, isLastPage) {
                 app.dao.list('pod_soundcloud_track_favorite', null, 100, pageNum, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
                   for (var i=0; i<result.data.length; i++) {
-                    var model = app.dao.modelFactory('pod_soundcloud_dup', {
-                           owner_id : result.data[i].owner_id,
-                           channel_id : result.data[i].channel_id,
-                           created: result.data[i].created,
-                           value : result.data[i].track_id,
-                           bip_id : result.data[i].bip_id,
-                           last_update : result.data[i].last_update
-                         });
+                    
+                    var soundcloudItem = Q.defer();
+                    scPromises.push(soundcloudItem.promise);
 
-                    (function(model, soundcloudMigration, isLast) {
+                    (function(ind, item, deferred, promises, migration, isLast) {
+                      var model = app.dao.modelFactory('pod_soundcloud_dup', {
+                           owner_id : item.owner_id,
+                           channel_id : item.channel_id,
+                           created: item.created,
+                           value : item.track_id,
+                           bip_id : item.bip_id,
+                           last_update : item.last_update
+                         });
+                      
                       app.dao.create(model, function(err) {
-                        if (err) soundcloudMigration.reject(new Error(err));
-                        else if (isLastPage && isLast) {
-                          console.log("...Soundcloud Migration finished.");
-                          soundcloudMigration.resolve();
+                        if (err) {
+                          deferred.reject(new Error(err));
+                        }
+                        else {
+                          deferred.resolve(true);
                         }
                       });
-                    })(model, soundcloudMigration, i === result.data.length-1)
+                      if (promises.length === result.total) {
+                        Q.all(scPromises).then(function(results) {
+                          console.log("Soundcloud migration finished. Total copied: " + results.length);
+                          migration.resolve();
+                        });
+                      }
+                    })(i, result.data[i], soundcloudItem, scPromises, soundcloudMigration, i === result.data.length-1);
                   }
-                }
-              })(i, soundcloudMigration, i === results.num_pages)
+                });
+              })(index, soundcloudMigration, index === results.num_pages);
             }
           }
-        });
+        });     
       }
 
       Q.all(promises).then(function(results) {

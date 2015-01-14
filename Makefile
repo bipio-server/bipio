@@ -20,7 +20,7 @@ clean:
 test:
 	@NODE_ENV=test ./node_modules/.bin/mocha \
 		--reporter $(REPORTER) \
-		--timeout 600 \
+		--timeout 10000 \
 		$(TESTS)
 
 test-cov: lib-cov
