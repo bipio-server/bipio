@@ -1503,8 +1503,6 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
 
       // enumerate available migrations
       var files = fs.readdirSync(migrationPath);
-console.log('files ->\n',files);
-//	  fs.readdir(migrationPath, function(err, files) {
         var pkgInt,
           migration,
           migrationFile,
@@ -1569,8 +1567,6 @@ console.log('files ->\n',files);
           }
 
 
-// OUT OF ORDER.  COME BACK LATER:
-
           if (promises.length) {
 			console.log("promises ->\n\n",promises);
 			Q.all(promises).then(function(messages) {
@@ -1585,34 +1581,7 @@ console.log('files ->\n',files);
           }
 
 
-// END OUT OF ORDER.
-
-
-
-// ALT ATTEMPT AT MIGRATIONS
-/*
-          if (promises.length) {
-
-			var messages = Q("");
-			app.logmessage("at least we got here.");
-			
-			promises.forEach(function(promise) {
-				messages = messages.then(promise) + '\n';
-			});
-
-			next.apply(next, messages);
-            
-          } else {
-            next('Nothing To Do');
-          }
-*/
-
-// END ALT ATTEMPT
-
-
-
         }
-   //   });
     }
   });
 }
