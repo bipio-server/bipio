@@ -9,9 +9,15 @@ var fs = require('fs'),
   Migration = {
     run : function(app, configPath, next) {
 
-      var config = JSON.parse(fs.readFileSync(configPath)),
-        rootPath = GLOBAL.SERVER_ROOT + '/../',
-        delta = false;
+console.log("configPath ->\n",configPath);
+
+      var config = JSON.parse(fs.readFileSync(configPath));
+//      var config = jf.readFileSync(configPath);
+
+
+	var rootPath = GLOBAL.SERVER_ROOT + '/../';
+      var delta = false;
+
 
       config.cdn_public = config.cdn_public.replace(/\/img\/cdn/, '');
 
@@ -153,9 +159,24 @@ var fs = require('fs'),
         });     
       }
 
+	var writtenResults = Q("");
+	promises.forEach(function(promise) {
+		console.log('a promise: ',promise);
+	});
+
+	if (delta) {
+		fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+		console.info("\nConfig (for 0.3.0) syncronously written to : " + configPath + "\n");
+		next();
+	} 
+	else {
+		next('nothing to do');
+	}
+
+/*
       Q.all(promises).then(function(results) {
         if (delta) {
-          fs.writeFile(configPath, JSON.stringify(config, null, 2), function(err) {
+          fs.writeFileSync(configPath, JSON.stringify(config, null, 2), function(err) {
             if (err) {
               next(err, 'error');
             } else {
@@ -170,7 +191,7 @@ var fs = require('fs'),
       }, function(err) {
         next(err);
       });
-
+*/
     }
   }
 

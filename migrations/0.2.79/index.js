@@ -20,14 +20,9 @@ var fs = require('fs'),
       }
 
       if (delta) {
-        fs.writeFile(configPath , JSON.stringify(config, null, 2), function(err) {
-          if (err) {
-            next(err, 'error');
-          } else {
-            console.info("\nConfig written to : " + configPath + "\n");
+        fs.writeFileSync(configPath , JSON.stringify(config, null, 2));
+            console.info("\nConfig (for 0.2.79) syncronously written to : " + configPath + "\n");
             next();
-          }
-        });
       } else {
         next('Nothing To Do');
       }

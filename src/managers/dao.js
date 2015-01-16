@@ -19,10 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-var util        = require('util'),
+var util      = require('util'),
   helper      = require('../lib/helper'),
   cdn         = require('../lib/cdn'),
-  crypto = require('crypto'),
+  crypto   	  = require('crypto'),
   step        = require('../lib/step'), // @todo deprecate, use Q
   async       = require('async'), // @todo deprecate, use Q
   Q           = require('q')
@@ -1502,7 +1502,9 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
       }
 
       // enumerate available migrations
-      fs.readdir(migrationPath, function(err, files) {
+      var files = fs.readdirSync(migrationPath);
+console.log('files ->\n',files);
+//	  fs.readdir(migrationPath, function(err, files) {
         var pkgInt,
           migration,
           migrationFile,
@@ -1566,8 +1568,12 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
             }
           }
 
+
+// OUT OF ORDER.  COME BACK LATER:
+
           if (promises.length) {
-            Q.all(promises).then(function(messages) {
+			console.log("promises ->\n\n",promises);
+			Q.all(promises).then(function(messages) {
 
               next(false, messages.join('\n') );
             },
@@ -1577,37 +1583,39 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
           } else {
             next('Nothing To Do');
           }
+
+
+// END OUT OF ORDER.
+
+
+
+// ALT ATTEMPT AT MIGRATIONS
+/*
+          if (promises.length) {
+
+			var messages = Q("");
+			app.logmessage("at least we got here.");
+			
+			promises.forEach(function(promise) {
+				messages = messages.then(promise) + '\n';
+			});
+
+			next.apply(next, messages);
+            
+          } else {
+            next('Nothing To Do');
+          }
+*/
+
+// END ALT ATTEMPT
+
+
+
         }
-      });
+   //   });
     }
   });
 }
 
 
 module.exports = Dao;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
