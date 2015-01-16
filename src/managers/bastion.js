@@ -67,6 +67,11 @@ function Bastion(dao, noConsume, cb) {
 Bastion.prototype.__proto__ = events.EventEmitter.prototype;
 
 
+Bastion.prototype.isRabbitConnected = function() {
+	app.logmessage('BASTION:AMQPCONNECTION:' + this._queue.amqpConn.connectionStatus);
+	return this._queue.amqpConn.connectionStatus;
+}
+
 Bastion.prototype.getQueue = function(queueName) {
   if (undefined == queueName) {
     return this._queue;

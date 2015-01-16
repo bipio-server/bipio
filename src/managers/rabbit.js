@@ -50,10 +50,13 @@ function Rabbit(cfg, next) {
   }
   );
 
+  this.amqpConn.connectionStatus = null;
+  
   // Setup our preconfigured exchanges, queues and routes
   this.amqpConn.on(
     'ready',
     function() {
+	  self.amqpConn.connectionStatus = 'connected';
       for (xName in cfg.exchanges) {
         self.exchanges[xName] = self.amqpConn.exchange(
           xName,
@@ -87,7 +90,8 @@ function Rabbit(cfg, next) {
   });
 
   this.amqpConn.on('error', function(err) {
-    app.logmessage('RABBIT:' + err, 'error');
+    self.amqpConn.connectionStatus = null;
+	app.logmessage('RABBIT:' + err, 'error');
   });
 
 //  this.amqpConn.connect();
@@ -113,6 +117,7 @@ Rabbit.prototype.getQueueByName = function(queueName) {
 
 Rabbit.prototype.disconnect = function() {
   this.amqpConn.disconnect();
+  this.amqpConn.connectionStatus = null;
   app.logmessage('RABBIT:DISCONNECTED');
 }
 
