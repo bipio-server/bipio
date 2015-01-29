@@ -103,10 +103,9 @@ process.on('uncaughtException', function(err) {
   console.error(err);
 });
 
-var targetConfig = path.resolve(
-  process.env.NODE_CONFIG_DIR || path.join(__dirname, '../config/'),
-  appEnv + '.json'
-);
+var configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../config/');
+
+var targetConfig = path.resolve(configDir, appEnv + '.json');
 
 function writeConfig(next) {
   fs.writeFile(targetConfig , JSON.stringify(sparseConfig, null, 2), function(err) {
@@ -269,12 +268,12 @@ function sslSetup() {
 
   prompt(sslPrompt, function(answer) {
     if (answer.sslContinue) {
-      var targetDir = path.basename(sparseFile + '/credentials'),
-        cmd = __dirname + '/gencert.sh ' + cn + ' ' + targetDir;
+      var targetDir = path.basename(configDir + '/credentials'),
+        cmd = __dirname + '/gencert.sh ' + sparseConfig.domain + ' ' + targetDir;
 
       if (0 === sh.run(cmd)) {
         sparseConfig.server.ssl.key = targetDir + '/server.key';
-        sparseConfig.server.ssl.crt = targetDir + '/server.crt';
+        sparseConfig.server.ssl.cert = targetDir + '/server.crt';
         userSetup();
       } else {
         console.log('SSL Cert or Key generation failed');
