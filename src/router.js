@@ -981,24 +981,24 @@ module.exports = {
     });
 
 	express.get('/status', function(req, res) {
-    	var serverStatus = {}; 
-    	
+    	var serverStatus = {};
+
 		// get server version number:
 		serverStatus['version'] = bipioVersion;
-    
+
     	// get rabbitmq connection status
     	if (app.bastion.isRabbitConnected()) {
 			serverStatus['rabbitmq'] = "connected";
 		} else {
 			serverStatus['rabbitmq'] = "error";
-		};  
+		};
 
 		// get mongodb connection status
 		if (app.dao.getConnection().readyState) {
 			serverStatus['mongodb'] = "connected";
 		} else {
 			serverStatus['mongodb'] = "error";
-		};  
+		};
 
 		res.status(200).send(serverStatus);
 

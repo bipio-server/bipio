@@ -144,6 +144,13 @@ process.addListener('uncaughtException', function (err, stack) {
   } else {
     console.trace(message);
   }
+
+  // if binding error, then drop the process
+  if ('EADDRINUSE' === err.code) {
+    console.error('Shutting Down...');
+    process.exit(1);
+  }
+
 });
 
 if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
