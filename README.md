@@ -155,7 +155,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
     git clone git@github.com:bipio-server/bipio.git
     cd bipio
-    make install
+    npm install
     node . (or `npm start`)
 
 When setting BipIO up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
