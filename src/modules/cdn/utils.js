@@ -1,4 +1,5 @@
 var mkdirp = require('mkdirp'),
+  multer = require('multer'),
   path = require('path');
 
 module.exports = {

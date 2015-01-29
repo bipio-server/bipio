@@ -26,7 +26,9 @@
 var bootstrap = require(__dirname + '/bootstrap'),
   app = bootstrap.app,
   express = require('express'),
-  restapi = express();
+  restapi = express(),
+  http = require('http'),
+  https = require('https'),
 
   session = require('express-session'),
   cookieParser = require('cookie-parser'),
@@ -276,13 +278,25 @@ restapi.disable('x-powered-by');
   }
 
   app.dao.on('ready', function(dao) {
-    var server;
+    var server,
+      opts = {};
+
+    if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
+      app.logmessage('BIPIO:SSL Mode');
+      opts.key = fs.readFileSync(GLOBAL.CFG.server.ssl.key);
+      opts.cert = fs.readFileSync(GLOBAL.CFG.server.ssl.cert);
+    }
 
     require('./router').init(restapi, dao);
 
-    server = restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
+    if (opts.key) {
 
-      // drop readme's from memory
+      server = https.createServer(opts, restapi);
+    } else {
+      server = http.createServer(restapi);
+    }
+
+    server.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
       var rCache = require.cache;
       for (var k in rCache) {
         if (rCache.hasOwnProperty(k) && rCache[k].exports && rCache[k].exports.readme) {

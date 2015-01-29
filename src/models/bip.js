@@ -81,6 +81,8 @@ function endLifeParse(end_life) {
 Bip.repr = function(accountInfo) {
   if (undefined === this.domain_id || '' === this.domain_id) {
     return '';
+  } else if (!accountInfo.user.domains) {
+    return this.name;
   }
 
   var repr = '',

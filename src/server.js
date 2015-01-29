@@ -24,8 +24,9 @@ var bootstrap = require(__dirname + '/bootstrap'),
   app = bootstrap.app,
   cluster = require('cluster'),
   express = require('express'),
-  restapi = express();
-
+  restapi = express(),
+  http = require('http'),
+  https = require('https'),
   session = require('express-session'),
   cookieParser = require('cookie-parser'),
   bodyParser = require('body-parser'),
@@ -37,8 +38,7 @@ var bootstrap = require(__dirname + '/bootstrap'),
   cron = require('cron'),
   MongoStore = require('connect-mongo')({ session : session});
   domain = require('domain'),
-  jwt = require('jsonwebtoken'),
-  bipioVersion = require('../package.json').version;
+  jwt = require('jsonwebtoken');
 
 // export app everywhere
 module.exports.app = app;
@@ -172,7 +172,7 @@ restapi.use(session({
   },
   secret: GLOBAL.CFG.server.sessionSecret,
   store: new MongoStore({
-    mongooseConnection : app.dao.getConnection()
+    mongoose_connection : app.dao.getConnection()
   })
 }));
 
@@ -247,8 +247,7 @@ if (cluster.isMaster) {
 
     // oAuth refresh
     app.logmessage('DAO:Starting OAuth Refresh', 'info');
-//    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
-    var oauthRefreshJob = new cron.CronJob('0 */1 * * * *', function() {
+    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);
 
@@ -282,9 +281,17 @@ if (cluster.isMaster) {
   );
 
   app.dao.on('ready', function(dao) {
-    var server;
+    var server,
+      opts = {};
+
+    if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
+      app.logmessage('BIPIO:SSL Mode');
+      opts.key = fs.readFileSync(GLOBAL.CFG.server.ssl.key);
+      opts.cert = fs.readFileSync(GLOBAL.CFG.server.ssl.cert);
+    }
 
     require('./router').init(restapi, dao);
+
 /*
     restapi.use(function(err, req, res, next) {
         var rDomain = domain.create();
@@ -323,9 +330,14 @@ if (cluster.isMaster) {
         }
       });
 */
-    server = restapi.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
 
-      // drop readme's from memory
+    if (opts.key) {
+      server = https.createServer(opts, restapi);
+    } else {
+      server = http.createServer(restapi);
+    }
+
+    server.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
       var rCache = require.cache;
       for (var k in rCache) {
         if (rCache.hasOwnProperty(k) && rCache[k].exports && rCache[k].exports.readme) {
@@ -335,5 +347,6 @@ if (cluster.isMaster) {
 
       app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
     });
+
   });
 }

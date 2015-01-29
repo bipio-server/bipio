@@ -423,7 +423,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
       }
 
       var mongoModel = self.toMongoModel(model);
-	  
+
 	  mongoModel.validate(function (err) {
 		if (err) {
           next(err, model.getEntityName(), err, 500);
@@ -493,7 +493,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
         return model;
       });
 	  });
-     
+
     });
 
   } else {
@@ -1072,6 +1072,18 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
 
   mongoose.model(model.getEntityName()).update( updateFilter, updateCols ).exec(next);
 };
+
+DaoMongo.prototype.copyTo = function(fromCollection, toCollection, next) {
+
+  console.log(mongoose.connection.collections[fromCollection].prototype);
+/*
+//console.log(this.models[fromCollection]);
+  collection.copyTo(toCollection, function() {
+    console.log(arguments);
+    next.apply(next, arguments);
+  })
+*/
+}
 
 
 module.exports = DaoMongo;
