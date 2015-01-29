@@ -38,7 +38,9 @@ var bootstrap = require(__dirname + '/bootstrap'),
   cron = require('cron'),
   MongoStore = require('connect-mongo')({ session : session});
   domain = require('domain'),
-  jwt = require('jsonwebtoken');
+  jwt = require('jsonwebtoken'),
+  pkg = bipioVersion = require('../package.json'),
+  bipioVersion = pkg.version;
 
 // export app everywhere
 module.exports.app = app;

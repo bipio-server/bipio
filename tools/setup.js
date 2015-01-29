@@ -268,9 +268,10 @@ function sslSetup() {
 
   prompt(sslPrompt, function(answer) {
     if (answer.sslContinue) {
-      var targetDir = path.basename(configDir + '/credentials'),
+console.log('CONFIG DIR IS ', configDir);
+      var targetDir = path.resolve(configDir + '/credentials'),
         cmd = __dirname + '/gencert.sh ' + sparseConfig.domain + ' ' + targetDir;
-
+console.log('TARGET DIR IS ', targetDir);
       if (0 === sh.run(cmd)) {
         sparseConfig.server.ssl.key = targetDir + '/server.key';
         sparseConfig.server.ssl.cert = targetDir + '/server.crt';
