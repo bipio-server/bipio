@@ -21,7 +21,7 @@
         "ssl" : {
           "key" : "",
           "cert" : ""
-        },
+        }
     },
     "mailer": {
         "host": "localhost",
