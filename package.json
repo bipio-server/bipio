@@ -53,6 +53,7 @@
     "dateformat": "1.0.7-1.2.3",
     "datejs": ">=0.0.2",
     "errorhandler": "^1.1.1",
+    "execSync": "^1.0.2",
     "express": ">=4.0.0",
     "express-session": "^1.0.4",
     "extend": "^2.0.0",

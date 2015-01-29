@@ -24,6 +24,7 @@
 var inquirer = require("inquirer"),
   fs = require('node-fs'),
   path = require('path'),
+  sh = require('execSync'),
   crypto = require('crypto'),
   defs = require('../config/defs'),
   mongoose = require('mongoose'),
@@ -246,14 +247,42 @@ function aesSetup() {
       process.exit(0);
     } else {
       if (sparseConfig.k['1']) {
-        userSetup();
+        sslSetup();
       } else {
         crypto.randomBytes(16, function(ex, buf) {
           var token = buf.toString('hex');
           sparseConfig.k['1'] = token;
-          userSetup();
+          sslSetup();
         });
       }
+    }
+  });
+}
+
+function sslSetup() {
+  var sslPrompt = {
+    type : 'confirm',
+    default : false,
+    name : 'sslContinue',
+    message : "Enable SSL? This will let you mount this server from the https://bip.io dashboard"
+  }
+
+  prompt(sslPrompt, function(answer) {
+    if (answer.sslContinue) {
+      var targetDir = path.basename(sparseFile + '/credentials'),
+        cmd = __dirname + '/gencert.sh ' + cn + ' ' + targetDir;
+
+      if (0 === sh.run(cmd)) {
+        sparseConfig.server.ssl.key = targetDir + '/server.key';
+        sparseConfig.server.ssl.crt = targetDir + '/server.crt';
+        userSetup();
+      } else {
+        console.log('SSL Cert or Key generation failed');
+        process.exit(0);
+      }
+
+    } else {
+      userSetup();
     }
   });
 }

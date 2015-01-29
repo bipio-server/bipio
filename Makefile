@@ -6,6 +6,7 @@ REPORTER = dot
 
 install:
 	./tools/git-setup.sh
+	mkdir -p config/credentials
 	@SYSTEM_TZ=`/usr/bin/env date +%Z` ./tools/setup.js
 
 test-install:
