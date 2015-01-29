@@ -87,7 +87,7 @@ if (pod && podPath) {
     config = pod._config || {};
 
     if (currentConfig) {
-        var imgDir = GLOBAL.CDN_DIR + '/img/pods';
+        var imgDir = GLOBAL.CFG.modules.cdn.config.data_dir + "/perm/cdn/img/pods";
         if (!fs.existsSync(imgDir)) {
             helper.mkdir_p(imgDir);
 

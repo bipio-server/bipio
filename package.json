@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "scripts": {
     "start": "node src/server.js",
     "test": "make test",
@@ -81,6 +81,7 @@
     "q": "^1.0.1",
     "request": ">= 2.2.9",
     "rimraf": ">=2.2.6",
+    "sleep": "^1.2.0",
     "sprintf": ">=0.1.1",
     "ssl-root-cas": "^1.1.7",
     "sugar": "^1.4.1",

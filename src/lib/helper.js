@@ -391,7 +391,11 @@ var helper = {
 
   mkdir_p: function(path, mode, next) {
     mkdirp(path, mode, function(err) {
-      next(err, path);
+      if (!next && err) {
+        throw new Error(err);
+      } else {
+        next(err, path);
+      }
     });
   },
 
