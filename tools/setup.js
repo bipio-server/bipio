@@ -276,6 +276,7 @@ function sslSetup() {
       }
 
       if (0 === sh.run(cmd)) {
+        sparseConfig.proto_public = 'https://';
         sparseConfig.server.ssl.key = targetDir + '/server.key';
         sparseConfig.server.ssl.cert = targetDir + '/server.crt';
         userSetup();
