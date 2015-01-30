@@ -27,16 +27,17 @@
 
 process.HEADLESS = true;
 if (!process.argv[2]) {
-  console.log('Usage - token_get {account uuid}');
+  console.log('Usage - token_get {account uuid|user_name}');
   process.exit(0);
 }
 
 var accountId = process.argv[2],
   bootstrap = require(__dirname + '/../src/bootstrap'),
   dao = bootstrap.app.dao,
-  modelName = 'account_auth';
+  modelName = 'account_auth',
+  acctSearch = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(accountId);
 
-dao.on('ready', function(dao) {
+function accountQuery(accountId) {
   dao.find(
     modelName,
     {
@@ -56,4 +57,27 @@ dao.on('ready', function(dao) {
       }
     }
   );
+}
+
+dao.on('ready', function(dao) {
+  if (acctSearch) {
+    accountQuery(accountId);
+  } else {
+    dao.find(
+      'account',
+      {
+        username : accountId
+      },
+      function(err, result) {
+        if (err || !result) {
+          if (!result) {
+            console.log('account id not found');
+          }
+          process.exit(0);
+        } else {
+          accountQuery(result.id);
+        }
+      }
+    );
+  }
 });
