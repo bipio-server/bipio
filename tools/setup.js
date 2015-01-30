@@ -33,11 +33,12 @@ var inquirer = require("inquirer"),
     process.env.BIPIO_SPARSE_CONFIG ?
     process.env.BIPIO_SPARSE_CONFIG :
     __dirname + '/../config/config.json-dist');
-
+/*
 process.on('uncaughtException', function(err) {
   console.error(err);
   process.exit(0);
 });
+*/
 
 // Select prompt
 if (process.env.HEADLESS) {
@@ -79,7 +80,8 @@ GLOBAL.app = {
     } else {
       console.log(err);
     }
-  }
+  },
+  modules : sparseConfig.modules
 }
 GLOBAL.CFG = sparseConfig;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
@@ -195,23 +197,6 @@ function datadirSelect() {
       answer.datadir = valDefault;
     }
     sparseConfig.modules.cdn.config.data_dir = path.resolve(answer.datadir);
-    cdnSelect();
-  });
-}
-
-function cdnSelect() {
-  var valDefault = path.join(sparseConfig.modules.cdn.config.data_dir, "/cdn");
-  var cndSelect = {
-    type : 'input',
-    name : 'cdn',
-    message : 'CDN directory. default "' + valDefault + '" :'
-  }
-
-  prompt(cndSelect, function(answer) {
-    if ('' === answer.cdn) {
-      answer.cdn = valDefault;
-    }
-    sparseConfig.cdn = path.resolve(answer.cdn);
     createDataDirs();
   });
 }
@@ -277,10 +262,12 @@ function sslSetup() {
 
   prompt(sslPrompt, function(answer) {
     if (answer.sslContinue) {
-      var targetDir = path.resolve(configDir + '/credentials'),
+      var targetDir = configDir + '/credentials',
         cmd = __dirname + '/gencert.sh ' + sparseConfig.domain + ' ' + targetDir;
 
-      fs.mkdirSync(targetDir, 0755);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, 0755);
+      }
 
       if (0 === sh.run(cmd)) {
         sparseConfig.server.ssl.key = targetDir + '/server.key';
@@ -496,7 +483,6 @@ function auxServers() {
     // try connecting
     console.log('trying ' + sparseConfig.dbMongo.connect + ' Ctrl-C to quit');
     GLOBAL.CFG = sparseConfig;
-
     var Dao = require(__dirname + '/../src/managers/dao');
     var dao = new Dao(sparseConfig,  function(message) {
       writeConfig(function() {
