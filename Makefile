@@ -6,7 +6,6 @@ REPORTER = dot
 
 install:
 	./tools/git-setup.sh
-	mkdir logs
 	@SYSTEM_TZ=`/usr/bin/env date +%Z` ./tools/setup.js
 
 test-install:

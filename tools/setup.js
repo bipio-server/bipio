@@ -99,6 +99,12 @@ crypto.randomBytes(48, function(ex, buf) {
   sparseConfig.server.sessionSecret = buf.toString('hex');
 });
 
+var logPath = path.resolve('../') + '/logs';
+if (!fs.existsSync(logPath)) {
+  fs.mkdirSync(logPath, 0755);
+}
+
+
 // JWT Signing Key
 if (!sparseConfig.jwtKey) {
   crypto.randomBytes(48, function(ex, buf) {
