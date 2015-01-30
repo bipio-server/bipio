@@ -259,15 +259,13 @@ stats-runner.sh :
 
 ## Notes
 
-The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.
-For visual tools, sign in to [bipio](https://bip.io) to mount your local install from your browser 
-under My Account > Mounts > Create Mount.  
+The BipIO server software is the basic framework for processing bips and their delivery graphs and is currently distributed headless.  For visual tools, sign in to [bipio](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
 
 ![Server Mount](https://bip.io/static/img/docs/server_mount.png)
 
-The BipIO website is not a first class citizen or tightly coupled to one particular endpoint, so you can mount your local install(s) even if behind a firewall.
+BipIO does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
 
-By itself, Bipio does not provide SSL termination or any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  If you need SSL termination this should be delegated to a forward proxy such as NginX, Apache, HAProxy etc.
+**important** Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.
 
 ## Developing and Contributing
 
