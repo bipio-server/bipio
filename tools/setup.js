@@ -34,6 +34,11 @@ var inquirer = require("inquirer"),
     process.env.BIPIO_SPARSE_CONFIG :
     __dirname + '/../config/config.json-dist');
 
+process.on('uncaughtException', function(err) {
+  console.error(err);
+  process.exit(0);
+});
+
 // Select prompt
 if (process.env.HEADLESS) {
   var prompt = function (select, cb) {
@@ -99,11 +104,12 @@ if (!sparseConfig.jwtKey) {
   });
 }
 
-process.on('uncaughtException', function(err) {
-  console.error(err);
-});
+// override data dir
+if (process.env.NODE_DATA_DIR) {
+  sparseConfig.modules.cdn.config.data_dir = path.resolve(process.env.NODE_DATA_DIR);
+}
 
-var configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../config/');
+var configDir = path.resolve(process.env.NODE_CONFIG_DIR || path.join(__dirname, '../config/'));
 
 var targetConfig = path.resolve(configDir, appEnv + '.json');
 
@@ -175,7 +181,7 @@ function portSelect() {
 
 function datadirSelect() {
   var valDefault = (0 === sparseConfig.modules.cdn.config.data_dir.indexOf('/')
-    ? sparseConfig.datadir
+    ? sparseConfig.modules.cdn.config.data_dir
     : path.resolve(__dirname + "/../" + sparseConfig.modules.cdn.config.data_dir));
 
   var datadirSelect = {
@@ -188,7 +194,7 @@ function datadirSelect() {
     if ('' === answer.datadir) {
       answer.datadir = valDefault;
     }
-    sparseConfig.datadir = path.resolve(answer.datadir);
+    sparseConfig.modules.cdn.config.data_dir = path.resolve(answer.datadir);
     cdnSelect();
   });
 }
@@ -218,11 +224,14 @@ function createDataDirs() {
     if (err) console.log(err);
   }
 
-  fs.mkdir(path.join(sparseConfig.datadir, "tmp"), 0755, true, cb);
-  fs.mkdir(path.join(sparseConfig.datadir, "channels"), 0755, true, cb);
-  fs.mkdir(path.join(sparseConfig.cdn, "img/av"), 0755, true, cb);
-  fs.mkdir(path.join(sparseConfig.cdn, "img/icofactory"), 0755, true, cb);
-  fs.mkdir(path.join(sparseConfig.cdn, "img/pods"), 0755, true, cb);
+  var ddir = sparseConfig.modules.cdn.config.data_dir;
+
+  fs.mkdir(path.join(ddir, "tmp"), 0755, true, cb);
+
+  // create paths for permanent data
+  fs.mkdir(path.join(ddir, "perm/cdn/img/av"), 0755, true, cb);
+  fs.mkdir(path.join(ddir, "perm/cdn/img/icofactory"), 0755, true, cb);
+  fs.mkdir(path.join(ddir, "perm/cdn/img/pods"), 0755, true, cb);
 
   aesSetup();
 }
@@ -268,8 +277,10 @@ function sslSetup() {
 
   prompt(sslPrompt, function(answer) {
     if (answer.sslContinue) {
-      var targetDir = path.resolve(configDir + '/credentials'),
+      var targetDir = configDir + '/credentials',
         cmd = __dirname + '/gencert.sh ' + sparseConfig.domain + ' ' + targetDir;
+
+      fs.mkdirSync(targetDir, 0755);
 
       if (0 === sh.run(cmd)) {
         sparseConfig.server.ssl.key = targetDir + '/server.key';
