@@ -277,7 +277,7 @@ function sslSetup() {
 
   prompt(sslPrompt, function(answer) {
     if (answer.sslContinue) {
-      var targetDir = configDir + '/credentials',
+      var targetDir = path.resolve(configDir + '/credentials'),
         cmd = __dirname + '/gencert.sh ' + sparseConfig.domain + ' ' + targetDir;
 
       fs.mkdirSync(targetDir, 0755);
