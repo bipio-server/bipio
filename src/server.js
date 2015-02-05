@@ -257,8 +257,8 @@ if (cluster.isMaster) {
     // compile popular transforms into transform_defaults.
 	// schedule = 00 00 00 * * * : everyday @ midnight.	
 	// TODO: ingest entire set from https://api.bip.io/rpc/transforms & merge with locals.
-	var reduceTransformsJob = new cron.CronJon('00 00 00 * * *', function() {
-    	app.logmessage('DAO:Starting Corpus Recalc', 'info');
+   	app.logmessage('DAO:Starting Corpus Recalc', 'info');
+	var reduceTransformsJob = new cron.CronJob('00 00 00 * * *', function() {
 		dao.reduceTransformDefaults();
 	}, function() {
 		app.logmessage('DAO:Done Compiling Sys Transforms');

@@ -422,7 +422,8 @@ var helper = {
   regUUID : /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
 //  regActionUUID : /\[%(\s*?)(source|_bip|_client|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_#\.\$@\*\[\],\?\(\)]*(\s*?)%\]/gi,
 
-  regActionUUID : /\[%(\s*?)(source|_bip|_client|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/gi,
+  regActionUUID_old : /\[%(\s*?)(source|_bip|_client|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/gi,
+  regActionUUID : /\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]|\w*\.\w*/gi,
   regActionSource : /\[%(\s*?)(source)#([@a-zA-Z0-9_\-#.\[\]]*)(\s*?)%\]/gi,
 
   regEscape : /[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g,
