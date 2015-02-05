@@ -479,9 +479,16 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
         // populate from mongo model into our model, and build a representation
         model.populate(mongoModel, accountInfo);
         model.postSave(accountInfo, function(err, modelName, retModel, code) {
-          if (next) {
+          if (err) {
+            self.remove(modelName, retModel.id, accountInfo, function() {
+              if (next) {
+                next(err, modelName, retModel, code );
+              }
+            });
+          } else if (next) {
             next(err, modelName, retModel, code );
           }
+
           // depending on the model, we can inject post-saves which are
           // outside the model's scope, such as notifications, or other
           // types of bindings.

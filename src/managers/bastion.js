@@ -384,6 +384,8 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
                 // update accumulator
                 self._dao.accumulate('bip', bipResult, '_imp_actual');
 
+                // update runtime
+
                 // if this bip is waiting for a binding, then set it.
                 // can't bind triggers
                 if ('trigger' !== bipModel.type && firstBinding) {

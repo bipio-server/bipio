@@ -515,6 +515,12 @@ Bip.entitySchema = {
     writable : false,
     "default" : 0
   },
+  _last_run : {
+    type : Number,
+    renderable : true,
+    writable : false,
+    "default" : 0
+  },
   _tz : { // user timezone
     type : String,
     renderable : false,

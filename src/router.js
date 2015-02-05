@@ -168,7 +168,7 @@ var restResponse = function(res) {
         app.logmessage('Error response propogated without code', 'warning');
       }
 
-      res.status(code).send({ message : error });
+      res.status(code).send({ message : error.toString() });
       return;
     } else {
       if (!results) {
