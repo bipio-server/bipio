@@ -641,7 +641,7 @@ Dao.prototype.setTransformDefaults = function(newDefaults) {
 /**
  *
  * Takes a simple count of non-system provided transforms and creates
- * new 'system' transform defaults.  for use by /rpc/bip/get_transform_hint
+ * new 'system' transform defaults.  for use by /rpc/transforms
  *
  */
 Dao.prototype.reduceTransformDefaults = function() {
@@ -652,7 +652,7 @@ Dao.prototype.reduceTransformDefaults = function() {
 			}
 		}, 
 		function(err, results) {
-			var key, uKey, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = {}, transformToInsert = {}; 
+			var key, uKey, utaStr, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = {}, transformToInsert = {}; 
 			if (!err) {
 
 				console.log("results->\n",results, '\n');
@@ -663,23 +663,27 @@ Dao.prototype.reduceTransformDefaults = function() {
 						transforms = lo_.pairs(el.transform);
 								
 						transforms.forEach( function(val, idx) {
-							uta[val[0]] = val[1];	
-							console.log('uta->',uta);
-							key = el.from_channel + ':' + el.to_channel + ':' + JSON.stringify(uta);
-							utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel }
-							uTransform[key] = utaProps;
-							uTransform[key]['transform'] = uta;
-							uTransforms.push(uTransform);
-							utaProps = {};
-							uTransform = {};
-							uta = {};
+
+							utaStr = val[1].match(/\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g); 
+							if (utaStr != null) {
+								uta[val[0]] = utaStr;	
+								console.log('uta->',uta);
+								key = el.from_channel + ':' + el.to_channel + ':' + utaStr;
+								utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel }
+								uTransform[key] = utaProps;
+								uTransform[key]['transform'] = uta;
+								uTransforms.push(uTransform);
+								utaProps = {};
+								uTransform = {};
+								uta = {};
+							}
 						});
 						return uTransforms;
 					});
 			
 				console.log("uTransforms->\n",uTransforms, '\n');
 
-				// derive -> reduce down to the popular transforms, then
+				// filter down to the popular transforms, then
 				// create transform_default with owner_id 'system'
 				popular = lo_(uTransforms)
 					.countBy( function(transform, idx, coll) {
@@ -694,7 +698,8 @@ Dao.prototype.reduceTransformDefaults = function() {
 					.forEach( function(el, idx) {
 						transformToInsert = lo_.find(uTransforms, el[0]);
 						transformToInsert[el[0]]['owner_id'] = 'system';
-						console.log(transformToInsert);
+						console.log('transformToInsert->\n',transformToInsert);
+						//this.upsert('transform_default', {}, transformToInsert);
 					});
 
 			} else {
