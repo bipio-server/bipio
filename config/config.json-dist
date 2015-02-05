@@ -113,5 +113,6 @@
       "math" : {},
       "html" : {},
       "crypto" : {}
-    }
+    },
+	"updateTransforms" : true
 }

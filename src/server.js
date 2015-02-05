@@ -39,7 +39,7 @@ var bootstrap = require(__dirname + '/bootstrap'),
   MongoStore = require('connect-mongo')({ session : session});
   domain = require('domain'),
   jwt = require('jsonwebtoken'),
-  pkg = bipioVersion = require('../package.json'),
+  pkg = require('../package.json'),
   bipioVersion = pkg.version;
 
 // export app everywhere
@@ -260,6 +260,9 @@ if (cluster.isMaster) {
    	app.logmessage('DAO:Starting Corpus Recalc', 'info');
 	var reduceTransformsJob = new cron.CronJob('00 00 00 * * *', function() {
 		dao.reduceTransformDefaults();
+		if (GLOBAL.CFG.updateTransforms) {
+			app.logmessage('DAO:Updating Default Transforms');
+		}
 	}, function() {
 		app.logmessage('DAO:Done Compiling Sys Transforms');
 	}, false, GLOBAL.CFG.timezone);
