@@ -254,14 +254,15 @@ if (cluster.isMaster) {
     }, null, true, GLOBAL.CFG.timezone);
 
 
-    // transform recalcs
-
-    app.logmessage('DAO:Starting Corpus Recalc', 'info');
-	dao.reduceTransformDefaults();
-    //var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
-    //      dao.reCorp();
-    //    }, null, true, GLOBAL.CFG.timezone);
-
+    // compile popular transforms into transform_defaults.
+	// schedule = 00 00 00 * * * : everyday @ midnight.	
+	// TODO: ingest entire set from https://api.bip.io/rpc/transforms & merge with locals.
+	var reduceTransformsJob = new cron.CronJon('00 00 00 * * *', function() {
+    	app.logmessage('DAO:Starting Corpus Recalc', 'info');
+		dao.reduceTransformDefaults();
+	}, function() {
+		app.logmessage('DAO:Done Compiling Sys Transforms');
+	}, false, GLOBAL.CFG.timezone);
 
   });
 

@@ -686,7 +686,7 @@ Dao.prototype.reduceTransformDefaults = function() {
 				// create transform_default with owner_id 'system'
 				popular = lo_(uTransforms)
 					.countBy( function(transform, idx, coll) {
-						console.log('transform->\n',transform);					
+						//console.log('transform->\n',transform);					
 						return Object.keys(transform);
 					})
 					.pairs()
