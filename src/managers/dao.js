@@ -30,7 +30,7 @@ var util      = require('util'),
   path        = require('path'),
   time        = require('time'),
   request     = require('request'),
-  lo_         = require('lodash');
+  lo_         = require('lodash'),
   DaoMongo    = require('./dao-mongo.js');
 
 function Dao(config, log, next) {
@@ -655,7 +655,7 @@ Dao.prototype.reduceTransformDefaults = function() {
 			var key, uKey, utaStr, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = {}, transformToInsert = {}; 
 			if (!err) {
 
-				console.log("results->\n",results, '\n');
+				//console.log("results->\n",results, '\n');
 
 				// derive a collection of every unique transform attribute
 				lo_(results)
@@ -667,7 +667,7 @@ Dao.prototype.reduceTransformDefaults = function() {
 							utaStr = val[1].match(/\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g); 
 							if (utaStr != null) {
 								uta[val[0]] = utaStr;	
-								console.log('uta->',uta);
+								//console.log('uta->',uta);
 								key = el.from_channel + ':' + el.to_channel + ':' + utaStr;
 								utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel }
 								uTransform[key] = utaProps;
@@ -681,7 +681,6 @@ Dao.prototype.reduceTransformDefaults = function() {
 						return uTransforms;
 					});
 			
-				console.log("uTransforms->\n",uTransforms, '\n');
 
 				// filter down to the popular transforms, then
 				// create transform_default with owner_id 'system'
@@ -698,8 +697,8 @@ Dao.prototype.reduceTransformDefaults = function() {
 					.forEach( function(el, idx) {
 						transformToInsert = lo_.find(uTransforms, el[0]);
 						transformToInsert[el[0]]['owner_id'] = 'system';
-						console.log('transformToInsert->\n',transformToInsert);
-						//this.upsert('transform_default', {}, transformToInsert);
+						//console.log('transformToInsert->\n',transformToInsert);
+						this.upsert('transform_default', {}, transformToInsert);
 					});
 
 			} else {
