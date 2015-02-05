@@ -13,13 +13,13 @@ LDAP.prototype = proto.prototype;
 /*
  *  Remote HTTP Basic Auth
  */
-LDAP.prototype.test = function(username, password, options, next) {
+LDAP.prototype.test = function(username, password, opts, next) {
   var self = this,
     dao = this.dao,
     filter = {},
     options = this.options;
 
-  if ('admin' === username || options.asOwner) {
+  if ('admin' === username || opts.asOwner) {
     this.__proto__._test.apply(this, arguments);
 
   } else if (!username || !password) {

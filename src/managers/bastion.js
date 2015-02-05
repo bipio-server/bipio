@@ -385,6 +385,11 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
                 self._dao.accumulate('bip', bipResult, '_imp_actual');
 
                 // update runtime
+                self._dao.updateColumn('bip', '_last_run', app.helper.nowUTCSeconds(), function(err, result) {
+                  if (err) {
+                    app.logmessage(err, 'error');
+                  }
+                });
 
                 // if this bip is waiting for a binding, then set it.
                 // can't bind triggers
