@@ -256,7 +256,8 @@ if (cluster.isMaster) {
 
     // transform recalcs
 
-    //app.logmessage('DAO:Starting Corpus Recalc', 'info');
+    app.logmessage('DAO:Starting Corpus Recalc', 'info');
+	dao.reduceTransformDefaults();
     //var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
     //      dao.reCorp();
     //    }, null, true, GLOBAL.CFG.timezone);

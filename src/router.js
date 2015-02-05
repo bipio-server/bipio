@@ -790,6 +790,11 @@ module.exports = {
           response.scheme = result.url_tokens.protocol.replace(':', '');
         }
         res.send(response);
+      
+	  } else if (methodDomain == 'transforms') {
+    		dao.list('transform_default', undefined, 100, 1, 'recent', {owner_id : 'system'}, function(err, modelName, results) {
+				res.send(results);
+			});
 
       // attempts to create a bip from the referer using default settings.
       } else if (methodDomain == 'bip') {
