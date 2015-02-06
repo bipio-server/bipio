@@ -84,7 +84,7 @@ if (pod && podPath) {
 
     // load local
     var currentConfig = JSON.parse(fs.readFileSync(configFile)),
-    config = pod._config || {};
+    config = pod.getConfig() || {};
 
     if (currentConfig) {
         var imgDir = GLOBAL.CFG.modules.cdn.config.data_dir + "/perm/cdn/img/pods";
@@ -97,19 +97,19 @@ if (pod && podPath) {
         }
 
         var actionDone = false;
-        if (mode === 'add' && !currentConfig.pods[pod._name]) {
-            currentConfig.pods[pod._name] = config;
+        if (mode === 'add' && !currentConfig.pods[podName]) {
+            currentConfig.pods[podName] = config;
             /*
             if (config.oauth && config.oauth.callbackURL) {
-              currentConfig.pods[pod._name].oauth.callbackURL = currentConfig.proto_public
+              currentConfig.pods[podName].oauth.callbackURL = currentConfig.proto_public
                 + currentConfig.domain_public
                 + config.oauth.callbackURL;
             }
             */
             actionDone = true;
 
-        } else if (mode === 'remove' && currentConfig.pods[pod._name]) {
-            delete currentConfig.pods[pod._name];
+        } else if (mode === 'remove' && currentConfig.pods[podName]) {
+            delete currentConfig.pods[podName];
             actionDone = true;
         }
 
@@ -128,7 +128,7 @@ if (pod && podPath) {
         if (program.upgrade) {
             if (mode !== 'remove') {
                 console.log('Upgrading Cluster on ' + os.hostname());
-                var podContext = bootstrap.app.dao.pod(pod._name);
+                var podContext = bootstrap.app.dao.pod(podName);
 
                 module.exports.app = app;
 
@@ -174,10 +174,10 @@ if (pod && podPath) {
         } else {
           console.log('DONE!');
           if (config.oauth) {
-            console.log('*** Manual OAuth Setup Required - update the pods.' + pod._name + '.oauth section of ' + configFile + ' with your app credentials before restart');
+            console.log('*** Manual OAuth Setup Required - update the pods.' + podName + '.oauth section of ' + configFile + ' with your app credentials before restart');
 
           } else if (config.api_key) {
-            console.log('*** Manual API Key Setup Required - update the pods.' + pod._name + '.api_key section of ' + configFile + ' with your app API key before restart');
+            console.log('*** Manual API Key Setup Required - update the pods.' + podName + '.api_key section of ' + configFile + ' with your app API key before restart');
           } else {
             console.log('Please restart the server at your convenience');
           }
