@@ -698,7 +698,8 @@ Dao.prototype.reduceTransformDefaults = function() {
 						transformToInsert = lo_.find(uTransforms, el[0]);
 						transformToInsert[el[0]]['owner_id'] = 'system';
 						//console.log('transformToInsert->\n',transformToInsert);
-						this.upsert('transform_default', {}, transformToInsert);
+						self.setTransformDefaults(transformToInsert);
+						//this.upsert('transform_default', {}, transformToInsert);
 					});
 
 			} else {
@@ -706,6 +707,20 @@ Dao.prototype.reduceTransformDefaults = function() {
 			}
 		});
 }
+
+
+Dao.prototype.updateTransformDefaults = function() {
+	// TODO: ingest entire set from https://api.bip.io/rpc/transforms 
+	request('http://api.scott.dev/rpc/transforms', function (err, resp, body) {
+		if (!err) {
+			console.log(body);
+		} else {
+			console.log('err');
+		}
+	});
+
+}
+
 
 /**
  *

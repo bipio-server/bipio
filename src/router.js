@@ -557,6 +557,14 @@ module.exports = {
 
     });
 
+
+	express.get('/rpc/transforms', function(req, res) {
+		dao.list('transform_default', undefined, 100, 1, 'recent', {owner_id : 'system'}, function(err, modelName, results) {
+			res.send(results);
+		});
+	});
+
+
     express.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req, res) {
       var model = req.params.model,
       model_subdomain = req.params.model_subdomain;
@@ -791,10 +799,6 @@ module.exports = {
         }
         res.send(response);
       
-	  } else if (methodDomain == 'transforms') {
-    		dao.list('transform_default', undefined, 100, 1, 'recent', {owner_id : 'system'}, function(err, modelName, results) {
-				res.send(results);
-			});
 
       // attempts to create a bip from the referer using default settings.
       } else if (methodDomain == 'bip') {

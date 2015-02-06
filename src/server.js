@@ -254,10 +254,11 @@ if (cluster.isMaster) {
     }, null, true, GLOBAL.CFG.timezone);
 
 
-    // compile popular transforms into transform_defaults.
+	dao.updateTransformDefaults();
+   
+   // compile popular transforms into transform_defaults.
 	// schedule = 00 00 00 * * * : everyday @ midnight.	
-	// TODO: ingest entire set from https://api.bip.io/rpc/transforms & merge with locals.
-   	app.logmessage('DAO:Starting Corpus Recalc', 'info');
+   	app.logmessage('DAO:Starting Transforms Recalc', 'info');
 	var reduceTransformsJob = new cron.CronJob('00 00 00 * * *', function() {
 		dao.reduceTransformDefaults();
 		if (GLOBAL.CFG.updateTransforms) {
