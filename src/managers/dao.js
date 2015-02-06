@@ -770,10 +770,18 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
                 var bipModel = self.modelFactory('bip', bipResult, accountInfo);
                 bipModel.checkExpiry(function(expired) {
                   if (expired) {
-                    bipModel.expire(client.id, next);
+                    bipModel.expire('expired', next);
                   } else {
                     var payload = app._.clone(bipResult)._doc;
                     payload.socketTrigger = isSocket;
+
+                    // update runtime
+                    self.updateColumn('bip', bipResult.id, { '_last_run' : app.moment().utc() }, function(err, result) {
+                      if (err) {
+                        app.logmessage(err, 'error');
+                      }
+                    });
+
 
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
                     numProcessed++;
