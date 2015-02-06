@@ -35,7 +35,8 @@ var app = {
   envConfig   = require('config'),
   cluster     = require('cluster'),
   os          = require('os'),
-  Q          = require('q'),
+  Q           = require('q'),
+  moment      = require('moment'),
   ipaddr = require('ipaddr.js'),
   memwatch = require('memwatch'),
   heapdump = require('heapdump');
@@ -57,6 +58,8 @@ GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 app.helper = helper;
 app._ = underscore;
 app.Q = Q;
+app.moment = moment;
+
 app.isMaster = cluster.isMaster;
 
 app.modules = {};

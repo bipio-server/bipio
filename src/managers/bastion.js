@@ -385,7 +385,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
                 self._dao.accumulate('bip', bipResult, '_imp_actual');
 
                 // update runtime
-                self._dao.updateColumn('bip', '_last_run', app.helper.nowUTCSeconds(), function(err, result) {
+                self._dao.updateColumn('bip', bipModel.id, { '_last_run' : app.moment().utc() }, function(err, result) {
                   if (err) {
                     app.logmessage(err, 'error');
                   }
@@ -404,7 +404,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
                   // just incase
                   bindTo = helper.sanitize(bindTo).xss();
 
-                  self._dao.updateColumn('bip', bipModel.id, [ bindTo ], function(err, result) {
+                  self._dao.updateColumn('bip', bipModel.id, { 'binder' : [ bindTo ] }, function(err, result) {
                     if (err) {
                       app.logmessage(err, 'error');
                     }

@@ -519,7 +519,15 @@ Bip.entitySchema = {
     type : Number,
     renderable : true,
     writable : false,
-    "default" : 0
+    "default" : 0,
+    get : function(value) {
+      if (value) {
+        var now = app.moment.utc();
+        return app.moment.duration(now.diff(value)).humanize() + ' ago';
+      } else {
+        return '';
+      }
+    }
   },
   _tz : { // user timezone
     type : String,
