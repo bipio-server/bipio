@@ -560,7 +560,7 @@ module.exports = {
 
 	express.get('/rpc/transforms', function(req, res) {
 		dao.list('transform_default', undefined, 100, 1, 'recent', {owner_id : 'system'}, function(err, modelName, results) {
-			res.send(results);
+			res.json(results);
 		});
 	});
 

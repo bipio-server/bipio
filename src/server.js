@@ -254,7 +254,7 @@ if (cluster.isMaster) {
     }, null, true, GLOBAL.CFG.timezone);
 
 
-	dao.updateTransformDefaults();
+	//dao.updateTransformDefaults();
    
    // compile popular transforms into transform_defaults.
 	// schedule = 00 00 00 * * * : everyday @ midnight.	
@@ -292,7 +292,11 @@ if (cluster.isMaster) {
     var server,
       opts = {};
 
-    if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
+	if (GLOBAL.CFG.updateTransforms) {
+		app.dao.updateTransformDefaults();
+	}
+
+	if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
       app.logmessage('BIPIO:SSL Mode');
       opts.key = fs.readFileSync(GLOBAL.CFG.server.ssl.key);
       opts.cert = fs.readFileSync(GLOBAL.CFG.server.ssl.cert);
