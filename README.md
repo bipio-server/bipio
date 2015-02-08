@@ -146,18 +146,24 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
 ## Installation
 
-#### via npm (global)
+### docker (offical)
+
+  [Find It Here](https://github.com/bipio-server/bipio-docker)
+
+ See 
+
+#### npm (global)
 
     sudo npm install -g bipio
     bipio
 
-#### via npm (local)
+#### npm (local)
 
     sudo npm install bipio
     cd node_modules
     npm start
 
-#### via git
+#### git
 
     git clone git@github.com:bipio-server/bipio.git
     cd bipio
