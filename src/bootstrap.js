@@ -20,6 +20,11 @@
  *
  */
 
+var path = require('path');
+
+process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
+process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 
 // includes
 var app = {
@@ -30,7 +35,6 @@ var app = {
   underscore  = require('underscore'),
   winston     = require('winston'),
   helper      = require('./lib/helper'),
-  path        = require('path'),
   defs        = require('../config/defs'),
   envConfig   = require('config'),
   cluster     = require('cluster'),
@@ -42,11 +46,6 @@ var app = {
   heapdump = require('heapdump');
 
 require('ssl-root-cas/latest').inject();
-
-process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
-
-process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 
 // globals
 GLOBAL.app = app;
