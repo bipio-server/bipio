@@ -176,6 +176,12 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                         type : 'delivered_bip_inbound'
                       });
 
+                      app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+                        owner_id : result.owner_id,
+                        bip_id : jobPacket.data.id,
+                        code : 'bip_invoke'
+                      });
+
                       // translate trigger exports
                       // into bip #source hub key.
                       var v = {
@@ -391,6 +397,12 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
                   }
                 });
 
+                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+                  owner_id : bipModel.owner_id,
+                  bip_id : bipModel.id,
+                  code : 'bip_invoke'
+                });
+
                 // if this bip is waiting for a binding, then set it.
                 // can't bind triggers
                 if ('trigger' !== bipModel.type && firstBinding) {
@@ -569,6 +581,14 @@ Bastion.prototype.channelProcess = function(struct) {
               } else if (err) {
                 app.logmessage('Channel Invoke Failure:' + channel.id);
                 app.logmessage(err);
+
+                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+                  owner_id : channel.owner_id,
+                  bip_id : struct.bip.id,
+                  code : 'bip_channnel_error',
+                  message : app.helper.isObject(err) ? JSON.stringify(err) : err,
+                  source : channel.id
+                });
 
                 var logModel = self._dao.modelFactory(
                   'channel_log',

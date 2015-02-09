@@ -18,12 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
- * 
+ *
  * Bip Activity + Error Log
- * 
+ *
  */
 var BipLogModel = require('./prototype.js').BipModel,
 BipLog = Object.create(BipLogModel);
@@ -36,7 +36,9 @@ BipLog.codes = {
     'bip_paused_auto' : 'Expired (Paused)',
     'bip_paused_manual' : 'Manually Paused',
     'bip_share' : 'Config Shared',
-    'bip_unshare' : 'Config Un-Shared'
+    'bip_unshare' : 'Config Un-Shared',
+    'bip_invoke' : 'Invoked',
+    'bip_channnel_error' : 'Channel Error'
 }
 
 BipLog.entityName = 'bip_log';
@@ -47,8 +49,8 @@ BipLog.entitySchema = {
         writable: false
     },
     owner_id : {
-        type: String, 
-        renderable: false, 
+        type: String,
+        renderable: false,
         index: true,
         writable: false
     },
@@ -71,7 +73,7 @@ BipLog.entitySchema = {
             if (BipLog.codes[code]) {
                 this.message = BipLog.codes[code];
             }
-            return code;            
+            return code;
         }
     },
     source : { // action source
@@ -93,7 +95,7 @@ BipLog.entitySchema = {
         type: Number,
         renderable: true,
         writable: false
-    }    
+    }
 };
 
 module.exports.BipLog = BipLog;
