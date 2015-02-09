@@ -99,7 +99,7 @@ crypto.randomBytes(48, function(ex, buf) {
   sparseConfig.server.sessionSecret = buf.toString('hex');
 });
 
-var logPath = path.resolve('../') + '/logs';
+var logPath = path.resolve(__dirname + '/../') + '/logs';
 if (!fs.existsSync(logPath)) {
   fs.mkdirSync(logPath, 0755);
 }
