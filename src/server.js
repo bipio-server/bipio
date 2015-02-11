@@ -253,20 +253,21 @@ if (cluster.isMaster) {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);
 
-
-	//dao.updateTransformDefaults();
    
    // compile popular transforms into transform_defaults.
-	// schedule = 00 00 00 * * * : everyday @ midnight.	
-   	app.logmessage('DAO:Starting Transforms Recalc', 'info');
-	var reduceTransformsJob = new cron.CronJob('00 00 00 * * *', function() {
-		dao.reduceTransformDefaults();
-		if (GLOBAL.CFG.updateTransforms) {
-			app.logmessage('DAO:Updating Default Transforms');
-		}
-	}, function() {
-		app.logmessage('DAO:Done Compiling Sys Transforms');
-	}, false, GLOBAL.CFG.timezone);
+    if (crons && crons.transforms && '' !== crons.transforms) {
+		app.logmessage('DAO:Starting Transforms Update', 'info');
+		var reduceTransformsJob = new cron.CronJob(crons.transforms, function() {
+		
+			if (GLOBAL.CFG.updateTransforms) {
+			
+				dao.updateTransformDefaults( function() {
+					app.logmessage('DAO:Done Updating Transforms');
+				});
+			}
+		
+		}, null, false, GLOBAL.CFG.timezone);
+	}
 
   });
 

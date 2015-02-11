@@ -734,7 +734,7 @@ Dao.prototype.updateTransformDefaults = function(next) {
 				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
 			});
 
-			app.logmessage('DAO:Updating Transforms:Done');
+			app.logmessage('DAO:Updating Transforms:Done', 'info');
 			next();
 
 		} else {
