@@ -660,27 +660,24 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 		if (!err) {
 
 			// derive a collection of every unique transform attribute
-			
-				results.forEach( function(el, idx, result) {
-					
-					transforms = _.pairs(el.transform);
-							
-					transforms.forEach( function(val, idx) {
-
-						utaStr = val[1].match(regTransform);
-						if (utaStr != null) {
-							uta[val[0]] = utaStr[0];	
-							key = el.from_channel + ':' + el.to_channel + ':' + utaStr;
-							utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel, 'transform' : uta}
-							uTransform[key] = utaProps;
-							uTransforms.push(uTransform);
-							utaProps =  {};
-							uTransform = {};
-							uta = {};
-						}
-					});
-					return uTransforms;
+			results.forEach( function(el, idx, result) {
+				transforms = _.pairs(el.transform);
+						
+				transforms.forEach( function(val, idx) {
+					utaStr = val[1].match(regTransform);
+					if (utaStr != null) {
+						uta[val[0]] = utaStr[0];	
+						key = el.from_channel + ':' + el.to_channel + ':' + utaStr;
+						utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel, 'transform' : uta}
+						uTransform[key] = utaProps;
+						uTransforms.push(uTransform);
+						utaProps =  {};
+						uTransform = {};
+						uta = {};
+					}
 				});
+				return uTransforms;
+			});
 		
 
 			// filter down to the popular transforms.
@@ -709,12 +706,13 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 				.uniq()
 				.value();
 
-			console.log('popular->\n',popular);
+			//console.log('popular->\n',popular);
 
-			// create transform_default with owner_id 'system'
+			// create 'system' transform_defaults.
 			popular.forEach( function(transform) {
-				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
+				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform, next);
 			});
+
 
 
 		} else {
