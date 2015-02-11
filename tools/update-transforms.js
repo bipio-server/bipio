@@ -33,7 +33,6 @@ bootstrap.app.dao.on('ready', function(read) {
             if (err) {
                 app.logmessage('DAO:' + err + ' ' + msg);
             } else {
-                app.logmessage(msg);
                 app.logmessage('DAO:Updating System Transforms:Done');
             }
             process.exit(0);

@@ -710,10 +710,10 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 
 			// create 'system' transform_defaults.
 			popular.forEach( function(transform) {
-				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform, next);
+				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
 			});
 
-
+			next();
 
 		} else {
 			app.logmessage(err, 'error');
@@ -723,18 +723,23 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 }
 
 
-Dao.prototype.updateTransformDefaults = function() {
-	// TODO: ingest entire set from https://api.bip.io/rpc/transforms 
+Dao.prototype.updateTransformDefaults = function(next) {
 	var self = this;
-	request('http://api.scott.dev/rpc/transforms', function (err, resp, body) {
+	request('http://api.staging.bip.io/rpc/transforms', function (err, resp, body) {
 		if (!err) {
 			data = JSON.parse(body).data;
 			data.forEach( function(transform) {
+				transform['owner_id'] = 'system';
 				//console.log(transform);
-				self.setTransformDefaults(_.pick(transform, ['from_channel','to_channel','transform']));	
+				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
 			});
+
+			app.logmessage('DAO:Updating Transforms:Done');
+			next();
+
 		} else {
-			app.logmessage('DAO:Error:updating transforms');
+			app.logmessage('DAO:Error:Updating Transforms:', err);
+			next(err);
 		}
 	});
 }
