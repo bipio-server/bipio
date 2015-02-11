@@ -861,7 +861,16 @@ module.exports = {
                   app.logmessage(err, 'error');
                   res.status(404).end();
                 } else {
-                  dao.shareBip(dao.modelFactory('bip', result, accountInfo, true), restResponse(res));
+                  var triggerConfig = req.query.triggerConfig;
+                  if (triggerConfig) {
+                    try {
+                      triggerConfig = JSON.parse(triggerConfig);
+                    } catch (e) {
+                      triggerConfig = {};
+                      app.logmessage(e, 'error')
+                    }
+                  }
+                  dao.shareBip(dao.modelFactory('bip', result, accountInfo, true), triggerConfig, restResponse(res));
                 }
               });
             }

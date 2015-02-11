@@ -381,7 +381,7 @@ Dao.prototype.removeBipDupTracking = function(bipId, next) {
 
 }
 
-Dao.prototype.shareBip = function(bip, cb) {
+Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   var self = this,
   modelName = 'bip_share',
   hub = helper.copyProperties(bip.hub, {}, true),
@@ -452,6 +452,9 @@ Dao.prototype.shareBip = function(bip, cb) {
     delete config.password;
   } else if (bip.type === 'trigger' && bip.config.channel_id) {
     config.channel_id = channelTranslate(bip.config.channel_id);
+    if (triggerConfig) {
+      config.config = triggerConfig;
+    }
   }
 
   // bip share struct
