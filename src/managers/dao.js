@@ -30,7 +30,7 @@ var util      = require('util'),
   path        = require('path'),
   time        = require('time'),
   request     = require('request'),
-  lo_         = require('lodash'),
+  _           = require('lodash'),
   DaoMongo    = require('./dao-mongo.js');
 
 function Dao(config, log, next) {
@@ -642,10 +642,13 @@ Dao.prototype.setTransformDefaults = function(newDefaults) {
  *
  * Takes a simple count of non-system provided transforms and creates
  * new 'system' transform defaults.  for use by /rpc/transforms
- *
+ * 
+ * uta : Unique Transform Attribute
  */
-Dao.prototype.reduceTransformDefaults = function() {
-	var self = this;
+Dao.prototype.reduceTransformDefaults = function(next) {
+	var self = this,
+	regTransform =  /\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g; 
+	
 	this.findFilter('transform_default',
 	{
 		owner_id : {
@@ -653,28 +656,25 @@ Dao.prototype.reduceTransformDefaults = function() {
 		}
 	},
 	function(err, results) {
-		var key, uKey, utaStr, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = {}, transformToInsert = {}; 
+		var key, utaStr, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = {}, transformToInsert = {}, transformsToInsert = [];
 		if (!err) {
 
-			//console.log("results->\n",results, '\n');
-
 			// derive a collection of every unique transform attribute
-			lo_(results)
-				.forEach( function(el, idx, result) {
-					transforms = lo_.pairs(el.transform);
+			
+				results.forEach( function(el, idx, result) {
+					
+					transforms = _.pairs(el.transform);
 							
 					transforms.forEach( function(val, idx) {
 
-						utaStr = val[1].match(/\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g); 
+						utaStr = val[1].match(regTransform);
 						if (utaStr != null) {
-							uta[val[0]] = utaStr;	
-							//console.log('uta->',uta);
+							uta[val[0]] = utaStr[0];	
 							key = el.from_channel + ':' + el.to_channel + ':' + utaStr;
-							utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel }
+							utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel, 'transform' : uta}
 							uTransform[key] = utaProps;
-							uTransform[key]['transform'] = uta;
 							uTransforms.push(uTransform);
-							utaProps = {};
+							utaProps =  {};
 							uTransform = {};
 							uta = {};
 						}
@@ -683,27 +683,43 @@ Dao.prototype.reduceTransformDefaults = function() {
 				});
 		
 
-			// filter down to the popular transforms, then
-			// create transform_default with owner_id 'system'
-			popular = lo_(uTransforms)
-				.countBy( function(transform, idx, coll) {
-					//console.log('transform->\n',transform);					
+			// filter down to the popular transforms.
+			popular = _(uTransforms)
+				.countBy( function(transform) {
 					return Object.keys(transform);
 				})
 				.pairs()
 				.filter( function(el) {
 					if (el[1] > 1) return el[0];
 				})
-				.value()
-				.forEach( function(el, idx) {
-					transformToInsert = lo_.find(uTransforms, el[0]);
-					transformToInsert[el[0]]['owner_id'] = 'system';
-					//console.log('transformToInsert->\n',transformToInsert);
-					self.setTransformDefaults(transformToInsert);
-				});
+				.map( function(el) {
+					return _.find(uTransforms, el[0]);
+				})
+				.map( function(el) {
+					return Object.values(el);	
+				})
+				.flatten()
+				.map( function(el) {
+					return _.merge(transformToInsert, el);
+				})
+				.map( function(el) {
+					el['owner_id'] = 'system';
+					return el;
+				})
+				.uniq()
+				.value();
+
+			console.log('popular->\n',popular);
+
+			// create transform_default with owner_id 'system'
+			popular.forEach( function(transform) {
+				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
+			});
+
 
 		} else {
 			app.logmessage(err, 'error');
+			next(err);
 		}
 	});
 }
@@ -711,13 +727,13 @@ Dao.prototype.reduceTransformDefaults = function() {
 
 Dao.prototype.updateTransformDefaults = function() {
 	// TODO: ingest entire set from https://api.bip.io/rpc/transforms 
-	var trans, self = this;
+	var self = this;
 	request('http://api.scott.dev/rpc/transforms', function (err, resp, body) {
 		if (!err) {
 			data = JSON.parse(body).data;
 			data.forEach( function(transform) {
 				//console.log(transform);
-				self.setTransformDefaults(lo_.pick(transform, ['from_channel','to_channel','transform']));	
+				self.setTransformDefaults(_.pick(transform, ['from_channel','to_channel','transform']));	
 			});
 		} else {
 			app.logmessage('DAO:Error:updating transforms');
