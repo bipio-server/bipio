@@ -864,7 +864,7 @@ module.exports = {
                   var triggerConfig = req.query.triggerConfig;
                   if (triggerConfig) {
                     try {
-                      triggerConfig = JSON.parse(triggerConfig);
+                      triggerConfig = app.helper.pasteurize(JSON.parse(triggerConfig));
                     } catch (e) {
                       triggerConfig = {};
                       app.logmessage(e, 'error')
