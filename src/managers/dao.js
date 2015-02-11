@@ -779,7 +779,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
                     payload.socketTrigger = isSocket;
 
                     // update runtime
-                    self.updateColumn('bip', bipResult.id, { '_last_run' : app.moment().utc() }, function(err, result) {
+                    self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
                       if (err) {
                         app.logmessage(err, 'error');
                       }
