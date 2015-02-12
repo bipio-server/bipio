@@ -928,6 +928,36 @@ module.exports = {
             }
           });
 
+        } else if (method == 'trigger' && resourceId) {
+          var filter = {
+            id : resourceId,
+            owner_id : accountInfo.getId(),
+            type : 'trigger',
+            paused : false
+          }
+
+          var respond = restResponse(res);
+
+          dao.find('bip', filter, function(err, result) {
+            if (err) {
+              respond.apply(this, arguments);
+            } else if (!result) {
+              respond(false, 'bip');
+            } else {
+              dao.triggerAll(function(err) {
+                  if (err) {
+                    respond('Internal Server Error', 'bip', null, 500);
+                  } else {
+                    respond(false, 'bip', { message : 'OK'});
+                  }
+                },
+                {
+                  id : result.id
+                }
+              );
+            }
+          });
+
         } else {
           res.status(400).end();
         }
