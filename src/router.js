@@ -762,6 +762,30 @@ module.exports = {
       })(req, res);
     });
 
+    express.post('/rpc/:method_domain?/:method_name?/:resource_id?/:subresource_id?', restAuthWrapper, function(req, res) {
+      res.contentType(DEFS.CONTENTTYPE_JSON);
+
+      var response = {};
+      var methodDomain = req.params.method_domain;
+      var method = req.params.method_name;
+      var resourceId = req.params.resource_id;
+      var subResourceId = req.params.subresource_id;
+      var accountInfo = req.remoteUser;
+
+      if (methodDomain == 'bip') {
+        if (method == 'share') {
+          var filter = {
+            'owner_id' : accountInfo.getId(),
+            'id' : resourceId
+          }
+
+          var shareModel = helper.pasteurize(req.body);
+
+          dao.shareBip(dao.modelFactory('bip', shareModel, accountInfo, true), null, restResponse(res));
+        }
+      }
+    });
+
     // ----------------------------------------------------------- CATCHALLS
 
     // RPC Catchall
@@ -989,29 +1013,29 @@ module.exports = {
       res.status(200).end();
     });
 
-	express.get('/status', function(req, res) {
-    	var serverStatus = {};
+	  express.get('/status', function(req, res) {
+      var serverStatus = {};
 
-		// get server version number:
-		serverStatus['version'] = bipioVersion;
+		  // get server version number:
+		  serverStatus['version'] = bipioVersion;
 
     	// get rabbitmq connection status
     	if (app.bastion.isRabbitConnected()) {
-			serverStatus['rabbitmq'] = "connected";
-		} else {
-			serverStatus['rabbitmq'] = "error";
-		};
+  			serverStatus['rabbitmq'] = "connected";
+  		} else {
+  			serverStatus['rabbitmq'] = "error";
+  		};
 
-		// get mongodb connection status
-		if (app.dao.getConnection().readyState) {
-			serverStatus['mongodb'] = "connected";
-		} else {
-			serverStatus['mongodb'] = "error";
-		};
+  		// get mongodb connection status
+  		if (app.dao.getConnection().readyState) {
+  			serverStatus['mongodb'] = "connected";
+  		} else {
+  			serverStatus['mongodb'] = "error";
+  		};
 
-		res.status(200).send(serverStatus);
+  		res.status(200).send(serverStatus);
 
-	});
+  	});
 
     express.all('*', function(req, res, next) {
       if (req.method == 'OPTIONS') {
