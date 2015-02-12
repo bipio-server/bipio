@@ -76,8 +76,26 @@ try {
 }
 
 if (pod && podPath) {
-    var
-      configFile = GLOBAL.CFG.getConfigSources()[0].name,
+
+    pod.init(
+      podName,
+      bootstrap.app.dao,
+      bootstrap.app.modules.cdn,
+      bootstrap.app.logmessage,
+      {
+        blacklist : CFG.server.public_interfaces,
+        baseUrl : bootstrap.app.dao.getBaseUrl(),
+        cdnPublicBaseURL : CFG.cdn_public,
+        cdnBasePath : 'cdn',
+        emitterBaseURL :  (CFG.site_emitter || CFG.website_public) + '/emitter',
+        timezone : CFG.timezone,
+        isMaster : false
+      }
+    );
+
+    podName = pod.getName();
+
+    var configFile = GLOBAL.CFG.getConfigSources()[0].name,
       corpusFile = path.join(podPath, 'corpus.json');
 
     console.log('Installing "' + podName + '" POD');
