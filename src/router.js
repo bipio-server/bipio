@@ -932,8 +932,7 @@ module.exports = {
           var filter = {
             id : resourceId,
             owner_id : accountInfo.getId(),
-            type : 'trigger',
-            paused : false
+            type : 'trigger'
           }
 
           var respond = restResponse(res);
@@ -953,7 +952,9 @@ module.exports = {
                 },
                 {
                   id : result.id
-                }
+                },
+                false,
+                true
               );
             }
           });

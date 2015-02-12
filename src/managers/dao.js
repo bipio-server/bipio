@@ -730,12 +730,15 @@ Dao.prototype.bipLog = function(payload) {
  * Trigger all trigger bips
  *
  */
-Dao.prototype.triggerAll = function(next, filterExtra, isSocket) {
+Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
   var self = this,
   filter = {
     type : 'trigger',
-    paused : false
   }, fkeys;
+
+  if (!force) {
+    filter.paused = false;
+  }
 
   if (filterExtra) {
     fKeys = Object.keys(filterExtra);
