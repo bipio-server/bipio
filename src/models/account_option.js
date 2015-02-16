@@ -20,9 +20,9 @@
  *
 
  */
-var BipModel = require('./prototype.js').BipModel;
-
-var AccountOption = Object.create(BipModel);
+ var request = require('request'),
+    BipModel = require('./prototype.js').BipModel,
+    AccountOption = Object.create(BipModel);
 
 AccountOption.entityName = 'account_option';
 AccountOption.uniqueKeys = ['owner_id'],
@@ -52,25 +52,28 @@ AccountOption.uniqueKeys = ['owner_id'],
                 // tortoise+hare is fine.'
                 validator : function(hub, next) {
                     var numEdges, edges = {}, edge, loop = false;
-                    for (key in hub) {
-                        edges[key] = 1;
-                        numEdges = hub[key].edges.length;
-                        for (var i = 0; i < numEdges; i++ ) {
-                            edge = hub[key].edges[i];
 
-                            if (!edges[edge]) {
-                                edges[edge] = 1;
-                            } else {
-                                edges[edge]++;
-                                break;
+                    if (hub) {
+                        for (key in hub) {
+                            edges[key] = 1;
+                            numEdges = hub[key].edges.length;
+                            for (var i = 0; i < numEdges; i++ ) {
+                                edge = hub[key].edges[i];
+
+                                if (!edges[edge]) {
+                                    edges[edge] = 1;
+                                } else {
+                                    edges[edge]++;
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    for (edge in edges) {
-                        loop = edges[edge] > 2;
-                        if (loop) {
-                            break;
+                        for (edge in edges) {
+                            loop = edges[edge] > 2;
+                            if (loop) {
+                                break;
+                            }
                         }
                     }
 
@@ -254,7 +257,6 @@ AccountOption.entityValidators = {
 //    'domain_id' : [ 'domains', 'Not Found' ]
 
 }
-
 
 /*
 AccountOption.preSave = function(accountInfo, next) {

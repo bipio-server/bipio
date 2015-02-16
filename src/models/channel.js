@@ -664,7 +664,7 @@ Channel.links = function( accountInfo ) {
     rpc,
     links = [];
 
-  if (accountInfo && action && action.rpcs) {
+  if (accountInfo && action) {
     // add global invokers
     links.push({
       name : 'invoke',
@@ -674,12 +674,14 @@ Channel.links = function( accountInfo ) {
       _href : accountInfo.getDefaultDomainStr(true) + '/rpc/channel/' + this.getIdValue() + '/invoke'
     });
 
-    for (var idx in action.rpcs) {
-      if (action.rpcs.hasOwnProperty(idx)) {
-        rpc = app._.clone(action.rpcs[idx]);
-        rpc.name = idx;
-        rpc._href = this.getRendererUrl(idx, accountInfo);
-        links.push(rpc);
+    if (action.rpcs) {
+      for (var idx in action.rpcs) {
+        if (action.rpcs.hasOwnProperty(idx)) {
+          rpc = app._.clone(action.rpcs[idx]);
+          rpc.name = idx;
+          rpc._href = this.getRendererUrl(idx, accountInfo);
+          links.push(rpc);
+        }
       }
     }
   }
