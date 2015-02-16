@@ -656,7 +656,7 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 		}
 	},
 	function(err, results) {
-		var key, utaStr, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = {}, transformToInsert = {}, transformsToInsert = [];
+		var key, utaStr, transforms = [], utaProps = {}, uTransforms = [], uTransform = {}, uta = {}, popular = [], transformToInsert = {}, transformsToInsert = [];
 		if (!err) {
 
 			// derive a collection of every unique transform attribute
@@ -680,40 +680,51 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 			});
 		
 
+//			console.log('uTransforms->\n',uTransforms);
+			
 			// filter down to the popular transforms.
-			popular = _(uTransforms)
+			_(uTransforms)
 				.countBy( function(transform) {
 					return Object.keys(transform);
 				})
 				.pairs()
 				.filter( function(el) {
-					if (el[1] > 1) return el[0];
+					//if (el[1] > 1) 
+					return el[0];
 				})
 				.map( function(el) {
 					return _.find(uTransforms, el[0]);
 				})
 				.map( function(el) {
+				//	console.log('uTransforms (found)->\n ',el);
 					return Object.values(el);	
 				})
 				.flatten()
 				.map( function(el) {
-					return _.merge(transformToInsert, el);
+//					console.log('before merge->\n ',el);
+					if (!( _.some(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel }))) {
+//						console.log('pushing ----> \n',el);
+						transformsToInsert.push(el);
+						return el;
+					} else {
+						return _.merge( _.find(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel}), el);
+					}
 				})
-				.map( function(el) {
-					el['owner_id'] = 'system';
-					return el;
-				})
-				.uniq()
 				.value();
 
-			//console.log('popular->\n',popular);
+
+//			console.log('transformsToInsert.count-> ',transformsToInsert.length);
 
 			// create 'system' transform_defaults.
-			popular.forEach( function(transform) {
-				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
+			_.forEach(transformsToInsert,  function(transform) {
+				transform['owner_id'] = 'system';
+//				console.log(transform);
+				//self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform, function() { console.log('inserted') });
+				self.setTransformDefaults(transform);
 			});
 
-			next();
+			console.log('done');
+//			next();
 
 		} else {
 			app.logmessage(err, 'error');
