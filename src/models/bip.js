@@ -591,14 +591,14 @@ Bip.exports = {
       },
       '_client' : {
         type : 'string',
-        description : 'Sender Info',
+        description : 'Client Info',
         oneOf : [{
           "$ref" : "#/definitions/client_attribute"
         }]
       },
       '_bip' : {
         type : 'string',
-        description : 'Bip Info',
+        description : 'Bip Model',
         oneOf : [{
           "$ref" : "#/definitions/bip_attribute"
         }]

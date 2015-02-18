@@ -174,7 +174,7 @@ restapi.use(session({
   },
   secret: GLOBAL.CFG.server.sessionSecret,
   store: new MongoStore({
-    mongoose_connection : app.dao.getConnection()
+    mongooseConnection : app.dao.getConnection()
   })
 }));
 
