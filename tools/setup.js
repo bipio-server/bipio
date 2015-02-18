@@ -279,15 +279,29 @@ function sslSetup() {
         sparseConfig.proto_public = 'https://';
         sparseConfig.server.ssl.key = targetDir + '/server.key';
         sparseConfig.server.ssl.cert = targetDir + '/server.crt';
-        userSetup();
+        corpusSyncSetup();
       } else {
         console.log('SSL Cert or Key generation failed');
         process.exit(0);
       }
 
     } else {
-      userSetup();
+      corpusSyncSetup();
     }
+  });
+}
+
+function corpusSyncSetup() {
+  var corpusPrompt = {
+    type : 'confirm',
+    default : sparseConfig.transforms.fetch,
+    name : 'corpusSync',
+    message : "Periodically fetch Community transforms from " + sparseConfig.transforms.syncFrom + '?'
+  }
+
+  prompt(corpusPrompt, function(answer) {
+    sparseConfig.transforms.fetch = answer;
+    userSetup();
   });
 }
 

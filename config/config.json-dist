@@ -10,7 +10,8 @@
       "stat" : "0 0 * * * *",
       "trigger" : "0 */15 * * * *",
       "expire" : "0 0 * * * *",
-      "transforms": "0 0 * * * *"
+      "transforms_compact": "0 * * * * *"
+      "transforms_fetch": "0 0 * * * *",
     },
     "timezone" : "Asia/Tokyo",
     "server": {
@@ -115,5 +116,8 @@
       "html" : {},
       "crypto" : {}
     },
-	"updateTransforms" : true
+    "transforms" : {
+        "fetch" : true,
+        "syncFrom" : "https://api.bip.io"
+    }
 }

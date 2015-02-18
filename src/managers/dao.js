@@ -746,26 +746,26 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 	});
 }
 
-
 Dao.prototype.updateTransformDefaults = function(next) {
 	var self = this;
-	request('http://api.staging.bip.io/rpc/transforms', function (err, resp, body) {
-		if (!err) {
-			data = JSON.parse(body).data;
-			data.forEach( function(transform) {
-				transform['owner_id'] = 'system';
-				//console.log(transform);
-				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
-			});
+  if (GLOBAL.CFG.transforms.syncFrom) {
+  	request(GLOBAL.CFG.transforms.syncFrom + '/rpc/transforms', function (err, resp, body) {
+  		if (!err) {
+  			data = JSON.parse(body).data;
+  			data.forEach( function(transform) {
+  				transform['owner_id'] = 'system';
+  				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
+  			});
 
-			app.logmessage('DAO:Updating Transforms:Done', 'info');
-			next();
+  			app.logmessage('DAO:Updating Transforms:Done', 'info');
+  			next();
 
-		} else {
-			app.logmessage('DAO:Error:Updating Transforms:', err);
-			next(err);
-		}
-	});
+  		} else {
+  			app.logmessage('DAO:Error:Updating Transforms:', err);
+  			next(err);
+  		}
+  	});
+  }
 }
 
 

@@ -253,22 +253,31 @@ if (cluster.isMaster) {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);
 
-   
    // compile popular transforms into transform_defaults.
-    if (crons && crons.transforms && '' !== crons.transforms) {
-		app.logmessage('DAO:Starting Transforms Update', 'info');
-		var reduceTransformsJob = new cron.CronJob(crons.transforms, function() {
-		
-			if (GLOBAL.CFG.updateTransforms) {
-			
-				dao.updateTransformDefaults( function() {
-					app.logmessage('DAO:Done Updating Transforms');
-				});
-			}
-		
-		}, null, false, GLOBAL.CFG.timezone);
-	}
+    if (crons && crons.transforms_compact && '' !== crons.transforms_compact) {
+  		app.logmessage('DAO:Transform Compaction', 'info');
+  		var reduceTransformsJob = new cron.CronJob(crons.transforms_compact, function() {
+        bootstrap.app.dao.reduceTransformDefaults(function(err, msg) {
+          if (err) {
+            app.logmessage('DAO:' + err + ' ' + msg);
+          } else {
+            app.logmessage('DAO:Transform Compaction:Done');
+          }
+        });
+  		}, null, false, GLOBAL.CFG.timezone);
+  	}
 
+    // fetch scrubbed community transforms from upstream
+    if (GLOBAL.CFG.transforms && GLOBAL.CFG.transforms.fetch) {
+      if (crons && crons.transforms_fetch && '' !== crons.transforms_fetch) {
+        app.logmessage('DAO:Syncing Transforms', 'info');
+        var syncTransformsJob = new cron.CronJob(crons.transforms_fetch, function() {
+          dao.updateTransformDefaults( function() {
+            app.logmessage('DAO:Syncing Transforms:Done');
+          });
+        }, null, false, GLOBAL.CFG.timezone);
+      }
+    }
   });
 
   cluster.on('disconnect', function(worker) {
