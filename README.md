@@ -51,7 +51,7 @@ And follow the instructions, or feel free to [craft your own](https://github.com
 
 The BipIO server is a small headless API server and ships without a UI.  Our official UI can be found on the hosted platform site at [https://bip.io](https://bip.io)
 
-[![ScreenShot](https://i.vimeocdn.com/video/478949093_300x168.jpg)](https://vimeo.com/119869509)
+[![ScreenShot](https://i.vimeocdn.com/video/507461873.webp?mw=1920&mh=960&q=70)](https://vimeo.com/119869509)
 
 Sign in to [bipio](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
 
@@ -60,6 +60,8 @@ Sign in to [bipio](https://bip.io) to mount your local install from your browser
 #### Mounting Security Notes
 
 Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
+
+The UI is a thin client which is loaded entirely into your browser.  Once loaded you can reach any bipio server your browser can connect to without, for example from behind any firewall, VPN, or IP tunnel.
 
 ## Requirements
 
@@ -123,80 +125,6 @@ If you're going the `git pull` route and want to save this step, create a git 'p
     chmod ug+x .git/hooks/post-merge
 
 This will automatically install any missing dependencies every time you `git pull`
-
-### Crons
-
-Periodic tasks will run from the server master instance automatically, you can find the config
-in the `config/{environment}.json` file, keyed by 'cron'.  
-
-* stats - network chord stats, every hour
-* triggers - trigger channels, every 15 minutes
-* expirer - bip expirer, every hour
-
-To disable a cron, either remove it from config or set an empty string.
-
-To have these crons handled by your system scheduler rather than the bipio server, disable the crons
-in config as described.  Wrapper scripts can be found in ./tools for each of stats (`tools/generate-hub-stats.js`), 
-triggers (`tools/bip-trigger.js`) and expirer (`tools/bip-expire.js`).
-
-Here's some example wrappers.
-
-#### Trigger Runner
-
-Cron:
-    */15 * * * * {username} /path/to/bipio/tools/trigger-runner.sh
-
-trigger-runner.sh :
-
-    #!/bin/bash
-    # trigger-runner.sh
-    export NODE_ENV=production
-    export HOME="/path/to/bipio"
-    cd $HOME (date && node ./tools/bip-trigger.js ) 2>&1 >> /path/to/bipio/logs/trigger.log
-
-#### Expire Runner
-
-Cron:
-    0 * * * * {username} /path/to/bipio/tools/expire-runner.sh
-
-expire-runner.sh :
-
-    #!/bin/bash
-    # expire-runner.sh
-    export NODE_ENV=production
-    export HOME="/path/to/bipio"
-    cd $HOME (date && node ./tools/bip-expire.js ) 2>&1 >> /path/to/bipio/logs/cron_server.log
-
-#### Stats Runner
-
-Cron:
-    */15 * * * * {username} /path/to/bipio/tools/stats-runner.sh
-
-stats-runner.sh :
-
-    #!/bin/bash
-    # stats-runner.sh
-    export NODE_ENV=production
-    export HOME="/path/to/bipio"
-    cd $HOME (date && node ./tools/generate-hub-stats.js ) 2>&1 >> /path/to/bipio/logs/stats.log
-
-### Monit Config
-
-/etc/monit/config.d/bipio.conf
-
-    #!monit
-    set logfile /var/log/monit.log
-
-    check process node with pidfile "/var/run/bip.pid"
-        start program = "/sbin/start bipio"
-        stop program  = "/sbin/stop bipio"
-        if failed port 5000 protocol HTTP
-            request /
-            with timeout 10 seconds
-            then restart
-
-
-
 
 ## Developing and Contributing
 
