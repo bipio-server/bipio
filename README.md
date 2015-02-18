@@ -24,13 +24,9 @@ BipIO can be installed alongside your existing open source app or prototype for 
 
 It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
-You can find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
+BipIO is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
-### Concept
-
-If you're familiar with Yahoo Pipes, IFTTT, Zapier, Mulesoft - the concept is a little similar.   BipIO is a message transformation hub for connecting API's and creating an internet of things that matter to you.  Over time and as more people use the system it builds a corpus of transformation data that serve as 'hints' for use by other community members in their own integrations.  Complete configurations can also be shared openly by different users and systems allowing for the instant installation of common workflows.
-
-Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
+Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
