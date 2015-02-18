@@ -109,19 +109,6 @@ For a non-interactive setup (ie: make install without any user interaction) - se
 
 BipIO does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
 
-## Updating
-
-Updating BipIO via `npm` will resolve any new dependencies for you, however if you're checking out from the repository 
-directly with `git pull` you may need to manually run `npm install` to download any new dependencies (bundled pods, for example).
-
-If you're going the `git pull` route and want to save this step, create a git 'post merge' hook by copying it from `./tools` like so :
-
-    mkdir -p .git/hooks
-    cp ./tools/post-merge .git/hooks
-    chmod ug+x .git/hooks/post-merge
-
-This will automatically install any missing dependencies every time you `git pull`
-
 ## Developing and Contributing
 
 A healthy contributor community is great for everyone! Take a look at the [Contribution Document](https://github.com/bipio-server/bipio/blob/master/CONTRIBUTING.md) to see how to get your changes merged in.
