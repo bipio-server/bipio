@@ -11,20 +11,20 @@ That's what BipIO does.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/bipio-server/bipio/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
+Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates, or `/join #bipio` on [Freenode IRC](https://freenode.net)
+
 ----
 
+BipIO is a nodejs based web automation framework which runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform a workflow on command. 
 
-BipIO is a highly parallel nodejs based API integration framework (iPaas).  It uses [graph](http://en.wikipedia.org/wiki/Directed_graph) 
-based <a href="http://en.wikipedia.org/wiki/Pipeline_(software)">pipelines</a> or 'Bips' to create ephemeral endpoints, complex workflows and message hubs with 3rd party API's and
-[RPC's](http://en.wikipedia.org/wiki/Remote_procedure_call).  Bips come in a variety of flavors for performing useful work - WebHooks/Sockets, Email, and Event Triggers.
-
-It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
+Bips can take actions in sequence, in parallel, or chain web services together  as you like. They can be put to work via Web Hooks, Email or some other kind of managed event.
 
 BipIO can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
-Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates, or `/join #bipio` on [Freenode IRC](https://freenode.net).
+It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
-For a technical deep-dive, don't be afraid to use [The Wiki](https://github.com/bipio-server/bipio/wiki) - it's open to contributors
+You can find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 ### Concept
 
@@ -34,105 +34,32 @@ Bipio is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
+### Pods
 
+Pods are the standalone service containers BipIO uses to encapsulate and standardize API's.  Our [list of supported pods](https://github.com/bipio-server/bipio/wiki/Pod-List) is growing all the time and completely open source.
 
-#### Bips
+The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  
 
-[Bips](https://bip.io/docs/resource/rest/bip) are graph structures which transform messages between adjacent [Channels](https://bip.io/docs/resource/rest/channel) and chain outputs to inputs indefinitely across disparate 'cloud' services. The structures also contain metadata defining the flavor, lifespan and overall characteristics of the endpoint or trigger.
-
-Some of their characteristics include :
-
- - dynamic or automatically derived naming
- - pausing or self-destructing after a certain time or impressions volume
- - binding to connecting clients with soft ACLs over the course of their 'life'
- - able to be reconfigured dynamically without changing a client implementation
- - infinitely extensible, from any channel to any other channel.
- - can serve (render) protected channel content while inheriting all of the above characteristics
-
-It's a fairly large topic, find out more in [the wiki](https://github.com/bipio-server/bipio/wiki/Bips).
-
-#### Channels
-
-Channels are pointers to discrete actions provided by 3rd party API's and services. They are reusable entities which perform a discrete unit of work and emit a predictable result.
-
-The collection of channels you create becomes something like a swatch from which you can orchestrate complex API messaging patterns.  When dropped onto a Bip's graph, a channels export becomes the next adjacent channels transformed import, which can be chained indefinitely.
-
-Channels are instantiated from service containers called Pods.  Pods only concern is providing a set of possible actions, and doing that well.
-
-Channels can store, track, serve or transform content and messages as part of a pipeline or in autonomous isolation.  
-
-The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
+Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
 
     npm install bip-pod-{pod-name}
     ./tools/pod-install.js -a {pod-name}
   
 And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
 
+##### Simple Visual Integration
 
-##### Simple Integrations
+The BipIO server is a small headless API server and ships without a UI.  Our official UI can be found on the hosted platform site at [https://bip.io](https://bip.io)
 
-Here's a quick example.  Lets say I have a private email address that I want to protect or obfuscate - I could use an SMTP Bip to
-create a temporary relay which will forward emails for 1 day only.  
+[![ScreenShot](https://i.vimeocdn.com/video/478949093_300x168.jpg)](https://vimeo.com/119869509)
 
-**Here's how :**
+Sign in to [bipio](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
 
-Create an SMTP Forwarder Channel to email me with any messages it receives :
-```
-POST /rest/channel
-{
- action : "email.smtp_forward",
- name : "Helo FuBa"
- config : {
-   rcpt_to : "foo@bar.net"
- }
-}
+![Server Mount](https://bip.io/static/img/docs/server_mount.png)
 
-RESPONSE
-{
- id : "206fe27f-5c98-11e3-8ad3-c860002bd1a4"
-}
-```
+#### Mounting Security Notes
 
-... I can then build the relay with a SMTP Bip having a single edge pointing to the the generated Channel ID :
-
-```
-POST /rest/bip
-{
- type : "smtp",
- hub : {
-   "source" : {
-      edges : [ "206fe27f-5c98-11e3-8ad3-c860002bd1a4" ],
-      transforms : {
-        "206fe27f-5c98-11e3-8ad3-c860002bd1a4" : {
-          "subject" : "[%source#subject%]",
-          "body_html" : "[%source#body_html%]",
-          "body_text" : "[%source#body_text%]",
-          "reply_to" : "[%source#reply_to%]",
-        }
-      },
-     _note : "^^ Transforms aren't mandatory, but here for illustration - you only need an edge"
-   }
- },
- end_life : {
-   imp : 0,
-   time : '+1d'
- },
- note : "No name, no problem.  Let the system generate something short and unique"
-}
-
-RESPONSE
-{
- name : "lcasKQosWire22"
- _repr : "lcasKQosWire22@yourdomain.net"
-}
-```
-
-And thats it. There's actually a little [chrome extension](http://goo.gl/ZVIkfr) which does just this for web based email forms.
-
-For an extra credit example, I could store attachments arriving on that email address straight to dropbox by just adding an edge - check out
-how in the [cookbook](https://github.com/bipio-server/bipio/wiki/Email-Repeater,-Dropbox-Attachment-Save)
-
-
+Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
 
 ## Requirements
 
@@ -181,6 +108,8 @@ For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf
 If you have a more complex deployment environment and the packaged sparse config doesn't suit, don't worry!  Set the environment variable BIPIO_SPARSE_CONFIG to the path of your preferred config file, and it will use that instead.
 
 For a non-interactive setup (ie: make install without any user interaction) - set environment variable HEADLESS=true
+
+BipIO does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
 
 ## Updating
 
@@ -267,17 +196,7 @@ stats-runner.sh :
             then restart
 
 
-## Visualization
 
-The BipIO server software provides an orchestration API and is distributed headless.  For visual tools, sign in to [bipio](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
-
-![Server Mount](https://bip.io/static/img/docs/server_mount.png)
-
-BipIO does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
-
-#### Mounting Security Notes
-
-Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
 
 ## Developing and Contributing
 
