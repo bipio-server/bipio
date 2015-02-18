@@ -1,13 +1,13 @@
-BipIO <a href="https://bip.io"><img align="right" width="48" src="https://2.gravatar.com/avatar/b4063abdf67036bdff26845fe2adcf69?d=https%3A%2F%2Fidenticons.github.com%2F7bad9441c4612b497d9d071c244f21cc.png&r=x&s=140" style="float:right"/></a>
+bip.io™ <a href="https://bip.io"><img align="right" width="48" src="https://2.gravatar.com/avatar/b4063abdf67036bdff26845fe2adcf69?d=https%3A%2F%2Fidenticons.github.com%2F7bad9441c4612b497d9d071c244f21cc.png&r=x&s=140" style="float:right"/></a>
 =========
 
-Welcome to the [BipIO](https://bip.io) API Server (Sansa 0.3)
+Welcome to the [bip.io](https://bip.io) API Server (Sansa 0.3)
 
-BipIO is Billion Instructions Per I/O - For People and Robots.  
+bip.io is Billion Instructions Per I/O - For People and Robots.  
 
 Imagine you can send a single standard payload and have a limitless host of API's orchestrate at your command.  
 
-That's what BipIO does.
+That's what bip.io does.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/bipio-server/bipio/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
@@ -16,15 +16,15 @@ Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data
 
 ----
 
-BipIO is a nodejs based web automation framework which runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform a workflow on command. 
+bip.io is a nodejs based web automation framework which runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform a workflow on command. 
 
 Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or some other kind of managed event.
 
-BipIO can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
+bip.io can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
 It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
-BipIO is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
+bip.io is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
 Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
@@ -32,7 +32,7 @@ Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 ### Pods
 
-Pods are the standalone service containers BipIO uses to encapsulate and standardize API's.  Our [list of supported pods](https://github.com/bipio-server/bipio/wiki/Pod-List) is growing all the time and completely open source.
+Pods are the standalone service containers bip.io uses to encapsulate and standardize API's.  Our [list of supported pods](https://github.com/bipio-server/bipio/wiki/Pod-List) is growing all the time and completely open source.
 
 The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  
 
@@ -45,7 +45,7 @@ And follow the instructions, or feel free to [craft your own](https://github.com
 
 ### Visual Tools
 
-The BipIO server is a small headless API server and ships without a UI.  Our official UI can be found on our hosted platform at [https://bip.io](https://bip.io)
+The bip.io server is a small headless API server and ships without a UI.  Our official UI can be found on our hosted platform at [https://bip.io](https://bip.io)
 
 [![ScreenShot](https://i.vimeocdn.com/video/507461873.webp?mw=1920&mh=960&q=70)](https://vimeo.com/119869509)
 
@@ -93,7 +93,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
     npm install
     node . (or `npm start`)
 
-When setting BipIO up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
+When setting bip.io up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
 
     export NODE_CONFIG_DIR=<path_to_your_config_directory>
 
@@ -107,7 +107,7 @@ If you have a more complex deployment environment and the packaged sparse config
 
 For a non-interactive setup (ie: make install without any user interaction) - set environment variable HEADLESS=true
 
-BipIO does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
+bip.io does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
 
 ## Developing and Contributing
 
@@ -123,5 +123,5 @@ Please log issues to the [repository issue tracker](https://github.com/bipio-ser
 
 Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3. 
 
-If you'd like to integrate BipIO with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License for Bipio,
+If you'd like to integrate bip.io with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License for Bipio,
 please [reach us](mailto:hello@bip.io)
