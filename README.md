@@ -18,7 +18,7 @@ Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data
 
 BipIO is a nodejs based web automation framework which runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform a workflow on command. 
 
-Bips can take actions in sequence, in parallel, or chain web services together  as you like. They can be put to work via Web Hooks, Email or some other kind of managed event.
+Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or some other kind of managed event.
 
 BipIO can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
