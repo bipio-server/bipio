@@ -605,6 +605,7 @@ Dao.prototype.getTransformHint = function(accountInfo, from, to, next) {
   });
 };
 
+
 Dao.prototype.setTransformDefaults = function(newDefaults, next) {
   var filter = {
     owner_id : newDefaults.owner_id,
@@ -653,13 +654,14 @@ Dao.prototype.reduceTransformDefaults = function(next) {
   	regTransform =  /\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g,
     reduceJob = Q.defer();
 
-  reduceJob.promise.then(
-    function() {
-      next();
-    },
-    function() {
-      next.apply(self, arguments);
-    });
+	reduceJob.promise.then(
+		function() {
+			next();
+		},
+		function() {
+			next.apply(self, arguments);
+		}
+	);
 
 	this.findFilter('transform_default',
 	{
@@ -692,8 +694,6 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 			});
 
 
-//			console.log('uTransforms->\n',uTransforms);
-
 			// filter down to the popular transforms.
 			_(uTransforms)
 				.countBy( function(transform) {
@@ -708,14 +708,11 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 					return _.find(uTransforms, el[0]);
 				})
 				.map( function(el) {
-				//	console.log('uTransforms (found)->\n ',el);
 					return Object.values(el);
 				})
 				.flatten()
 				.map( function(el) {
-//					console.log('before merge->\n ',el);
 					if (!( _.some(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel }))) {
-//						console.log('pushing ----> \n',el);
 						transformsToInsert.push(el);
 						return el;
 					} else {
@@ -725,27 +722,23 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 				.value();
 
 
-//			console.log('transformsToInsert.count-> ',transformsToInsert.length);
-
 			// create 'system' transform_defaults.
 			_.forEach(transformsToInsert,  function(transform, idx) {
 
 				transform['owner_id'] = 'system';
-//				console.log(transform);
-				//self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform, function() { console.log('inserted') });
 				self.setTransformDefaults(transform, function(err) {
-          if (err) {
-            reduceJob.reject(err);
-          } else if (idx === (transformsToInsert.length - 1)) {
-            console.log('done');
-            reduceJob.resolve();
-          }
-        });
+					if (err) {
+						reduceJob.reject(err);
+					} else if (idx === (transformsToInsert.length - 1)) {
+						console.log('done');
+						reduceJob.resolve();
+					}
+				});
 			});
 
 		} else {
 			app.logmessage(err, 'error');
-      reduceJob.reject(err);
+			reduceJob.reject(err);
 		}
 	});
 }
