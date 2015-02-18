@@ -41,7 +41,7 @@ Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-serv
     npm install bip-pod-{pod-name}
     ./tools/pod-install.js -a {pod-name}
   
-And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
+And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Pods#creating-pods).
 
 ### Visual Tools
 
