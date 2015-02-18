@@ -39,7 +39,7 @@ var bootstrap = require(__dirname + '/bootstrap'),
   MongoStore = require('connect-mongo')({ session : session});
   domain = require('domain'),
   jwt = require('jsonwebtoken'),
-  pkg = bipioVersion = require('../package.json'),
+  pkg = require('../package.json'),
   bipioVersion = pkg.version;
 
 // export app everywhere
@@ -253,14 +253,21 @@ if (cluster.isMaster) {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);
 
-
-    // transform recalcs
-
-    //app.logmessage('DAO:Starting Corpus Recalc', 'info');
-    //var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
-    //      dao.reCorp();
-    //    }, null, true, GLOBAL.CFG.timezone);
-
+   
+   // compile popular transforms into transform_defaults.
+    if (crons && crons.transforms && '' !== crons.transforms) {
+		app.logmessage('DAO:Starting Transforms Update', 'info');
+		var reduceTransformsJob = new cron.CronJob(crons.transforms, function() {
+		
+			if (GLOBAL.CFG.updateTransforms) {
+			
+				dao.updateTransformDefaults( function() {
+					app.logmessage('DAO:Done Updating Transforms');
+				});
+			}
+		
+		}, null, false, GLOBAL.CFG.timezone);
+	}
 
   });
 
@@ -286,7 +293,7 @@ if (cluster.isMaster) {
     var server,
       opts = {};
 
-    if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
+	if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
       app.logmessage('BIPIO:SSL Mode');
       opts.key = fs.readFileSync(GLOBAL.CFG.server.ssl.key);
       opts.cert = fs.readFileSync(GLOBAL.CFG.server.ssl.cert);

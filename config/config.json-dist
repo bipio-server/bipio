@@ -9,7 +9,8 @@
     "crons" : {
       "stat" : "0 0 * * * *",
       "trigger" : "0 */15 * * * *",
-      "expire" : "0 0 * * * *"
+      "expire" : "0 0 * * * *",
+      "transforms": "0 0 * * * *"
     },
     "timezone" : "Asia/Tokyo",
     "server": {
@@ -113,5 +114,6 @@
       "math" : {},
       "html" : {},
       "crypto" : {}
-    }
+    },
+	"updateTransforms" : true
 }
