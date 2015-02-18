@@ -47,7 +47,7 @@ Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-serv
   
 And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Creating-Pods).
 
-##### Simple Visual Integration
+### Visual Tools
 
 The BipIO server is a small headless API server and ships without a UI.  Our official UI can be found on the hosted platform site at [https://bip.io](https://bip.io)
 
