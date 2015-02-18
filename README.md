@@ -36,7 +36,7 @@ Pods are the standalone service containers BipIO uses to encapsulate and standar
 
 The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  
 
-Extra Pods can be found in the [GitHub Repository](https://github.com/bipio-server/bipio) - to install it's just :
+Extra Pods can be found in the [Master Repository](https://github.com/bipio-server) - to install it's just :
 
     npm install bip-pod-{pod-name}
     ./tools/pod-install.js -a {pod-name}
