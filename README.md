@@ -49,7 +49,7 @@ The bip.io server is a small headless API server and ships without a UI.  Our of
 
 [![ScreenShot](https://i.vimeocdn.com/video/507461873.webp?mw=1920&mh=960&q=70)](https://vimeo.com/119869509)
 
-Sign in to [bipio](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
+Sign in to [bip.io](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
 
 ![Server Mount](https://bip.io/static/img/docs/server_mount.png)
 
@@ -123,5 +123,4 @@ Please log issues to the [repository issue tracker](https://github.com/bipio-ser
 
 Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3. 
 
-If you'd like to integrate bip.io with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License for Bipio,
-please [reach us](mailto:hello@bip.io)
+If you'd like to integrate bip.io with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License, please [reach us](mailto:hello@bip.io)
