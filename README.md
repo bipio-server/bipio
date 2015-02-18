@@ -49,7 +49,7 @@ And follow the instructions, or feel free to [craft your own](https://github.com
 
 ### Visual Tools
 
-The BipIO server is a small headless API server and ships without a UI.  Our official UI can be found on the hosted platform site at [https://bip.io](https://bip.io)
+The BipIO server is a small headless API server and ships without a UI.  Our official UI can be found on our hosted platform at [https://bip.io](https://bip.io)
 
 [![ScreenShot](https://i.vimeocdn.com/video/507461873.webp?mw=1920&mh=960&q=70)](https://vimeo.com/119869509)
 
