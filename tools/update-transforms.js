@@ -27,7 +27,7 @@
 process.HEADLESS = true;
 var bootstrap = require(__dirname + '/../src/bootstrap');
 bootstrap.app.dao.on('ready', function(read) {
-    if (GLOBAL.CFG.updateTransforms) {
+//    if (GLOBAL.CFG.updateTransforms) {
         app.logmessage('DAO:Updating System Transforms');
         bootstrap.app.dao.reduceTransformDefaults(function(err, msg) {
             if (err) {
@@ -37,5 +37,5 @@ bootstrap.app.dao.on('ready', function(read) {
             }
             process.exit(0);
         });
-    }
+//    }
 });

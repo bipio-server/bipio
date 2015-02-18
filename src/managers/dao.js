@@ -605,7 +605,7 @@ Dao.prototype.getTransformHint = function(accountInfo, from, to, next) {
   });
 };
 
-Dao.prototype.setTransformDefaults = function(newDefaults) {
+Dao.prototype.setTransformDefaults = function(newDefaults, next) {
   var filter = {
     owner_id : newDefaults.owner_id,
     from_channel : newDefaults.from_channel,
@@ -622,6 +622,7 @@ Dao.prototype.setTransformDefaults = function(newDefaults) {
           if (err) {
             app.logmessage(err, 'error');
           }
+          next(err, result);
         });
       } else {
         model = self.modelFactory(modelName, newDefaults);
@@ -629,10 +630,12 @@ Dao.prototype.setTransformDefaults = function(newDefaults) {
           if (err) {
             app.logmessage(err, 'error');
           }
+          next(err, result);
         });
       }
     } else {
       app.logmessage(err, 'error');
+      next(err);
     }
   });
 };
@@ -642,13 +645,22 @@ Dao.prototype.setTransformDefaults = function(newDefaults) {
  *
  * Takes a simple count of non-system provided transforms and creates
  * new 'system' transform defaults.  for use by /rpc/transforms
- * 
+ *
  * uta : Unique Transform Attribute
  */
 Dao.prototype.reduceTransformDefaults = function(next) {
 	var self = this,
-	regTransform =  /\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g; 
-	
+  	regTransform =  /\[%(\s*?)(source|_bip|_client|\w*\.\w*)#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/g,
+    reduceJob = Q.defer();
+
+  reduceJob.promise.then(
+    function() {
+      next();
+    },
+    function() {
+      next.apply(self, arguments);
+    });
+
 	this.findFilter('transform_default',
 	{
 		owner_id : {
@@ -662,11 +674,11 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 			// derive a collection of every unique transform attribute
 			results.forEach( function(el, idx, result) {
 				transforms = _.pairs(el.transform);
-						
+
 				transforms.forEach( function(val, idx) {
 					utaStr = val[1].match(regTransform);
 					if (utaStr != null) {
-						uta[val[0]] = utaStr[0];	
+						uta[val[0]] = utaStr[0];
 						key = el.from_channel + ':' + el.to_channel + ':' + utaStr;
 						utaProps = { 'from_channel' : el.from_channel, 'to_channel' : el.to_channel, 'transform' : uta}
 						uTransform[key] = utaProps;
@@ -678,10 +690,10 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 				});
 				return uTransforms;
 			});
-		
+
 
 //			console.log('uTransforms->\n',uTransforms);
-			
+
 			// filter down to the popular transforms.
 			_(uTransforms)
 				.countBy( function(transform) {
@@ -689,7 +701,7 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 				})
 				.pairs()
 				.filter( function(el) {
-					//if (el[1] > 1) 
+					//if (el[1] > 1)
 					return el[0];
 				})
 				.map( function(el) {
@@ -697,7 +709,7 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 				})
 				.map( function(el) {
 				//	console.log('uTransforms (found)->\n ',el);
-					return Object.values(el);	
+					return Object.values(el);
 				})
 				.flatten()
 				.map( function(el) {
@@ -716,19 +728,24 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 //			console.log('transformsToInsert.count-> ',transformsToInsert.length);
 
 			// create 'system' transform_defaults.
-			_.forEach(transformsToInsert,  function(transform) {
+			_.forEach(transformsToInsert,  function(transform, idx) {
+
 				transform['owner_id'] = 'system';
 //				console.log(transform);
 				//self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform, function() { console.log('inserted') });
-				self.setTransformDefaults(transform);
+				self.setTransformDefaults(transform, function(err) {
+          if (err) {
+            reduceJob.reject(err);
+          } else if (idx === (transformsToInsert.length - 1)) {
+            console.log('done');
+            reduceJob.resolve();
+          }
+        });
 			});
-
-			console.log('done');
-//			next();
 
 		} else {
 			app.logmessage(err, 'error');
-			next(err);
+      reduceJob.reject(err);
 		}
 	});
 }
