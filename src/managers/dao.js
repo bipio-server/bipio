@@ -1694,10 +1694,15 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
                           self.modelFactory('migration', {
                             version : runVersion,
                             versionInt : runVersionInt
-                          })
+                          }),
+                          function(err) {
+                            if (err) {
+                              deferred.reject(err);
+                            } else {
+                              deferred.resolve('Installed ' + runVersion );
+                            }
+                          }
                         );
-
-                        deferred.resolve('Installed ' + runVersion );
                       }
                     });
                   })(deferred, migration, migrations[orderedMigrations[i]], orderedMigrations[i]);
