@@ -1706,15 +1706,11 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
                   next('No migration index.js or no "run" method found in ' + migrationFile);
                 }
               }
-
             }
           }
 
-
           if (promises.length) {
-			console.log("promises ->\n\n",promises);
-			Q.all(promises).then(function(messages) {
-
+      			Q.all(promises).then(function(messages) {
               next(false, messages.join('\n') );
             },
             function() {

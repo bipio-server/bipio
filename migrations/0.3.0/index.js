@@ -9,8 +9,6 @@ var fs = require('fs'),
   Migration = {
     run : function(app, configPath, next) {
 
-console.log("configPath ->\n",configPath);
-
       var config = JSON.parse(fs.readFileSync(configPath));
 //      var config = jf.readFileSync(configPath);
 
@@ -44,9 +42,9 @@ console.log("configPath ->\n",configPath);
       // Handle database migration
 
       if (config.pods.hasOwnProperty("syndication")) {
-        
+
         app.dao.list('pod_syndication_track_subscribe', null, 100, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, results) {
-            
+
           if (err) {
             syndicationMigration.reject(new Error(err));
           }
@@ -63,10 +61,10 @@ console.log("configPath ->\n",configPath);
               (function(pageNum, syndicationMigration, isLastPage) {
                 app.dao.list('pod_syndication_track_subscribe', null, 100, pageNum, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
                   for (var i=0; i<result.data.length; i++) {
-                    
+
                     var syndicationItem = Q.defer();
                     syndPromises.push(syndicationItem.promise);
-                    
+
                     (function(ind, item, deferred, promises, migration, isLast) {
                       var model = app.dao.modelFactory('pod_syndication_dup', {
                              owner_id : item.owner_id,
@@ -76,7 +74,7 @@ console.log("configPath ->\n",configPath);
                              bip_id : item.bip_id,
                              last_update : item.last_update
                            });
-                    
+
                       app.dao.create(model, function(err) {
                         if (err) {
                           deferred.reject(new Error(err));
@@ -105,7 +103,7 @@ console.log("configPath ->\n",configPath);
       if (config.pods.hasOwnProperty("soundcloud")) {
 
         app.dao.list('pod_soundcloud_track_favorite', null, 100, 1, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, results) {
-            
+
           if (err) {
             soundcloudMigration.reject(new Error(err));
           }
@@ -122,7 +120,7 @@ console.log("configPath ->\n",configPath);
               (function(pageNum, soundcloudMigration, isLastPage) {
                 app.dao.list('pod_soundcloud_track_favorite', null, 100, pageNum, 'recent', { created: { $gt: minTime } }, function(err, oldModelName, result) {
                   for (var i=0; i<result.data.length; i++) {
-                    
+
                     var soundcloudItem = Q.defer();
                     scPromises.push(soundcloudItem.promise);
 
@@ -135,7 +133,7 @@ console.log("configPath ->\n",configPath);
                            bip_id : item.bip_id,
                            last_update : item.last_update
                          });
-                      
+
                       app.dao.create(model, function(err) {
                         if (err) {
                           deferred.reject(new Error(err));
@@ -156,19 +154,16 @@ console.log("configPath ->\n",configPath);
               })(index, soundcloudMigration, index === results.num_pages);
             }
           }
-        });     
+        });
       }
 
 	var writtenResults = Q("");
-	promises.forEach(function(promise) {
-		console.log('a promise: ',promise);
-	});
 
 	if (delta) {
 		fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-		console.info("\nConfig (for 0.3.0) syncronously written to : " + configPath + "\n");
+		console.info("\nConfig (for 0.3.0) written to : " + configPath + "\n");
 		next();
-	} 
+	}
 	else {
 		next('nothing to do');
 	}

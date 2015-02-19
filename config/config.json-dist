@@ -10,8 +10,8 @@
       "stat" : "0 0 * * * *",
       "trigger" : "0 */15 * * * *",
       "expire" : "0 0 * * * *",
-      "transforms_compact": "0 * * * * *",
-      "transforms_fetch": "0 0 * * * *"
+      "transforms_compact": "0 0 */8 * * *",
+      "transforms_fetch": "0 0 */12 * * *"
     },
     "timezone" : "Asia/Tokyo",
     "server": {
