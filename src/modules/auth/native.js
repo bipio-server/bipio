@@ -177,7 +177,7 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     authModel = this.dao.modelFactory('account_auth', accountAuth);
 
   if (masquerade && account.is_admin) {
-    self.getAccountStructByUsername(masquerade, next);
+    this.getAccountStructByUsername(masquerade, next);
 
   } else {
     accountAuth.username = account.username;
