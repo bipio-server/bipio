@@ -16,15 +16,15 @@ Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data
 
 ----
 
-bip.io is a nodejs based web automation framework that runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform at your command.
+bip.io is a nodejs based web automation framework that runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services and perform useful work.  It can act on your behalf or perform at your command.
 
-Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or trigger on custom events.
+Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or Trigger on your custom events.
 
-bip.io can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
+bip.io can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your [Rasberry Pi](http://www.raspberrypi.org/).
 
 This server software is a RESTful JSON API supporting account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
-bip.io is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
+bip.io is dynamic, flexible, fast, modular, opinionless and GPLv3 open source.
 
 Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
@@ -32,11 +32,11 @@ Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 ### Pods
 
-Pods are the standalone service containers bip.io uses to encapsulate and standardize the world's API's.  The [list of supported services](https://github.com/bipio-server/bipio/wiki/Pod-List) is growing fast, and open source.
+Pods are the standalone service containers bip.io uses to encapsulate and standardize the world's API's.  [Supported Services](https://github.com/bipio-server/bipio/wiki/Pod-List) are growing fast, and open source.
 
-The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks and Time.  
+This server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks and Time.  
 
-Supported Pods can be found in the [master repository](https://github.com/bipio-server).
+Extra Pods can be found in the [master repository](https://github.com/bipio-server).
 
 To install a pod :
 
