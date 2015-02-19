@@ -30,7 +30,7 @@ var util      = require('util'),
   path        = require('path'),
   time        = require('time'),
   request     = require('request'),
-  _           = require('lodash'),
+  lodash           = require('lodash'),
   DaoMongo    = require('./dao-mongo.js');
 
 function Dao(config, log, next) {
@@ -42,7 +42,6 @@ function Dao(config, log, next) {
   this._baseUrl = config.proto_public + config.domain_public;
   this.cdn = cdn;
   this._modelPrototype = require('../models/prototype.js').BipModel;
-
 
   // @todo refactor to not rely on mongoose models
   var modelSrc = {
@@ -678,7 +677,7 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 
 			// derive a collection of every unique transform attribute
 			results.forEach( function(el, idx, result) {
-				transforms = _.pairs(el.transform);
+				transforms = lodash.pairs(el.transform);
 
 				transforms.forEach( function(val, idx) {
 					utaStr = val[1].match(regTransform);
@@ -696,9 +695,8 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 				return uTransforms;
 			});
 
-
 			// filter down to the popular transforms.
-			_(uTransforms)
+			lodash(uTransforms)
 				.countBy( function(transform) {
 					return Object.keys(transform);
 				})
@@ -708,32 +706,30 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 					return el[0];
 				})
 				.map( function(el) {
-					return _.find(uTransforms, el[0]);
+					return lodash.find(uTransforms, el[0]);
 				})
 				.map( function(el) {
 					return Object.values(el);
 				})
 				.flatten()
 				.map( function(el) {
-					if (!( _.some(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel }))) {
+					if (!( lodash.some(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel }))) {
 						transformsToInsert.push(el);
 						return el;
 					} else {
-						return _.merge( _.find(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel}), el);
+						return lodash.merge( lodash.find(transformsToInsert, {'from_channel' : el.from_channel, 'to_channel' : el.to_channel}), el);
 					}
 				})
 				.value();
 
 
 			// create 'system' transform_defaults.
-			_.forEach(transformsToInsert,  function(transform, idx) {
-
+			lodash.forEach(transformsToInsert,  function(transform, idx) {
 				transform['owner_id'] = 'system';
 				self.setTransformDefaults(transform, function(err) {
 					if (err) {
 						reduceJob.reject(err);
 					} else if (idx === (transformsToInsert.length - 1)) {
-						console.log('done');
 						reduceJob.resolve();
 					}
 				});
@@ -754,7 +750,7 @@ Dao.prototype.updateTransformDefaults = function(next) {
   			data = JSON.parse(body).data;
   			data.forEach( function(transform) {
   				transform['owner_id'] = 'system';
-  				self.upsert('transform_default', _.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
+  				self.upsert('transform_default', lodash.pick(transform, ['from_channel', 'to_channel', 'owner_id']), transform);
   			});
 
   			app.logmessage('DAO:Updating Transforms:Done', 'info');
