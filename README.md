@@ -97,6 +97,8 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
     npm install
     node . (or `npm start`)
 
+## Technical Notes
+
 When setting bip.io up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
 
     export NODE_CONFIG_DIR=<path_to_your_config_directory>
