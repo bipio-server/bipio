@@ -67,6 +67,7 @@
     "json-middleware": "^1.0.2",
     "jsonwebtoken": "^1.1.1",
     "ldapjs": "^0.7.1",
+    "lodash": "^3.2.0",
     "marked": "^0.3.2",
     "memwatch": "^0.2.2",
     "method-override": "^1.0.0",
