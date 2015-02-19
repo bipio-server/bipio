@@ -16,13 +16,13 @@ Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data
 
 ----
 
-bip.io is a nodejs based web automation framework which runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform a workflow on command. 
+bip.io is a nodejs based web automation framework that runs 'bips'. A Bip is a web automation agent.  A Bip can connect many different web services together for performing useful work and either act on your behalf or perform at your command.
 
-Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or some other kind of managed event.
+Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or trigger on custom events.
 
 bip.io can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your Rasberry Pi.
 
-It's a RESTful JSON API that supports account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
+This server software is a RESTful JSON API supporting account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
 bip.io is dynamic, flexible, fast, modular, opinionless and gplv3 open source.
 
@@ -32,20 +32,24 @@ Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 ### Pods
 
-Pods are the standalone service containers bip.io uses to encapsulate and standardize API's.  Our [list of supported pods](https://github.com/bipio-server/bipio/wiki/Pod-List) is growing all the time and completely open source.
+Pods are the standalone service containers bip.io uses to encapsulate and standardize the world's API's.  The [list of supported services](https://github.com/bipio-server/bipio/wiki/Pod-List) is growing fast, and open source.
 
-The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks, Time.  
+The server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks and Time.  
 
-Extra Pods can be found in the [Master Repository](https://github.com/bipio-server) - to install it's just :
+Supported Pods can be found in the [master repository](https://github.com/bipio-server).
+
+To install a pod :
 
     npm install bip-pod-{pod-name}
     ./tools/pod-install.js -a {pod-name}
   
-And follow the instructions, or feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Pods#creating-pods).
+And follow the instructions. 
+
+Feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Pods#creating-pods).
 
 ### Visual Tools
 
-The bip.io server is a small headless API server and ships without a UI.  Our official UI can be found on our hosted platform at [https://bip.io](https://bip.io)
+The bip.io server is a light weight headless API server and ships without a User Interface (UI).  The official UI can be found on the [bip.io](https://bip.io) hosted platform.  It's completely free.
 
 [![ScreenShot](https://bip.io/static/img/docs/vimeo_overlay.png)](https://vimeo.com/119869509)
 
