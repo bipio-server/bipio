@@ -18,12 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 /**
- * 
+ *
  * Shared Bip hubs
- * 
+ *
  */
 var BipShare = Object.create(require('./prototype.js').BipModel);
 
@@ -39,45 +39,45 @@ BipShare.entitySchema = {
         renderable: false,
         writable: false
     },
-    
+
     type : {
         type: String,
         renderable: true,
         writable: true
     },
-    
+
     name : {
         type: String,
         renderable: true,
         writable: true
     },
-    
+
     note : {
         type: String,
         renderable: true,
         writable: true
     },
-    
+
     icon : {
         type: String,
         renderable: true,
         writable: true
     },
-    
+
     config : {
         type: Object,
         renderable: true,
         writable: true
     },
-    
+
     owner_id : {
-        type: String, 
-        renderable: true, 
+        type: String,
+        renderable: true,
         writable: false
     },
     owner_name : {
-        type: String, 
-        renderable: true, 
+        type: String,
+        renderable: true,
         writable: false
     },
     manifest : {
@@ -95,6 +95,11 @@ BipShare.entitySchema = {
         renderable: true,
         writable: false
     },
+    search : {
+        type : String,
+        renderable : false,
+        writable : false
+    },
     votes: {
         type: Number,
         renderable: true,
@@ -111,6 +116,33 @@ BipShare.entitySchema = {
         renderable: true,
         writable: false
     }
+};
+
+//
+BipShare.preSave = function(accountInfo, next) {
+    // rebuild search terms
+    var note = this.note || '',
+        name = this.name || '',
+        manifest = this.manifest ? this.manifest.join('" "') : '',
+        searchStr = '',
+        pod,
+        tokens;
+
+    searchStr += (note ? ('"' + note + '"') : '') + '"' + name + '" "' + manifest + '"';
+
+    if (this.manifest) {
+        for (var i = 0; i < this.manifest.length; i++) {
+            tokens = this.manifest[i].split('.');
+            pod = this._dao.pod(tokens[0]);
+            if (pod) {
+                searchStr += ' "' + pod.getAction(tokens[1]).title + '"';
+            }
+        }
+    }
+
+    this.search = searchStr;
+
+    next(false, this);
 };
 
 module.exports.BipShare = BipShare;

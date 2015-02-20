@@ -552,16 +552,16 @@ Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
     var tokens = listBy.split(':');
     var searchTerms = tokens[1];
 
-/*
-    filter.name = {
+    filter[tokens[0]] = {
       '$regex' : searchTerms,
       '$options' : 'i'
     };
-*/
-    filter.note = {
-      '$regex' : searchTerms,
-      '$options' : 'i'
-    }
+
+    /* -- experimental, requires mongo 2.6
+    filter['$text'] = {
+      '$search' : searchTerms
+    };
+    */
   }
 
   this.list('bip_share', null, pageSize, page, orderBy, filter, next);

@@ -273,11 +273,15 @@ DaoMongo.prototype.buildProperties = function(struct, idStruct) {
  * Forces a filter object to use the model id, owner id
  */
 DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
-  return {
+  var filter = {
     id : fromModel.id,
-    // find with the owner id filter for the authenticated user
-    owner_id : accountInfo.user.id
   };
+
+  if (accountInfo) {
+    // find with the owner id filter for the authenticated user
+    filter.owner_id = accountInfo.user.id
+  }
+  return filter;
 }
 
 /**
