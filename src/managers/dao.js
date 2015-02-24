@@ -625,7 +625,9 @@ Dao.prototype.setTransformDefaults = function(newDefaults, next) {
           if (err) {
             app.logmessage(err, 'error');
           }
-          next(err, result);
+          if (next) {
+            next(err, result);
+          }
         });
       } else {
         model = self.modelFactory(modelName, newDefaults);
@@ -633,12 +635,16 @@ Dao.prototype.setTransformDefaults = function(newDefaults, next) {
           if (err) {
             app.logmessage(err, 'error');
           }
-          next(err, result);
+          if (next) {
+            next(err, result);
+          }
         });
       }
     } else {
       app.logmessage(err, 'error');
-      next(err);
+      if (next) {
+        next(err);
+      }
     }
   });
 };
