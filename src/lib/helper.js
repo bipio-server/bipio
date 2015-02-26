@@ -37,6 +37,7 @@ uuid = require('node-uuid'),
 ipaddr = require('ipaddr.js'),
 rimraf = require('rimraf'),
 _ = require('underscore'),
+moment = require('moment'),
 JSONPath = require('JSONPath'),
 favitest = require('favitest');
 
@@ -331,6 +332,28 @@ var helper = {
     return (d.getTime() + seconds);
   },
 
+  nowTimeTz : function(tz, time) {
+    if (!time) {
+      time = undefined;
+    } else {
+      if (!isNaN(time * 1000) ) {
+        time *= 1000;
+      }
+    }
+
+    var timeMoment = moment(time).utc(),
+      utcOffset = timeMoment.tz(tz).utcOffset();
+
+    return timeMoment.unix() + (utcOffset * 60);
+  },
+
+  tzDiff : function(tz) {
+    var localTz = moment().utc().tz(CFG.timezone).utcOffset(),
+      tzTz = moment().utc().tz(tz).utcOffset();
+
+    return (tzTz - localTz) * 60;
+  },
+
   // @return string yyyymmdd UTC
   nowDay : function() {
     var n = this.now();
@@ -423,7 +446,7 @@ var helper = {
 //  regActionUUID : /\[%(\s*?)(source|_bip|_client|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_#\.\$@\*\[\],\?\(\)]*(\s*?)%\]/gi,
 
   regActionUUID_old : /\[%(\s*?)(source|_bip|_client|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/gi,
-  regActionUUID : /\[%(\s*?)(source|_bip|_client|\w*\.\w*|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/gi,  
+  regActionUUID : /\[%(\s*?)(source|_bip|_client|\w*\.\w*|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})#[a-zA-Z0-9_\-#:.$@*[\],?()]*(\s*?)%\]/gi,
   regActionSource : /\[%(\s*?)(source)#([@a-zA-Z0-9_\-#.\[\]]*)(\s*?)%\]/gi,
 
   regEscape : /[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g,

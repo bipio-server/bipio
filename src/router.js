@@ -822,7 +822,7 @@ module.exports = {
           response.scheme = result.url_tokens.protocol.replace(':', '');
         }
         res.send(response);
-      
+
 
       // attempts to create a bip from the referer using default settings.
       } else if (methodDomain == 'bip') {

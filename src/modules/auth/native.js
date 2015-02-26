@@ -46,6 +46,9 @@ AccountInfo.prototype = {
   },
   getName : function() {
     return this.user.name;
+  },
+  getTimezone : function() {
+    return this.getSetting('timezone');
   }
 };
 

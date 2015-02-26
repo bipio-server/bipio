@@ -108,13 +108,15 @@ Bastion.prototype.jobRunner = function(jobPacket) {
       this._dao.userNotify( jobPacket.data, this.jobRunnerAlert );
 
     } else if (jobPacket.name == DEFS.JOB_BIP_TRIGGER) {
-      var cid = jobPacket.data.config.channel_id;
+      var bip = jobPacket.data.bip,
+        cid = bip.config.channel_id;
+
       // Get Channel
       this._dao.find(
         'channel',
         {
           'id' : cid,
-          'owner_id' : jobPacket.data.owner_id
+          'owner_id' : bip.owner_id
         },
         function(err, result) {
           var invokeChannel,
@@ -122,7 +124,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             _files : []
           },
           imports = {
-             _bip : app._.clone(jobPacket.data)
+             _bip : app._.clone(bip)
           },
           transforms = {},
           clientStruct = {
@@ -136,6 +138,9 @@ Bastion.prototype.jobRunner = function(jobPacket) {
             'encoding' : '',
             'headers' : {}
           };
+
+          // convert to user tz
+          clientStruct.date += app.helper.tzDiff(jobPacket.data.accountInfo.user.settings.timezone);
 
           imports._client = clientStruct;
 
@@ -189,12 +194,12 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                       };
 
                       self.channelDistribute(
-                        app._.clone(jobPacket.data),
+                        bip,
                         'source',
                         '',
                         '',
                         normedExports,
-                        app._.clone(clientStruct),
+                        clientStruct,
                         content_parts
                       );
                     }
@@ -325,6 +330,8 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
     'type' : type,
     'paused' : false
   };
+
+  client.date += app.helper.tzDiff(accountInfo.user.settings.timezone);
 
   if (name) {
     filter.name = name;

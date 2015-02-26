@@ -910,8 +910,11 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
                   if (expired) {
                     bipModel.expire('expired', next);
                   } else {
-                    var payload = app._.clone(bipResult)._doc;
-                    payload.socketTrigger = isSocket;
+                    var payload = {
+                      bip : app._.clone(bipResult)._doc,
+                      socketTrigger : isSocket,
+                      accountInfo : accountInfo
+                    }
 
                     // update runtime
                     self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
@@ -924,7 +927,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
                     numProcessed++;
 
-                    app.logmessage('DAO:Trigger:' + payload.id + ':' + numProcessed + ':' + numResults);
+                    app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
 
                     if (numProcessed >= (numResults - 1)) {
                       // the amqp lib has stopped giving us queue publish acknowledgements?
