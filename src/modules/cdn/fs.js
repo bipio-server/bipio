@@ -81,12 +81,12 @@ FsProto.prototype = {
         var gzip = zlib.createGzip();
         readStream.pipe(gzip).pipe(writeStream);
         readStream.resume();
-      } 
+      }
       else if (readStream) {
         readStream.pipe(writeStream);
         readStream.resume();
       }
-      
+
       if (buffer) {
         writeStream.write(buffer.toString(), null, function() {
           writeStream.end();
@@ -190,6 +190,7 @@ FsProto.prototype = {
   find: function() {
 
     var file = arguments[0],
+      self = this,
       filePath = ((typeof file === 'object') ? file.localpath : file),
       next = arguments[arguments.length-1];
 
