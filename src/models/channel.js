@@ -237,8 +237,7 @@ Channel._transform = function(adjacentExports, transforms) {
     resolvedImports = {}; // final imports for the channel
 
   app._.each(transforms, function(transform, key) {
-    var literalMatch = ("" === transform.replace(helper.regActionUUID, '').trim()),
-      matches = transform.match(helper.regActionUUID),
+    var matches = transform.match(helper.regActionUUID),
       matchMap = {},
       mapKeys;
 
@@ -256,7 +255,7 @@ Channel._transform = function(adjacentExports, transforms) {
     mapKeys = Object.keys(matchMap);
 
     // forward object substructure
-    if (mapKeys.length && literalMatch) {
+    if (1 === mapKeys.length) {
       resolvedImports[key] = matchMap[mapKeys[0]];
     } else {
       app._.each(matchMap, function(value, key) {
