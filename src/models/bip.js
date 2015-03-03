@@ -760,6 +760,7 @@ function getAction(accountInfo, channelId) {
 }
 
 Bip.normalizeTransformDefaults = function(accountInfo, next) {
+
   var from, to, payload, fromMatch, transforms = {}, dirty = false;
   for (var key in this.hub) {
     if (this.hub.hasOwnProperty(key)) {
@@ -779,13 +780,21 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
           if (this.hub[key].transforms.hasOwnProperty(txChannelId)) {
             to = getAction(accountInfo, txChannelId);
             if (from && to) {
-              // filter to include only transforms for these
+             
+			  // filter to include only transforms for these
               // adjacent channels
               for(var txKey in this.hub[key].transforms[txChannelId]) {
+
                 if (this.hub[key].transforms[txChannelId].hasOwnProperty(txKey)) {
+
                   this.hub[key].transforms[txChannelId][txKey].replace(fromMatch, from);
+
+                  if (app.helper.getRegUUID().test(this.hub[key].transforms[txChannelId][txKey])) {
+                    this.hub[key].transforms[txChannelId][txKey] = '';
+                  }
+
                   // strip any remaining uuid's.  Only supporting adjacent transform helpers
-                  // for now.
+                  // for now
                   this.hub[key].transforms[txChannelId][txKey].replace(app.helper.getRegActionUUID(), '');
                 }
               }
