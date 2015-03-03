@@ -139,7 +139,6 @@ app.logmessage = function(message, loglevel) {
 }
 
 // exception catchall
-/*
 process.addListener('uncaughtException', function (err, stack) {
   var message = 'Caught exception: ' + err + '\n' + err.stack;
   if (app && app.logmessage) {
@@ -155,7 +154,6 @@ process.addListener('uncaughtException', function (err, stack) {
   }
 
 });
-*/
 
 if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   GLOBAL.CFG.server.public_interfaces = [];
