@@ -108,7 +108,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
       this._dao.userNotify( jobPacket.data, this.jobRunnerAlert );
 
     } else if (jobPacket.name == DEFS.JOB_BIP_TRIGGER) {
-      var bip = jobPacket.data.bip,
+      var bip = jobPacket.data,
         cid = bip.config.channel_id;
 
       // Get Channel

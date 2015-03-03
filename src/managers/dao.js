@@ -923,7 +923,6 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
                       }
                     });
 
-
                     app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
                     numProcessed++;
 
