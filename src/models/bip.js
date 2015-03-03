@@ -527,7 +527,7 @@ Bip.entitySchema = {
   // channel secondary index
   _channel_idx : {
     type : Array,
-    renderable : false,
+    renderable : true,
     writable : false
   }
 };

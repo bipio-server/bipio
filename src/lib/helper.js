@@ -37,7 +37,7 @@ uuid = require('node-uuid'),
 ipaddr = require('ipaddr.js'),
 rimraf = require('rimraf'),
 _ = require('underscore'),
-moment = require('moment'),
+moment = require('moment-timezone'),
 JSONPath = require('JSONPath'),
 favitest = require('favitest');
 

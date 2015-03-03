@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.3.29",
+  "version": "0.3.30",
   "scripts": {
     "start": "node src/server.js >> logs/server.log &",
     "test": "make test",
@@ -74,6 +74,7 @@
     "mime": "^1.2.11",
     "mkdirp": ">=0.3.5",
     "moment": "^2.8.4",
+    "moment-timezone": "^0.3.0",
     "mongoose": "3.9.7",
     "multer": ">=0.0.6",
     "node-fs": "^0.1.7",
