@@ -834,7 +834,7 @@ Bip.postSave = function(accountInfo, next, isNew) {
 
     // if its a new trigger, then run it
     if ('trigger' === this.type && !this.paused) {
-      app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, this);
+      this._dao.triggerAll(function() {}, { id : this.id });
     }
   }
 

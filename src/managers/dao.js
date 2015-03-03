@@ -916,6 +916,8 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
                       accountInfo : accountInfo
                     }
 
+                    delete payload.bip.accountInfo;
+
                     // update runtime
                     self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
                       if (err) {

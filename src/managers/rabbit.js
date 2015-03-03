@@ -51,7 +51,7 @@ function Rabbit(cfg, next) {
   );
 
   this.amqpConn.connectionStatus = null;
-  
+
   // Setup our preconfigured exchanges, queues and routes
   this.amqpConn.on(
     'ready',
@@ -91,7 +91,7 @@ function Rabbit(cfg, next) {
 
   this.amqpConn.on('error', function(err) {
     self.amqpConn.connectionStatus = null;
-	app.logmessage('RABBIT:' + err, 'error');
+  	app.logmessage('RABBIT:' + err, 'error');
   });
 
 //  this.amqpConn.connect();
