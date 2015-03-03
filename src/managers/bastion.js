@@ -586,6 +586,8 @@ Bastion.prototype.channelProcess = function(struct) {
                   contentParts || struct.content_parts
                   );
               } else if (err) {
+                var errStr = err.toString();
+
                 app.logmessage('Channel Invoke Failure:' + channel.id);
                 app.logmessage(err);
 
@@ -593,7 +595,7 @@ Bastion.prototype.channelProcess = function(struct) {
                   owner_id : channel.owner_id,
                   bip_id : struct.bip.id,
                   code : 'bip_channnel_error',
-                  message : app.helper.isObject(err) ? JSON.stringify(err) : err,
+                  message : errStr,
                   source : channel.id
                 });
 
@@ -605,7 +607,7 @@ Bastion.prototype.channelProcess = function(struct) {
                     transaction_id : struct.client.id,
                     code : 'channel_error',
                     bip_id : struct.imports._bip.id,
-                    message : err.toString()
+                    message : errStr
                   }
                 );
                 self._dao.create(logModel);
