@@ -30,7 +30,7 @@
 var BipModel = require('./prototype.js').BipModel,
 TransformDefault = Object.create(BipModel);
 
-TransformDefault.compoundKeyContraints = {
+TransformDefault.compoundKeyConstraints = {
   owner_id : 1,
   from_channel : 1,
   to_channel : 1

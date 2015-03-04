@@ -33,7 +33,7 @@ Account.is_admin = false;
 // @todo what is uniqueKeys?>
 Account.uniqueKeys = ['username', 'email_account'];
 
-Account.compoundKeyContraints = {
+Account.compoundKeyConstraints = {
     username : 1,
     email_account : 1
 };

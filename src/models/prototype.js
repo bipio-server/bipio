@@ -43,7 +43,7 @@ var BipModel = {
         return this.entityValidators;
     },
     */
-  compoundKeyContraints: undefined,
+  compoundKeyConstraints: undefined,
 
   // list of unique keys
   uniqueKeys: [],
@@ -97,7 +97,7 @@ var BipModel = {
   },
 
   getCompoundKeyConstraints: function() {
-    return this.compoundKeyContraints;
+    return this.compoundKeyConstraints;
   },
 
   repr: function() {

@@ -162,7 +162,7 @@ Channel.entitySchema = {
   }
 };
 
-Channel.compoundKeyContraints = {
+Channel.compoundKeyConstraints = {
   "owner_id" : 1,
   "name" : 1,
   "action" : 1
