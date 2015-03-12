@@ -52,7 +52,7 @@ StatsAccountNetwork.entitySchema = {
     }
 };
 
-StatsAccountNetwork.compoundKeyContraints = {
+StatsAccountNetwork.compoundKeyConstraints = {
     owner_id : 1,
     day : 1
 

@@ -448,7 +448,7 @@ Bip.entitySchema = {
       validator : function(val, next) {
         next(val.action && /^(pause|delete)$/i.test(val.action) );
       },
-      msg : 'Expected pause" or "delete"'
+      msg : 'Expected "pause" or "delete"'
     }
     ]
   },
@@ -532,7 +532,7 @@ Bip.entitySchema = {
   }
 };
 
-Bip.compoundKeyContraints = {
+Bip.compoundKeyConstraints = {
   owner_id : 1,
   name : 1,
   type : 1
@@ -626,10 +626,8 @@ Bip.exports = {
   },
 
   'trigger' : {
-    properties : {
-    },
-    definitions : {
-  }
+    properties : {},
+    definitions : {}
   }
 }
 
@@ -897,16 +895,16 @@ Bip.checkExpiry = function(next) {
   next(expired);
 };
 
-Bip.expire = function(transationId, next) {
+Bip.expire = function(transactionId, next) {
   var accountInfo = this.getAccountInfo(),
     expireBehavior = (this.end_life.action && '' !== this.end_life.action)
       ? this.end_life.action
       : accountInfo.user.settings.bip_expire_behaviour;
 
   if ('delete' === expireBehavior) {
-    this._dao.deleteBip(this, accountInfo, next, transationId);
+    this._dao.deleteBip(this, accountInfo, next, transactionId);
   } else {
-    this._dao.pauseBip(this, true, next, transationId);
+    this._dao.pauseBip(this, true, next, transactionId);
   }
 }
 

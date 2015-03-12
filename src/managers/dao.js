@@ -30,7 +30,7 @@ var util      = require('util'),
   path        = require('path'),
   time        = require('time'),
   request     = require('request'),
-  lodash           = require('lodash'),
+  lodash      = require('lodash'),
   DaoMongo    = require('./dao-mongo.js');
 
 function Dao(config, log, next) {

@@ -230,7 +230,7 @@ Domain.entitySetters = {
   }
 };
 
-Domain.compoundKeyContraints = {
+Domain.compoundKeyConstraints = {
   name : 1
 };
 

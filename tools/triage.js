@@ -122,7 +122,7 @@ dao.on('ready', function(dao) {
             mBody.dataSources[ds.entityName.replace('pod_' + s.name + '_', '')] =
               {
                 properties : ds.entitySchema,
-                keys : ds.compoundKeyContraints ? Object.keys(ds.compoundKeyContraints) : [ ds.entityIndex ]
+                keys : ds.compoundKeyConstraints ? Object.keys(ds.compoundKeyConstraints) : [ ds.entityIndex ]
               };
           }
         }

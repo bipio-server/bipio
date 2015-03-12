@@ -20,26 +20,26 @@
  *
 
  */
-var    bcrypt      = require('bcrypt'),
-crypto = require('crypto'),
+var bcrypt = require('bcrypt'),
 baseConverter = require('base-converter'),
-tldtools    = require('tldtools'),
-url = require('url'),
-fs = require('fs'),
-path = require('path'),
-http    = require('http'),
-https    = require('https'),
-mkdirp = require('mkdirp'),
-validator = require('validator'),
+crypto = require('crypto'),
 djs = require('datejs'),
 dns = require('dns'),
-uuid = require('node-uuid'),
+favitest = require('favitest')
+fs = require('fs'),
+http = require('http'),
+https = require('https'),
 ipaddr = require('ipaddr.js'),
-rimraf = require('rimraf'),
-_ = require('underscore'),
-moment = require('moment-timezone'),
 JSONPath = require('JSONPath'),
-favitest = require('favitest');
+moment = require('moment-timezone'),
+mkdirp = require('mkdirp'),
+path = require('path'),
+rimraf = require('rimraf'),
+tldtools = require('tldtools'),
+validator = require('validator'),
+uuid = require('node-uuid'),
+url = require('url'),
+_ = require('lodash');
 
 var helper = {
 
@@ -49,6 +49,10 @@ var helper = {
 
   isArray: function(src) {
     return (this.getType(src) == '[object Array]');
+  },
+
+  isDate : function(src) {
+    return (this.getType(src) == '[object Date]');
   },
 
   isString : function(src) {
