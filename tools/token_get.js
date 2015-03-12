@@ -35,9 +35,10 @@ var accountId = process.argv[2],
   bootstrap = require(__dirname + '/../src/bootstrap'),
   dao = bootstrap.app.dao,
   modelName = 'account_auth',
-  acctSearch = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(accountId);
+  acctSearch = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(accountId),
+  emailSearch = -1 !== accountId.indexOf('@');
 
-function accountQuery(accountId) {
+function accountQuery(accountId, username) {
   dao.find(
     modelName,
     {
@@ -52,6 +53,9 @@ function accountQuery(accountId) {
         }
         process.exit(0);
       } else {
+        if (username) {
+          console.log('Username : ' + username)
+        }
         console.log('Token : ' + dao.modelFactory(modelName, result).getPassword());
         process.exit(0);
       }
@@ -63,11 +67,16 @@ dao.on('ready', function(dao) {
   if (acctSearch) {
     accountQuery(accountId);
   } else {
+    var filter = {};
+    if (emailSearch) {
+      filter.email_account = accountId;
+    } else {
+      filter.username = accountId;
+    }
+
     dao.find(
       'account',
-      {
-        username : accountId
-      },
+      filter,
       function(err, result) {
         if (err || !result) {
           if (!result) {
@@ -75,7 +84,7 @@ dao.on('ready', function(dao) {
           }
           process.exit(0);
         } else {
-          accountQuery(result.id);
+          accountQuery(result.id, result.username);
         }
       }
     );
