@@ -499,6 +499,12 @@ Bip.entitySchema = {
     renderable: true,
     writable: false
   },
+  schedule : {
+    type : Object,
+    renderable : true,
+    writable : true,
+    default : {}
+  },
   _imp_actual : {
     type : Number,
     renderable : true,
@@ -778,7 +784,7 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
           if (this.hub[key].transforms.hasOwnProperty(txChannelId)) {
             to = getAction(accountInfo, txChannelId);
             if (from && to) {
-             
+
 			  // filter to include only transforms for these
               // adjacent channels
               for(var txKey in this.hub[key].transforms[txChannelId]) {
