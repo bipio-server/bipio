@@ -60,38 +60,43 @@ FsProto.prototype = {
         next(err);
       }
 
-      var writeStream = fs.createWriteStream(path, writeOptions);
+      (function(next) {
+        var writeStream = fs.createWriteStream(path, writeOptions);
 
-      if (header) {
-        var headerStream = new Stream();
-        headerStream.on('data', function(data) {
-          writeStream.write(data);
-        });
+        if (header) {
+          var headerStream = new Stream();
+          headerStream.on('data', function(data) {
+            writeStream.write(data);
+          });
 
-        headerStream.emit('data', options.header);
-      }
+          headerStream.emit('data', options.header);
+        }
 
-      writeStream.on('error', next);
-      writeStream.on('finish', function(err) {
-        if (err) next(err);
-        else self.utils.normalize(path, next);
-        });
+        writeStream.on('error', next);
+        writeStream.on('finish', function(err) {
 
-      if (compress) {
-        var gzip = zlib.createGzip();
-        readStream.pipe(gzip).pipe(writeStream);
-        readStream.resume();
-      }
-      else if (readStream) {
-        readStream.pipe(writeStream);
-        readStream.resume();
-      }
+          if (err) next(err);
+          else self.utils.normalize(path, next);
+          });
 
-      if (buffer) {
-        writeStream.write(buffer.toString(), null, function() {
-          writeStream.end();
-              });
-      }
+        if (compress) {
+          var gzip = zlib.createGzip();
+          readStream.pipe(gzip).pipe(writeStream);
+          readStream.resume();
+        }
+        else if (readStream) {
+          readStream.pipe(writeStream);
+          readStream.resume();
+        }
+
+        if (buffer) {
+          writeStream.write(buffer.toString(), null, function() {
+            writeStream.end();
+          });
+        }
+      })(next);
+
+
     });
   },
 
