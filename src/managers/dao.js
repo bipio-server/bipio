@@ -21,7 +21,7 @@
  */
 var util      = require('util'),
   helper      = require('../lib/helper'),
-  cdn         = require('../lib/cdn'),
+  cdn         = require('../modules/cdn/cdn.js'),
   crypto   	  = require('crypto'),
   step        = require('../lib/step'), // @todo deprecate, use Q
   async       = require('async'), // @todo deprecate, use Q

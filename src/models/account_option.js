@@ -258,19 +258,23 @@ AccountOption.entityValidators = {
 
 }
 
-/*
+
 AccountOption.preSave = function(accountInfo, next) {
     if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || /^http/.test(this.avatar) ) {
         if (this.avatar) {
-            this._dao.getAvRemote(this.owner_id, this.avatar, true, function(err, result) {
+            this.app.modules.cdn.saveAvatar(this.owner_id, this.avatar, function(err, avatarPath) {
+				console.log(err);
+			});
+			// deprecated approach to saving avatar image
+			/*this._dao.getAvRemote(this.owner_id, this.avatar, true, function(err, result) {
                 console.log(err);
-            });
+            });*/
         }
-        this.avatar = '/static/img/cdn/av/' + this.owner_id + '.jpg';
+        this.avatar = '/static/img/cdn/av/' + this.owner_id + '.png';
     }
     next(false, this);
 }
-*/
+
 
 function endLifeParse(end_life) {
     var imp = parseInt(end_life.imp);

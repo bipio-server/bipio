@@ -619,6 +619,69 @@ var helper = {
     });
   },
 
+
+  httpSnarfResponseHandler : function(res, srcUrl, dstFile, next, hops) {
+    if (hops > 3) {
+      next(true, 'too many redirects');
+    } else if (res.headers['content-length'] == 0) {
+      var msg = 'Zero Size Reply';
+      console.log(msg);
+      next(true, msg);
+    } else if (res.statusCode == 200) {
+      var outFile = fs.createWriteStream(dstFile);
+      res.pipe(outFile);
+      outFile
+      .on('close', function() {
+        next(false, {
+          'url' : srcUrl,
+          'file' : dstFile
+        });
+      })
+      .on('error', function(e) {
+        next(true, e);
+        console.log(e);
+      });
+    } else if (res.statusCode == 301) {
+      srcUrl = res.headers.location;
+      hops++;
+      this.httpFileSnarf(srcUrl, dstFile, next, hops);
+    } else {
+      next(true, res);
+    }
+  },
+
+  /**
+     * Given a http(s) url, retrieves a file, follows 301's etc. and
+     * streams to dstFile
+     */
+  httpFileSnarf : function(srcUrl, dstFile, next, hops) {
+    var urlTokens = tldtools.extract(srcUrl),
+    self = this,
+    proto = urlTokens.url_tokens.protocol;
+
+    if (undefined === hops) {
+      hops = 1;
+    }
+
+    if (proto == 'http:') {
+      http.get(srcUrl, function(res) {
+        self.httpSnarfResponseHandler(res, srcUrl, dstFile, next, hops);
+      }).on('error', function(e) {
+        console.log(e);
+        next(true, e);
+      });
+    } else if (proto == 'https:') {
+      https.get(srcUrl, function(res) {
+        self.httpSnarfResponseHandler(res, srcUrl, dstFile, next, hops);
+      }).on('error', function(e) {
+        console.log(e);
+        next(true, e);
+      });
+    } else {
+      next(true, 'Bad Protocol : ' + proto);
+    }
+  }
+
 }
 
 //

@@ -277,7 +277,8 @@ var restAction = function(req, res) {
         // populate our model with the request.  Set an owner_id to be the
         // authenticated user before doing anything else
         model = dao.modelFactory(resourceName, helper.pasteurize(req.body), accountInfo, true);
-        dao.create(model, restResponse(res), accountInfo, postSave);
+
+      dao.create(model, restResponse(res), accountInfo, postSave);
       } else if (rMethod == 'PUT') {
         // filter request body to public writable
         var writeFilters = modelPublicFilter[resourceName]['write'];

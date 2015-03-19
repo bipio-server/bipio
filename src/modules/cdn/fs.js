@@ -100,6 +100,67 @@ FsProto.prototype = {
     });
   },
 
+
+  /*
+   * Saves an avatar file
+   *
+   * owner_id: string
+   * source: string. image location | url
+   * dstPath: string
+   * next: function(string err, string dstFile)
+   */
+  saveAvatar: function() {
+	var self = this,
+		owner_id = arguments[0],
+		source  = arguments[1],
+		dstPath  = arguments[2],
+		next = arguments[3];
+		
+		var dstFile = dstPath + owner_id + '.png';
+
+		console.log('saving ',source, ' to ',dstFile);
+
+			var options = {
+				srcPath : source,
+				dstPath : dstPath + owner_id + '.png',
+				format: 'png',
+				height: 125,
+				width: 125
+			};
+
+			imagemagick.convert([options.srcPath, '-resize', '125x125', options.dstPath], function(err, result) {
+				if (err) next(err);
+				next(err, dstFile);
+			});
+
+
+
+
+/*
+		// from a url
+		app.helper.httpFileSnarf(source, dstFile, function(err, resp) {
+			if (err) { 
+				next(true, resp); 
+			} else {
+
+				console.log(resp);
+
+			}
+		});
+*/
+  },
+
+
+  convert : function(args, next) {
+    imagemagick.convert(args, next);
+  },
+	
+  resize : function(args, next) {
+    imagemagick.resize(args, next);
+  },
+
+
+
   /*
    * Gets a file from a fileStruct and returns a new fileStruct and readStream
    *

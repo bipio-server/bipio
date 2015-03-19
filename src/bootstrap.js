@@ -33,6 +33,7 @@ var app = {
   sugar       = require('sugar'),
   util        = require('util'),
   underscore  = require('underscore'),
+  lodash      = require('lodash'),
   winston     = require('winston'),
   helper      = require('./lib/helper'),
   defs        = require('../config/defs'),
@@ -55,7 +56,7 @@ GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 
 // attach general helpers to the app
 app.helper = helper;
-app._ = underscore;
+app._ = lodash;
 app.Q = Q;
 app.moment = moment;
 

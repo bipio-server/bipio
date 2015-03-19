@@ -576,7 +576,7 @@ Bip.exports = {
       // what the end user needs to send.  We assume they're strings.
       //
       if (this.type == 'http' && this.config.exports.length > 0) {
-        for (var i = 0; i < this.config.exports.length; i++) {
+	    for (var i = 0; i < this.config.exports.length; i++) {
           exp[this.config.exports[i]] = {
             type : String,
             description : this.config.exports[i]
