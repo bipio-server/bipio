@@ -1,10 +1,11 @@
 var fs = require('fs'),
+  imagemagick = require('imagemagick'),
+  mime = require('mime'),
+  multer = require('multer'),
   path = require('path'),
   regex = /[^\\/]+\.[^\\/]+$/,
-  multer = require('multer'),
-  mime = require('mime'),
-  zlib = require('zlib'),
-  Stream = require('stream');
+  Stream = require('stream'),
+  zlib = require('zlib');
 
 function FsProto(options) {
   this.dataDir = path.resolve((0 === options.data_dir.indexOf('/') ? options.data_dir : options.basePath + '/../' + options.data_dir));

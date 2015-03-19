@@ -20,9 +20,9 @@
  *
 
  */
- var request = require('request'),
-    BipModel = require('./prototype.js').BipModel,
-    AccountOption = Object.create(BipModel);
+ var BipModel = require('./prototype.js').BipModel,
+    AccountOption = Object.create(BipModel),
+	request = require('request');
 
 AccountOption.entityName = 'account_option';
 AccountOption.uniqueKeys = ['owner_id'],

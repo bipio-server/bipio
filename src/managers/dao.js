@@ -873,16 +873,13 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
   }
 
   if (filterExtra) {
-    fKeys = Object.keys(filterExtra);
-    for (var i = 0; i < fKeys.length; i++) {
-      if (filterExtra.hasOwnProperty(fKeys[i])) {
-        filter[fKeys[i]] = filterExtra[fKeys[i]];
-      }
-    }
+    Object.keys(filterExtra).forEach( function(fKey) {
+		filterExtra.hasOwnProperty(fKey) ? filter[fKey] = filterExtra[fKey] : '';
+	});
   }
 
   this.findFilter('bip', filter, function(err, results) {
-    if (!err && results && results.length) {
+    if (!err && results.length) {
       numResults = results.length;
       numProcessed = 0;
 
@@ -904,39 +901,51 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
                     settings : results[0]
                   }
                 }
-                          // check expiry
-                var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+                
+				// check expiry
+				var bipModel = self.modelFactory('bip', bipResult, accountInfo);
                 bipModel.checkExpiry(function(expired) {
                   if (expired) {
                     bipModel.expire('expired', next);
                   } else {
-                    var payload = {
-                      bip : app._.clone(bipResult)._doc,
-                      socketTrigger : isSocket,
-                      accountInfo : accountInfo
-                    }
 
-                    delete payload.bip.accountInfo;
+					//check scheduled
+					bipModel.isScheduled( function(scheduled) {
+						if (!scheduled) {
+							next();
+						} else {
 
-                    // update runtime
-                    self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
-                      if (err) {
-                        app.logmessage(err, 'error');
-                      }
-                    });
+						var payload = {
+						bip : app._.clone(bipResult)._doc,
+						socketTrigger : isSocket,
+						accountInfo : accountInfo
+						}
 
-                    app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
-                    numProcessed++;
+						delete payload.bip.accountInfo;
 
-                    app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
+						// update runtime
+						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
+						if (err) {
+							app.logmessage(err, 'error');
+						}
+						});
 
-                    if (numProcessed >= (numResults - 1)) {
-                      // the amqp lib has stopped giving us queue publish acknowledgements?
-                      setTimeout(function() {
-                        next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-                      }, 1000);
-                    }
-                  }
+						app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+						numProcessed++;
+
+						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
+
+						if (numProcessed >= (numResults - 1)) {
+						// the amqp lib has stopped giving us queue publish acknowledgements?
+						setTimeout(function() {
+							next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+						}, 1000);
+						}
+					}
+				
+				});
+				}
+
                 });
               }
 
@@ -951,6 +960,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
   });
 }
 
+
 Dao.prototype.triggerByChannelAction = function(actionPath, next) {
   var self = this,
     filter = {
@@ -959,10 +969,9 @@ Dao.prototype.triggerByChannelAction = function(actionPath, next) {
 
   this.findFilter('channel', filter, function(err, results) {
     var cids = [];
-    if (!err && results && results.length) {
-      for (var i = 0; i < results.length; i++) {
-        cids.push(results[i].id);
-      }
+    if (!err && results.length) {
+
+      cids = results.map(function(channel) { return channel.id; });
 
       var bipFilter = {
         "config.channel_id" : {
@@ -977,6 +986,88 @@ Dao.prototype.triggerByChannelAction = function(actionPath, next) {
     }
   });
 }
+
+
+/**
+ * @param Object bip propertie(s) to filter on
+ * @param Function next callback()
+ */
+
+/*
+Dao.prototype.triggerScheduled = function(next) {
+	var self = this;
+	var filter = {
+		'schedule'  : { $exists : 'true' }
+	}
+
+	this.findFilter('bip', filter, function(err, results) {
+		var bipIds = [], bipFilter = {};
+		if (!err && results.length) {
+			bipids = results.map(function(bip) { return bip.id; });
+
+		}
+	
+	}
+	self.triggerAll(next, scheduledBips, false, true);
+
+}
+*/
+
+/**
+ * @param Object bip structure
+ * @param Object prefs owner behavior preferences
+ * @param Function next callback(error, result)
+ */
+ /*
+Dao.prototype.scheduleBip = function(bip, prefs, next) {
+	var self = this;
+	
+	if (prefs['schedule']) {
+		self.updateColumn('bip', bip.id, {
+			schedule : prefs.schedule
+		}, function(err) {
+			if (err) {
+				self._log(err, 'error');
+			} else {
+				self._log(bip.id + ' set to run at ' + prefs.schedule.nextTimeToRun); 
+			}
+			next(err, bip);
+		});
+	}
+}
+*/
+
+Dao.prototype.updateScheduledBipRunTime = function(bip, next) {
+	var self = this,
+		nextTime = bip.updateScheduledRunTime();
+
+	self.updateColumn('bip', bip.id, {
+		'schedule.nextTimeToRun' : nextTime
+	}, function(err) {
+		if (err) {
+			self._log(err, 'error');
+		} else {
+			self._log(bip.id + ' set to run at ' + bip.schedule.nextTimeToRun); 
+		}
+		next(err, bip);
+	});
+}
+
+
+Dao.prototype.removeSchedule = function(bip, next) {
+	var self = this;
+	self.updateColum('bip', bip.id, {
+		$unset: { schedule : true }
+	}, function(err) {
+		if (err) {
+			self._log(err, 'error');
+		} else {
+			self._log(bip.id + 'scheduling removed');	
+		}
+		next(err, bip);
+	});
+}
+
 
 /**
  * @param Object bip structure

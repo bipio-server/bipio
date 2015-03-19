@@ -828,7 +828,6 @@ module.exports = {
       } else if (methodDomain == 'bip') {
         if (method == 'create_from_referer') {
           result = getReferer(req);
-
           if (undefined == result) {
             response = 400;
             res.send(response);
@@ -1053,11 +1052,11 @@ module.exports = {
       res.status(200).end();
     });
 
-	  express.get('/status', function(req, res) {
-      var serverStatus = {};
+	express.get('/status', function(req, res) {
+	  var serverStatus = {};
 
-		  // get server version number:
-		  serverStatus['version'] = bipioVersion;
+	  // get server version number:
+	  serverStatus['version'] = bipioVersion;
 
     	// get rabbitmq connection status
     	if (app.bastion.isRabbitConnected()) {
