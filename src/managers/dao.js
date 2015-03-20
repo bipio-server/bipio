@@ -21,7 +21,6 @@
  */
 var util      = require('util'),
   helper      = require('../lib/helper'),
-  cdn         = require('../modules/cdn/cdn.js'),
   crypto   	  = require('crypto'),
   step        = require('../lib/step'), // @todo deprecate, use Q
   async       = require('async'), // @todo deprecate, use Q
@@ -40,7 +39,7 @@ function Dao(config, log, next) {
 
   // protocol + base url
   this._baseUrl = config.proto_public + config.domain_public;
-  this.cdn = cdn;
+
   this._modelPrototype = require('../models/prototype.js').BipModel;
 
   // @todo refactor to not rely on mongoose models
@@ -1494,137 +1493,6 @@ Dao.prototype.generateHubStats = function(next) {
     }
   });
 }
-
-/**
- *
- * Deferred job to pull an image url to the cdn and bind it to a users avatar.
- *
- */
-Dao.prototype._jobAttachUserAvatarIcon = function(payload, next) {
-  var ownerId = payload.owner_id,
-  avPath = payload.avatar_url,
-  dstFile = payload.dst_file
-  self = this;
-
-  if (!next) {
-    next = function(err, response) {
-      console.log(err);
-      console.log(response);
-    }
-  }
-
-  // don't care if the file exists or not, just suck it down.
-  cdn.httpFileSnarf(avPath, dstFile, function(err, resp) {
-    var convertArgs = [ dstFile ];
-
-    // if avPath isn't a jpeg, convert it
-    if (! /(jpg|jpeg)$/i.test(dstFile)  ) {
-      var newDst = dstFile.split('.');
-      newDst.pop();
-      newDst = newDst.join('.') + '.jpg';
-      convertArgs.push(newDst);
-    } else {
-      newDst = dstFile;
-    }
-
-    cdn.convert(convertArgs, function(err, stdout) {
-      if (err) {
-        next(true, resp);
-      } else {
-        cdn.resize({
-
-          srcPath : newDst,
-          dstPath : newDst,
-          width : 125,
-          height : 125
-        }, function(err, stdout) {
-          next(err, payload);
-        });
-      }
-    });
-  });
-}
-
-/**
- *
- *
- * @todo - convert to png
- */
- /*
-Dao.prototype.getAvRemote = function(ownerId, avUrl, blocking, cb) {
-  var iconUri,
-  fileSuffix = '.ico',
-  ok = true,
-  jobPayload,
-  tokens = avUrl.split('.'),
-  ext = tokens[tokens.length - 1];
-  fileName = ownerId + '.' + ext,
-  // via {username}.bip.io/profile/av
-  // or website bip.io/static/cdn/av/{owner_id}.png
-  dDir = DATA_DIR + '/cdn/img/av/';
-  filePath = dDir + fileName;
-
-  jobPayload = {
-    owner_id : ownerId,
-    avatar_url : avUrl,
-    dst_file : filePath
-  };
-
-  if (!blocking) {
-    // @todo stubbed. Queue not yet implemented
-    app.bastion.createJob(DEFS.JOB_ATTACH_REFERER_ICON, jobPayload);
-  } else {
-    // for testing purposes
-    this._jobAttachUserAvatarIcon(jobPayload, cb);
-  }
-}
-*/
-
-/**
- * Deferred job to attach a 3rd party icon to the given bip after saving to the CDN
- *
- * @todo move this into a jobRunner class (bastion)
- *
- */
- /*
-Dao.prototype._jobAttachBipRefererIcon = function(payload, next) {
-  var bipId = payload.bip_id,
-  dstFile = payload.dst_file,
-  refererIconPath = payload.referer_icon_path,
-  iconUri = payload.icon_uri,
-  self = this;
-
-  if (!next) {
-    next = function(err, response) {
-      console.log(err);
-    }
-  }
-
-  helper.exists(dstFile, function(exists) {
-    if (!exists) {
-      cdn.httpFileSnarf(refererIconPath, dstFile, function(err, resp) {
-        if (err) {
-          next(true, resp);
-        } else {
-          if (bipId) {
-            self.updateColumn('bip', bipId, {
-              icon : iconUri
-            });
-          }
-          next(false, payload);
-        }
-      });
-    } else {
-      if (bipId) {
-        self.updateColumn('bip', bipId, {
-          icon : iconUri
-        });
-      }
-      next(false, payload);
-    }
-  });
-}
-*/
 
 DaoMongo.prototype.getModelPrototype = function() {
   return this._modelPrototype;
