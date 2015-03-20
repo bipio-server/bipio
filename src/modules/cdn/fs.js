@@ -1,10 +1,11 @@
 var fs = require('fs'),
-  path = require('path'),
-  regex = /[^\\/]+\.[^\\/]+$/,
+  imagemagick = require('imagemagick'),
   multer = require('multer'),
   mime = require('mime'),
-  zlib = require('zlib'),
-  Stream = require('stream');
+  path = require('path'),
+  regex = /[^\\/]+\.[^\\/]+$/,
+  Stream = require('stream')
+  zlib = require('zlib');
 
 function FsProto(options) {
   this.dataDir = path.resolve((0 === options.data_dir.indexOf('/') ? options.data_dir : options.basePath + '/../' + options.data_dir));
@@ -56,7 +57,8 @@ FsProto.prototype = {
     }
 
     self.utils.parse_path(destPath, rootDir, function(err, path) {
-      if (err) {
+ 
+ 	if (err) {
         next(err);
       }
 
@@ -118,47 +120,25 @@ FsProto.prototype = {
 		
 		var dstFile = dstPath + owner_id + '.png';
 
-		console.log('saving ',source, ' to ',dstFile);
+	self.save(dstFile, source, { persist : true }, function(err, file) {
 
 			var options = {
-				srcPath : source,
-				dstPath : dstPath + owner_id + '.png',
+				srcPath : file.localpath,
+				dstPath : file.localpath.replace(/\.[a-z]{0,4}$/i, '.png'),
 				format: 'png',
 				height: 125,
 				width: 125
 			};
 
 			imagemagick.convert([options.srcPath, '-resize', '125x125', options.dstPath], function(err, result) {
+				
 				if (err) next(err);
 				next(err, dstFile);
 			});
-
-
-
-
-/*
-		// from a url
-		app.helper.httpFileSnarf(source, dstFile, function(err, resp) {
-			if (err) { 
-				next(true, resp); 
-			} else {
-
-				console.log(resp);
-
-			}
-		});
-*/
-  },
-
-
-  convert : function(args, next) {
-    imagemagick.convert(args, next);
-  },
 	
-  resize : function(args, next) {
-    imagemagick.resize(args, next);
-  },
+	});
 
+  },
 
 
   /*

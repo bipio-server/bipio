@@ -22,17 +22,19 @@
  * A Bipio Commercial OEM License may be obtained via hello@bip.io
  */
 var dao      = require('../src/bootstrap');
+var request = require('request');
 
 // given an image url and account id, attaches the account avatar
 var ownerId = process.argv[2];
 	url = process.argv[3],
-	dstPath = process.argv[4] ? process.argv[4] : GLOBAL.CFG.datadir + '/cdn/img/av/'
+	dstPath = process.argv[4] ? process.argv[4] : GLOBAL.CFG.datadir + '/perm/cdn/img/av/'
 
 if (!url || !ownerId) {
     console.log('Usage : node avsnarf.js {owner id} {url} {destination path}');
     process.exit(1);
 }
 
+url = request.get(url);
 
 console.log('fetching avatar...');
 dao.app.modules.cdn.saveAvatar(ownerId, url, dstPath, function(err, response) {
