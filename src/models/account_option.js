@@ -259,14 +259,20 @@ AccountOption.entityValidators = {
 }
 
 
-AccountOption.preSave = function(accountInfo, next) {
+AccountOption.DISABLED_preSave = function(accountInfo, next) {
+    var self = this;
     if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || /^http/.test(this.avatar) ) {
-		app.modules.cdn.saveAvatar(this.owner_id, this.avatar, '/cdn/img/av/', function(err, avatarPath) {
-			console.log(err);
-			this.avatar = avatarPath;
+		app.modules.cdn.saveAvatar(this.owner_id, request.get(this.avatar), '/cdn/img/av/', function(err, avatarPath) {
+            if (err) {
+                next(err);
+            } else {
+                self.avatar = CFG.cdn_public + avatarPath;
+                next(false, self);
+            }
 		});
+    } else {
+        next(false, this);
     }
-    next(false, this);
 }
 
 

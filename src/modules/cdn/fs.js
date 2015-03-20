@@ -57,7 +57,7 @@ FsProto.prototype = {
     }
 
     self.utils.parse_path(destPath, rootDir, function(err, path) {
- 
+
  	if (err) {
         next(err);
       }
@@ -106,37 +106,41 @@ FsProto.prototype = {
   /*
    * Saves an avatar file
    *
-   * owner_id: string
+   * fileName: string
    * source: string. image location | url
    * dstPath: string
    * next: function(string err, string dstFile)
    */
   saveAvatar: function() {
 	var self = this,
-		owner_id = arguments[0],
+		fileName = arguments[0],
 		source  = arguments[1],
 		dstPath  = arguments[2],
 		next = arguments[3];
-		
-		var dstFile = dstPath + owner_id + '.png';
 
-	self.save(dstFile, source, { persist : true }, function(err, file) {
+		var dstFile = dstPath + fileName + '.png';
 
-			var options = {
-				srcPath : file.localpath,
-				dstPath : file.localpath.replace(/\.[a-z]{0,4}$/i, '.png'),
-				format: 'png',
-				height: 125,
-				width: 125
-			};
+  	self.save(dstFile, source, { persist : true }, function(err, file) {
+      if (err) {
+        next(err);
+      } else {
+  			var options = {
+  				srcPath : file.localpath,
+  				dstPath : file.localpath.replace(/\.[a-z]{0,4}$/i, '.png'),
+  				format: 'png',
+  				height: 125,
+  				width: 125
+  			};
 
-			imagemagick.convert([options.srcPath, '-resize', '125x125', options.dstPath], function(err, result) {
-				
-				if (err) next(err);
-				next(err, dstFile);
-			});
-	
-	});
+  			imagemagick.convert([options.srcPath, '-resize', '125x125', options.dstPath], function(err, result) {
+  				if (err) {
+            next(err);
+          } else {
+    				next(err, dstFile);
+          }
+  			});
+      }
+  	});
 
   },
 
