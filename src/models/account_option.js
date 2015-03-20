@@ -261,16 +261,10 @@ AccountOption.entityValidators = {
 
 AccountOption.preSave = function(accountInfo, next) {
     if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || /^http/.test(this.avatar) ) {
-        if (this.avatar) {
-            this.app.modules.cdn.saveAvatar(this.owner_id, this.avatar, function(err, avatarPath) {
-				console.log(err);
-			});
-			// deprecated approach to saving avatar image
-			/*this._dao.getAvRemote(this.owner_id, this.avatar, true, function(err, result) {
-                console.log(err);
-            });*/
-        }
-        this.avatar = '/static/img/cdn/av/' + this.owner_id + '.png';
+		app.modules.cdn.saveAvatar(this.owner_id, this.avatar, '/cdn/img/av/', function(err, avatarPath) {
+			console.log(err);
+			this.avatar = avatarPath;
+		});
     }
     next(false, this);
 }

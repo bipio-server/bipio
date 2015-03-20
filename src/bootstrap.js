@@ -30,21 +30,21 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 var app = {
     workerId : ':PID:' + process.pid
   },
-  sugar       = require('sugar'),
-  util        = require('util'),
-  underscore  = require('underscore'),
-  lodash      = require('lodash'),
-  winston     = require('winston'),
-  helper      = require('./lib/helper'),
+  cluster     = require('cluster'),
   defs        = require('../config/defs'),
   envConfig   = require('config'),
-  cluster     = require('cluster'),
+  heapdump    = require('heapdump'),
+  helper      = require('./lib/helper'),
+  ipaddr      = require('ipaddr.js'),
+  lodash      = require('lodash'),
+  memwatch    = require('memwatch'),
+  moment      = require('moment'),
   os          = require('os'),
   Q           = require('q'),
-  moment      = require('moment'),
-  ipaddr = require('ipaddr.js'),
-  memwatch = require('memwatch'),
-  heapdump = require('heapdump');
+  sugar       = require('sugar'),
+  underscore  = require('underscore'),
+  util        = require('util'),
+  winston     = require('winston');
 
 require('ssl-root-cas/latest').inject();
 
