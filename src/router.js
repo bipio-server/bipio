@@ -205,17 +205,9 @@ function getReferer(req) {
 }
 
 function getClientInfo(req, txId) {
-  var host;
-
-  if (req.header('X-Forwarded-For')) {
-    host = req.header('X-Forwarded-For').split(',').shift().trim();
-  } else {
-    host = req.connection.remoteAddress;
-  }
-
   return {
     'id' : txId || uuid.v4(),
-    'host' : host,
+    'host' : req.header('X-Forwarded-For') || req.connection.remoteAddress,
     'date' : Math.floor(new Date().getTime() / 1000),
     'proto' : 'http',
     'reply_to' : '',
@@ -277,8 +269,7 @@ var restAction = function(req, res) {
         // populate our model with the request.  Set an owner_id to be the
         // authenticated user before doing anything else
         model = dao.modelFactory(resourceName, helper.pasteurize(req.body), accountInfo, true);
-
-      dao.create(model, restResponse(res), accountInfo, postSave);
+        dao.create(model, restResponse(res), accountInfo, postSave);
       } else if (rMethod == 'PUT') {
         // filter request body to public writable
         var writeFilters = modelPublicFilter[resourceName]['write'];
@@ -570,34 +561,45 @@ module.exports = {
     Concept for OEmbed widget functionality.
     TODO: find bip share based on req.params.id and return HTML below with interpolated results.
   */
-  express.get('/oembed/:id', function(req, res) {
+  express.get('/oembed/*', function(req, res) {
+    if (req.query.url) {
+      
+      var shareId = req.query.url.split('/')[req.query.url.split('/').length - 1]
+      
+      dao.find('bip_share', { id : shareId }, function(err, result) {
+        if (err) {
+          res.status(500).end(err)
+        }
 
-    // Dao query here
+        res.json({
+          version: "1.0",
+          provider_name: "Bipio",
+          provider_url: "http://"+req.headers.host,
+          version: "1.0",
+          html: "<div class=\"bip-select-info\">"+
+                  "<div class=\"bip-preview middle pull-left\">"+
+                    "<img alt=\""+ result.note +"\" title=\""+ result.name +"\" class=\"tooltipped hub-icon hub-icon-32 source-icon\" data-placement=\"top\" data-container=\"body\" src=\"CENTER_IMAGE_URL\" />"+
+                    "<ul>"+
+                      "<li><img class=\"mini tooltipped hub-icon\" data-container=\"body\" data-placement=\"top\" title=\"ACTION_TITLE\" src=\"POD_IMAGE_URL\" /></li>"+
+                    "</ul>"+
+                  "</div>"+
+                  "<a href=\"http://"+ req.headers.host +"/signup?p=%2Fdash%23community%2F"+ result.id +"\"></a>"+
+                  "<div>"+
+                    "<strong class=\"name\">"+ result.name +"</strong>"+
+                  "</div>"+
+                  "<div class=\"pull-left\">"+
+                    "<small class=\"description\">"+ result.note +"</small>"+
+                  "</div><button data-target=\"http://"+ req.headers.host +"/signup?p=%2Fdash%23community%2F"+ result.id +"\" class=\"btn pull-right\">"+
+                  "<h2>+</h2></button>"+
+                  "<div class=\"clearfix\"></div>"+
+                "</div>"
+        });
+      });
 
-    res.json({
-      version: "1.0",
-      provider_name: "Bipio",
-      provider_url: "https://bip.io",
-      version: "1.0",
-      html: "<div class=\"bip-select-info\">\
-              <div class=\"bip-preview middle pull-left\">\
-                <img alt=\"integrate twitter with Stack Overflow: Search\" title=\"Stack Overflow: Search\" class=\"tooltipped hub-icon hub-icon-32 source-icon\" data-placement=\"top\" data-container=\"body\" src=\"/static/img/channels/32/color/stackoverflow.png\" />\
-                <ul>\
-                  <li><img class=\"mini tooltipped hub-icon\" data-container=\"body\" data-placement=\"top\" title=\"<%= manifest.title + (manifest.description ? ' : ' + manifest.description : '') %>\" src=\"/static/img/channels/32/color/twitter.png\" /></li>\
-                  <li><img class=\"mini tooltipped hub-icon\" data-container=\"body\" data-placement=\"top\" title=\"<%= manifest.title + (manifest.description ? ' : ' + manifest.description : '') %>\" src=\"/static/img/channels/32/color/stackoverflow.png\" /></li>\
-                </ul>\
-              </div>\
-              <a href=\"/signup?p=%2Fdash%23community%2F2d8a3120-7564-41b3-9593-9b2a05224b6b\"></a>\
-              <div>\
-                <strong class=\"name\">Direct Message on Twitter all new StackOverflow Searches</strong>\
-              </div>\
-              <div class=\"pull-left\">\
-                <small class=\"description\">I want to get certain StackOverflow search results sent to my Twitter account, so I can retweet the better ones.</small>\
-              </div><button data-target=\"/signup?p=%2Fdash%23community%2F2d8a3120-7564-41b3-9593-9b2a05224b6b\" class=\"btn pull-right\">\
-              <h2>+</h2></button>\
-              <div class=\"clearfix\"></div>\
-            </div>"
-    });
+    }
+    else {
+      res.status(404).end();
+    }
   });
 
 	express.get('/rpc/transforms', function(req, res) {
