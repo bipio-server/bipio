@@ -558,9 +558,9 @@ module.exports = {
     });
   
   /*
-    Concept for OEmbed widget functionality.
-    TODO: find bip share based on req.params.id and return HTML below with interpolated results.
+    OEmbed widget API.
   */
+  
   express.get('/oembed/*', function(req, res) {
     if (req.query.url) {
       
