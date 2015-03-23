@@ -918,7 +918,7 @@ Dao.prototype.bipLog = function(payload) {
  * Trigger all trigger bips
  *
  */
-Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
+Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) {
   var self = this,
   filter = {
     type : 'trigger',
@@ -969,7 +969,8 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
                     var payload = {
                       bip : app._.clone(bipResult)._doc,
                       socketTrigger : isSocket,
-                      accountInfo : accountInfo
+                      accountInfo : accountInfo,
+                      dryRun : !!dryRun
                     }
 
                     delete payload.bip.accountInfo;

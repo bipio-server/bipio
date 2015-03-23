@@ -863,7 +863,7 @@ Bip.postSave = function(accountInfo, next, isNew) {
 
     // if its a new trigger, then run it
     if ('trigger' === this.type && !this.paused) {
-      this._dao.triggerAll(function() {}, { id : this.id });
+      this._dao.triggerAll(function() {}, { id : this.id }, false, false, true);
     }
   }
 

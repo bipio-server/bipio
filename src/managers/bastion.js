@@ -151,6 +151,14 @@ Bastion.prototype.jobRunner = function(jobPacket) {
           } else {
             invokeChannel = self._dao.modelFactory('channel', result);
 
+            self._dao.accumulate('bip', imports._bip, '_imp_actual');
+
+            app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+              owner_id : result.owner_id,
+              bip_id : jobPacket.data.id,
+              code : 'bip_invoke'
+            });
+
             if (jobPacket.data.socketTrigger || !invokeChannel.isRealtime() ) {
               invokeChannel.invoke(
                 imports, // imports
@@ -158,34 +166,29 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                 clientStruct, // client
                 contentParts, // content parts
                 function(err, exports, content_parts, transferSizeBytes) {
-                  var normedExports = {};
-                  transferSizeBytes = transferSizeBytes || 0;
-                  for (var key in exports) {
-                    normedExports['source#' + key] = exports[key];
-                  }
 
-                  normedExports['source'] = app._.clone(exports);
+                  if (!err && !jobPacket.data.dryRun) {
 
-                  if (!err) {
+                    app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                      owner_id : result.owner_id,
+                      type : 'traffic_inbound_mb',
+                      inc : sprintf('%.4f', (transferSizeBytes / (1024 * 1024)) )
+                    });
+
+                    app.bastion.createJob(DEFS.JOB_USER_STAT, {
+                      owner_id : result.owner_id,
+                      type : 'delivered_bip_inbound'
+                    });
+
                     if (exports) {
-                      self._dao.accumulate('bip', imports._bip, '_imp_actual');
 
-                      app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                        owner_id : result.owner_id,
-                        type : 'traffic_inbound_mb',
-                        inc : sprintf('%.4f', (transferSizeBytes / (1024 * 1024)) )
-                      });
+                      var normedExports = {};
+                      transferSizeBytes = transferSizeBytes || 0;
+                      for (var key in exports) {
+                        normedExports['source#' + key] = exports[key];
+                      }
 
-                      app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                        owner_id : result.owner_id,
-                        type : 'delivered_bip_inbound'
-                      });
-
-                      app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
-                        owner_id : result.owner_id,
-                        bip_id : jobPacket.data.id,
-                        code : 'bip_invoke'
-                      });
+                      normedExports['source'] = app._.clone(exports);
 
                       // translate trigger exports
                       // into bip #source hub key.
