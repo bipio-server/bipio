@@ -377,7 +377,64 @@ Dao.prototype.removeBipDupTracking = function(bipId, next) {
         );
       }
     });
+}
 
+Dao.prototype.removeBipDeltaTracking = function(bipId, next) {
+  var promises = [],
+    deferred,
+    self = this;
+
+  // get bip
+  this.find(
+    'bip',
+    {
+      id : bipId
+    },
+    function(err, result) {
+      if (err) {
+        next(err);
+      } else {
+        for (var i = 0; i < result._channel_idx.length; i++)  {
+
+          deferred = app.Q.defer();
+          promises.push(deferred.promise);
+
+          (function(channelId, deferred) {
+            var modelName = 'channel';
+            self.find(modelName, { id : channelId }, function(err, channel) {
+              var cModel, pod;
+              if (err) {
+                deferred.reject(err);
+              } else {
+                cModel = self.modelFactory(modelName, channel);
+                pod = cModel.getPod();
+
+                if (pod.getTrackDeltas()) {
+                  pod.deltaRemove(bipId, cModel, function(err) {
+                    if (err) {
+                      deferred.reject(err);
+                    } else {
+                      deferred.resolve();
+                    }
+                  });
+                } else {
+                  deferred.resolve();
+                }
+              }
+            });
+          })(result._channel_idx[i], deferred);
+        }
+
+        app.Q.all(promises).then(
+          function() {
+            next();
+          },
+          function(err) {
+            next(err);
+          }
+        );
+      }
+    });
 }
 
 Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
