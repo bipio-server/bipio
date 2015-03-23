@@ -93,8 +93,19 @@ function cryptSave(value) {
   return crypted;
 }
 
+function _encStr(s, toUnicode) {
+   var json = JSON.stringify(s);
+   return toUnicode ? json : json.replace(/[\u007f-\uffff]/g,
+      function(c) {
+        return '\\u'+('0000'+c.charCodeAt(0).toString(16)).slice(-4);
+      }
+   );
+}
+
 function cryptSaveObj(value) {
-  var strVal = (new Buffer(JSON.stringify(value), 'utf-8' )).toString('ascii')
+  //var strVal = (new Buffer(JSON.stringify(value), 'utf-8' )).toString('ascii')
+  //return cryptSave(JSON.stringify(strVal));
+  var strVal = _encStr(value, false)
   return cryptSave(JSON.stringify(strVal));
 }
 

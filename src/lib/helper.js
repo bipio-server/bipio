@@ -22,6 +22,7 @@
  */
 var bcrypt = require('bcrypt'),
 baseConverter = require('base-converter'),
+//cronParser = require('cron-parser'),
 crypto = require('crypto'),
 djs = require('datejs'),
 dns = require('dns'),
@@ -617,7 +618,7 @@ var helper = {
         );
       }
     });
-  },
+  }
 
 }
 

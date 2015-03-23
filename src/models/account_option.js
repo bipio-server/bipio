@@ -258,19 +258,23 @@ AccountOption.entityValidators = {
 
 }
 
-/*
-AccountOption.preSave = function(accountInfo, next) {
+
+AccountOption.DISABLED_preSave = function(accountInfo, next) {
+    var self = this;
     if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || /^http/.test(this.avatar) ) {
-        if (this.avatar) {
-            this._dao.getAvRemote(this.owner_id, this.avatar, true, function(err, result) {
-                console.log(err);
-            });
-        }
-        this.avatar = '/static/img/cdn/av/' + this.owner_id + '.jpg';
+		app.modules.cdn.saveAvatar(this.owner_id, request.get(this.avatar), '/cdn/img/av/', function(err, avatarPath) {
+            if (err) {
+                next(err);
+            } else {
+                self.avatar = CFG.cdn_public + avatarPath;
+                next(false, self);
+            }
+		});
+    } else {
+        next(false, this);
     }
-    next(false, this);
 }
-*/
+
 
 function endLifeParse(end_life) {
     var imp = parseInt(end_life.imp);

@@ -55,6 +55,7 @@ function generate_random_base() {
  */
 function endLifeParse(end_life) {
   var seconds, d;
+
   // passed validation but isn't a number, then set it zero (never end based on impressions)
   if (isNaN(parseInt(end_life.imp))) {
     end_life.imp = 0;
@@ -62,6 +63,14 @@ function endLifeParse(end_life) {
 
   if (!end_life.time) {
     end_life.time = 0;
+  } else if (end_life.time !== '0' && end_life.time !== 0 && end_life.time !== '') {
+    try {
+      d = new Date(Date.parse(end_life.time));
+      if (d.getTime() != 0) {
+        end_life.time = Math.floor(d.getTime() / 1000);
+      }
+    } catch (e) {
+    }
   }
 
   return end_life;
@@ -499,6 +508,12 @@ Bip.entitySchema = {
     renderable: true,
     writable: false
   },
+  schedule : {
+    type : Object,
+    renderable : true,
+    writable : true,
+    default : {}
+  },
   _imp_actual : {
     type : Number,
     renderable : true,
@@ -561,7 +576,7 @@ Bip.exports = {
       // what the end user needs to send.  We assume they're strings.
       //
       if (this.type == 'http' && this.config.exports.length > 0) {
-        for (var i = 0; i < this.config.exports.length; i++) {
+	    for (var i = 0; i < this.config.exports.length; i++) {
           exp[this.config.exports[i]] = {
             type : String,
             description : this.config.exports[i]
@@ -778,7 +793,7 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
           if (this.hub[key].transforms.hasOwnProperty(txChannelId)) {
             to = getAction(accountInfo, txChannelId);
             if (from && to) {
-             
+
 			  // filter to include only transforms for these
               // adjacent channels
               for(var txKey in this.hub[key].transforms[txChannelId]) {

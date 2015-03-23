@@ -1,10 +1,11 @@
 var fs = require('fs'),
-  path = require('path'),
-  regex = /[^\\/]+\.[^\\/]+$/,
+  imagemagick = require('imagemagick'),
   multer = require('multer'),
   mime = require('mime'),
-  zlib = require('zlib'),
-  Stream = require('stream');
+  path = require('path'),
+  regex = /[^\\/]+\.[^\\/]+$/,
+  Stream = require('stream')
+  zlib = require('zlib');
 
 function FsProto(options) {
   this.dataDir = path.resolve((0 === options.data_dir.indexOf('/') ? options.data_dir : options.basePath + '/../' + options.data_dir));
@@ -56,44 +57,93 @@ FsProto.prototype = {
     }
 
     self.utils.parse_path(destPath, rootDir, function(err, path) {
-      if (err) {
+
+ 	if (err) {
         next(err);
       }
 
-      var writeStream = fs.createWriteStream(path, writeOptions);
+      (function(next) {
+        var writeStream = fs.createWriteStream(path, writeOptions);
 
-      if (header) {
-        var headerStream = new Stream();
-        headerStream.on('data', function(data) {
-          writeStream.write(data);
-        });
+        if (header) {
+          var headerStream = new Stream();
+          headerStream.on('data', function(data) {
+            writeStream.write(data);
+          });
 
-        headerStream.emit('data', options.header);
-      }
+          headerStream.emit('data', options.header);
+        }
 
-      writeStream.on('error', next);
-      writeStream.on('finish', function(err) {
-        if (err) next(err);
-        else self.utils.normalize(path, next);
-        });
+        writeStream.on('error', next);
+        writeStream.on('finish', function(err) {
 
-      if (compress) {
-        var gzip = zlib.createGzip();
-        readStream.pipe(gzip).pipe(writeStream);
-        readStream.resume();
-      }
-      else if (readStream) {
-        readStream.pipe(writeStream);
-        readStream.resume();
-      }
+          if (err) next(err);
+          else self.utils.normalize(path, next);
+          });
 
-      if (buffer) {
-        writeStream.write(buffer.toString(), null, function() {
-          writeStream.end();
-              });
-      }
+        if (compress) {
+          var gzip = zlib.createGzip();
+          readStream.pipe(gzip).pipe(writeStream);
+          readStream.resume();
+        }
+        else if (readStream) {
+          readStream.pipe(writeStream);
+          readStream.resume();
+        }
+
+        if (buffer) {
+          writeStream.write(buffer.toString(), null, function() {
+            writeStream.end();
+          });
+        }
+      })(next);
+
+
     });
   },
+
+
+  /*
+   * Saves an avatar file
+   *
+   * fileName: string
+   * source: string. image location | url
+   * dstPath: string
+   * next: function(string err, string dstFile)
+   */
+  saveAvatar: function() {
+	var self = this,
+		fileName = arguments[0],
+		source  = arguments[1],
+		dstPath  = arguments[2],
+		next = arguments[3];
+
+		var dstFile = dstPath + fileName + '.png';
+
+  	self.save(dstFile, source, { persist : true }, function(err, file) {
+      if (err) {
+        next(err);
+      } else {
+  			var options = {
+  				srcPath : file.localpath,
+  				dstPath : file.localpath.replace(/\.[a-z]{0,4}$/i, '.png'),
+  				format: 'png',
+  				height: 125,
+  				width: 125
+  			};
+
+  			imagemagick.convert([options.srcPath, '-resize', '125x125', options.dstPath], function(err, result) {
+  				if (err) {
+            next(err);
+          } else {
+    				next(err, dstFile);
+          }
+  			});
+      }
+  	});
+
+  },
+
 
   /*
    * Gets a file from a fileStruct and returns a new fileStruct and readStream

@@ -1,7 +1,8 @@
-var pkgcloud = require('pkgcloud'),
+
+var	client = null,
 	fs = require('fs'),
 	FsProto = require('./fs.js'),
-	client = null,
+    pkgcloud = require('pkgcloud'),
 	util = require('util');
 
 function CDNProto(options) {
