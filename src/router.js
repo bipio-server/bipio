@@ -556,7 +556,40 @@ module.exports = {
         });
 
     });
+  
+  /*
+    Concept for OEmbed widget functionality.
+    TODO: find bip share based on req.params.id and return HTML below with interpolated results.
+  */
+  express.get('/oembed/:id', function(req, res) {
 
+    // Dao query here
+
+    res.json({
+      version: "1.0",
+      provider_name: "Bipio",
+      provider_url: "https://bip.io",
+      version: "1.0",
+      html: "<div class=\"bip-select-info\">\
+              <div class=\"bip-preview middle pull-left\">\
+                <img alt=\"integrate twitter with Stack Overflow: Search\" title=\"Stack Overflow: Search\" class=\"tooltipped hub-icon hub-icon-32 source-icon\" data-placement=\"top\" data-container=\"body\" src=\"/static/img/channels/32/color/stackoverflow.png\" />\
+                <ul>\
+                  <li><img class=\"mini tooltipped hub-icon\" data-container=\"body\" data-placement=\"top\" title=\"<%= manifest.title + (manifest.description ? ' : ' + manifest.description : '') %>\" src=\"/static/img/channels/32/color/twitter.png\" /></li>\
+                  <li><img class=\"mini tooltipped hub-icon\" data-container=\"body\" data-placement=\"top\" title=\"<%= manifest.title + (manifest.description ? ' : ' + manifest.description : '') %>\" src=\"/static/img/channels/32/color/stackoverflow.png\" /></li>\
+                </ul>\
+              </div>\
+              <a href=\"/signup?p=%2Fdash%23community%2F2d8a3120-7564-41b3-9593-9b2a05224b6b\"></a>\
+              <div>\
+                <strong class=\"name\">Direct Message on Twitter all new StackOverflow Searches</strong>\
+              </div>\
+              <div class=\"pull-left\">\
+                <small class=\"description\">I want to get certain StackOverflow search results sent to my Twitter account, so I can retweet the better ones.</small>\
+              </div><button data-target=\"/signup?p=%2Fdash%23community%2F2d8a3120-7564-41b3-9593-9b2a05224b6b\" class=\"btn pull-right\">\
+              <h2>+</h2></button>\
+              <div class=\"clearfix\"></div>\
+            </div>"
+    });
+  });
 
 	express.get('/rpc/transforms', function(req, res) {
 		dao.list('transform_default', undefined, 100, 1, 'recent', {owner_id : 'system'}, function(err, modelName, results) {
@@ -564,66 +597,65 @@ module.exports = {
 		});
 	});
 
+  express.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req, res) {
+    var model = req.params.model,
+    model_subdomain = req.params.model_subdomain;
+    res.contentType(DEFS.CONTENTTYPE_JSON);
 
-    express.get('/rpc/describe/:model/:model_subdomain?', restAuthWrapper, function(req, res) {
-      var model = req.params.model,
-      model_subdomain = req.params.model_subdomain;
-      res.contentType(DEFS.CONTENTTYPE_JSON);
+    dao.describe(model, model_subdomain, restResponse(res), req.remoteUser);
+  });
 
-      dao.describe(model, model_subdomain, restResponse(res), req.remoteUser);
-    });
+  /**
+   * DomainAuth channel renderer
+   * @deprecated /rpc/render/channel/:channel_id/:renderer
+   */
+  express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+      var filter = {
+        owner_id: req.remoteUser.getId(),
+        id : req.params.channel_id
+      };
 
-    /**
-     * DomainAuth channel renderer
-     * @deprecated /rpc/render/channel/:channel_id/:renderer
-     */
-    express.get('/rpc/render/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
-        var filter = {
-          owner_id: req.remoteUser.getId(),
-          id : req.params.channel_id
-        };
+      dao.find('channel', filter, function(err, result) {
+        if (err || !result) {
+          app.logmessage(err, 'error');
+          res.status(404).end();
+        } else {
+          var channel = dao.modelFactory('channel', result, req.remoteUser);
 
-        dao.find('channel', filter, function(err, result) {
-          if (err || !result) {
-            app.logmessage(err, 'error');
-            res.status(404).end();
-          } else {
-            var channel = dao.modelFactory('channel', result, req.remoteUser);
+          channel.rpc(
+            req.params.renderer,
+            req.query,
+            getClientInfo(req),
+            req,
+            res
+            );
+        }
+      });
+  });
 
-            channel.rpc(
-              req.params.renderer,
-              req.query,
-              getClientInfo(req),
-              req,
-              res
-              );
-          }
-        });
-    });
+  express.get('/rpc/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+      var filter = {
+        owner_id: req.remoteUser.getId(),
+        id : req.params.channel_id
+      };
 
-    express.get('/rpc/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
-        var filter = {
-          owner_id: req.remoteUser.getId(),
-          id : req.params.channel_id
-        };
+      dao.find('channel', filter, function(err, result) {
+        if (err || !result) {
+          app.logmessage(err, 'error');
+          res.status(404).end();
+        } else {
+          var channel = dao.modelFactory('channel', result, req.remoteUser);
 
-        dao.find('channel', filter, function(err, result) {
-          if (err || !result) {
-            app.logmessage(err, 'error');
-            res.status(404).end();
-          } else {
-            var channel = dao.modelFactory('channel', result, req.remoteUser);
-
-            channel.rpc(
-              req.params.renderer,
-              req.query,
-              getClientInfo(req),
-              req,
-              res
-              );
-          }
-        });
-    });
+          channel.rpc(
+            req.params.renderer,
+            req.query,
+            getClientInfo(req),
+            req,
+            res
+            );
+        }
+      });
+  });
 
     /**
      * Account Auth RPC, sets up oAuth for the selected pod, if the pod supports oAuth
