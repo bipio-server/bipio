@@ -560,7 +560,7 @@ module.exports = {
   /*
     OEmbed widget API.
   */
-  
+
   express.get('/oembed/*', function(req, res) {
     if (req.query.url) {
       
@@ -573,7 +573,6 @@ module.exports = {
         }
 
         res.json({
-          version: "1.0",
           provider_name: "Bipio",
           provider_url: "http://"+req.headers.host,
           version: "1.0",
