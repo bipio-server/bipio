@@ -567,6 +567,7 @@ module.exports = {
       var shareId = req.query.url.split('/')[req.query.url.split('/').length - 1]
       
       dao.find('bip_share', { id : shareId }, function(err, result) {
+        
         if (err) {
           res.status(500).end(err)
         }
