@@ -830,8 +830,15 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
 
 Bip.preRemove = function(id, accountInfo, next) {
   var self = this;
-  this._dao.removeBipDupTracking(id, function(err) {
-    next(err, 'bip', self);
+
+  this._dao.removeBipDeltaTracking(id, function(err) {
+    if (err) {
+      next(err, 'bip', self);
+    } else {
+      self._dao.removeBipDupTracking(id, function(err) {
+        next(err, 'bip', self);
+      });
+    }
   });
 }
 
