@@ -30,21 +30,20 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 var app = {
     workerId : ':PID:' + process.pid
   },
-  cluster     = require('cluster'),
+  sugar       = require('sugar'),
+  util        = require('util'),
+  underscore  = require('underscore'),
+  winston     = require('winston'),
+  helper      = require('./lib/helper'),
   defs        = require('../config/defs'),
   envConfig   = require('config'),
-  heapdump    = require('heapdump'),
-  helper      = require('./lib/helper'),
-  ipaddr      = require('ipaddr.js'),
-  lodash      = require('lodash'),
-  memwatch    = require('memwatch'),
-  moment      = require('moment'),
+  cluster     = require('cluster'),
   os          = require('os'),
   Q           = require('q'),
-  sugar       = require('sugar'),
-  underscore  = require('underscore'),
-  util        = require('util'),
-  winston     = require('winston');
+  moment      = require('moment'),
+  ipaddr = require('ipaddr.js'),
+  memwatch = require('memwatch'),
+  heapdump = require('heapdump');
 
 require('ssl-root-cas/latest').inject();
 
@@ -56,7 +55,7 @@ GLOBAL.SERVER_ROOT = path.resolve(__dirname);
 
 // attach general helpers to the app
 app.helper = helper;
-app._ = lodash;
+app._ = underscore;
 app.Q = Q;
 app.moment = moment;
 

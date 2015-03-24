@@ -576,25 +576,7 @@ module.exports = {
           provider_name: "Bipio",
           provider_url: GLOBAL.CFG.website_public,
           version: "1.0",
-          html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/" + result.id +"\">"+
-                  /*"<div class=\"bip-select-info\">"+
-                    "<div class=\"bip-preview middle pull-left\">"+
-                      "<img alt=\""+ result.note +"\" title=\""+ result.name +"\" class=\"tooltipped hub-icon hub-icon-32 source-icon\" data-placement=\"top\" data-container=\"body\" src=\"CENTER_IMAGE_URL\" />"+
-                      "<ul>"+
-                        "<li><img class=\"mini tooltipped hub-icon\" data-container=\"body\" data-placement=\"top\" title=\"ACTION_TITLE\" src=\"POD_IMAGE_URL\" /></li>"+
-                      "</ul>"+
-                    "</div>"+
-                    "<a href=\"http://"+ req.headers.host +"/signup?p=%2Fdash%23community%2F"+ result.id +"\"></a>"+
-                    "<div>"+
-                      "<strong class=\"name\">"+ result.name +"</strong>"+
-                    "</div>"+
-                    "<div class=\"pull-left\">"+
-                      "<small class=\"description\">"+ result.note +"</small>"+
-                    "</div><button data-target=\"http://"+ req.headers.host +"/signup?p=%2Fdash%23community%2F"+ result.id +"\" class=\"btn pull-right\">"+
-                    "<h2>+</h2></button>"+
-                    "<div class=\"clearfix\"></div>"+
-                  "</div>"+*/
-                "</iframe>"
+          html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/" + new Buffer(JSON.stringify(result)).toString("base64") +"\" allowTransparency=\"true\" style=\"border: none;\"></iframe>"
         });
       });
 
