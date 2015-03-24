@@ -573,9 +573,12 @@ module.exports = {
         }
 
         res.json({
+          version: "1.0",
+          type: "rich",
           provider_name: "Bipio",
           provider_url: GLOBAL.CFG.website_public,
-          version: "1.0",
+          width: "470",
+          height: "94",
           html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/" + new Buffer(JSON.stringify(result)).toString("base64") +"\" allowTransparency=\"true\" style=\"border: none;\"></iframe>"
         });
       });
