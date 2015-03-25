@@ -44,7 +44,8 @@ Account.entitySchema = {
     username: { type: String, renderable: true, writable: false, index: true },
     name: { type: String, renderable: true, writable: true },
     is_admin: { type: Boolean, renderable: false, writable: false },
-    email_account: { type: String, renderable: true, writable: false }
+    email_account: { type: String, renderable: true, writable: false },
+    created : { type: Number, renderable: true, writable: false}
 };
 
 module.exports.Account = Account;
