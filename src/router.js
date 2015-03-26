@@ -561,7 +561,7 @@ module.exports = {
     OEmbed widget API.
   */
 
-  express.get('/oembed/*', function(req, res) {
+  express.get('/rpc/oembed/*', function(req, res) {
     if (req.query.url && GLOBAL.CFG.oembed_host) {
       
       var shareId = req.query.url.split('/')[req.query.url.split('/').length - 1]
@@ -579,7 +579,7 @@ module.exports = {
           provider_url: GLOBAL.CFG.website_public,
           width: "470",
           height: "94",
-          html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/" + new Buffer(JSON.stringify(result)).toString("base64") +"\" allowtransparency=\"true\" style=\"border: none; overflow: hidden;\" width=\"470\" height=\"94\"></iframe>"
+          html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/widget/" + new Buffer(JSON.stringify(result)).toString("base64") +"\" allowtransparency=\"true\" style=\"border: none; overflow: hidden;\" width=\"470\" height=\"94\"></iframe>"
         });
       });
 
