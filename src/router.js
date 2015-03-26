@@ -35,7 +35,8 @@ var dao,
   helper  = require('./lib/helper'),
   uuid    = require('node-uuid'),
   // restful models
-  restResources = ['bip', 'channel', 'domain', 'account_option'],
+//  restResources = [ 'bip', 'channel', 'domain', 'account_option', 'bip_share' ],
+  restResources = [ 'bip', 'channel', 'domain', 'account_option' ],
   modelPublicFilter;
 
 function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
@@ -556,18 +557,18 @@ module.exports = {
         });
 
     });
-  
+
   /*
     OEmbed widget API.
   */
 
   express.get('/rpc/oembed/*', function(req, res) {
     if (req.query.url && GLOBAL.CFG.oembed_host) {
-      
+
       var shareId = req.query.url.split('/')[req.query.url.split('/').length - 1]
-      
+
       dao.find('bip_share', { id : shareId }, function(err, result) {
-        
+
         if (err) {
           res.status(500).json(err)
         }
