@@ -287,7 +287,11 @@ var restAction = function(req, res) {
         }
       }
     } else if (rMethod == 'DELETE') {
-      if (undefined != req.params.id) {
+
+      if ('bip' === resourceName && 'logs' === subResourceId) {
+        dao.removeFilter('bip_log', { bip_id : req.params.id }, restResponse(res));
+
+      } else if (undefined != req.params.id) {
         dao.remove(resourceName, req.params.id, accountInfo, restResponse(res));
       } else {
         res.status(404).end();
@@ -469,7 +473,7 @@ module.exports = {
     express.get( '/rest/:resource_name/:id?', restAuthWrapper, restAction);
     express.get( '/rest/:resource_name/:id?/:subresource_id?', restAuthWrapper, restAction);
     express.put( '/rest/:resource_name/:id?', restAuthWrapper, restAction);
-    express.delete( '/rest/:resource_name/:id', restAuthWrapper, restAction);
+    express.delete( '/rest/:resource_name/:id/:subresource_id?', restAuthWrapper, restAction);
     express.patch( '/rest/:resource_name/:id', restAuthWrapper, restAction);
     express.options('*', function(req, res) {
       res.status(200).end();
