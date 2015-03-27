@@ -451,6 +451,8 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
  *
  */
 Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files) {
+  var self = this;
+
   if (files) {
     content_parts._files = files;
   }
@@ -476,8 +478,11 @@ Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files)
     type : 'delivered_bip_inbound'
   } );
 
-  // distribute the undirected graph out to channel workers
-  return this.channelDistribute(bip, 'source', client.content_type, client.encoding, app._.clone(exports), client, content_parts);
+  // clear bip error state
+  this._dao.bipError(bip.id, false, function() {
+    // distribute the undirected graph out to channel workers
+    return self.channelDistribute(bip, 'source', client.content_type, client.encoding, app._.clone(exports), client, content_parts);
+  });
 
 }
 

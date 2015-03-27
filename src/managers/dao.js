@@ -874,7 +874,7 @@ Dao.prototype.reCorp = function() {
           if (agg.hasOwnProperty(k)) {
             for (var j in agg[k]) {
 
-console.log(agg[k][j])
+//console.log(agg[k][j])
 
               if (!reduced[agg[k]]) {
                 reduced[agg[k]] = agg[k][j];
@@ -911,6 +911,25 @@ Dao.prototype.bipLog = function(payload) {
       app.logmessage(err, 'error');
     }
   });
+
+  // if an error, mark the bip as errored
+  if ('bip_channnel_error' === payload.code) {
+    this.bipError(payload.bip_id, true);
+  }
+}
+
+Dao.prototype.bipError = function(id, errState, next) {
+  this.updateColumn(
+    'bip',
+    {
+      id : id
+    },
+    {
+      _errors : errState
+    },
+    next
+  );
+
 }
 
 /**
