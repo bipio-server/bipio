@@ -49,45 +49,6 @@ function generate_random_base() {
 }
 
 
-/**
- * ABANDONDED - cron approach.
- *
-
-function parseCronToDate(cronStr, options) {
-	options.iterator = true;
-	return cronParser.parseExpression(cronStr, options);
-}
-
-function cronifyTime(timesArrays) {
-	var times = timesArrays.map(function(el) { return el.toString(); });
-	times.splice(2,0,' * '); // shim in day of month (unsupported)
-	times.splice(3,0,' * '); // shim in month (unsupported)
-	return times.reduce(function(acc, curr) { return acc + ' ' + curr.toString(); });
-}
-
-
- *  Schedule structure:
- *
- *  frequency:  'once' | 'repeat'
- *  times: [[00,15,30,45],[0,1,..23],'*','*', [0,1,..6]]     // an array of arrays: in 15min increments, at an hour (or every hour), on one or more days of the week.
- *  cron: "00,15 0,1,23 * * 0,1,6" //  cronjob representation of schedule.times
- *  nextTimeToRun: timestamp
- *
-// for now, support minute(s), hour(s), and day(s) of week as 3-element array of arrays.
-
-
-function setSchedule(schedule) {
-	this.schedule = schedule;
-	schedule.frequency ? schedule.frequency : 'repeat';
-	schedule.times ? schedule.times : [];
-	schedule.cron ? schedule.cron : cronifyTime(schedule.times);
-	schedule.nextTimeToRun ? schedule.nextTimeToRun : parseCronToDate(schedule.cron);
-
-	return schedule;
-}
-*/
-
-
 function setSchedule(schedule) {
 	var sched, recur, recurStr, startTime;
 
@@ -952,7 +913,6 @@ Bip.isScheduled = function( next) {
 	// check if the set schedule dictates that it is time to trigger this bip
 	if (this.schedule) {
 		if (timeNow > this.schedule.nextTimeToRun) {
-			this._dao.updateScheduledBipRunTime(this, next);
 			next(true);
 		} else {
 			next(false);
@@ -962,19 +922,11 @@ Bip.isScheduled = function( next) {
 	} 
 }
 
-
-/* DEPRECATED 
-Bip.updateSchedule = function() {
-	var accountInfo = this.getAccountInfo();
-	var nowTime =  app.helper.nowTimeTz(accountInfo.user.settings.timezone);
-
-	if (this.schedule && this.schedule.frequency == 'repeat') {
-			this.schedule.nextTimeToRun = cronParser.parseExpression(this.schedule.cron, {currentDate : nowTime}).next();	
-	} else { this.removeSchedule(); }
+Bip.hasSchedule = function() {
+	return this.schedule != undefined;
 }
-*/
 
-Bip.updateScheduledRunTime = function(options) {
+Bip.getNextScheduledRunTime = function(options) {
 	var options = options || this.schedule.sched; 
 	var recur = Rrecur.create(options, Date(this._last_run), this.schedule.timeZone.offset);
 	return Date.parse(recur.next());

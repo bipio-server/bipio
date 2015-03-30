@@ -914,7 +914,8 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
 						if (!scheduled) {
 							next();
 						} else {
-
+						
+						
 						var payload = {
 						bip : app._.clone(bipResult)._doc,
 						socketTrigger : isSocket,
@@ -928,6 +929,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
 						if (err) {
 							app.logmessage(err, 'error');
 						}
+
 						});
 
 						app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
@@ -935,9 +937,12 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force) {
 
 						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
 
+
 						if (numProcessed >= (numResults - 1)) {
 						// the amqp lib has stopped giving us queue publish acknowledgements?
 						setTimeout(function() {
+
+							if (bipModel.schedule !== undefined) { self.updateScheduledBipRunTime(bipModel, next); }
 							next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
 						}, 1000);
 						}
@@ -988,58 +993,9 @@ Dao.prototype.triggerByChannelAction = function(actionPath, next) {
 }
 
 
-/**
- * @param Object bip propertie(s) to filter on
- * @param Function next callback()
- */
-
-/*
-Dao.prototype.triggerScheduled = function(next) {
-	var self = this;
-	var filter = {
-		'schedule'  : { $exists : 'true' }
-	}
-
-	this.findFilter('bip', filter, function(err, results) {
-		var bipIds = [], bipFilter = {};
-		if (!err && results.length) {
-			bipids = results.map(function(bip) { return bip.id; });
-
-		}
-	
-	}
-	self.triggerAll(next, scheduledBips, false, true);
-
-}
-*/
-
-/**
- * @param Object bip structure
- * @param Object prefs owner behavior preferences
- * @param Function next callback(error, result)
- */
- /*
-Dao.prototype.scheduleBip = function(bip, prefs, next) {
-	var self = this;
-	
-	if (prefs['schedule']) {
-		self.updateColumn('bip', bip.id, {
-			schedule : prefs.schedule
-		}, function(err) {
-			if (err) {
-				self._log(err, 'error');
-			} else {
-				self._log(bip.id + ' set to run at ' + prefs.schedule.nextTimeToRun); 
-			}
-			next(err, bip);
-		});
-	}
-}
-*/
-
 Dao.prototype.updateScheduledBipRunTime = function(bip, next) {
 	var self = this,
-		nextTime = bip.updateScheduledRunTime();
+		nextTime = bip.getNextScheduledRunTime();
 
 	self.updateColumn('bip', bip.id, {
 		'schedule.nextTimeToRun' : nextTime
@@ -1049,7 +1005,7 @@ Dao.prototype.updateScheduledBipRunTime = function(bip, next) {
 		} else {
 			self._log(bip.id + ' set to run at ' + bip.schedule.nextTimeToRun); 
 		}
-		next(err, bip);
+		next(err, false);
 	});
 }
 
