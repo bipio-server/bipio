@@ -501,11 +501,17 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   }
 
   var config = helper.copyProperties(bip.config, {});
+
   // always force auth on shared http bips.
   if (bip.type === 'http') {
     config.auth = 'token'
     delete config.username;
     delete config.password;
+
+    if (config.renderer && config.renderer.channel_id) {
+      config.renderer.channel_id = channelTranslate(config.renderer.channel_id);
+    }
+
   } else if (bip.type === 'trigger' && bip.config.channel_id) {
     config.channel_id = channelTranslate(bip.config.channel_id);
     if (triggerConfig) {
@@ -526,7 +532,6 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     owner_id : bip.owner_id,
     owner_name : bip.accountInfo.user.name
   };
-
 
   bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
 
