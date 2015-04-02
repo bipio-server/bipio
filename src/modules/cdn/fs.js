@@ -36,6 +36,7 @@ FsProto.prototype = {
       append = options && options.append,
       header = options && options.header,
       write = options && options.write,
+      encoding = ((options && options.encoding) ? options.encoding : null),
       destPath = ((typeof dest === 'object') ? dest.localpath : dest),
       rootDir = ((options && options.persist) ? self.permDir : self.tmpDir),
       writeOptions = {};
@@ -92,7 +93,7 @@ FsProto.prototype = {
         }
 
         if (buffer) {
-          writeStream.write(buffer.toString(), null, function() {
+          writeStream.write(buffer.toString(), encoding, function() {
             writeStream.end();
           });
         }
