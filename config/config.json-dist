@@ -4,6 +4,7 @@
     "domain_public" : "localhost:5000",
     "website_public": "http://localhost",
     "cdn_public": "http://localhost/static",
+    "oembed_host": "http://localhost",
     "site_emitter": "https://bip.io",
     "proto_public": "http://",
     "crons" : {

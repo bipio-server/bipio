@@ -4,6 +4,7 @@ config/default.json
 config/staging.json
 config/production.json
 config/haraka
+config/credentials
 data
 config/runtime.json
 npm-debug.log

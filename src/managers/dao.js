@@ -501,11 +501,17 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   }
 
   var config = helper.copyProperties(bip.config, {});
+
   // always force auth on shared http bips.
   if (bip.type === 'http') {
     config.auth = 'token'
     delete config.username;
     delete config.password;
+
+    if (config.renderer && config.renderer.channel_id) {
+      config.renderer.channel_id = channelTranslate(config.renderer.channel_id);
+    }
+
   } else if (bip.type === 'trigger' && bip.config.channel_id) {
     config.channel_id = channelTranslate(bip.config.channel_id);
     if (triggerConfig) {
@@ -526,7 +532,6 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     owner_id : bip.owner_id,
     owner_name : bip.accountInfo.user.name
   };
-
 
   bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
 
@@ -874,7 +879,7 @@ Dao.prototype.reCorp = function() {
           if (agg.hasOwnProperty(k)) {
             for (var j in agg[k]) {
 
-console.log(agg[k][j])
+//console.log(agg[k][j])
 
               if (!reduced[agg[k]]) {
                 reduced[agg[k]] = agg[k][j];
@@ -911,6 +916,25 @@ Dao.prototype.bipLog = function(payload) {
       app.logmessage(err, 'error');
     }
   });
+
+  // if an error, mark the bip as errored
+  if ('bip_channnel_error' === payload.code) {
+    this.bipError(payload.bip_id, true);
+  }
+}
+
+Dao.prototype.bipError = function(id, errState, next) {
+  this.updateColumn(
+    'bip',
+    {
+      id : id
+    },
+    {
+      _errors : errState
+    },
+    next
+  );
+
 }
 
 /**

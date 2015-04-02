@@ -118,6 +118,20 @@ BipShare.entitySchema = {
     }
 };
 
+BipShare.links = function( accountInfo ) {
+    var links = [];
+
+    links.push({
+      name : 'oembed',
+      title : 'oEmbed',
+      description : 'Retrieves The oEmbed For This Share',
+      contentType : DEFS.CONTENTTYPE_JSON,
+      _href : this._dao.getBaseUrl() + '/rpc/oembed/?url=' + this.href()
+    });
+
+    return links;
+}
+
 //
 BipShare.preSave = function(accountInfo, next) {
     // rebuild search terms

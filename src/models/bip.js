@@ -144,8 +144,17 @@ Bip.links = function(accountInfo) {
 
     // traverse transforms, extract attributes
     links.push(schema);
-
   }
+
+  if (this._errors) {
+    links.push({
+      _href : this._dao.getBaseUrl() + '/rest/bip/' + this.id + '/logs',
+      name : 'errors',
+      contentType : 'application/json',
+      title : 'Error Logs'
+    });
+  }
+
   return links;
 }
 
@@ -543,6 +552,11 @@ Bip.entitySchema = {
   _channel_idx : {
     type : Array,
     renderable : true,
+    writable : false
+  },
+  _errors : {
+    type : Boolean,
+    renderable : false,
     writable : false
   }
 };
