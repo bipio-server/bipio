@@ -6,8 +6,18 @@ var fs = require('fs'),
         dao = app.dao,
         modelName = 'channel';
 
-        dao.updateColumn(modelName, { action: /^(?!email\.smtp\_forward).*$/, _available: false }, { _available : true });
-        next('Nothing To Do');
+        dao.updateColumn(
+          modelName,
+          {
+            action: /^(?!email\.smtp\_forward).*$/,
+            _available: false
+          },
+          {
+            _available : true
+          }, function(err) {
+            next(err);
+          }
+        );
     }
   }
 
