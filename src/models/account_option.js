@@ -259,14 +259,14 @@ AccountOption.entityValidators = {
 }
 
 
-AccountOption.DISABLED_preSave = function(accountInfo, next) {
+AccountOption.preSave = function(accountInfo, next) {
     var self = this;
-    if (!/^\/static\/img\/cdn\/av\//.test(this.avatar) || /^http/.test(this.avatar) ) {
+    if (0 !== this.avatar.indexOf(CFG.cdn_public) ) {
 		app.modules.cdn.saveAvatar(this.owner_id, request.get(this.avatar), '/cdn/img/av/', function(err, avatarPath) {
             if (err) {
                 next(err);
             } else {
-                self.avatar = CFG.cdn_public + avatarPath;
+                self.avatar = CFG.cdn_public + avatarPath.replace('/cdn', '');
                 next(false, self);
             }
 		});
