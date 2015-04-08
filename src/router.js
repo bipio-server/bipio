@@ -469,6 +469,13 @@ module.exports = {
     dao = _dao;
     modelPublicFilter = _dao.getModelPublicFilters();
 
+    // attach any modules which are route aware
+    for (var k in app.modules) {
+      if (app.modules.hasOwnProperty(k) && app.modules[k].routes) {
+        app.modules[k].routes(express, restAuthWrapper);
+      }
+    }
+
     express.post( '/rest/:resource_name', restAuthWrapper, restAction);
     express.get( '/rest/:resource_name/:id?', restAuthWrapper, restAction);
     express.get( '/rest/:resource_name/:id?/:subresource_id?', restAuthWrapper, restAction);
