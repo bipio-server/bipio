@@ -20,11 +20,12 @@
  *
 
  */
-var baseConverter = require('base-converter'),
-djs = require('datejs'),
-async       = require('async'),
+var async = require('async'),
+baseConverter = require('base-converter'),
 BipModel = require('./prototype.js').BipModel,
-Bip = Object.create(BipModel);
+Bip = Object.create(BipModel),
+//cronParser = require('cron-parser'),
+Rrecur = require('rrecur').Rrecur;
 
 // setters
 /**
@@ -46,6 +47,37 @@ function generate_random_base() {
 
   return '.' + ret + '_';
 }
+
+
+function setSchedule(schedule) {
+	var sched, recur, recurStr, startTime;
+
+	recurStr = schedule.recurrencePattern;
+
+	// FuelBox UI tacks on trailing semicolon, which breaks ability for rrecurjs to create() an iterable object. 	
+	recurStr = (recurStr.charAt(recurStr.length-1) == ';') ? recurStr.slice(0,-1) : recurStr;
+	
+	// strict formatting of date string required for scheduler to work
+	removeOffset = function(time) { return time.substr(0, 16); }
+
+	startTime = removeOffset(schedule.startDateTime);
+	
+	sched = { 
+		dtstart: {
+			zoneless: startTime,
+			locale: schedule.timeZone.offset
+		}, 
+		rrule: Rrecur.parse(recurStr) 
+	} 
+	
+	schedule['sched'] = sched;
+		
+	recur = Rrecur.create(sched, schedule.startTime, schedule.timeZone.offset);
+	schedule['nextTimeToRun'] = Date.parse(recur.next());
+	return schedule;
+}
+
+
 
 /**
  * Takes a time string
@@ -489,6 +521,13 @@ Bip.entitySchema = {
       'msg' : 'Expected 1,0,true,false'
     }]
   },
+  schedule: {
+    type: Object,
+    renderable: true,
+	writable: true,
+	default : {},
+	set : setSchedule
+  },
   binder: {
     type: Array,
     renderable: true,
@@ -884,6 +923,8 @@ Bip.postSave = function(accountInfo, next, isNew) {
   next(false, this.getEntityName(), this);
 };
 
+
+
 // ensure we have an up to date channel index
 Bip.prePatch = function(patch, accountInfo, next) {
 
@@ -898,6 +939,35 @@ Bip.prePatch = function(patch, accountInfo, next) {
 
   next(false, this.getEntityName(), patch);
 };
+
+
+Bip.isScheduled = function( next) {
+	var accountInfo = this.getAccountInfo();
+//	var timeNow =  app.helper.nowTimeTz(accountInfo.user.settings.timezone);
+	var timeNow = new Date().getTime();
+
+	// check if the set schedule dictates that it is time to trigger this bip
+	if (this.schedule) {
+		if (timeNow > this.schedule.nextTimeToRun) {
+			next(true);
+		} else {
+			next(false);
+		}
+	} else {
+		next(true);
+	} 
+}
+
+Bip.hasSchedule = function() {
+	return this.schedule != undefined;
+}
+
+Bip.getNextScheduledRunTime = function(options) {
+	var options = options || this.schedule.sched; 
+	var recur = Rrecur.create(options, Date(this._last_run), this.schedule.timeZone.offset);
+	return Date.parse(recur.next());
+}
+
 
 Bip.checkExpiry = function(next) {
   var accountInfo = this.getAccountInfo();
@@ -930,6 +1000,7 @@ Bip.checkExpiry = function(next) {
 
   next(expired);
 };
+
 
 Bip.expire = function(transactionId, next) {
   var accountInfo = this.getAccountInfo(),

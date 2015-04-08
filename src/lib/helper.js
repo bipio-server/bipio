@@ -202,6 +202,7 @@ var helper = {
     return ret;
   },
 
+
   randCharStr : function(length) {
     var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-',
     ret = '';

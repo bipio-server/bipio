@@ -94,7 +94,7 @@ FsProto.prototype = {
 
         if (buffer) {
           writeStream.write(buffer.toString(), encoding, function() {
-            writeStream.end(); 
+            writeStream.end();
           });
         }
       })(next);
