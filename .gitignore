@@ -10,3 +10,4 @@ config/runtime.json
 npm-debug.log
 sftp_config.json
 .DS_Store
+src/modules/stats

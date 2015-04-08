@@ -7,3 +7,4 @@ config/haraka
 data
 config/runtime.json
 npm-debug.log
+src/modules/stats
