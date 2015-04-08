@@ -54,11 +54,17 @@ function setSchedule(schedule) {
 
 	recurStr = schedule.recurrencePattern;
 
+  if (!schedule.startDateTime.trim()) {
+    schedule.startDateTime = app.moment().format();
+  }
+
 	// FuelBox UI tacks on trailing semicolon, which breaks ability for rrecurjs to create() an iterable object.
 	recurStr = (recurStr.charAt(recurStr.length-1) == ';') ? recurStr.slice(0,-1) : recurStr;
 
 	// strict formatting of date string required for scheduler to work
-	removeOffset = function(time) { return time.substr(0, 16); }
+	removeOffset = function(time) {
+    return time.substr(0, 16);
+  }
 
 	startTime = removeOffset(schedule.startDateTime);
 
@@ -524,9 +530,9 @@ Bip.entitySchema = {
   schedule: {
     type: Object,
     renderable: true,
-	writable: true,
-	default : {},
-	set : setSchedule
+  	writable: true,
+  	default : {},
+  	set : setSchedule
   },
   binder: {
     type: Array,
@@ -555,12 +561,6 @@ Bip.entitySchema = {
     type: Number,
     renderable: true,
     writable: false
-  },
-  schedule : {
-    type : Object,
-    renderable : true,
-    writable : true,
-    default : {}
   },
   _imp_actual : {
     type : Number,

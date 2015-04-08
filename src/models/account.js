@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var BipModel = require('./prototype.js').BipModel;
 
@@ -45,7 +45,8 @@ Account.entitySchema = {
     name: { type: String, renderable: true, writable: true },
     is_admin: { type: Boolean, renderable: false, writable: false },
     email_account: { type: String, renderable: true, writable: false },
-    created : { type: Number, renderable: true, writable: false}
+    created : { type: Number, renderable: true, writable: false},
+    last_session : { type: Number, renderable: true, writable: false}
 };
 
 module.exports.Account = Account;

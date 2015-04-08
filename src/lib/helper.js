@@ -332,10 +332,10 @@ var helper = {
 
   nowUTCSeconds: function() {
     var d = this.toUTC(this.now());
-
+    return d.getTime();
     // @todo looks like a bug in datejs, no seconds for getTime?
-    seconds = d.getSeconds() + (d.getMinutes() * 60) + (d.getHours() * 60 * 60);
-    return (d.getTime() + seconds);
+    //seconds = d.getSeconds() + (d.getMinutes() * 60) + (d.getHours() * 60 * 60);
+    //return (d.getTime() + seconds);
   },
 
   nowTimeTz : function(tz, time) {

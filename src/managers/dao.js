@@ -1018,8 +1018,9 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
             						// the amqp lib has stopped giving us queue publish acknowledgements?
             						setTimeout(function() {
             							if (bipModel.schedule !== undefined) {
-                            self.updateScheduledBipRunTime(bipModel, next);
+                            self.updateScheduledBipRunTime(bipModel);
                           }
+
             							next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
             						}, 1000);
             						}
@@ -1079,7 +1080,6 @@ Dao.prototype.updateScheduledBipRunTime = function(bip, next) {
 		} else {
 			self._log(bip.id + ' set to run at ' + bip.schedule.nextTimeToRun);
 		}
-		next(err, false);
 	});
 }
 

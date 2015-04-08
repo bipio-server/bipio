@@ -993,7 +993,8 @@ module.exports = {
             } else if (!result) {
               respond(false, 'bip');
             } else {
-              dao.triggerAll(function(err) {
+              dao.triggerAll(
+                function(err) {
                   if (err) {
                     respond('Internal Server Error', 'bip', null, 500);
                   } else {
@@ -1085,6 +1086,17 @@ module.exports = {
           }
 
           res.send(publicFilter('account_option', result.user.settings));
+
+          // update session
+          app.dao.updateColumn(
+            'account',
+            {
+              id : result.user.id
+            },
+            {
+              last_session : helper.nowUTCSeconds() / 1000
+            }
+          );
         }
       });
     });
