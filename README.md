@@ -1,4 +1,5 @@
-<a href="https://bip.io"><img align="left" width="100" src="https://bip.io/static/img/bipiologo_color.svg"/></a>
+<a href="https://bip.io"><img align="left" width="200" src="https://bip.io/static/img/bipiologo_color.svg"/></a>
+<br/>
 =========
 
 Welcome to the [bip.io](https://bip.io) API Server (Sansa 0.3)
