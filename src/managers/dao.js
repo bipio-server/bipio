@@ -1003,9 +1003,9 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 						
 						// update runtime
 						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
-						if (err) {
-							app.logmessage(err, 'error');
-						}
+							if (err) {
+								app.logmessage(err, 'error');
+							}
 
 						});
 

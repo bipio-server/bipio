@@ -954,7 +954,7 @@ Bip.isScheduled = function( next) {
 			next(false);
 		}
 	} else {
-		next(false);
+		(this.schedule) ? next(false) : next(true); // legacy bips without schedule.
 	}
 }
 
