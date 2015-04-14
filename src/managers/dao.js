@@ -983,61 +983,61 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
                 }
 
       				// check expiry
-				      var bipModel = self.modelFactory('bip', bipResult, accountInfo);
-                bipModel.checkExpiry(function(expired) {
-                  if (expired) {
-                    bipModel.expire('expired', next);
-                  } else {
-          					//check scheduled
-          					bipModel.isScheduled( function(scheduled) {
-          						if (!force && !scheduled) {
-          							next();
-          						} else {
-            						var payload = {
-              						bip : app._.clone(bipResult)._doc,
-              						socketTrigger : isSocket,
-              						accountInfo : accountInfo
-            						}
+		var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+		bipModel.checkExpiry(function(expired) {
+			if (expired) {
+				bipModel.expire('expired', next);
+			} else {
+				//check scheduled
+				bipModel.isScheduled( function(scheduled) {
+					if (!force && !scheduled) {
+						next();
+					} else {
+						var payload = {
+							bip : app._.clone(bipResult)._doc,
+							socketTrigger : isSocket,
+							accountInfo : accountInfo
+						}
 
-            						delete payload.bip.accountInfo;
+						delete payload.bip.accountInfo;
+						
+						// update runtime
+						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
+						if (err) {
+							app.logmessage(err, 'error');
+						}
 
-            						// update runtime
-            						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
-            						if (err) {
-            							app.logmessage(err, 'error');
-            						}
+						});
 
-            						});
+						app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+						numProcessed++;
 
-            						app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
-            						numProcessed++;
+						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
 
-            						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
+						if (numProcessed >= (numResults - 1)) {
+							// the amqp lib has stopped giving us queue publish acknowledgements?
+							setTimeout(function() {
+								if (bipModel.schedule !== undefined) {
+									self.updateScheduledBipRunTime(bipModel);
+								}
 
-            						if (numProcessed >= (numResults - 1)) {
-            						// the amqp lib has stopped giving us queue publish acknowledgements?
-            						setTimeout(function() {
-            							if (bipModel.schedule !== undefined) {
-                            self.updateScheduledBipRunTime(bipModel);
-                          }
+								next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+							}, 1000);
+						}
+					}
+				});
+			}
+		});
+	}
+	}
+    );
+    })(results[i]);
 
-            							next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-            						}, 1000);
-            						}
-            					}
-          				  });
-          				}
-                });
-              }
-            }
-          );
-        })(results[i]);
-
-      }
-    } else {
-      next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
-    }
-  });
+	}
+	} else {
+		next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
+	}
+	});
 }
 
 

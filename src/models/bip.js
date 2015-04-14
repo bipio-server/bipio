@@ -947,14 +947,14 @@ Bip.isScheduled = function( next) {
 	var timeNow = new Date().getTime();
 
 	// check if the set schedule dictates that it is time to trigger this bip
-	if (this.schedule) {
+	if (this.schedule && this.schedule.nextTimeToRun) {
 		if (timeNow > this.schedule.nextTimeToRun) {
 			next(true);
 		} else {
 			next(false);
 		}
 	} else {
-		next(true);
+		next(false);
 	}
 }
 
