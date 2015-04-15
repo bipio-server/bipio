@@ -591,7 +591,7 @@ module.exports = {
           provider_url: GLOBAL.CFG.website_public,
           width: "470",
           height: "94",
-          html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/widget/" + new Buffer(JSON.stringify(result)).toString("base64") +"\" allowtransparency=\"true\" style=\"border: none; overflow: hidden;\" width=\"470\" height=\"94\"></iframe>"
+          html: "<iframe src=\""+ GLOBAL.CFG.oembed_host + "/widget/?payload=" + new Buffer(JSON.stringify(result)).toString("base64") +"\" allowtransparency=\"true\" style=\"border: none; overflow: hidden;\" width=\"470\" height=\"94\"></iframe>"
         });
       });
 
