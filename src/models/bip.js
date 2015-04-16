@@ -580,7 +580,15 @@ Bip.entitySchema = {
       } else {
         return '';
       }
-    }
+    },
+	getLastRun : function(value) {
+		if (value) {
+			var now = app.moment.utc();
+			return value;
+		} else {
+			return '';
+		}
+	}
   },
   _tz : { // user timezone
     type : String,
@@ -944,11 +952,12 @@ Bip.prePatch = function(patch, accountInfo, next) {
 Bip.isScheduled = function( next) {
 	var accountInfo = this.getAccountInfo();
 //	var timeNow =  app.helper.nowTimeTz(accountInfo.user.settings.timezone);
-	var timeNow = new Date().getTime();
+	var timeNow = new Date();
 
 	// check if the set schedule dictates that it is time to trigger this bip
 	if (this.schedule && this.schedule.nextTimeToRun) {
-		if (timeNow > this.schedule.nextTimeToRun) {
+
+		if (timeNow.getTime() > this.schedule.nextTimeToRun.getTime()) {
 			next(true);
 		} else {
 			next(false);
@@ -959,13 +968,14 @@ Bip.isScheduled = function( next) {
 }
 
 Bip.hasSchedule = function() {
-	return this.schedule != undefined;
+	return this.schedule !== undefined;
 }
 
 Bip.getNextScheduledRunTime = function(options) {
 	var options = options || this.schedule.sched;
-	var recur = Rrecur.create(options, Date(this._last_run), this.schedule.timeZone.offset);
-	return Date.parse(recur.next());
+	var recur = Rrecur.create(options, Date(this._last_run.getLastRun), this.schedule.timeZone.offset);
+	var nextRecurrence = Date.parse(recur.next());
+	return nextRecurrence;
 }
 
 

@@ -982,8 +982,10 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
                   }
                 }
 
-      				// check expiry
 		var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+
+
+		// check expiry
 		bipModel.checkExpiry(function(expired) {
 			if (expired) {
 				bipModel.expire('expired', next);
@@ -1000,7 +1002,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 						}
 
 						delete payload.bip.accountInfo;
-						
+					
 						// update runtime
 						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
 							if (err) {
@@ -1013,17 +1015,18 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 						numProcessed++;
 
 						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
+						
+						setTimeout(function() {
+							
+							if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
+								self.updateScheduledBipRunTime(bipModel);
+							}
 
-						if (numProcessed >= (numResults - 1)) {
-							// the amqp lib has stopped giving us queue publish acknowledgements?
-							setTimeout(function() {
-								if (bipModel.schedule !== undefined) {
-									self.updateScheduledBipRunTime(bipModel);
-								}
-
+							if (numProcessed >= (numResults -1)) {
 								next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-							}, 1000);
-						}
+							}	
+							
+						}, 1000);
 					}
 				});
 			}
@@ -1068,7 +1071,7 @@ Dao.prototype.triggerByChannelAction = function(actionPath, next) {
 }
 
 
-Dao.prototype.updateScheduledBipRunTime = function(bip, next) {
+Dao.prototype.updateScheduledBipRunTime = function(bip) {
 	var self = this,
 		nextTime = bip.getNextScheduledRunTime();
 
