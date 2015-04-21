@@ -67,7 +67,7 @@ The UI is a thin client which is loaded entirely into your browser.  Once loaded
 ## Requirements
 
   - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
-  - [MongoDB Server](http://www.mongodb.org) **data store**
+  - [MongoDB Server v2.6](http://www.mongodb.org) **data store**
   - [RabbitMQ](http://www.rabbitmq.com) **message broker**
 
 SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bipio-contrib/haraka](https://github.com/bipio-server/bipio-contrib).
