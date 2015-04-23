@@ -643,7 +643,7 @@ module.exports = {
       });
   });
 
-  express.get('/rpc/channel/:channel_id/:renderer', restAuthWrapper, function(req, res) {
+  express.get('/rpc/channel/:channel_id/:renderer/:extra_params?/:extra_params_value?', restAuthWrapper, function(req, res) {
       var filter = {
         owner_id: req.remoteUser.getId(),
         id : req.params.channel_id
