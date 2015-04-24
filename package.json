@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.3.41",
+  "version": "0.3.42",
   "scripts": {
     "start": "node src/server.js >> logs/server.log &",
     "test": "make test",
@@ -95,7 +95,6 @@
     "tldtools": ">=0.0.6",
     "underscore": ">=1.5.2",
     "validator": "1.5.1",
-    "webkit-devtools-agent": "^0.2.4",
     "winston": "0.5.1"
   },
   "devDependencies": {

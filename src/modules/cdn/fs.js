@@ -164,6 +164,10 @@ FsProto.prototype = {
       readStream = fs.createReadStream(srcPath);
 
     self.utils.normalize(srcPath, function(err, struct) {
+      if (source.name) {
+        struct.name = source.name;
+      }
+
       next(err, struct, readStream);
     });
   },
