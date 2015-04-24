@@ -52,6 +52,12 @@ BipShare.entitySchema = {
         writable: true
     },
 
+    slug : {
+        type: String,
+        renderable: true,
+        writable: true
+    },
+
     note : {
         type: String,
         renderable: true,
