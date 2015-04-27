@@ -165,4 +165,9 @@ BipShare.preSave = function(accountInfo, next) {
     next(false, this);
 };
 
+BipShare.compoundKeyConstraints = {
+  owner_id : 1,
+  slug: 1
+};
+
 module.exports.BipShare = BipShare;
