@@ -193,6 +193,7 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
       } else {
         accountInfo.user.activeDomainId = activeDomainId;
       }
+      accountInfo.user.username = account.username;
       next(false, accountInfo);
     });
   }
