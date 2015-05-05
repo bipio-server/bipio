@@ -34,6 +34,7 @@ var dao,
   connect = require('connect'),
   helper  = require('./lib/helper'),
   uuid    = require('node-uuid'),
+  pkg = require('../package.json'),
   // restful models
 //  restResources = [ 'bip', 'channel', 'domain', 'account_option', 'bip_share' ],
   restResources = [ 'bip', 'channel', 'domain', 'account_option' ],
@@ -1110,7 +1111,7 @@ module.exports = {
 	  var serverStatus = {};
 
 	  // get server version number:
-	  serverStatus['version'] = bipioVersion;
+	  serverStatus['version'] = pkg.version;
 
     	// get rabbitmq connection status
     	if (app.bastion.isRabbitConnected()) {
