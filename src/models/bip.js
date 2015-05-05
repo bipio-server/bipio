@@ -326,30 +326,15 @@ Bip.entitySchema = {
     },
     {
       validator : function(val, next) {
-        var ok = true,
-        userChannels;
-
+        var ok = true;
         if (this.type == 'http' && val.renderer) {
-          ok = app.helper.isObject(val.renderer)
-          && val.renderer.channel_id
-          && val.renderer.renderer;
-
-          // check channel exists
-          if (ok) {
-            userChannels = this.getAccountInfo().user.channels,
-            ok = userChannels.test(val.renderer.channel_id);
-          }
-
-          // check renderer exists
-          if (ok) {
-            var channel = userChannels.get(val.renderer.channel_id);
-            ok = channel.hasRenderer(val.renderer.renderer);
-          }
+          ok = this.getDao().validateRenderer(val, this.getAccountInfo());
         }
+
         next(ok);
         return;
       },
-      msg : 'Invalid Channel ID/Renderer pair'
+      msg : 'Renderer RPC Not Found'
     }
     ]
   },

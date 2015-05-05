@@ -1002,7 +1002,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 						}
 
 						delete payload.bip.accountInfo;
-					
+
 						// update runtime
 						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
 							if (err) {
@@ -1015,17 +1015,17 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 						numProcessed++;
 
 						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
-						
+
 						setTimeout(function() {
-							
+
 							if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
 								self.updateScheduledBipRunTime(bipModel);
 							}
 
 							if (numProcessed >= (numResults -1)) {
 								next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-							}	
-							
+							}
+
 						}, 1000);
 					}
 				});
@@ -1221,6 +1221,34 @@ Dao.prototype.expireAll = function(next) {
 Dao.prototype.pod = function(podName) {
   return this.models['channel']['class'].pod(podName);
 }
+
+
+// validate a renderer struct for a given user
+Dao.prototype.validateRenderer = function(struct, accountInfo) {
+  var ok = app.helper.isObject(struct.renderer)
+      && (struct.renderer.channel_id || struct.renderer.pod)
+      && struct.renderer.renderer;
+
+  // check channel exists
+  if (ok && struct.renderer.channel_id ) {
+    userChannels = accountInfo.user.channels,
+    ok = userChannels.test(struct.renderer.channel_id);
+    // check renderer exists
+    if (ok) {
+      var channel = userChannels.get(struct.renderer.channel_id);
+      ok = channel.hasRenderer(struct.renderer.renderer);
+    }
+  // if a pod, check pod and renderer exist
+  } else if (ok && struct.renderer.pod) {
+    pod = this.pod(struct.renderer.pod);
+    ok = pod && Object.keys(pod.getRPCs(struct.renderer.renderer));
+  } else {
+    ok = false;
+  }
+
+  return ok;
+}
+
 
 Dao.prototype.refreshOAuth = function() {
   var self = this,

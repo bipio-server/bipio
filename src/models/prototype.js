@@ -143,6 +143,10 @@ var BipModel = {
       return self.getAccountInfo();
     }
 
+    model.getDao = function() {
+      return self.getDao();
+    }
+
     return model;
   },
 

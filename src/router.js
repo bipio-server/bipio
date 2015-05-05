@@ -375,25 +375,44 @@ var restAction = function(req, res) {
   return;
 }
 
-function channelRender(ownerId, channelId, renderer, req, res) {
-  var filter = {
-    owner_id: ownerId,
-    id : channelId
-  };
+function callRenderer(ownerId, renderer, req, res) {
+  if (renderer && renderer.channel_id) {
+    var filter = {
+      owner_id: ownerId,
+      id : renderer.channel_id
+    };
 
-  dao.find('channel', filter, function(err, result) {
-    if (err || !result) {
-      res.status(404).end();
-    } else {
-      dao.modelFactory('channel', result).rpc(
-        renderer,
-        req.query,
-        getClientInfo(req),
-        req,
-        res
-        );
-    }
-  });
+    dao.find('channel', filter, function(err, result) {
+      if (err || !result) {
+        res.status(404).end();
+      } else {
+        dao.modelFactory('channel', result).rpc(
+          renderer,
+          req.query,
+          getClientInfo(req),
+          req,
+          res
+          );
+      }
+    });
+  } else if (renderer && renderer.pod) {
+    var channel = dao.modelFactory('channel', {
+      owner_id : ownerId,
+      action :renderer.pod + '.'
+    });
+
+    channel.rpc(
+      renderer.renderer,
+      req.query,
+      getClientInfo(req),
+      req,
+      res
+      );
+
+
+  } else {
+    res.status(404).end();
+  }
 }
 
 // ---------------- BIP RPC --------------------------------------------------------
@@ -544,10 +563,9 @@ module.exports = {
             // Renderer Invoke, send a repsonse
             if (bip.config.renderer) {
               // get channel
-              channelRender(
+              callRenderer(
                 bip.owner_id,
-                bip.config.renderer.channel_id,
-                bip.config.renderer.renderer,
+                bip.config.renderer,
                 req,
                 res
                 );
@@ -1153,7 +1171,9 @@ module.exports = {
               domain = accountResult.getActiveDomainObj(),
               filter;
 
-              if (app.helper.isObject(domain.renderer) && '' !== domain.renderer.channel_id) {
+              req.remoteUser = accountResult;
+
+              if (app.helper.isObject(domain.renderer) && domain.renderer.channel_id && '' !== domain.renderer.channel_id) {
                 filter = {
                   id : domain.renderer.channel_id,
                   owner_id : ownerId
@@ -1166,10 +1186,24 @@ module.exports = {
                     res.status(404).end();
 
                   } else {
-                    req.remoteUser = accountResult;
-                    channelRender(result.owner_id, result.id, domain.renderer.renderer, req, res);
+                    callRenderer(
+                      result.owner_id,
+                      {
+                        "channel_id" : result.id,
+                        "renderer" : domain.renderer.renderer
+                      },
+                      req,
+                      res);
                   }
                 });
+              } else if (app.helper.isObject(domain.renderer) && domain.renderer.pod && '' !== domain.renderer.pod) {
+                callRenderer(
+                  ownerId,
+                  domain.renderer,
+                  req,
+                  res);
+              } else {
+                res.status(404).end();
               }
             }
           });

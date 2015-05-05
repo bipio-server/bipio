@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var BipModel = require('./prototype.js').BipModel,
 Domain = Object.create(BipModel),
@@ -58,28 +58,28 @@ Domain.entitySchema = {
     index : true,
     writable: true,
     validate : [
-    {
-      validator : function(val, next) {
-        if (process.env.NODE_ENV !== 'production') {
-          next(true);
-          return;
-        }
-
-        var ok = /[\w\d]+\.[a-zA-Z]{2,}$/.test(val);
-        if (ok) {
-         
-          var isLocal = Domain.isLocal(val);
-          if (this.type == 'custom') {
-            ok = !isLocal;
-          } else {
-            // lock vanity domains as unwritable
-            ok = (!isLocal && this.type != 'vanity');
+      {
+        validator : function(val, next) {
+          if (process.env.NODE_ENV !== 'production') {
+            next(true);
+            return;
           }
-        }
-        next(ok);
+
+          var ok = /[\w\d]+\.[a-zA-Z]{2,}$/.test(val);
+          if (ok) {
+
+            var isLocal = Domain.isLocal(val);
+            if (this.type == 'custom') {
+              ok = !isLocal;
+            } else {
+              // lock vanity domains as unwritable
+              ok = (!isLocal && this.type != 'vanity');
+            }
+          }
+          next(ok);
+        },
+        msg : "Can not overwrite a protected Domain"
       },
-      msg : "Can not overwrite a protected Domain"
-    },
     ]
   },
   renderer : {
@@ -87,33 +87,12 @@ Domain.entitySchema = {
     renderable : true,
     writable : true,
     validate : [
-    {
-      validator : function(val, next) {
-        var ok = true;
-        if (app.helper.isObject(val) && val.channel_id && '' !== val.channel_id) {
-          var channels = this.getAccountInfo().user.channels,
-          ok = userChannels.test(val.renderer.channel_id);
-        }
-        next(ok);
-
-      },
-      msg : "Renderer Channel Does Not Exist"
-    },
-    {
-      validator : function(val, next) {
-        var ok = true;
-        if (app.helper.isObject(val) && val.channel_id && '' !== val.channel_id) {
-          var channels = this.getAccountInfo().user.channels,
-          ok = (channels.test(val.renderer.channel_id) && val.renderer && '' !== val.renderer);
-          if (ok) {
-            var channel = channels.get(val.renderer.channel_id);
-            ok = channel.hasRenderer(val.renderer.renderer);
-          }
-        }
-        next(ok);
-      },
-      msg : "Renderer Does Not Exist"
-    }
+      {
+        validator : function(val, next) {
+          next(self._dao.validateRenderer(val, this.getAccountInfo()));
+        },
+        msg : 'Renderer RPC Not Found'
+      }
     ]
   }
 };
@@ -160,12 +139,12 @@ Domain.verify = function(accountInfo, next) {
   }
 
   step(
-    function domainVerify() {         
+    function domainVerify() {
       dns.resolveMx(
         self.name,
         this.parallel()
         );
-          
+
       dns.resolveCname(
         self.name,
         this.parallel()

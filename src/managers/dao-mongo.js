@@ -381,6 +381,10 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
     return srcModel.getAccountInfo();
   }
 
+  model.getDao = function() {
+    return srcModel.getDao();
+  }
+
   delete model.accountInfo;
 
   return model;
