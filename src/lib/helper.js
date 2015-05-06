@@ -40,7 +40,8 @@ tldtools = require('tldtools'),
 validator = require('validator'),
 uuid = require('node-uuid'),
 url = require('url'),
-_ = require('lodash');
+_ = require('lodash'),
+htmlEncode = require('htmlencode').htmlEncode;
 
 var helper = {
 
@@ -84,6 +85,7 @@ var helper = {
       //retStr = helper.sanitize(retStr).escape();
     }
     //retStr = helper.sanitize(retStr).entityEncode();
+    retStr = this.html_encode(retStr)
     return retStr;
   },
 
@@ -129,7 +131,11 @@ var helper = {
 
     return src;
   },
-
+  
+  html_encode :function(str){
+	  return htmlEncode(str);
+  },
+  
   naturalize : function(src) {
     var attrLen, newKey;
     if (this.isArray(src)) {
