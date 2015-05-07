@@ -107,8 +107,62 @@ if ('development' ===  process.env.NODE_ENV) {
 //  var agent = require('webkit-devtools-agent');
 }
 
-// logger
-app.logmessage = function(message, loglevel) {
+
+//Configure Winston Log Files
+winston.loggers.add('transactionLogs', {
+	 transports: [
+	              new (winston.transports.DailyRotateFile)(
+			    		  {	
+			    			name: 'server_transaction',
+			    			filename: 'logs/w_transaction.log', 
+			    			timestamp: true,
+			    			level: 'info',
+			    			tailable: true,
+			    			prettyPrint: true,
+			    			humanReadableUnhandledException: true,
+			    			zippedArchive: true,
+			    			datePattern: '.dd-MM-yyyy'})
+	              ]
+  });
+
+winston.loggers.add('serverLogs',{
+    transports: [
+                 new (winston.transports.DailyRotateFile)(
+                		 {	 name: "server_info",
+                			 filename: 'logs/w_server.log', 
+                			 timestamp: true,
+                			 tailable: true,
+                			 prettyPrint: true,
+                			 humanReadableUnhandledException: true,
+                			 zippedArchive: true,
+                			 datePattern: '.dd-MM-yyyy'}),
+                new (winston.transports.DailyRotateFile)(
+			    		  {	
+			    			  name: "server_error",
+			    			  filename: 'logs/w_error.log', 
+			    			  level: 'error', 
+			    			  timestamp: true,
+			    			  handleExceptions: true,
+			    			  tailable: true,
+			    			  prettyPrint: true,
+			    			  humanReadableUnhandledException: true,
+			    			  zippedArchive: true,
+			    			  datePattern: '.dd-MM-yyyy'})
+    ]
+});
+
+var transactionLogger = winston.loggers.get('transactionLogs');
+var serverLogger =  winston.loggers.get('serverLogs');
+
+
+
+
+// default logger: keep it for now and call winston logger from it
+app.logmessage = function(message, loglevel, skip) {
+  
+   if(!skip) //To skip winston on recursive calls of app.logmessage
+	  app.winstonLog(message, loglevel)
+  
   if ('error' === loglevel) {
     console.trace(message);
   }
@@ -124,25 +178,51 @@ app.logmessage = function(message, loglevel) {
     }
     message = (app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':' + message;
   } else {
-    app.logmessage((app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':OBJECT', loglevel);
+    app.logmessage((app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':OBJECT', loglevel, true);
   }
 
-  if (!obj && winston) {
-    winston.log(loglevel || 'info', message);
-  } else {
     if ('error' === loglevel) {
      console.trace(message);
     } else {
       console.log(message);
     }
-  }
+}
+
+// winston logger
+app.winstonLog = function(message, loglevel) {
+	if(!loglevel) {
+		loglevel = "info";
+	}
+	 var meta = (app.workerId ? { WORKER:  (app.workerId).replace(':PID:', 'PID:') } : { WORKER: (process.pid).replace(':PID:', 'PID:')});
+	 if ('error' === loglevel) {
+		  var err = new Error(message);
+		  meta["stack"]  = err.stack;
+	 }
+	 var obj = helper.isObject(message);
+	  if (!obj) {
+	    if (message && message.trim) {
+	      message = message.trim();
+	    }
+	    if (!message) {
+	      return;
+	    }
+	  } else {
+		  message = "Check Message";
+		  meta["message"] = message;
+	  }
+	  
+	  serverLogger.log(loglevel, message, meta);
+	  if( -1 !== message.toLowerCase().indexOf('bastion')) {
+		transactionLogger.log(loglevel, message, meta);
+	}
 }
 
 // exception catchall
 process.addListener('uncaughtException', function (err, stack) {
   var message = 'Caught exception: ' + err + '\n' + err.stack;
   if (app && app.logmessage) {
-    app.logmessage(message);
+    app.logmessage(message, 'error', true); //true to skip winstonLog in logMessage, as it is a stack
+    app.winstonLog(err.message, 'error'); //Call winston logger directly
   } else {
     console.trace(message);
   }
