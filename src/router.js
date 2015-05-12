@@ -850,7 +850,9 @@ module.exports = {
 
           var shareModel = helper.pasteurize(req.body);
 
-          dao.shareBip(dao.modelFactory('bip', shareModel, accountInfo, true), null, restResponse(res));
+          shareModel.bip_id = shareModel.id;
+
+          dao.shareBip(dao.modelFactory('bip_share', shareModel, accountInfo, true), null, restResponse(res));
         }
       }
     });

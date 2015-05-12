@@ -426,15 +426,20 @@ Bip.entitySchema = {
         }
         next(ok);
       },
-      msg : 'Invalid, Inactive or Missing Channel'
+      msg : 'Invalid, Inactive or Missing Channel In Hub'
     },
     {
       // ensure hub has a source edge
       validator : function(hub, next) {
-        var hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
+        var hasRenderer = this.config.renderer &&
+          (
+            undefined !== this.config.renderer.channel_id ||
+            undefined !== this.config.renderer.pod
+          );
+
         next(hub.source && hub.source.edges.length > 0 || hasRenderer);
       },
-      msg : "Cannot Be Empty"
+      msg : "Hub Cannot Be Empty"
     },
     /* @todo stubbed
         {

@@ -112,9 +112,9 @@ if ('development' ===  process.env.NODE_ENV) {
 winston.loggers.add('transactionLogs', {
 	 transports: [
 	              new (winston.transports.DailyRotateFile)(
-			    		  {	
+			    		  {
 			    			name: 'server_transaction',
-			    			filename: 'logs/w_transaction.log', 
+			    			filename: 'logs/w_transaction.log',
 			    			timestamp: true,
 			    			level: 'info',
 			    			tailable: true,
@@ -129,7 +129,7 @@ winston.loggers.add('serverLogs',{
     transports: [
                  new (winston.transports.DailyRotateFile)(
                 		 {	 name: "server_info",
-                			 filename: 'logs/w_server.log', 
+                			 filename: 'logs/w_server.log',
                 			 timestamp: true,
                 			 tailable: true,
                 			 prettyPrint: true,
@@ -137,10 +137,10 @@ winston.loggers.add('serverLogs',{
                 			 zippedArchive: true,
                 			 datePattern: '.dd-MM-yyyy'}),
                 new (winston.transports.DailyRotateFile)(
-			    		  {	
+			    		  {
 			    			  name: "server_error",
-			    			  filename: 'logs/w_error.log', 
-			    			  level: 'error', 
+			    			  filename: 'logs/w_error.log',
+			    			  level: 'error',
 			    			  timestamp: true,
 			    			  handleExceptions: true,
 			    			  tailable: true,
@@ -159,10 +159,10 @@ var serverLogger =  winston.loggers.get('serverLogs');
 
 // default logger: keep it for now and call winston logger from it
 app.logmessage = function(message, loglevel, skip) {
-  
+
    if(!skip) //To skip winston on recursive calls of app.logmessage
 	  app.winstonLog(message, loglevel)
-  
+
   if ('error' === loglevel) {
     console.trace(message);
   }
@@ -174,7 +174,7 @@ app.logmessage = function(message, loglevel, skip) {
     }
 
     if (!message) {
-      return;
+    return;
     }
     message = (app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':' + message;
   } else {
@@ -210,7 +210,7 @@ app.winstonLog = function(message, loglevel) {
 		  message = "Check Message";
 		  meta["message"] = message;
 	  }
-	  
+
 	  serverLogger.log(loglevel, message, meta);
 	  if( -1 !== message.toLowerCase().indexOf('bastion')) {
 		transactionLogger.log(loglevel, message, meta);

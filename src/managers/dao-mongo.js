@@ -41,7 +41,7 @@
  *  accumulateFilter(modelName, filter, accumulator)
  *  updateColumn(modelName, filter, props, next)
  *  expire(modelName, maxTime, next)
- *
+ *  aggregate(modelName, filter, next)
  * Factories
  *
  *  modelFactory(modelName, properties, accountInfo, tainted) //
@@ -984,6 +984,21 @@ DaoMongo.prototype.expire = function(modelName, filter, maxTime, next) {
   };
 
   this.removeFilter(modelName, filter, next);
+};
+
+// expire a model
+DaoMongo.prototype.aggregate = function(modelName, filter, next, sort) {
+  var model = this.modelFactory(modelName),
+    // cast to mongoose model
+    MongoModel = mongoose.model(model.getEntityName());
+
+  var q = MongoModel.aggregate(filter);
+
+  if (sort) {
+//    q = q.sort(sort);
+  }
+
+  q.exec(next);
 };
 
 /**

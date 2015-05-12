@@ -530,7 +530,8 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     hub : derivedHub,
     manifest : Object.keys(manifest),
     owner_id : bip.owner_id,
-    owner_name : bip.accountInfo.user.name
+    owner_name : bip.accountInfo.user.name,
+    slug : bip.slug
   };
 
   bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
