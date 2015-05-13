@@ -212,7 +212,7 @@ app.winstonLog = function(message, loglevel) {
 	  }
 
 	  serverLogger.log(loglevel, message, meta);
-	  if( -1 !== message.toLowerCase().indexOf('bastion')) {
+	  if( typeof message === 'string' && -1 !== message.toLowerCase().indexOf('bastion')) {
 		transactionLogger.log(loglevel, message, meta);
 	}
 }
