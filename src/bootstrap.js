@@ -121,6 +121,7 @@ winston.loggers.add('transactionLogs', {
 			    			prettyPrint: true,
 			    			humanReadableUnhandledException: true,
 			    			zippedArchive: true,
+                exitOnError: false,
 			    			datePattern: '.dd-MM-yyyy'})
 	              ]
   });
@@ -135,6 +136,7 @@ winston.loggers.add('serverLogs',{
                 			 prettyPrint: true,
                 			 humanReadableUnhandledException: true,
                 			 zippedArchive: true,
+                       exitOnError: false,
                 			 datePattern: '.dd-MM-yyyy'}),
                 new (winston.transports.DailyRotateFile)(
 			    		  {
@@ -147,6 +149,7 @@ winston.loggers.add('serverLogs',{
 			    			  prettyPrint: true,
 			    			  humanReadableUnhandledException: true,
 			    			  zippedArchive: true,
+                  exitOnError: false,
 			    			  datePattern: '.dd-MM-yyyy'})
     ]
 });
