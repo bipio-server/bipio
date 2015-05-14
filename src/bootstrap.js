@@ -110,7 +110,6 @@ if ('development' ===  process.env.NODE_ENV) {
 
 //Configure Winston Log Files
 winston.loggers.add('transactionLogs', {
-  exitOnError: false,
   transports: [
     new (winston.transports.DailyRotateFile)(
     {
@@ -128,7 +127,6 @@ winston.loggers.add('transactionLogs', {
 );
 
 winston.loggers.add('serverLogs',{
-  exitOnError: false,
   transports: [
     new (winston.transports.DailyRotateFile)(
       {
@@ -158,10 +156,10 @@ winston.loggers.add('serverLogs',{
 });
 
 var transactionLogger = winston.loggers.get('transactionLogs');
+transactionLogger.exitOnError = false;
+
 var serverLogger =  winston.loggers.get('serverLogs');
-
-
-
+serverLogger.exitOnError = false;
 
 // default logger: keep it for now and call winston logger from it
 app.logmessage = function(message, loglevel, skip) {
