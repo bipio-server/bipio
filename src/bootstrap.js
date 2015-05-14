@@ -20,30 +20,30 @@
  *
  */
 
-var path = require('path');
+ var path = require('path');
 
-process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
-process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
+ process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
+ process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 
 // includes
 var app = {
-    workerId : ':PID:' + process.pid
-  },
-  sugar       = require('sugar'),
-  util        = require('util'),
-  underscore  = require('underscore'),
-  winston     = require('winston'),
-  helper      = require('./lib/helper'),
-  defs        = require('../config/defs'),
-  envConfig   = require('config'),
-  cluster     = require('cluster'),
-  os          = require('os'),
-  Q           = require('q'),
-  moment      = require('moment'),
-  ipaddr = require('ipaddr.js'),
-  memwatch = require('memwatch'),
-  heapdump = require('heapdump');
+  workerId : ':PID:' + process.pid
+},
+sugar       = require('sugar'),
+util        = require('util'),
+underscore  = require('underscore'),
+winston     = require('winston'),
+helper      = require('./lib/helper'),
+defs        = require('../config/defs'),
+envConfig   = require('config'),
+cluster     = require('cluster'),
+os          = require('os'),
+Q           = require('q'),
+moment      = require('moment'),
+ipaddr = require('ipaddr.js'),
+memwatch = require('memwatch'),
+heapdump = require('heapdump');
 
 require('ssl-root-cas/latest').inject();
 
@@ -85,7 +85,7 @@ for (k in envConfig.modules) {
       + '/'
       + mod.strategy
       + '.js'
-    );
+      );
     app.modules[k] = new ModProto(mod.config);
   }
 }
@@ -110,48 +110,51 @@ if ('development' ===  process.env.NODE_ENV) {
 
 //Configure Winston Log Files
 winston.loggers.add('transactionLogs', {
-	 transports: [
-	              new (winston.transports.DailyRotateFile)(
-			    		  {
-			    			name: 'server_transaction',
-			    			filename: 'logs/w_transaction.log',
-			    			timestamp: true,
-			    			level: 'info',
-			    			tailable: true,
-			    			prettyPrint: true,
-			    			humanReadableUnhandledException: true,
-			    			zippedArchive: true,
-                exitOnError: false,
-			    			datePattern: '.dd-MM-yyyy'})
-	              ]
-  });
+  exitOnError: false,
+  transports: [
+    new (winston.transports.DailyRotateFile)(
+    {
+      name: 'server_transaction',
+      filename: 'logs/w_transaction.log',
+      timestamp: true,
+      level: 'info',
+      tailable: true,
+      prettyPrint: true,
+      humanReadableUnhandledException: true,
+      zippedArchive: true,
+      datePattern: '.dd-MM-yyyy'})
+    ]
+  }
+);
 
 winston.loggers.add('serverLogs',{
-    transports: [
-                 new (winston.transports.DailyRotateFile)(
-                		 {	 name: "server_info",
-                			 filename: 'logs/w_server.log',
-                			 timestamp: true,
-                			 tailable: true,
-                			 prettyPrint: true,
-                			 humanReadableUnhandledException: true,
-                			 zippedArchive: true,
-                       exitOnError: false,
-                			 datePattern: '.dd-MM-yyyy'}),
-                new (winston.transports.DailyRotateFile)(
-			    		  {
-			    			  name: "server_error",
-			    			  filename: 'logs/w_error.log',
-			    			  level: 'error',
-			    			  timestamp: true,
-			    			  handleExceptions: true,
-			    			  tailable: true,
-			    			  prettyPrint: true,
-			    			  humanReadableUnhandledException: true,
-			    			  zippedArchive: true,
-                  exitOnError: false,
-			    			  datePattern: '.dd-MM-yyyy'})
-    ]
+  exitOnError: false,
+  transports: [
+    new (winston.transports.DailyRotateFile)(
+      {
+      name: "server_info",
+      filename: 'logs/w_server.log',
+      timestamp: true,
+      tailable: true,
+      prettyPrint: true,
+      humanReadableUnhandledException: true,
+      zippedArchive: true,
+      datePattern: '.dd-MM-yyyy'}
+    ),
+    new (winston.transports.DailyRotateFile)(
+      {
+      name: "server_error",
+      filename: 'logs/w_error.log',
+      level: 'error',
+      timestamp: true,
+      handleExceptions: true,
+      tailable: true,
+      prettyPrint: true,
+      humanReadableUnhandledException: true,
+      zippedArchive: true,
+      datePattern: '.dd-MM-yyyy'}
+    )
+  ]
 });
 
 var transactionLogger = winston.loggers.get('transactionLogs');
@@ -164,9 +167,9 @@ var serverLogger =  winston.loggers.get('serverLogs');
 app.logmessage = function(message, loglevel, skip) {
 
    if(!skip) //To skip winston on recursive calls of app.logmessage
-	  app.winstonLog(message, loglevel)
+     app.winstonLog(message, loglevel)
 
-  if ('error' === loglevel) {
+   if ('error' === loglevel) {
     console.trace(message);
   }
 
@@ -177,18 +180,18 @@ app.logmessage = function(message, loglevel, skip) {
     }
 
     if (!message) {
-    return;
+      return;
     }
     message = (app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':' + message;
   } else {
     app.logmessage((app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':OBJECT', loglevel, true);
   }
 
-    if ('error' === loglevel) {
-     console.trace(message);
-    } else {
-      console.log(message);
-    }
+  if ('error' === loglevel) {
+   console.trace(message);
+ } else {
+  console.log(message);
+}
 }
 
 // winston logger
@@ -196,28 +199,28 @@ app.winstonLog = function(message, loglevel) {
 	if(!loglevel) {
 		loglevel = "info";
 	}
-	 var meta = (app.workerId ? { WORKER:  (app.workerId).replace(':PID:', 'PID:') } : { WORKER: (process.pid).replace(':PID:', 'PID:')});
-	 if ('error' === loglevel) {
-		  var err = new Error(message);
-		  meta["stack"]  = err.stack;
-	 }
-	 var obj = helper.isObject(message);
-	  if (!obj) {
-	    if (message && message.trim) {
-	      message = message.trim();
-	    }
-	    if (!message) {
-	      return;
-	    }
-	  } else {
-		  message = "Check Message";
-		  meta["message"] = message;
-	  }
+  var meta = (app.workerId ? { WORKER:  (app.workerId).replace(':PID:', 'PID:') } : { WORKER: (process.pid).replace(':PID:', 'PID:')});
+  if ('error' === loglevel) {
+    var err = new Error(message);
+    meta["stack"]  = err.stack;
+  }
+  var obj = helper.isObject(message);
+  if (!obj) {
+   if (message && message.trim) {
+     message = message.trim();
+   }
+   if (!message) {
+     return;
+   }
+ } else {
+  message = "Check Message";
+  meta["message"] = message;
+}
 
-	  serverLogger.log(loglevel, message, meta);
-	  if( typeof message === 'string' && -1 !== message.toLowerCase().indexOf('bastion')) {
-		transactionLogger.log(loglevel, message, meta);
-	}
+serverLogger.log(loglevel, message, meta);
+if( typeof message === 'string' && -1 !== message.toLowerCase().indexOf('bastion')) {
+  transactionLogger.log(loglevel, message, meta);
+}
 }
 
 // exception catchall
