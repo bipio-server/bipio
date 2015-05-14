@@ -32,7 +32,6 @@ http = require('http'),
 https = require('https'),
 ipaddr = require('ipaddr.js'),
 JSONPath = require('JSONPath'),
-moment = require('moment-timezone'),
 mkdirp = require('mkdirp'),
 path = require('path'),
 rimraf = require('rimraf'),
@@ -131,11 +130,11 @@ var helper = {
 
     return src;
   },
-  
+
   html_encode :function(str){
 	  return htmlEncode(str);
   },
-  
+
   naturalize : function(src) {
     var attrLen, newKey;
     if (this.isArray(src)) {
@@ -353,15 +352,15 @@ var helper = {
       }
     }
 
-    var timeMoment = moment(time).utc(),
+    var timeMoment = app.moment(time).utc(),
       utcOffset = timeMoment.tz(tz).utcOffset();
 
     return timeMoment.unix() + (utcOffset * 60);
   },
 
   tzDiff : function(tz) {
-    var localTz = moment().utc().tz(CFG.timezone).utcOffset(),
-      tzTz = moment().utc().tz(tz).utcOffset();
+    var localTz = app.moment().utc().tz(CFG.timezone).utcOffset(),
+      tzTz = app.moment().utc().tz(tz).utcOffset();
 
     return (tzTz - localTz) * 60;
   },
