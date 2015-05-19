@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- 
+
  */
 var StatsAccountNetworkNetworkModel = require('./prototype.js').BipModel,
     StatsAccountNetwork = Object.create(StatsAccountNetworkNetworkModel);
@@ -32,7 +32,7 @@ StatsAccountNetwork.entitySchema = {
     },
     day: {   // day
         type: String,
-        renderable: false,
+        renderable: true,
         writable: false
     },
     owner_id : {
@@ -42,7 +42,7 @@ StatsAccountNetwork.entitySchema = {
     },
     data: {
         type: Object,
-        renderable: false,
+        renderable: true,
         writable: false
     },
     updated_at: {
