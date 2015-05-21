@@ -676,14 +676,16 @@ Bip.exports = {
 
   // http export helpers
   'http' : {
+    title : 'Incoming Web Hook',
+    type : 'object',
     properties : {
       'title' : {
-        type : String,
+        type : 'string',
         description: 'Message Title'
       },
 
       'body' : {
-        type : String,
+        type : 'string',
         description: 'Message Body'
       }
     },
@@ -699,6 +701,8 @@ Bip.exports = {
 
 if (CFG.server.smtp_bips) {
   Bip.exports.smtp = {
+    title : 'Incoming Email',
+    type : 'object',
     properties : {
       'subject' : {
         type : 'string',

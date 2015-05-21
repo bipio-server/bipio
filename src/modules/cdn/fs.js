@@ -93,12 +93,11 @@ FsProto.prototype = {
         }
 
         if (buffer) {
-          writeStream.write(buffer.toString(), encoding, function() {
+          writeStream.write(encoding ? buffer : buffer.toString(), encoding, function() {
             writeStream.end();
           });
         }
       })(next);
-
 
     });
   },
