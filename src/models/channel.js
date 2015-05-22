@@ -218,6 +218,7 @@ Channel.getActionTokens = function() {
   }
 }
 
+
 /**
  * Transforms adjacentExports into an import usable by this Channel.  Transforms
  * are applied to imports under these conditions
@@ -232,23 +233,28 @@ Channel.getActionTokens = function() {
  */
 
 Channel._transform = function(adjacentExports, transforms) {
+
   var self = this,
-    pod = this.getPodTokens();
+    pod = this.getPodTokens(),
     resolvedImports = {}; // final imports for the channel
 
   app._.each(transforms, function(transform, key) {
     var literalMatch = ("" === transform.replace(helper.regActionUUID, '').trim()),
-      matches = transform.match(helper.regActionUUID),
+	  matches = app._.union(transform.match(helper.regActionUUID), ( transform.match(helper.regAction))),
       matchMap = {},
       mapKeys;
 
+
     app._.each(matches, function(matchStr) {
-      var pathResult;
+      var matchStrNorm,
+	      pathExp,
+		  pathResult;
 
       matchStrNorm = matchStr.replace(/\[%|\s|%\]/g, ''),
       pathExp = matchStrNorm.replace(/#/, '.');
 
       pathResult = app.helper.jsonPath(adjacentExports, pathExp);
+
 
       matchMap[matchStr] = pathResult.length === 1 ? pathResult.shift() : pathResult;
     });
@@ -256,7 +262,7 @@ Channel._transform = function(adjacentExports, transforms) {
     mapKeys = Object.keys(matchMap);
 
     // forward object substructure
-    if (1 === mapKeys.length && literalMatch) {
+   if (1 === mapKeys.length && literalMatch) {
       resolvedImports[key] = matchMap[mapKeys[0]];
     } else {
       app._.each(matchMap, function(value, key) {
@@ -272,6 +278,7 @@ Channel._transform = function(adjacentExports, transforms) {
       resolvedImports[key] = transform;
     }
   });
+
 
   return helper.naturalize(resolvedImports);
 }

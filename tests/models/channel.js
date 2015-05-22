@@ -14,6 +14,18 @@ describe('channel transforms', function() {
         }, 100);
     });
 
+    var exampleChannel = {
+		"id" : "374d9a1d-cc84-456d-9dad-e1e3065e8c4d",
+		"owner_id" : "5b8461ff-36e8-4540-b421-54d47b85b580",
+		"note" : "some text",
+		"created" : 1430315993000,
+		"icon" : "",
+		"action" : "math.random",
+		"app_id" : "",
+		"name" : "Do Nothing",
+		"__v" : 0
+	};    
+
     var imports = {
         "source" : {
             "title" : "source title"
@@ -35,15 +47,29 @@ describe('channel transforms', function() {
                     1, 2, 3, 4, 5
                 ]
             ]
-        }
-    },
-    transforms = {
+        },
+		"math" : {
+			"random" : {
+				0 : {
+					"random_int": 1
+				},
+                1 : {
+                    "other_arr": [ 2, 3, 4]
+                }
+			}
+		}
+    };
+
+    var transforms = {
         "simple_transform" : "[%source#title%]",
         "simple_compound_transform" : "Title is [%source#title%]",
         "simple_compound_repeating_transform" : "[%source#title%] is [%source#title%]",
         "obj_transform" : "[%_bip#config%]",
         "obj_compound_transform" : "Config is [%_bip#config%]",
         "jsonpath_transform" : "[%_bip#config.auth%]",
+        "jsonpath_pod_action_transform" : "[%math.random[0].random_int%]",
+        "jsonpath_pod_action_compound_transform" : "[%math.random[0].random_int%] and [%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[0]%]",
+        "jsonpath_pod_action_repeating_transform" : "[%math.random[1].other_arr[2]%] and [%math.random[1].other_arr[2]%]",
         "complex_jsonpath_transform" : "Auth type is [%_bip#config.auth%]",
         "complex_json_struct_1" : "[%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[0]%]",
         "complex_json_struct_2" : "[%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[1].name%]",
@@ -153,6 +179,7 @@ describe('channel transforms', function() {
         done();
     });
 
+
     it('can perform a complex jsonpath transform', function(done) {
         var transform = getTransform('complex_jsonpath_transform'),
             result = model._transform(imports, transform, imports);
@@ -163,118 +190,37 @@ describe('channel transforms', function() {
         done();
     });
 
-});
 
-/*
-describe('bootstrap', function() {
-    it('can compile an accountInfo object', function(done) {
-        dao.checkAuth(
-            GLOBAL.CFG.testing_user.username,
-            GLOBAL.CFG.testing_user.password,
-            'token',
-            function(err, acct) {
-                if (err) {
-                    done(err);
-                } else {
-                    acct.should.be.ok;
-                    acct.user.username.should.equal(GLOBAL.CFG.testing_user.username);
-
-                    // assert expected object structure and interface
-                    acct.should.have.ownProperty('user');
-                    acct.user.should.have.ownProperty('id');
-                    acct.user.settings.should.be.a('object');
-
-                    acct.user.domains.should.be.a('object');
-                    acct.user.domains.set.should.be.a('function');
-                    acct.user.domains.get.should.be.a('function');
-                    acct.user.domains.test.should.be.a('function');
-
-                    acct.user.channels.should.be.a('object');
-                    acct.user.channels.set.should.be.a('function');
-                    acct.user.channels.get.should.be.a('function');
-                    acct.user.channels.test.should.be.a('function');
-
-                    Object.keys(acct.user.domains).should.not.be.empty;
-
-                    accountInfo = acct;
-                    done();
-                }
-            }
-            );
-    });
-});
-
-var cid;
-describe('channel dao', function() {
-    var channelStruct = {
-        action : 'flow.blackhole',
-        name : 'Blackhole Channel ' + uuid.v4()
-    };
-
-    it('can save a channel', function(done) {
-        var model = dao.modelFactory('channel', channelStruct, accountInfo, true);
-        dao.create(model, function(err, modelName, channel) {
-            modelName.should.equal('channel');
-
-            channel.should.have.ownProperty('id');
-            channel.should.have.ownProperty('owner_id');
-            channel.should.have.ownProperty('action');
-            channel.should.have.ownProperty('name');
-
-            channel.owner_id.should.equal(accountInfo.user.id);
-            channel.action.should.equal(channelStruct.action);
-            channel.name.should.equal(channelStruct.name);
-
-            cid = channel.id;
-            //            accountInfo.user.channels.channels[cid] = channel;
-            done();
-        }, accountInfo);
+    it('can replace a pod.action[idx].key structured jsonpath transform', function(done) {
+        var channel = dao.modelFactory('channel', exampleChannel);
+        var transform = getTransform('jsonpath_pod_action_transform'),
+            result = model._transform(imports, transform, imports);
+        result.should.have.ownProperty('jsonpath_pod_action_transform');
+        result.jsonpath_pod_action_transform.should.equal('1');
+        done();
     });
 
-    it('can retrieve a channel', function(done) {
-        var model = dao.modelFactory('channel', {}, accountInfo);
-        dao.get(model, cid, accountInfo, function(err, modelName, channel) {
-            err.should.be.false;
 
-            modelName.should.equal('channel');
-            channel.should.have.ownProperty('id');
-            channel.should.have.ownProperty('owner_id');
-            channel.should.have.ownProperty('action');
-            channel.should.have.ownProperty('name');
-
-            channel.owner_id.should.equal(accountInfo.user.id);
-            channel.action.should.equal(channelStruct.action)
-            channel.name.should.equal(channelStruct.name)
-
-            done();
-        });
+    it('can replace pod.action[idx].key  AND uuid#action structured jsonpath transforms', function(done) {
+        var channel = dao.modelFactory('channel', exampleChannel);
+        var transform = getTransform('jsonpath_pod_action_compound_transform'),
+            result = model._transform(imports, transform, imports);
+        result.should.have.ownProperty('jsonpath_pod_action_compound_transform');
+        result.jsonpath_pod_action_compound_transform.should.equal('1 and Arr String Value');
+        done();
     });
 
-    it('can put a channel', function(done) {
-        var newStruct = {
-            name : 'Updated ' + channelStruct.name
-        };
 
-        dao.update(
-            'channel',
-            cid,
-            newStruct,
-            function(err, modelName, channel) {
-                err.should.not.be.ok;
-
-                modelName.should.equal('channel');
-                channel.owner_id.should.equal(accountInfo.user.id);
-                channel.action.should.equal(channelStruct.action)
-                channel.name.should.equal(newStruct.name)
-
-                done();
-            },
-            accountInfo
-        );
+    it('can replace repeating pod.action[idx].key  structured jsonpath transforms', function(done) {
+        var channel = dao.modelFactory('channel', exampleChannel);
+        var transform = getTransform('jsonpath_pod_action_repeating_transform'),
+            result = model._transform(imports, transform, imports);
+        result.should.have.ownProperty('jsonpath_pod_action_repeating_transform');
+        result.jsonpath_pod_action_repeating_transform.should.equal('4 and 4');
+        done();
     });
+
+
+
 });
 
-describe('channel transforms', function() {
-
-});
-*/
