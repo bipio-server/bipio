@@ -829,9 +829,11 @@ function getAction(accountInfo, channelId) {
 
 Bip.normalizeTransformDefaults = function(accountInfo, next) {
 
-  var from, to, payload, fromMatch, transforms = {}, dirty = false;
-  for (var key in this.hub) {
-    if (this.hub.hasOwnProperty(key)) {
+  var from, to, payload, fromMatch, transforms = {}, dirty = false,
+    hub = JSON.parse(JSON.stringify(this.hub));
+
+  for (var key in hub) {
+    if (hub.hasOwnProperty(key)) {
       fromMatch = new RegExp(key, 'gi');
       if (key === 'source') {
         if (this.type === 'trigger' && this.config.channel_id) {
@@ -843,27 +845,27 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
         from = getAction(accountInfo, key);
       }
 
-      if (this.hub[key].transforms && Object.keys(this.hub[key].transforms).length > 0) {
+      if (hub[key].transforms && Object.keys(hub[key].transforms).length > 0) {
         for (var txChannelId in this.hub[key].transforms) {
-          if (this.hub[key].transforms.hasOwnProperty(txChannelId)) {
+          if (hub[key].transforms.hasOwnProperty(txChannelId)) {
             to = getAction(accountInfo, txChannelId);
             if (from && to) {
 
 			  // filter to include only transforms for these
               // adjacent channels
-              for(var txKey in this.hub[key].transforms[txChannelId]) {
+              for(var txKey in hub[key].transforms[txChannelId]) {
 
-                if (this.hub[key].transforms[txChannelId].hasOwnProperty(txKey)) {
+                if (hub[key].transforms[txChannelId].hasOwnProperty(txKey)) {
 
-                  this.hub[key].transforms[txChannelId][txKey].replace(fromMatch, from);
+                  hub[key].transforms[txChannelId][txKey].replace(fromMatch, from);
 
-                  if (app.helper.getRegUUID().test(this.hub[key].transforms[txChannelId][txKey])) {
-                    this.hub[key].transforms[txChannelId][txKey] = '';
+                  if (app.helper.getRegUUID().test(hub[key].transforms[txChannelId][txKey])) {
+                    hub[key].transforms[txChannelId][txKey] = '';
                   }
 
                   // strip any remaining uuid's.  Only supporting adjacent transform helpers
                   // for now
-                  this.hub[key].transforms[txChannelId][txKey].replace(app.helper.getRegActionUUID(), '');
+                  hub[key].transforms[txChannelId][txKey].replace(app.helper.getRegActionUUID(), '');
                 }
               }
 
@@ -871,7 +873,7 @@ Bip.normalizeTransformDefaults = function(accountInfo, next) {
               payload = {
                 from_channel : from,
                 to_channel : to,
-                transform : this.hub[key].transforms[txChannelId],
+                transform : hub[key].transforms[txChannelId],
                 owner_id : accountInfo.user.id
               };
               next(payload);
@@ -898,11 +900,13 @@ Bip.preRemove = function(id, accountInfo, next) {
 }
 
 Bip.postSave = function(accountInfo, next, isNew) {
+
   this.normalizeTransformDefaults(accountInfo, function(payload) {
     if (payload.transform && Object.keys(payload.transform).length > 0) {
       app.bastion.createJob(DEFS.JOB_BIP_SET_DEFAULTS, payload);
     }
   });
+
 
   // create metric updates jobs
   if (isNew) {
