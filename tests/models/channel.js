@@ -68,8 +68,8 @@ describe('channel transforms', function() {
         "obj_compound_transform" : "Config is [%_bip#config%]",
         "jsonpath_transform" : "[%_bip#config.auth%]",
         "jsonpath_pod_action_transform" : "[%math.random._0.random_int%]",
-        "jsonpath_pod_action_compound_transform" : "[%math.random._0.random_int%] and [%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[0]%]",
         "jsonpath_pod_action_repeating_transform" : "[%math.random._1.other_arr[2]%] and [%math.random._1.other_arr[2]%]",
+        "jsonpath_mixed_structure_transform" : "[%math.random._0.random_int%] and [%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[0]%]",
         "complex_jsonpath_transform" : "Auth type is [%_bip#config.auth%]",
         "complex_json_struct_1" : "[%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[0]%]",
         "complex_json_struct_2" : "[%374d9a1d-cc84-456d-9dad-e1e3065e8c4d#arr[1].name%]",
@@ -191,8 +191,7 @@ describe('channel transforms', function() {
     });
 
 
-    it('can replace a pod.action[idx].key structured jsonpath transform', function(done) {
-        var channel = dao.modelFactory('channel', exampleChannel);
+    it('can perfrom a pod.action._(#).attr structured jsonpath transform', function(done) {
         var transform = getTransform('jsonpath_pod_action_transform'),
             result = model._transform(imports, transform, imports);
         result.should.have.ownProperty('jsonpath_pod_action_transform');
@@ -201,18 +200,16 @@ describe('channel transforms', function() {
     });
 
 
-    it('can replace pod.action[count].key  AND uuid#action structured jsonpath transforms', function(done) {
-        var channel = dao.modelFactory('channel', exampleChannel);
-        var transform = getTransform('jsonpath_pod_action_compound_transform'),
+    it('can perform a mixed pod.action._(#).attr AND uuid#action structured jsonpath transforms', function(done) {
+        var transform = getTransform('jsonpath_mixed_structure_transform'),
             result = model._transform(imports, transform, imports);
-        result.should.have.ownProperty('jsonpath_pod_action_compound_transform');
-        result.jsonpath_pod_action_compound_transform.should.equal('1 and Arr String Value');
+        result.should.have.ownProperty('jsonpath_mixed_structure_transform');
+        result.jsonpath_mixed_structure_transform.should.equal('1 and Arr String Value');
         done();
     });
 
 
-    it('can replace repeating pod.action[count].key  structured jsonpath transforms', function(done) {
-        var channel = dao.modelFactory('channel', exampleChannel);
+    it('can perform repeating pod.action._(#).attr  structured jsonpath transforms', function(done) {
         var transform = getTransform('jsonpath_pod_action_repeating_transform'),
             result = model._transform(imports, transform, imports);
         result.should.have.ownProperty('jsonpath_pod_action_repeating_transform');
