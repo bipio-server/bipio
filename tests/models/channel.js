@@ -48,16 +48,16 @@ describe('channel transforms', function() {
                 ]
             ]
         },
-		"math" : {
-			"random" : {
-				0 : {
-					"random_int": 1
-				},
-                1 : {
-                    "other_arr": [ 2, 3, 4]
-                }
-			}
-		}
+        "math" : {
+          "random" : {
+            0 : {
+              "random_int": 1
+            },
+            1 : {
+                "other_arr": [ 2, 3, 4]
+            }
+          }
+        }
     };
 
     var transforms = {
