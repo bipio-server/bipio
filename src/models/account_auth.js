@@ -52,9 +52,9 @@ function AESCrypt(value) {
 function AESDecrypt(cryptedStr, autoPadding) {
   var crypted = new Buffer(cryptedStr, 'base64').toString('utf-8');
   var keyVersion = crypted.substr(0, 1),
-  iv = crypted.substr(1, 16),
-  key = CFG.k[keyVersion],
-  cypher = crypted.substr(17);
+    iv = crypted.substr(1, 16),
+    key = CFG.k[keyVersion],
+    cypher = crypted.substr(17);
 
   var decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
 
@@ -80,17 +80,21 @@ function pwHash(pwValue) {
 }
 
 function cryptSave(value) {
-  var crypted = value;
+  if (value) {
+    var crypted = value;
 
-  // passwords get
-  if (this.type == 'login_primary' || this.type == 'login_sub') {
-    app.logmessage('Trying to write login primary to account_auth [' + this.id + ']', 'error');
-    throw new Error('Bad Type');
-  } else if (this.type !== 'token_invite') {
-    crypted = AESCrypt(value);
+    // passwords get
+    if (this.type == 'login_primary' || this.type == 'login_sub') {
+      app.logmessage('Trying to write login primary to account_auth [' + this.id + ']', 'error');
+      throw new Error('Bad Type');
+    } else if (this.type !== 'token_invite') {
+      crypted = AESCrypt(value);
+    }
+
+    return crypted;
+  } else {
+    return value;
   }
-
-  return crypted;
 }
 
 function _encStr(s, toUnicode) {
@@ -103,10 +107,14 @@ function _encStr(s, toUnicode) {
 }
 
 function cryptSaveObj(value) {
-  //var strVal = (new Buffer(JSON.stringify(value), 'utf-8' )).toString('ascii')
-  //return cryptSave(JSON.stringify(strVal));
-  var strVal = _encStr(value, false)
-  return cryptSave(JSON.stringify(strVal));
+  if (value) {
+    //var strVal = (new Buffer(JSON.stringify(value), 'utf-8' )).toString('ascii')
+    //return cryptSave(JSON.stringify(strVal));
+    var strVal = _encStr(value, false)
+    return cryptSave(JSON.stringify(strVal));
+  } else {
+    return value;
+  }
 }
 
 AccountAuth.id = '';
@@ -179,7 +187,11 @@ AccountAuth.entitySchema = {
     renderable : false,
     writable : false,
     set : function(value) {
-      return (new Date()).getTime() + value
+      if (value) {
+        return (new Date()).getTime() + value
+      } else {
+        return value;
+      }
     }
   },
   oauth_profile: {
