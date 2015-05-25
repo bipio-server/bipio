@@ -98,7 +98,7 @@ Bastion.prototype.jobRunnerAlert = function(err, message) {
 // @todo we have to assume the queue system is a DMZ for now :|
 Bastion.prototype.jobRunner = function(jobPacket) {
   var self = this;
-  app.logmessage('BASTION:REC:NAME:' + jobPacket.name, 'info');
+  app.logmessage('BASTION:REC:NAME:' + jobPacket.name +':CID: [' + jobPacket.data.bip.config.channel_id + ']', 'info');
   if (jobPacket.name) {
     if (jobPacket.name == DEFS.JOB_ATTACH_REFERER_ICON) {
 //      this._dao._jobAttachBipRefererIcon( jobPacket.data, this.jobRunnerAlert );
@@ -247,7 +247,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
         inc = Number(jobPacket.data.inc) || 1;
 
         if (isNaN(inc)) {
-          app.logmessage('Incrementor is Not A Number', 'warning');
+          app.logmessage('Incrementor is Not A Number  :CID: [' + jobPacket.data.bip.config.channel_id + ']', 'warning');
           app.logmessage(inc, 'warning');
           inc = 0;
         }
@@ -289,7 +289,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
       heapdump.writeSnapshot(f);
     } else {
       console.log(jobPacket);
-      app.logmessage('BASTION:MALFORMED PACKET', 'error');
+      app.logmessage('BASTION:MALFORMED PACKET :CID: [' + jobPacket.data.bip.config.channel_id +']', 'error');
     }
   }
 }
