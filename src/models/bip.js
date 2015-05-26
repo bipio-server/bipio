@@ -139,6 +139,14 @@ Bip.repr = function(accountInfo) {
   return repr;
 }
 
+function escapeDot(val) {
+  return val.replace(/\./g, '\u0001');
+}
+
+function unEscapeDot(val) {
+  return val.replace(/\u0001/g, '.');
+}
+
 Bip.links = function(accountInfo) {
   var links = [];
   if (this.type === 'http') {
@@ -343,6 +351,32 @@ Bip.entitySchema = {
     renderable: true,
     writable: true,
     set : function(hub) {
+      var newSrc, newCid;
+
+      // normalize
+      for (var src in hub) {
+
+        newSrc = escapeDot(src);
+        hub[newSrc] = hub[src];
+
+        if (newSrc !== src) {
+          delete hub[src];
+        }
+
+        if ( hub.hasOwnProperty(newSrc) ) {
+          for (var cid in hub[newSrc].transforms) {
+
+            newCid = escapeDot(cid);
+            hub[newSrc].transforms[newCid] = hub[newSrc].transforms[cid];
+            if (newCid !== cid) {
+              delete hub[newSrc].transforms[cid];
+            }
+
+          }
+        }
+      }
+
+      // parse
       for (var src in hub) {
         if (hub.hasOwnProperty(src)) {
           for (var cid in hub[src].transforms) {
@@ -354,6 +388,34 @@ Bip.entitySchema = {
           }
         }
       }
+      return hub;
+    },
+    get : function(hub) {
+      var newSrc, newCid;
+
+      // normalize
+      for (var src in hub) {
+
+        newSrc = unEscapeDot(src);
+        hub[newSrc] = hub[src];
+
+        if (newSrc !== src) {
+          delete hub[src];
+        }
+
+        if ( hub.hasOwnProperty(newSrc) ) {
+          for (var cid in hub[newSrc].transforms) {
+
+            newCid = unEscapeDot(cid);
+            hub[newSrc].transforms[newCid] = hub[newSrc].transforms[cid];
+            if (newCid !== cid) {
+              delete hub[newSrc].transforms[cid];
+            }
+
+          }
+        }
+      }
+
       return hub;
     },
     validate : [
