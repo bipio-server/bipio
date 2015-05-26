@@ -1060,7 +1060,15 @@ DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
           next(err, model.getEntityName(), model, 500);
         } else {
 
-          self.updateProperties(modelName, result.id, patch, function(err) {
+          var updateCols = {
+            "$set" : app._.clone(patch)
+          }
+
+          var updateFilter = {};
+
+          updateFilter[model.getEntityIndex()] = result.id;
+
+          mongoose.model(model.getEntityName()).update( updateFilter, updateCols ).exec(function(err) {
             if (err) {
               next(err, modelName, {});
             } else {
@@ -1069,6 +1077,7 @@ DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
               });
             }
           });
+
         }
       });
     }
@@ -1081,7 +1090,8 @@ DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
 DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
   var model = this.modelFactory(modelName, props),
     updateFilter = {},
-    setProperties = {};
+    setProperties = {},
+    value;
 
   updateFilter[model.getEntityIndex()] = id;
 
@@ -1089,10 +1099,11 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
   var mongoModel = this.toMongoModel(model);
   for (var k in props) {
     if (props.hasOwnProperty(k)) {
-      if (app.helper.isObject(mongoModel[k]) && Object.keys(mongoModel[k]).length === 0) {
+      val = mongoModel.getValue(k);
+      if (app.helper.isObject(val) && Object.keys(val).length === 0) {
         mongoModel[k] = undefined;
       }
-      setProperties[k] = mongoModel[k];
+      setProperties[k] = val;
     }
   }
 

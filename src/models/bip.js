@@ -388,6 +388,7 @@ Bip.entitySchema = {
           }
         }
       }
+
       return hub;
     },
     get : function(hub) {
@@ -992,12 +993,15 @@ Bip.postSave = function(accountInfo, next, isNew) {
 };
 
 
-
 // ensure we have an up to date channel index
 Bip.prePatch = function(patch, accountInfo, next) {
 
   for (var k in patch) {
     if (patch.hasOwnProperty(k)) {
+      if (Bip.entitySchema[k].set) {
+        patch[k] = Bip.entitySchema[k].set(patch[k]);
+      }
+
       this[k] = patch[k];
     }
   }
