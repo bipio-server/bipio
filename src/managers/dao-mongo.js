@@ -229,6 +229,7 @@ DaoMongo.prototype.registerModelClass = function(modelClass) {
   }
 
   // get item setters
+  /*
   if (undefined != modelClass.entitySetters) {
     var setters = modelClass.entitySetters;
 
@@ -237,6 +238,7 @@ DaoMongo.prototype.registerModelClass = function(modelClass) {
       container[modelName]['schema'].path(key).set(setters[key]);
     }
   }
+  */
 
   // register mongoose schema
   try {
@@ -312,7 +314,14 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
       };
 
       if (!(tainted && !helper.inArray(writeOnlyProps, modelProperties[i]))) {
-        propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
+        // custom getters are a nasty workaround for some mongoose woes.
+        // see bip.js model, hub getter
+        var getter = this.models[modelName]['class'].entitySchema[modelProperties[i]].customGetter;
+        if (getter) {
+          propArgs[modelProperties[i]].value = getter(initProperties[modelProperties[i]]);
+        } else {
+          propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
+        }
       }
     }
 

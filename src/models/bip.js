@@ -391,7 +391,7 @@ hub: {
 
       return hub;
     },
-    get : function(hub) {
+    customGetter : function(hub) {
       var newSrc, newCid;
 
       // normalize
@@ -465,40 +465,38 @@ hub: {
         if (undefined != val.source) {
           for (var cid in val) {
             if (val.hasOwnProperty(cid)) {
-                  // check channel exists
-                  ok = (cid == 'source' || userChannels.isAvailable(cid));
-                  if (ok) {
-                    numEdges = val[cid].edges.length;
-                    if (numEdges > 0) {
-                      for (var e = 0; e < numEdges; e++) {
-                        ok = userChannels.isAvailable(val[cid].edges[e]);
-                        if (!ok) {
-                          break;
-                        }
-                        ok= app.helper.getRegUUID().test(val[cid].edges[e]);
-                        ok=false;
-                        if (!ok) {
-                          var pointerDetails=val[cid].edges[e].split(".");
-                          if(pointerDetails.length>=2){
-                           if(Bip.getDao().pod(pointerDetails[0])){
-                            if(Bip.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1])){
-                             ok=true;
-                           }else{
-                             ok=false;
-                             break;
-                           }
-                         }else{
+              // check channel exists
+              ok = (cid == 'source' || userChannels.isAvailable(cid));
+              if (ok) {
+                numEdges = val[cid].edges.length;
+                if (numEdges > 0) {
+                  for (var e = 0; e < numEdges; e++) {
+                    ok = userChannels.isAvailable(val[cid].edges[e]);
+                    if (!ok) {
+                      break;
+                    }
+                    ok = app.helper.getRegUUID().test(val[cid].edges[e]);
+                    ok =false;
+                    if (!ok) {
+                      var pointerDetails=val[cid].edges[e].split(".");
+                      if ( pointerDetails.length >= 2 ){
+                        if ( this.getDao().pod(pointerDetails[0]) ){
+                          if ( this.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1]) ){
+                            ok=true;
+                          } else {
+                            ok=false;
+                            break;
+                          }
+                        } else {
                           ok=false;
                           break;
                         }
                       }
-                    }else{
+                    } else {
                       ok=false;
                       break;
                     }
-
                   }
-
                 }
               } else if (!ok && hasRenderer) {
                 ok = true;
@@ -511,7 +509,6 @@ hub: {
 
           }
         }
-
         next(ok);
       },
       msg : 'Invalid, Inactive or Missing Channel In Hub'
@@ -916,7 +913,9 @@ function getAction(accountInfo, channelId) {
 }
 
 Bip.normalizeTransformDefaults = function(accountInfo, next) {
-
+// disabled until bip-508 complete
+next();
+return;
   var from, to, payload, fromMatch, transforms = {}, dirty = false,
   hub = JSON.parse(JSON.stringify(this.hub));
 

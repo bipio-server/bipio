@@ -348,7 +348,26 @@ Dao.prototype.removeBipDupTracking = function(bipId, next) {
               if (err) {
                 deferred.reject(err);
               } else {
-                cModel = self.modelFactory(modelName, channel);
+                if (!channel && channelId && !app.helper.getRegUUID().test(channelId)) {
+                  var tokens = channelId.split('.'),
+                    actionName = tokens[1],
+                    podName = tokens[0];
+
+                  cModel = self.modelFactory(
+                    modelName,
+                    {
+                      action : podName + '.' + actionName
+                    }
+                  );
+
+                } else if (!channel) {
+                  deferred.resolve();
+                  return;
+
+                } else {
+                  cModel = self.modelFactory(modelName, channel);
+                }
+
                 pod = cModel.getPod();
 
                 if (pod.getTrackDuplicates()) {
@@ -406,11 +425,31 @@ Dao.prototype.removeBipDeltaTracking = function(bipId, next) {
               if (err) {
                 deferred.reject(err);
               } else {
-                cModel = self.modelFactory(modelName, channel);
+
+                if (!channel && channelId && !app.helper.getRegUUID().test(channelId)) {
+                  var tokens = channelId.split('.'),
+                    actionName = tokens[1],
+                    podName = tokens[0];
+
+                  cModel = self.modelFactory(
+                    modelName,
+                    {
+                      action : podName + '.' + actionName
+                    }
+                  );
+
+                } else if (!channel) {
+                  deferred.resolve();
+                  return;
+
+                } else {
+                  cModel = self.modelFactory(modelName, channel);
+                }
+
                 pod = cModel.getPod();
 
                 if (pod.getTrackDeltas()) {
-                  pod.deltaRemove(bipId, cModel, function(err) {
+                  pod.deltaRemove(bipId, function(err) {
                     if (err) {
                       deferred.reject(err);
                     } else {
