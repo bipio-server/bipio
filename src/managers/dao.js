@@ -371,7 +371,7 @@ Dao.prototype.removeBipDupTracking = function(bipId, next) {
                 pod = cModel.getPod();
 
                 if (pod.getTrackDuplicates()) {
-                  pod.dupRemove(bipId, cModel, function(err) {
+                  pod.dupRemove(bipId, function(err) {
                     if (err) {
                       deferred.reject(err);
                     } else {
