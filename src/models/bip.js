@@ -367,6 +367,7 @@ Bip.entitySchema = {
           for (var cid in hub[newSrc].transforms) {
 
             newCid = escapeDot(cid);
+console.log('newCid',newCid);
             hub[newSrc].transforms[newCid] = hub[newSrc].transforms[cid];
             if (newCid !== cid) {
               delete hub[newSrc].transforms[cid];

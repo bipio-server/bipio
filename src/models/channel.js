@@ -283,11 +283,13 @@ Channel._transform = function(adjacentExports, transforms) {
   return helper.naturalize(resolvedImports);
 }
 
+
 /**
  *
  * Applies transforms to imports for this channel and invokes this channel
  *
  */
+
 Channel.invoke = function(adjacentExports, transforms, client, contentParts, next) {
   var self = this;
 
@@ -320,6 +322,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
     }
   });
 }
+
 
 /**
  *
