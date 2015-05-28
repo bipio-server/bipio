@@ -453,28 +453,55 @@ Bip.entitySchema = {
     },
 
     {
-      validator : function(val, next) {
+
+    	validator : function(val, next) {
+
         var ok = false,
           userChannels = this.getAccountInfo().user.channels,
           numEdges,
           transforms,
           hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
 
-        // check channels + transforms make sense
+     // check channels + transforms make sense
         if (undefined != val.source) {
           for (var cid in val) {
             if (val.hasOwnProperty(cid)) {
               // check channel exists
               ok = (cid == 'source' || userChannels.isAvailable(cid));
               if (ok) {
-                // check edges point to channels for this account
-                numEdges = val[cid].edges.length;
+
+
+                  numEdges = val[cid].edges.length;
                 if (numEdges > 0) {
                   for (var e = 0; e < numEdges; e++) {
                     ok = userChannels.isAvailable(val[cid].edges[e]);
                     if (!ok) {
                       break;
                     }
+                   ok= app.helper.getRegUUID().test(val[cid].edges[e]);
+                  ok=false;
+                   if (!ok) {
+                	   var pointerDetails=val[cid].edges[e].split(".");
+                         if(pointerDetails.length>=2){
+	                                        if(Bip.getDao().pod(pointerDetails[0])){
+	                                        	if(Bip.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1])){
+	                                        		ok=true;
+	                                        	}else{
+	                                        		ok=false;
+	                                                break;
+	                                        	}
+	                                        }else{
+	                                        	ok=false;
+	                                            break;	
+	                                        }
+                                    }
+                          }else{
+                                ok=false;
+                                break;
+                          }
+
+                        }
+
                   }
                 } else if (!ok && hasRenderer) {
                   ok = true;
@@ -482,8 +509,9 @@ Bip.entitySchema = {
               }
 
               if (!ok) {
-                break;
-              }
+                  break;
+                }
+
             }
           }
         }
