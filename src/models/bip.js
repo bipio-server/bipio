@@ -20,10 +20,10 @@
  *
 
  */
-var async = require('async'),
-baseConverter = require('base-converter'),
-BipModel = require('./prototype.js').BipModel,
-Bip = Object.create(BipModel),
+ var async = require('async'),
+ baseConverter = require('base-converter'),
+ BipModel = require('./prototype.js').BipModel,
+ Bip = Object.create(BipModel),
 //cronParser = require('cron-parser'),
 Rrecur = require('rrecur').Rrecur;
 
@@ -31,7 +31,7 @@ Rrecur = require('rrecur').Rrecur;
 /**
  *
  */
-function generate_random_base() {
+ function generate_random_base() {
   var ret = '';
   var charRanges = {
     48 : 57,
@@ -66,21 +66,21 @@ function setSchedule(schedule) {
     return time.substr(0, 16);
   }
 
-	startTime = removeOffset(schedule.startDateTime);
+  startTime = removeOffset(schedule.startDateTime);
 
-	sched = {
-		dtstart: {
-			zoneless: startTime,
-			locale: schedule.timeZone.offset
-		},
-		rrule: Rrecur.parse(recurStr)
-	}
+  sched = {
+    dtstart: {
+     zoneless: startTime,
+     locale: schedule.timeZone.offset
+   },
+   rrule: Rrecur.parse(recurStr)
+ }
 
-	schedule['sched'] = sched;
+ schedule['sched'] = sched;
 
-	recur = Rrecur.create(sched, schedule.startTime, schedule.timeZone.offset);
-	schedule['nextTimeToRun'] = Date.parse(recur.next());
-	return schedule;
+ recur = Rrecur.create(sched, schedule.startTime, schedule.timeZone.offset);
+ schedule['nextTimeToRun'] = Date.parse(recur.next());
+ return schedule;
 }
 
 
@@ -91,7 +91,7 @@ function setSchedule(schedule) {
  * Doesn't make a user setting timezone translation here, if they change timezones
  * it means system needs to update all of their bips.
  */
-function endLifeParse(end_life) {
+ function endLifeParse(end_life) {
   var seconds, d;
 
   // passed validation but isn't a number, then set it zero (never end based on impressions)
@@ -167,7 +167,7 @@ Bip.links = function(accountInfo) {
           if (this.hub[sCID].transforms.hasOwnProperty(eCID)) {
             for (var attr in this.hub[sCID].transforms[eCID]) {
               var tokens = this.hub[sCID].transforms[eCID][attr].match(app.helper.regActionSource),
-                key;
+              key;
 
               if (tokens) {
                 for (var i = 0; i < tokens.length; i++ ) {
@@ -299,12 +299,12 @@ Bip.entitySchema = {
           }
 
         // ------------------------------
-        } else if (this.type == 'http') {
+      } else if (this.type == 'http') {
 
-          if (val.auth && /^(none|token|basic)$/.test(val.auth)) {
-            if (val.auth == 'basic') {
-              ok = val.username && val.password;
-            } else {
+        if (val.auth && /^(none|token|basic)$/.test(val.auth)) {
+          if (val.auth == 'basic') {
+            ok = val.username && val.password;
+          } else {
               // none and token don't require extra config
               ok = true;
             }
@@ -324,34 +324,34 @@ Bip.entitySchema = {
           }
 
         // ------------------------------
-        } else if (this.type == 'smtp') {
-          ok = true;
-        }
+      } else if (this.type == 'smtp') {
+        ok = true;
+      }
 
-        next(ok);
-      },
-      msg : 'Bad Config'
+      next(ok);
     },
-    {
-      validator : function(val, next) {
-        var ok = true;
-        if (this.type == 'http' && val.renderer) {
-          ok = this.getDao().validateRenderer(val, this.getAccountInfo());
-        }
-
-        next(ok);
-        return;
-      },
-      msg : 'Renderer RPC Not Found'
-    }
-    ]
+    msg : 'Bad Config'
   },
-  hub: {
-    type: Object,
-    renderable: true,
-    writable: true,
-    set : function(hub) {
-      var newSrc, newCid;
+  {
+    validator : function(val, next) {
+      var ok = true;
+      if (this.type == 'http' && val.renderer) {
+        ok = this.getDao().validateRenderer(val, this.getAccountInfo());
+      }
+
+      next(ok);
+      return;
+    },
+    msg : 'Renderer RPC Not Found'
+  }
+  ]
+},
+hub: {
+  type: Object,
+  renderable: true,
+  writable: true,
+  set : function(hub) {
+    var newSrc, newCid;
 
       // normalize
       for (var src in hub) {
@@ -367,7 +367,6 @@ Bip.entitySchema = {
           for (var cid in hub[newSrc].transforms) {
 
             newCid = escapeDot(cid);
-console.log('newCid',newCid);
             hub[newSrc].transforms[newCid] = hub[newSrc].transforms[cid];
             if (newCid !== cid) {
               delete hub[newSrc].transforms[cid];
@@ -454,68 +453,65 @@ console.log('newCid',newCid);
     },
 
     {
-
     	validator : function(val, next) {
 
         var ok = false,
-          userChannels = this.getAccountInfo().user.channels,
-          numEdges,
-          transforms,
-          hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
+        userChannels = this.getAccountInfo().user.channels,
+        numEdges,
+        transforms,
+        hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
 
-     // check channels + transforms make sense
+        // check channels + transforms make sense
         if (undefined != val.source) {
           for (var cid in val) {
             if (val.hasOwnProperty(cid)) {
-              // check channel exists
-              ok = (cid == 'source' || userChannels.isAvailable(cid));
-              if (ok) {
-
-
-                  numEdges = val[cid].edges.length;
-                if (numEdges > 0) {
-                  for (var e = 0; e < numEdges; e++) {
-                    ok = userChannels.isAvailable(val[cid].edges[e]);
-                    if (!ok) {
+                  // check channel exists
+                  ok = (cid == 'source' || userChannels.isAvailable(cid));
+                  if (ok) {
+                    numEdges = val[cid].edges.length;
+                    if (numEdges > 0) {
+                      for (var e = 0; e < numEdges; e++) {
+                        ok = userChannels.isAvailable(val[cid].edges[e]);
+                        if (!ok) {
+                          break;
+                        }
+                        ok= app.helper.getRegUUID().test(val[cid].edges[e]);
+                        ok=false;
+                        if (!ok) {
+                          var pointerDetails=val[cid].edges[e].split(".");
+                          if(pointerDetails.length>=2){
+                           if(Bip.getDao().pod(pointerDetails[0])){
+                            if(Bip.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1])){
+                             ok=true;
+                           }else{
+                             ok=false;
+                             break;
+                           }
+                         }else{
+                          ok=false;
+                          break;
+                        }
+                      }
+                    }else{
+                      ok=false;
                       break;
                     }
-                   ok= app.helper.getRegUUID().test(val[cid].edges[e]);
-                  ok=false;
-                   if (!ok) {
-                	   var pointerDetails=val[cid].edges[e].split(".");
-                         if(pointerDetails.length>=2){
-	                                        if(Bip.getDao().pod(pointerDetails[0])){
-	                                        	if(Bip.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1])){
-	                                        		ok=true;
-	                                        	}else{
-	                                        		ok=false;
-	                                                break;
-	                                        	}
-	                                        }else{
-	                                        	ok=false;
-	                                            break;	
-	                                        }
-                                    }
-                          }else{
-                                ok=false;
-                                break;
-                          }
-
-                        }
 
                   }
-                } else if (!ok && hasRenderer) {
-                  ok = true;
+
                 }
+              } else if (!ok && hasRenderer) {
+                ok = true;
               }
-
-              if (!ok) {
-                  break;
-                }
-
             }
+
+            if (!ok) {
+              break;
+            }
+
           }
         }
+
         next(ok);
       },
       msg : 'Invalid, Inactive or Missing Channel In Hub'
@@ -524,9 +520,9 @@ console.log('newCid',newCid);
       // ensure hub has a source edge
       validator : function(hub, next) {
         var hasRenderer = this.config.renderer &&
-          (
-            undefined !== this.config.renderer.channel_id ||
-            undefined !== this.config.renderer.pod
+        (
+          undefined !== this.config.renderer.channel_id ||
+          undefined !== this.config.renderer.pod
           );
 
         next(hub.source && hub.source.edges.length > 0 || hasRenderer);
@@ -554,124 +550,124 @@ console.log('newCid',newCid);
                 }
             },
             msg : "Orphaned Channel"
-        }*/
-    ]
-  },
-  note: {
-    type: String,
-    renderable: true,
-    writable: true,
-    "default" : '',
-    validate : [{
-      'validator' : BipModel.validators.max_text,
-      'msg' : "1024 characters max"
-    }]
-  },
-  end_life: {
-    type: Object,
-    renderable: true,
-    writable: true,
-    set : endLifeParse,
-    validate : [{
-      validator : function(val, next) {
-        next(
-          (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
-          ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
-          0 !== new Date(Date.parse(val.time)).getTime()
-          );
-      },
-      msg : 'Bad Expiry Structure'
-    },
-    {
-      validator : function(val, next) {
-        next(val.action && /^(pause|delete)$/i.test(val.action) );
-      },
-      msg : 'Expected "pause" or "delete"'
-    }
-    ]
-  },
-  paused: {
-    type: Boolean,
-    renderable: true,
-    writable: true,
-    'default' : false,
-    set : function(newValue) {
-      return newValue;
+          }*/
+          ]
+        },
+        note: {
+          type: String,
+          renderable: true,
+          writable: true,
+          "default" : '',
+          validate : [{
+            'validator' : BipModel.validators.max_text,
+            'msg' : "1024 characters max"
+          }]
+        },
+        end_life: {
+          type: Object,
+          renderable: true,
+          writable: true,
+          set : endLifeParse,
+          validate : [{
+            validator : function(val, next) {
+              next(
+                (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
+                ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
+                0 !== new Date(Date.parse(val.time)).getTime()
+                );
+            },
+            msg : 'Bad Expiry Structure'
+          },
+          {
+            validator : function(val, next) {
+              next(val.action && /^(pause|delete)$/i.test(val.action) );
+            },
+            msg : 'Expected "pause" or "delete"'
+          }
+          ]
+        },
+        paused: {
+          type: Boolean,
+          renderable: true,
+          writable: true,
+          'default' : false,
+          set : function(newValue) {
+            return newValue;
     /*
             if (false === this.paused && newValue) {
                 Bip.getDao().pauseBip(this, null, newValue, null);
             }
             return newValue;
             */
-    },
-    validate : [{
-      'validator' : BipModel.validators.bool_any,
-      'msg' : 'Expected 1,0,true,false'
-    }]
-  },
-  schedule: {
-    type: Object,
-    renderable: true,
-  	writable: true,
-  	default : {},
-  	set : setSchedule
-  },
-  binder: {
-    type: Array,
-    renderable: true,
-    writable: true
-  },
-  icon : {
-    type: String,
-    renderable: true,
-    writable: true,
-    "default" : ""
-  },
-  app_id : {
-    type: String,
-    renderable: true,
-    writable: true,
-    "default" : ""
-  },
-  owner_id : {
-    type: String,
-    index: true,
-    renderable: false,
-    writable: false
-  },
-  created : {
-    type: Number,
-    renderable: true,
-    writable: false
-  },
-  _imp_actual : {
-    type : Number,
-    renderable : true,
-    writable : false,
-    "default" : 0
-  },
-  _last_run : {
-    type : Number,
-    renderable : true,
-    writable : false,
-    "default" : 0,
-    get : function(value) {
-      if (value) {
-        var now = app.moment.utc();
-        return app.moment.duration(now.diff(value)).humanize() + ' ago';
-      } else {
-        return '';
-      }
-    },
-	getLastRun : function(value) {
-		if (value) {
-			var now = app.moment.utc();
-			return value;
-		} else {
-			return '';
-		}
-	}
-  },
+          },
+          validate : [{
+            'validator' : BipModel.validators.bool_any,
+            'msg' : 'Expected 1,0,true,false'
+          }]
+        },
+        schedule: {
+          type: Object,
+          renderable: true,
+          writable: true,
+          default : {},
+          set : setSchedule
+        },
+        binder: {
+          type: Array,
+          renderable: true,
+          writable: true
+        },
+        icon : {
+          type: String,
+          renderable: true,
+          writable: true,
+          "default" : ""
+        },
+        app_id : {
+          type: String,
+          renderable: true,
+          writable: true,
+          "default" : ""
+        },
+        owner_id : {
+          type: String,
+          index: true,
+          renderable: false,
+          writable: false
+        },
+        created : {
+          type: Number,
+          renderable: true,
+          writable: false
+        },
+        _imp_actual : {
+          type : Number,
+          renderable : true,
+          writable : false,
+          "default" : 0
+        },
+        _last_run : {
+          type : Number,
+          renderable : true,
+          writable : false,
+          "default" : 0,
+          get : function(value) {
+            if (value) {
+              var now = app.moment.utc();
+              return app.moment.duration(now.diff(value)).humanize() + ' ago';
+            } else {
+              return '';
+            }
+          },
+          getLastRun : function(value) {
+            if (value) {
+             var now = app.moment.utc();
+             return value;
+           } else {
+             return '';
+           }
+         }
+       },
   _tz : { // user timezone
     type : String,
     renderable : false,
@@ -719,20 +715,20 @@ Bip.exports = {
       // what the end user needs to send.  We assume they're strings.
       //
       if (this.type == 'http' && this.config.exports.length > 0) {
-	    for (var i = 0; i < this.config.exports.length; i++) {
-          exp[this.config.exports[i]] = {
-            type : String,
-            description : this.config.exports[i]
-          }
+       for (var i = 0; i < this.config.exports.length; i++) {
+        exp[this.config.exports[i]] = {
+          type : String,
+          description : this.config.exports[i]
         }
       }
-
     }
-    return exp;
-  },
 
-  '*' : {
-    properties : {
+  }
+  return exp;
+},
+
+'*' : {
+  properties : {
       '_files' : { // tba
         type : 'array',
         description : 'File Objects'
@@ -782,7 +778,7 @@ Bip.exports = {
       }
     },
     definitions : {
-  }
+    }
   },
 
   'trigger' : {
@@ -837,18 +833,18 @@ Bip._createChannelIndex = function() {
   }
 
   if ('http' === this.type && app.helper.isObject(this.config.renderer)
-          && this.config.renderer.channel_id
-          && this.config.renderer.renderer) {
+    && this.config.renderer.channel_id
+    && this.config.renderer.renderer) {
     channels.push(this.config.renderer.channel_id);
-  }
+}
 
-  this._channel_idx = app._.uniq(channels);
+this._channel_idx = app._.uniq(channels);
 }
 
 /**
  * For any omitted attributes, use account defaults
  */
-Bip.preSave = function(accountInfo, next) {
+ Bip.preSave = function(accountInfo, next) {
   var self = this;
   if ('' !== this.id && undefined !== this.id) {
     var props = {
@@ -897,7 +893,7 @@ Bip.preSave = function(accountInfo, next) {
               'bip.' + this.type,
               accountInfo.user.channels.get(edgeCid).action,
               this.hub[cid].transforms[edgeCid])
-            );
+              );
           }
         }
       }
@@ -922,7 +918,7 @@ function getAction(accountInfo, channelId) {
 Bip.normalizeTransformDefaults = function(accountInfo, next) {
 
   var from, to, payload, fromMatch, transforms = {}, dirty = false,
-    hub = JSON.parse(JSON.stringify(this.hub));
+  hub = JSON.parse(JSON.stringify(this.hub));
 
   for (var key in hub) {
     if (hub.hasOwnProperty(key)) {
@@ -1045,7 +1041,7 @@ Bip.prePatch = function(patch, accountInfo, next) {
 Bip.isScheduled = function( next) {
 	var accountInfo = this.getAccountInfo();
 //	var timeNow =  app.helper.nowTimeTz(accountInfo.user.settings.timezone);
-	var timeNow = new Date();
+var timeNow = new Date();
 
 	// check if the set schedule dictates that it is time to trigger this bip
 	if (this.schedule && this.schedule.nextTimeToRun) {
@@ -1078,10 +1074,10 @@ Bip.checkExpiry = function(next) {
   if (this.end_life) {
     // convert bip expiry to user timezone
     var endTime = (app.moment(this.end_life.time).utc() / 1000) + (app.moment().utcOffset() * 60),
-      nowTime = app.helper.nowTimeTz(accountInfo.user.settings.timezone),
-      endImp =  parseInt(this.end_life.imp * 1),
-      expired = false,
-      self = this;
+    nowTime = app.helper.nowTimeTz(accountInfo.user.settings.timezone),
+    endImp =  parseInt(this.end_life.imp * 1),
+    expired = false,
+    self = this;
 
     if (endTime > 0) {
       // if its an integer, then treat as a timestamp
@@ -1107,9 +1103,9 @@ Bip.checkExpiry = function(next) {
 
 Bip.expire = function(transactionId, next) {
   var accountInfo = this.getAccountInfo(),
-    expireBehavior = (this.end_life.action && '' !== this.end_life.action)
-      ? this.end_life.action
-      : accountInfo.user.settings.bip_expire_behaviour;
+  expireBehavior = (this.end_life.action && '' !== this.end_life.action)
+  ? this.end_life.action
+  : accountInfo.user.settings.bip_expire_behaviour;
 
   if ('delete' === expireBehavior) {
     this._dao.deleteBip(this, accountInfo, next, transactionId);
