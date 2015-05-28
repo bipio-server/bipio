@@ -914,7 +914,7 @@ function getAction(accountInfo, channelId) {
 
 Bip.normalizeTransformDefaults = function(accountInfo, next) {
 // disabled until bip-508 complete
-next();
+next({});
 return;
   var from, to, payload, fromMatch, transforms = {}, dirty = false,
   hub = JSON.parse(JSON.stringify(this.hub));
