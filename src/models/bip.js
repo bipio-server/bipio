@@ -935,6 +935,13 @@ return;
       if (hub[key].transforms && Object.keys(hub[key].transforms).length > 0) {
         for (var txChannelId in this.hub[key].transforms) {
           if (hub[key].transforms.hasOwnProperty(txChannelId)) {
+        		var res=app.helper.getRegUUID().test(txChannelId);
+        		if(!res){
+        			//remove the verison from the pointer example facebook.post_page._0, then it should just return facebook.post_page
+        			var tmp=txChannelId.split(".");
+        			tmp.pop();
+        			txChannelId=tmp.join(".");
+        		}
             to = getAction(accountInfo, txChannelId);
             if (from && to) {
 
