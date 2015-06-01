@@ -504,7 +504,12 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
               }
             });
           } else if (next) {
-            next(err, modelName, retModel, code );
+            next(
+              err,
+              modelName,
+              self.modelFactory(model.getEntityName(), retModel, accountInfo),
+              code
+            );
           }
 
           // depending on the model, we can inject post-saves which are
