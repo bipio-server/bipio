@@ -316,8 +316,9 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
       if (!(tainted && !helper.inArray(writeOnlyProps, modelProperties[i]))) {
         // custom getters are a nasty workaround for some mongoose woes.
         // see bip.js model, hub getter
+
         var getter = this.models[modelName]['class'].entitySchema[modelProperties[i]].customGetter;
-        if (getter) {
+        if (getter && initProperties[modelProperties[i]]) {
           propArgs[modelProperties[i]].value = getter(initProperties[modelProperties[i]]);
         } else {
           propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
@@ -721,7 +722,8 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
 
     if (result) {
       // hydrate model
-      model.populate(result, accountInfo);
+      //model.populate(result, accountInfo);
+      model = self.modelFactory(model.getEntityName(), result, accountInfo);
     }
 
     if (next) {
