@@ -108,9 +108,11 @@ Bastion.prototype.jobRunner = function(jobPacket) {
       this._dao.userNotify( jobPacket.data, this.jobRunnerAlert );
 
     } else if (jobPacket.name == DEFS.JOB_BIP_TRIGGER) {
-      var bip = jobPacket.data.bip,
-        cid = bip.config.channel_id;
+      var bip = jobPacket.data.bip;
+      var cid = bip.config.channel_id;
 
+      // because channels don't always have channel_ids
+	  // i.e. action pointers 
       // Get Channel
       this._dao.find(
         'channel',
@@ -146,9 +148,43 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 
           if (err) {
             app.logmessage(err, 'error');
-          } else if (!result) {
-            app.logmessage('Channel has disappeared [' + cid + ']', 'info');
           } else {
+
+			if (!result) {
+
+				// might have failed for reasons other than the channel not being an action pointer...	
+				if (!app.helper.getRegUUID().test(cid)) {
+					app.logmessage('Channel has disappeared [' + cid + ']', 'info');
+				} 
+
+				// STYLE NOTE:  This is hitting the DB to find the channel by channel_id, and upon NOT finding it, goes ahead
+				// with concocting a 'result' to process an action pointer.  i.e.  this imperative flow is a wasted round turn to the DB.
+
+				// check pod.action exists
+
+				var actionTokens = cid.split('.');  
+				var pod = actionTokens[0];
+				var action = actionTokens[1];
+
+				if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
+					result = { 
+					'id' : cid, 
+					'action' : pod + '.' + action, 
+					'owner_id' : bip.owner_id,
+                    'config': bip.config ? bip.config.config : {}
+					};
+
+
+				} else {
+					app.logmessage('BASTION:CRITICAL Couldnt load (channel) action:' + cid, 'warning');
+					return;
+				}
+			}
+
+
+
+
+
             invokeChannel = self._dao.modelFactory('channel', result);
 
             self._dao.accumulate('bip', imports._bip, '_imp_actual');
