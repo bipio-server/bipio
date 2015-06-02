@@ -43,7 +43,7 @@ Account.entitySchema = {
     id: { type: String, renderable: true, writable: false, index: true },
     username: { type: String, renderable: true, writable: false, index: true },
     name: { type: String, renderable: true, writable: true },
-    is_admin: { type: Boolean, renderable: false, writable: false },
+    is_admin: { type: Boolean, renderable: false, writable: false }, // @todo deprecate for account_level
     email_account: { type: String, renderable: true, writable: false },
     created : { type: Number, renderable: true, writable: false},
     last_session : { type: Number, renderable: true, writable: false}

@@ -289,13 +289,25 @@ Bip.entitySchema = {
         if (this.type == 'trigger') {
           ok = false;
           var cid = val.channel_id,
-          userChannels = this.getAccountInfo().user.channels,
-          channel = userChannels.get(cid),
-          podTokens;
+            userChannels = this.getAccountInfo().user.channels,
+            channel, podTokens, pod;
 
-          if (channel) {
-            podTokens = channel.getPodTokens();
-            ok = userChannels.test(cid) && podTokens.isTrigger();
+          if (app.helper.getRegUUID().test(cid)) {
+            channel = userChannels.get(cid),
+            podTokens;
+
+            if (channel) {
+              podTokens = channel.getPodTokens();
+              ok = userChannels.test(cid) && podTokens.isTrigger();
+            }
+          } else {
+            podTokens = cid.split('.');
+
+            pod = this.getDao().pod(podTokens[0]);
+
+            if (pod) {
+              ok = pod.isTrigger(podTokens[1])
+            }
           }
 
         // ------------------------------
