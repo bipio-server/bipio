@@ -29,7 +29,6 @@ var bootstrap = require(__dirname + '/bootstrap'),
   restapi = express(),
   http = require('http'),
   https = require('https'),
-
   session = require('express-session'),
   cookieParser = require('cookie-parser'),
   bodyParser = require('body-parser'),
@@ -39,10 +38,10 @@ var bootstrap = require(__dirname + '/bootstrap'),
   helper  = require('./lib/helper'),
   passport = require('passport'),
   cron = require('cron'),
-  MongoStore = require('connect-mongo')({ session : session});
+  MongoStore = require('connect-mongo')({ session : session}),
   domain = require('domain'),
   jwt = require('jsonwebtoken'),
-  pkg = bipioVersion = require('../package.json'),
+  pkg = require('../package.json'),
   bipioVersion = pkg.version;
 
 // export app everywhere
@@ -104,8 +103,8 @@ function jwtConfirm(req, res, next) {
           _jwtDeny(res, err.message);
         } else {
           try {
-            if (decoded.path === req.originalUrl
-              && JSON.stringify(decoded.body) === JSON.stringify(req.body)) {
+            if (decoded.path === req.originalUrl) {
+              // && JSON.stringify(decoded.body) === JSON.stringify(req.body)) {
 
               if (decoded.user === masq) {
                 req.masqUser = masq;
@@ -140,12 +139,12 @@ function setCORS(req, res, next) {
   next();
 }
 
-
 //
 // ------ LOAD EXPRESS MIDDLEWARE
 //
 
 restapi.use(app.modules.cdn.utils.HTTPFormHandler());
+
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {
   if (err.status == 400) {
@@ -177,7 +176,7 @@ restapi.use(session({
   },
   secret: GLOBAL.CFG.server.sessionSecret,
   store: new MongoStore({
-    mongoose_connection : app.dao.getConnection()
+    mongooseConnection : app.dao.getConnection()
   })
 }));
 
@@ -187,126 +186,130 @@ restapi.use(passport.session());
 restapi.set('jsonp callback', true );
 restapi.disable('x-powered-by');
 
+app.logmessage('BIPIO:STARTED:' + new Date());
+app.logmessage('Node v' + process.versions.node);
 
-  // when user hasn't explicitly configured a cluster size, use 1 process per cpu
-  app.logmessage('BIPIO:STARTED:' + new Date());
-  app.logmessage('Node v' + process.versions.node);
+app.dao.on('ready', function(dao) {
+  var crons = GLOBAL.CFG.crons;
 
-  app.dao.on('ready', function(dao) {
-    var crons = GLOBAL.CFG.crons;
-
-    // Network chords and stats summaries
-    if (crons && crons.stat && '' !== crons.stat) {
-      app.logmessage('DAO:Starting Stats Cron', 'info');
-      var statsJob = new cron.CronJob(crons.stat, function() {
-        dao.generateHubStats(function(err, msg) {
-          if (err) {
-            app.logmessage('STATS:THERE WERE ERRORS');
-          } else {
-            app.logmessage(msg);
-            app.logmessage('STATS:DONE');
-          }
-        });
-      }, null, true, GLOBAL.CFG.timezone);
-    }
-
-    // periodic triggers
-    if (crons && crons.trigger && '' !== crons.trigger) {
-      app.logmessage('DAO:Starting Trigger Cron', 'info');
-      var triggerJob = new cron.CronJob(crons.trigger, function() {
-        dao.triggerAll(function(err, msg) {
-          if (err) {
-            app.logmessage('TRIGGER:' + err + ' ' + msg);
-          } else {
-            app.logmessage(msg);
-            app.logmessage('TRIGGER:DONE');
-          }
-        });
-      }, null, true, GLOBAL.CFG.timezone);
-    }
-
-    // auto-expires
-    if (crons && crons.expire && '' !== crons.expire) {
-      app.logmessage('DAO:Starting Expiry Cron', 'info');
-      var expireJob = new cron.CronJob(crons.expire, function() {
-        dao.expireAll(function(err, msg) {
-          if (err) {
-            app.logmessage('EXPIRE:ERROR:' + err);
-            app.logmessage(msg);
-          } else {
-            app.logmessage('EXPIRE:DONE');
-          }
-        });
-      }, null, true, GLOBAL.CFG.timezone);
-    }
-
-    // oAuth refresh
-    app.logmessage('DAO:Starting OAuth Refresh', 'info');
-    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
-      dao.refreshOAuth();
+  // Network chords and stats summaries
+  if (crons && crons.stat && '' !== crons.stat) {
+    app.logmessage('DAO:Starting Stats Cron', 'info');
+    var statsJob = new cron.CronJob(crons.stat, function() {
+      dao.generateHubStats(function(err, msg) {
+        if (err) {
+          app.logmessage('STATS:THERE WERE ERRORS');
+        } else {
+          app.logmessage(msg);
+          app.logmessage('STATS:DONE');
+        }
+      });
     }, null, true, GLOBAL.CFG.timezone);
-
-
-    // transform recalcs
-
-    //app.logmessage('DAO:Starting Corpus Recalc', 'info');
-    //var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
-    //      dao.reCorp();
-    //    }, null, true, GLOBAL.CFG.timezone);
-
-
-  });
-
-
-
-  app.logmessage('BIPIO:STARTED:' + new Date());
-  helper.tldtools.init(
-    function() {
-      app.logmessage('TLD:UP');
-    },
-    function(body) {
-      app.logmessage('TLD:Cache fail - ' + body, 'error')
-    }
-  );
-
-  if (process.env.BIP_DUMP_HEAPS) {
-    var heapdump = require('heapdump');
-    setInterval(function() {
-      var f = '/tmp/bipio_NC_' + Date.now() + '.heapsnapshot';
-      console.log('Writing ' + f);
-      console.log(require.cache);
-      heapdump.writeSnapshot(f);
-    }, 60000);
   }
 
-  app.dao.on('ready', function(dao) {
-    var server,
-      opts = {};
-
-    if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
-      app.logmessage('BIPIO:SSL Mode');
-      opts.key = fs.readFileSync(GLOBAL.CFG.server.ssl.key);
-      opts.cert = fs.readFileSync(GLOBAL.CFG.server.ssl.cert);
-    }
-
-    require('./router').init(restapi, dao);
-
-    if (opts.key) {
-
-      server = https.createServer(opts, restapi);
-    } else {
-      server = http.createServer(restapi);
-    }
-
-    server.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
-      var rCache = require.cache;
-      for (var k in rCache) {
-        if (rCache.hasOwnProperty(k) && rCache[k].exports && rCache[k].exports.readme) {
-          delete rCache[k].exports.readme;
+  // periodic triggers
+  if (crons && crons.trigger && '' !== crons.trigger) {
+    app.logmessage('DAO:Starting Trigger Cron', 'info');
+    var triggerJob = new cron.CronJob(crons.trigger, function() {
+      dao.triggerAll(function(err, msg) {
+        if (err) {
+          app.logmessage('TRIGGER:' + err + ' ' + msg);
+        } else {
+          app.logmessage(msg);
+          app.logmessage('TRIGGER:DONE');
         }
-      }
+      });
+    }, null, true, GLOBAL.CFG.timezone);
+  }
 
-      app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
-    });
+  // auto-expires
+  if (crons && crons.expire && '' !== crons.expire) {
+    app.logmessage('DAO:Starting Expiry Cron', 'info');
+    var expireJob = new cron.CronJob(crons.expire, function() {
+      dao.expireAll(function(err, msg) {
+        if (err) {
+          app.logmessage('EXPIRE:ERROR:' + err);
+          app.logmessage(msg);
+        } else {
+          app.logmessage('EXPIRE:DONE');
+        }
+      });
+    }, null, true, GLOBAL.CFG.timezone);
+  }
+
+  // oAuth refresh
+  app.logmessage('DAO:Starting OAuth Refresh', 'info');
+  var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
+    dao.refreshOAuth();
+  }, null, true, GLOBAL.CFG.timezone);
+
+ // compile popular transforms into transform_defaults.
+  if (crons && crons.transforms_compact && '' !== crons.transforms_compact) {
+    app.logmessage('DAO:Starting Transform Compaction Cron', 'info');
+    var reduceTransformsJob = new cron.CronJob(crons.transforms_compact, function() {
+      bootstrap.app.dao.reduceTransformDefaults(function(err, msg) {
+        if (err) {
+          app.logmessage('DAO:' + err + ' ' + msg);
+        } else {
+          app.logmessage('DAO:Transform Compaction:Done');
+        }
+      });
+    }, null, true, GLOBAL.CFG.timezone);
+  }
+
+  // fetch scrubbed community transforms from upstream
+  if (GLOBAL.CFG.transforms && GLOBAL.CFG.transforms.fetch) {
+    if (crons && crons.transforms_fetch && '' !== crons.transforms_fetch) {
+      app.logmessage('DAO:Starting Transform Syncing Cron', 'info');
+      var syncTransformsJob = new cron.CronJob(crons.transforms_fetch, function() {
+        dao.updateTransformDefaults( function() {
+          app.logmessage('DAO:Syncing Transforms:Done');
+        });
+      }, null, true, GLOBAL.CFG.timezone);
+    }
+  }
+});
+
+
+app.logmessage('BIPIO:STARTED:' + new Date());
+helper.tldtools.init(
+  function() {
+    app.logmessage('TLD:UP');
+  },
+  function(body) {
+    app.logmessage('TLD:Cache fail - ' + body, 'error')
+  }
+);
+
+app.dao.on('ready', function(dao) {
+  var server,
+    opts = {};
+
+if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.cert) {
+    app.logmessage('BIPIO:SSL Mode');
+    opts.key = fs.readFileSync(GLOBAL.CFG.server.ssl.key);
+    opts.cert = fs.readFileSync(GLOBAL.CFG.server.ssl.cert);
+  }
+
+  require('./router').init(restapi, dao);
+
+  if (opts.key) {
+    server = https.createServer(opts, restapi);
+  } else {
+    server = http.createServer(restapi);
+  }
+
+  server.listen(GLOBAL.CFG.server.port, GLOBAL.CFG.server.host, function() {
+    var rCache = require.cache;
+    for (var k in rCache) {
+      if (rCache.hasOwnProperty(k) && rCache[k].exports && rCache[k].exports.readme) {
+        delete rCache[k].exports.readme;
+      }
+    }
+
+    app.logmessage('Listening on :' + GLOBAL.CFG.server.port + ' in "' + restapi.settings.env + '" mode...');
   });
+
+});
+
 
