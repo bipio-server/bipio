@@ -508,6 +508,8 @@ hub: {
             }
 
           }
+        } else if (hasRenderer) {
+          ok = true;
         }
         next(ok);
       },
