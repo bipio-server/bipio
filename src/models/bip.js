@@ -745,30 +745,56 @@ Bip.exports = {
         description : 'File Objects'
       },
       '_client' : {
-        type : 'string',
+        type : 'object',
         description : 'Client Info',
-        oneOf : [{
-          "$ref" : "#/definitions/client_attribute"
-        }]
+        properties : {
+          "host" : {
+            "title" : "Host",
+            "type" : "string"
+          },
+          "repr" : {
+            "title" : "Sender",
+            "type" : "string"
+          },
+          "date" : {
+            "title" : "Invoke Time",
+            "type" : "string"
+          },
+          "id" : {
+            "title" : "Message ID",
+            "type" : "string"
+          },
+          "proto" : {
+            "title" : "Protocol",
+            "type" : "string"
+          },
+          "method" : {
+            "title" : "Request Method",
+            "type" : "string"
+          }
+        }
       },
       '_bip' : {
-        type : 'string',
-        description : 'Bip Model',
-        oneOf : [{
-          "$ref" : "#/definitions/bip_attribute"
-        }]
-      }
-    },
-    definitions : {
-      "client_attribute" : {
-        "description" : "Connecting client attributes",
-        "enum" : [ "host" , "repr", "date", "id", "proto", "method" ],
-        "enum_label" : [ "Host" , "Sender", "Invoke Time", "Message ID", "Protocol", "Request Method" ]
-      },
-      "bip_attribute" : {
-        "description" : "This Bip's attribute",
-        "enum" : [ "name" , "type", "_repr" ],
-        "enum_label" : [ "Name" , "Type", "Representation" ]
+        type : 'object',
+        description : 'This Bip',
+        properties : {
+          "name" : {
+            "title" : "Name",
+            "type" : "string"
+          },
+          "type" : {
+            "title" : "Type",
+            "type" : "string"
+          },
+          "note" : {
+            "title" : "Description",
+            "type" : "string"
+          },
+          "_repr" : {
+            "title" : "Link",
+            "type" : "string"
+          }
+        }
       }
     }
   },

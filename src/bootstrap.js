@@ -90,23 +90,17 @@ for (k in envConfig.modules) {
   }
 }
 
-/*
-memwatch.on('leak', function(info) {
-  app.logmessage(info, 'error');
+if (process.env.BIP_DUMP_HEAPS) {
+  memwatch.on('leak', function(info) {
+    app.logmessage(info, 'error');
 
-  if (process.env.BIP_DUMP_HEAPS) {
-    var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
-    console.log('Writing Heap Snapshot ' + f);
-    heapdump.writeSnapshot(f);
-  }
-});
-*/
 
-// heap profiling.
-if ('development' ===  process.env.NODE_ENV) {
-//  var agent = require('webkit-devtools-agent');
+      var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
+      console.log('Writing Heap Snapshot ' + f);
+      heapdump.writeSnapshot(f);
+    }
+  });
 }
-
 
 //Configure Winston Log Files
 winston.loggers.add('transactionLogs', {
