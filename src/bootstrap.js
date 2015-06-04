@@ -93,12 +93,9 @@ for (k in envConfig.modules) {
 if (process.env.BIP_DUMP_HEAPS) {
   memwatch.on('leak', function(info) {
     app.logmessage(info, 'error');
-
-
-      var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
-      console.log('Writing Heap Snapshot ' + f);
-      heapdump.writeSnapshot(f);
-    }
+    var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
+    console.log('Writing Heap Snapshot ' + f);
+    heapdump.writeSnapshot(f);
   });
 }
 
