@@ -2,7 +2,7 @@
 <br/>
 =========
 
-Welcome to the [bip.io](https://bip.io) API Server (Sansa 0.3)
+Welcome to the [bip.io](https://bip.io) API Server (Shango 0.5)
 
 bip.io is Billion Instructions Per I/O - For People and Robots.  
 

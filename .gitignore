@@ -1,13 +1,6 @@
-/nbproject/private/
 node_modules
-config/default.json
-config/staging.json
-config/production.json
-config/haraka
-config/credentials
+config/keys.json
 data
-config/runtime.json
 npm-debug.log
 sftp_config.json
 .DS_Store
-src/modules/stats
