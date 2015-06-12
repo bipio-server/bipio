@@ -1,5 +1,6 @@
 node_modules
 config/keys.json
+rethinkdb_data
 data
 npm-debug.log
 sftp_config.json
