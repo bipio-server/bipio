@@ -20,7 +20,7 @@ Auth profiles for accounts.
 		oauth_provider: 'string'
 		oauth_refresh: 'string'
 		oauth_token_expire: 'number'
-		oauth_profile: 'string'
+		oauth_profile: 'object'
 
 	schemaNotMatching = "Does Not Match Schema"
 
@@ -44,11 +44,14 @@ Auth profiles for accounts.
 
 			return @
 
+
 		strCryptSync: (str) ->
 			return bcrypt.hashSync(str, bcrypt.genSaltSync(10))
 
-		strCryptCmpSync: (taintedClear, localHash) ->
+
+		strCryptCompareSync: (taintedClear, localHash) ->
 			return bcrypt.compareSync(taintedClear, localHash)
+
 
 		AESCrypt: (value) ->
 			iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
@@ -61,6 +64,27 @@ Auth profiles for accounts.
 			cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64')
 
 			return cryptEncoded
+
+
+		AESDecrypt: (cryptedStr, autoPadding) ->
+			crypted = new Buffer(cryptedStr, 'base64').toString('utf-8')
+			keyVersion = crypted.substr(0, 1)
+			iv = crypted.substr(1, 16)
+			key = CFG.k[keyVersion]
+			cypher = crypted.substr(17)
+			decipher = crypto.createDecipheriv('aes-256-cbc', key, iv)
+			if autoPadding then (autoPadding = false) else (autoPadding = true)
+			decipher.setAutoPadding autoPadding
+			decrypted = decipher.update(cypher, 'base64', 'ascii') + decipher.final('ascii')
+			return decrypted
+
+
+		passwordHash: (pwValue) ->
+			crypted = undefined
+			# tokens use AES
+			if @type != 'login_primary' then (crypted = AESCrypt(pwValue)) else (crypted = strCryptSync(pwValue))
+			return crypted
+
 
 		cryptSave: (value) ->
 			if value
@@ -75,6 +99,11 @@ Auth profiles for accounts.
 				return crypted
 			else
 				return value
+
+
+		cryptSaveObject: (value) ->
+			return cryptSave(JSON.stringify(value))
+
 
 		toJSON: () ->
 			obj = {}
