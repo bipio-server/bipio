@@ -50,6 +50,7 @@
     "connect-mongo": ">=0.4.0",
     "cookie-parser": "^1.0.1",
     "cron": ">=1.0.1",
+    "crypto": "0.0.3",
     "dateformat": "1.0.7-1.2.3",
     "datejs": ">=0.0.2",
     "errorhandler": "^1.1.1",
