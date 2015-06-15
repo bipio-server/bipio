@@ -68,10 +68,10 @@ Auth profiles for accounts.
 
 				# passwords get
 				if @type == 'login_primary' or @type == 'login_sub'
-					app.logmessage 'Trying to write login primary to account_auth [' + @id + ']', 'error'
+					app.error "Trying to write login primary to account_auth [#{@id}]"
 					throw new Error('Bad Type')
 				else if @type != 'token_invite'
-					crypted = AESCrypt(value)
+					crypted = @AESCrypt(value)
 				return crypted
 			else
 				return value

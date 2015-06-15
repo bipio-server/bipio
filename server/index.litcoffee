@@ -65,6 +65,7 @@ Configure models, Passport and [RethinkDB](http://rethinkdb.com) middleware.
 		app.database = new Database app.config.db
 		
 		app.database.on "ready", () ->
+			# Connected to database
 			app.dialog "Database Ready"
 			app.passport.use new BasicStrategy (username, password, done) ->
 				console.log "username: #{username}, password: #{password}"
