@@ -1,1 +1,1 @@
-web:    node-supervisor src/server.js
+web:    node-supervisor index.js
