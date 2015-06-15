@@ -77,9 +77,9 @@ Auth profiles for accounts.
 				return value
 
 		toJSON: () ->
-			object = {}
-			self = @
-			return _.mapObject schema, (value, key) ->  object[key] = self[key] if typeof self[key] is value
+			obj = {}
+			for key, value in schema
+				obj[key] = @[key] if typeof @[key] is value
 
 
 	module.exports = AccountAuth
