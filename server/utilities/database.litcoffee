@@ -21,11 +21,11 @@
 
 Retrieves an entry from the DB.
 
-		get: (table, options, next) ->
+		get: (modelName, options, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(table).filter(options).run self.connection, (err, cursor) ->
+			db.table(modelName).filter(options).run self.connection, (err, cursor) ->
 				if err
 					throw new Error err
 				else
@@ -43,11 +43,11 @@ Retrieves an entry from the DB.
 
 Saves an entry to the DB.
 
-		save: (table, object, options, next) ->
+		save: (modelName, object, options, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(table).insert(object, options).run self.connection, (err, result) ->
+			db.table(modelName).insert(object, options).run self.connection, (err, result) ->
 				if err
 					throw new Error err
 				else if result.inserted is not 1
@@ -62,11 +62,11 @@ Saves an entry to the DB.
 
 Updates an entry in the DB.
 
-		update: (table, object, next) ->
+		update: (modelName, object, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(table).get(object.id).update(object).run self.connection, (err, result) ->
+			db.table(modelName).get(object.id).update(object).run self.connection, (err, result) ->
 				if err
 					throw new Error err
 				else
@@ -79,11 +79,11 @@ Updates an entry in the DB.
 
 Removes an entry from the DB.
 
-		remove: (table, options, next) ->
+		remove: (modelName, options, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(table).delete(options).run self.connection, (err, result) ->
+			db.table(modelName).delete(options).run self.connection, (err, result) ->
 				if err
 					throw new Error err
 				else
