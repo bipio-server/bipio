@@ -26,23 +26,15 @@ Starts a bip.
 
 				console.log req.subdomains
 				
-				r.table('bips').get(req.params.name).run app._rdbConn, (err, cursor) ->
-					console.log err, cursor 
-					if err
-						res.status(500).json err
-					else
-						###cursor.toArray (err, result) ->
-							if err
-								res.status(500).json err
-							else
-								console.log result###
+				app.database.get 'bips', req.params,  (err, result) ->
+					console.log "Retrieved Bip #{req.params.id}"
 
 ###### `controllers.bip.get`
 
 Gets a bip from the database.
 
 			get: (req, res) ->
-				r.table('bips').get(req.params.id).run app._rdbConn, (err, result) ->
+				app.database.get 'bips', req.params,  (err, result) ->
 					if err
 						res.status(500).json err
 					else
@@ -54,13 +46,11 @@ Creates a bip.
 
 			create: (req, res) ->
 
-				r.table('bips').insert(req.bip.toJSON(), {returnChanges: true}).run app._rdbConn, (err, result) ->
+				app.database.save 'bips', req.bip.toJSON(), {returnChanges: true}, (err, result) ->
 					if err
 						res.status(500).json err
-					else if result.inserted is not 1
-						res.status(500).json new Error("Document not inserted")
 					else
-						res.status(200).json result.changes[0].new_val
+						res.status(200).json result
 
 ###### `controllers.bip.update`
 
@@ -68,20 +58,22 @@ Updates a bip.
 
 			update: (req, res) ->
 
-				###r.table('bips').insert(req.bip.toJSON(), {returnChanges: true}).run app._rdbConn, (err, result) ->
+				###
+
+				app.database.update 'bips', req.bip.toJSON(), {returnChanges: true}, (err, result) ->
 					if err
 						res.status(500).json err
-					else if result.inserted is not 1
-						res.status(500).json new Error("Document not inserted")
 					else
-						res.status(200).json result.changes[0].new_val###
+						res.status(200).json result
+
+				###
 
 ###### `controllers.bip.del`
 
 Deletes a bip.
 
 			del: (req, res) ->
-				r.table('bips').delete().run app._rdbConn, (err, result) ->
+				app.database.remove 'bips', req.params, (err, result) ->
 					if err
 						res.status(500).json err
 					else

@@ -12,6 +12,7 @@ Config
 		config.db =
 			host: "localhost"
 			port: 28015
+			db: 'bipio'
 			authKey: keys.db
 
 		config.oauth =

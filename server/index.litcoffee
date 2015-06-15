@@ -17,13 +17,12 @@ Here's where we require our [npm modules](https://npmjs.com).
 		bodyParser 		= require 'body-parser'
 		compression 	= require 'compression'
 		request 		= require 'request'
-		r 				= require 'rethinkdb'
-		Rx 				= require 'rx'
 		passport 		= require 'passport'
 		BasicStrategy 	= require('passport-http').BasicStrategy
 		config			= require '../config'
 		strategies 		= require '../config/passport'
 		pkg				= require '../package.json'
+		Database 		= require './utilities/database'
 		models			= {}
 		routes 			= {}
 		controllers		= {}
@@ -62,22 +61,20 @@ Configure models, Passport and [RethinkDB](http://rethinkdb.com) middleware.
 
 		app.passport = passport
 		strategies(app)
+
+		app.database = new Database app.config.db
 		
-		r.connect { host: app.config.db.host, port: app.config.db.port, db: 'bipio'}, (err, conn) ->
-			throw new Error err if err
-			app._rdbConn = conn
-
+		app.database.on "ready", () ->
+			app.dialog "Database Ready"
 			app.passport.use new BasicStrategy (username, password, done) ->
-				#console.log "username: #{username}, password: #{password}"
-				r.table('account_auths').filter({username: username}).run app._rdbConn, (err, cursor) ->
+				console.log "username: #{username}, password: #{password}"
+				app.database.get 'account_auths', {username: username}, (err, result) ->
 					done err if err
-					cursor.toArray (err, result) ->
-						done err if err
+					
+					if result.length > 0 # TODO match passwords
+						done null, result
 
-						if result.length > 0 # TODO match passwords
-							done null, result
-
-						else done()
+					else done()
 
 		app.use app.passport.initialize()
 
