@@ -5,7 +5,7 @@ var fs = require('fs'),
         rootPath = GLOBAL.SERVER_ROOT + '/../',
         dao = app.dao,
         modelName = 'bip_share',
-        slugify = function(model) {
+        update = function(model) {
           hub = {}
           for (var i in model.hub) {
             if (i.indexOf("-") > -1) {
