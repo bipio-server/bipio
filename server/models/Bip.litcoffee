@@ -31,8 +31,7 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 			# Set default bip id if none provided.
 			object.id = uuid.v4() if not object.hasOwnProperty 'id'
 
-			# Validate against schema types. Can be a parent method in the future.
-			_.mapObject schema, (value, key) -> self[key] = object[key] if typeof object[key] is value
+			@[key] = object[key] for key, value of schema
 
 			console.log "Bip object instantiated with id #{this.id}".cyan
 
@@ -82,7 +81,7 @@ Retrieves JSON representation of bip.
 		toJSON: () ->
 			obj = graphlib.json.write @
 			for key, value in schema
-				obj[key] = @[key]
+				obj[key] = @[key] if typeof @[key] is value
 			obj
 
 	module.exports = Bip

@@ -22,7 +22,9 @@ Config
 				consumerSecret: "#{keys.twitter.consumerSecret}",
 				callbackURL: "http://#{config.api.host}:#{config.api.port}/rpc/oauth/twitter/cb"
 
-			slack: keys.slack
+			slack: 
+				clientID: "#{keys.slack.clientID}",
+				clientSecret: "#{keys.slack.clientSecret}"
 
 
-		config
+		return config
