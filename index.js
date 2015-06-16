@@ -23,5 +23,11 @@ if (process.argv[2]) {
 	else console.log("Not a valid parameter.")
 }
 else {
-	module.exports = require('./server/index.litcoffee')()
+	try { 
+		var keys = require('./config/keys')
+	}
+	catch (error) {
+		require('./commands/install')(null, require('./server/index.litcoffee'))
+	}
+	if (keys) require('./server/index.litcoffee')() 
 }

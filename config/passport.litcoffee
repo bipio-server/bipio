@@ -3,9 +3,10 @@ Passport Config
 
 	module.exports = (app) ->
 
-		Strategies =
-			twitter: require('passport-twitter').Strategy
-			slack: require('passport-slack').Strategy
+		Strategies = {}
+
+		for name, value of app.config.oauth
+			Strategies[name] = require("passport-#{name}").Strategy
 
 		app.passport.serializeUser (user, done) ->
 			done null, user.id

@@ -23,6 +23,7 @@ Here's where we require our [npm modules](https://npmjs.com).
 		strategies 		= require '../config/passport'
 		pkg				= require '../package.json'
 		Database 		= require './utilities/database'
+		Bastion 		= require './utilities/bastion'
 		models			= {}
 		routes 			= {}
 		controllers		= {}
@@ -55,9 +56,11 @@ Attach all to the Express instance.
 		app.use bodyParser.json()
 		app.use bodyParser.urlencoded { extended: true }
 
-Configure models, Passport and [RethinkDB](http://rethinkdb.com) middleware.
+Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middleware.
 
 		app.models = models
+
+		app.bastion = new Bastion app.config.amqp.url
 
 		app.passport = passport
 		strategies(app)
@@ -66,6 +69,7 @@ Configure models, Passport and [RethinkDB](http://rethinkdb.com) middleware.
 		
 		app.database.on "ready", () ->
 			# Connected to database
+
 			app.dialog "Database Ready"
 			app.passport.use new BasicStrategy (username, password, done) ->
 				console.log "username: #{username}, password: #{password}"

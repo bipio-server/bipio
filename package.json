@@ -84,6 +84,7 @@
     "posix-getopt": "1.1.0",
     "prompt": "^0.2.14",
     "q": "^1.4.1",
+    "rabbit.js": "^0.4.2",
     "request": "^2.57.0",
     "rethinkdb": "^2.0.0-2",
     "rimraf": ">=2.2.6",
