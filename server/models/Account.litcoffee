@@ -13,6 +13,7 @@
 	class Account
 
 		constructor: (object) ->
+			super schema
 			@id = ''
 			@username = ''
 			@is_admin = false

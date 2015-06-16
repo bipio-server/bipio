@@ -1,7 +1,8 @@
 ### Account Auth
 
 Auth profiles for accounts.
-
+	
+	Model = require './index'
 	uuid = require 'node-uuid'
 	bcrypt = require 'bcrypt'
 	crypto = require 'crypto'
@@ -24,11 +25,12 @@ Auth profiles for accounts.
 
 	schemaNotMatching = "Does Not Match Schema"
 
-	class AccountAuth
+	class AccountAuth extends Model
 
 		constructor: (object) ->
+			super schema
 			@type = if object?.type then object.type else 'token'
-			@id = if object.hasOwnProperty 'id' then object.id else uuid.v4()
+			@id = if object?.id then object.id else uuid.v4()
 			@owner_id = if object?.owner_id then object.owner_id else throw new Error schemaNotMatching
 
 			switch @type
@@ -104,12 +106,6 @@ Auth profiles for accounts.
 		cryptSaveObject: (value) ->
 			return cryptSave(JSON.stringify(value))
 
-
-		toJSON: () ->
-			obj = {}
-			for key, value in schema
-				obj[key] = @[key] if typeof @[key] is value
-
-
+		
 	module.exports = AccountAuth
 

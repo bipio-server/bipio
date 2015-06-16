@@ -23,6 +23,7 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 	class Bip extends Graph
 
 		constructor: (object) ->
+			super schema
 			self = @
 			
 			# Set default graph options.

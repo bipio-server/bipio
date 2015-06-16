@@ -18,6 +18,7 @@
 	class Account_Option
 
 		constructor: (object) ->
+			super schema
 			@id = ''
 			@owner_id = ''
 
