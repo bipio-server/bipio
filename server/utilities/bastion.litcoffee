@@ -1,4 +1,6 @@
-### Bastion helper class.
+### Bastion 
+
+A helper class. Manages work taken from the job queue.
 
 	rabbit = require 'rabbit.js'
 	events = require 'events'
@@ -40,12 +42,24 @@ Adds a bip object representation to the AMQP exchange.
 				self.pub.connect 'bips', () ->					
 					self.pub.write JSON.stringify(bip), 'utf8'
 
+###### `next`
+
+Used as first argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
+
 		next: (buf) ->
 			@ack()
 			bip = new Bip(JSON.parse buf.toString())
 			bip.run()
 
+###### `error`
+
+Used as second argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
+
 		error: (err) -> console.error "Graph Error: #{err.msg}".red
+
+###### `complete`
+
+Used as third argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
 
 		complete: () -> console.log "Worker Idle.".yellow
 

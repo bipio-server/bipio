@@ -46,6 +46,6 @@ Consult the documentation for your own Passport module for more details.
 		for pod of keys.pods
 			config.oauth[pod] = {}
 			config.oauth[pod][key] = value for key, value of keys.pods[pod]
-			config.oauth[pod]["callbackURL"] = "http://#{config.api.host}:#{config.api.port}/rpc/oauth/#{pod}/cb"
+			config.oauth[pod]["callbackURL"] = "http://#{config.api.host}:#{config.api.port}/rpc/oauth/#{pod}/cb" if not keys.pods.callbackURL
 
 		return config
