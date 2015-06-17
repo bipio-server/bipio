@@ -46,6 +46,7 @@ Re-route console methods to app, put a timestamp and colors on output
 		app.log = (str) -> console.log "#{moment().format('D MMM YYYY H:mm:ss').bgCyan.black} #{"Info:".cyan} #{str.cyan}"
 		app.error = (str) -> console.error "#{moment().format('D MMM YYYY H:mm:ss').bgRed.black} #{"Error:".red} #{str.red}"
 		app.warn = (str) -> console.warn "#{moment().format('D MMM YYYY H:mm:ss').bgYellow.black} #{"Warning:".yellow} #{str.yellow}"
+		app.kill = () -> process.exit 0
 
 Set the TCP/IP port for the app to listen on. During development it's set at `localhost:5000`.
 

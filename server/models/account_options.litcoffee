@@ -23,6 +23,7 @@
 			@owner_id = ''
 
 ######  Avatar
+
 This was handled as a preSave condition
 
 		saveAvatar: (accountInfo, next) ->

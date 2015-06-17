@@ -5,6 +5,7 @@ HTTP Delete
 
 		return {
 
-			'/bip/:id': [ app.controllers.bip.del ]
+			'/rest/:resource': [ app.controllers.global.del ]
+			'/rest/:resource/:id': [ app.controllers.global.del ]
 
 		}

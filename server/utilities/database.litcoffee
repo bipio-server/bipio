@@ -1,4 +1,6 @@
-### Database helper class
+### Database 
+
+A helper class, functionally replaces the DAO in legacy versions of Bipio.
 
 	events = require 'events'
 	db = require 'rethinkdb'
@@ -25,7 +27,7 @@
 
 			self
 
-###### `Database.createTables`
+###### `createTables`
 
 Creates tables based on the contents of [Models folder](../models). Bypasses if table exists already.
 
@@ -55,15 +57,15 @@ Creates tables based on the contents of [Models folder](../models). Bypasses if 
 				Q.all(promises).then (results) ->
 					self.emit "ready"
 
-###### `Database.get`
+###### `get`
 
 Retrieves an entry from the DB.
 
-		get: (modelName, options, next) ->
+		get: (modelName, id, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(modelName).filter(options).run self.connection, (err, cursor) ->
+			callback = (err, cursor) ->
 				if err
 					throw new Error err
 				else
@@ -75,16 +77,23 @@ Retrieves an entry from the DB.
 							next null, result if next
 							deferred.resolve result
 
+			if id
+				db.table(modelName).get(id).run self.connection, (err, result) -> 
+					next null, result if next
+					deferred.resolve result
+			else
+				db.table(modelName).run self.connection, callback
+
 			deferred.promise
 
-###### `Database.save`
+###### `save`
 
 Saves an entry to the DB.
 
-		save: (modelName, object, options, next) ->
+		insert: (modelName, object, options, next) ->
 			self = @
 			deferred = Q.defer()
-
+			
 			db.table(modelName).insert(object, options).run self.connection, (err, result) ->
 				if err
 					throw new Error err
@@ -113,15 +122,15 @@ Updates an entry in the DB.
 
 			deferred.promise
 
-###### `Database.remove`
+###### `remove`
 
 Removes an entry from the DB.
 
-		remove: (modelName, options, next) ->
+		remove: (modelName, id, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(modelName).delete(options).run self.connection, (err, result) ->
+			db.table(modelName).get(id).delete().run self.connection, (err, result) ->
 				if err
 					throw new Error err
 				else

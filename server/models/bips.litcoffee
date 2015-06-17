@@ -4,17 +4,7 @@
 	graphlib = require 'graphlib'
 	Graph = graphlib.Graph
 	_ = require 'underscore'
-
-###### Bip schema
-
-	schema =
-		id: 'string'
-		domain_id: 'string'
-		name: 'string'
-		type: 'string'
-		options: 'object'
-		nodes: 'object'
-		edges: 'object'
+	Model = require './index'
 
 #### Class Bip
 
@@ -22,9 +12,21 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 
 	class Bip extends Graph
 
+###### Bip schema
+
+		schema:
+			id: 'string'
+			domain_id: 'string'
+			name: 'string'
+			type: 'string'
+			options: 'object'
+			nodes: 'object'
+			edges: 'object'
+
 		constructor: (object) ->
-			super schema
 			self = @
+
+			self[name] = method.bind self for name, method of new Model()
 			
 			# Set default graph options.
 			super { directed: true, multigraph: false, compound: true }
@@ -32,9 +34,9 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 			# Set default bip id if none provided.
 			object.id = uuid.v4() if not object.hasOwnProperty 'id'
 
-			@[key] = object[key] for key, value of schema
+			self[key] = object[key] for key, value of self.schema
 
-			@
+			self
 
 ###### `Bip.setAction`
 
@@ -72,15 +74,5 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 					edge.out.then (o) -> 
 						i.subscribe o
 						console.log "#{pipe} connected."
-
-###### `Bip.toJSON`
-
-Retrieves JSON representation of bip. 
-
-		toJSON: () ->
-			obj = graphlib.json.write @
-			for key, value in schema
-				obj[key] = @[key] if typeof @[key] is value
-			obj
 
 	module.exports = Bip

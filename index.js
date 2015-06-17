@@ -7,6 +7,7 @@ pkg = require(path.join(__dirname, './package.json'))
 colors = require('colors')
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Generic process exit handler.
 done = function (exitmsg) {
 	if (exitmsg) console.log("[Bipio]".cyan, exitmsg)
 	process.exit(0)
@@ -23,11 +24,15 @@ if (process.argv[2]) {
 	else console.log("Not a valid parameter.")
 }
 else {
+
+	// Are there keys?
 	try { 
 		var keys = require('./config/keys')
 	}
+	// No? okay, this is a new install.
 	catch (error) {
 		require('./commands/install')(null, require('./server/index.litcoffee'))
 	}
+	// Yes? Great, let's start Bipio!
 	if (keys) require('./server/index.litcoffee')() 
 }

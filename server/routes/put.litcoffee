@@ -5,6 +5,6 @@ HTTP Put
 
 		return {
 
-			'/rest/bip/:id': [ app.controllers.bip.update ]
+			#'/rest/bip/:id': [ app.controllers.bip.update ]
 
 		}
