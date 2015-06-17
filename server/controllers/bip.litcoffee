@@ -12,6 +12,7 @@ Starts a Bip by adding it to the [Job Queue](../utilities/bastion.litcoffee#addJ
 
 			start: (req, res, next) ->
 				console.log "start bip"
-				next()
+				res.status(200)
+				#next()
 
 		}

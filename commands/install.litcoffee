@@ -1,6 +1,6 @@
 #### `bipio install`
 
-Command handler for `bipio install` command
+Command handler for `bipio install` command.
 
 	es = require 'event-stream'
 	fs = require 'fs'
@@ -14,14 +14,22 @@ Command handler for `bipio install` command
 
 	module.exports = (args, end) ->
 
+Detect whether this is a new install or not
+
 		try 
 			keys = require '../config/keys'
 		catch error
 			console.log "Installing new API...".yellow
 
+If this is a pod install, begin the pod install prompt.
+
 		if keys
+			prompt.message = '[Bipio][Pod Install]'.cyan
+
+			# If you `bipio install` from a folder that has a config/keys.json in it, we are side-eyeing you like so.
 			end "Is there already a Bipio API installed? Backup the old keys and remove them, then try `bipio install` again.".red if not args[3]
 
+			# Select pod from the command. `bipio install twitter`, for example, will trigger the 'twitter' switch statement case.
 			properties = switch args[3]
 				when 'slack' then {
 					clientID: {
@@ -55,6 +63,7 @@ Command handler for `bipio install` command
 					end err.red if err
 					keys.pods[args[3]] = result
 
+					# Update the keys for the pod.
 					fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys), (err) ->
 						if err
 							throw new Error err
@@ -63,9 +72,11 @@ Command handler for `bipio install` command
 
 		else
 			keys = {}
-			prompt.message = '[Bipio]'.cyan
-	
-Prompt the user for initial API and database configuration.
+			prompt.message = '[Bipio][New Install]'.cyan
+
+If this is a new install, begin the new install prompt.
+
+Here are the questions posed to users on first install.
 
 			prompt.get { 
 				properties: {
@@ -114,6 +125,8 @@ Prompt the user for initial API and database configuration.
 			}, (err, result) ->
 				end err.red if err
 
+				# Construct a new keys object.
+
 				keys.api =
 					host: result.host
 					port: result.port
@@ -128,6 +141,7 @@ Prompt the user for initial API and database configuration.
 
 				# TODO encrypt AES key, create account_auth, domain, and other admin user stuff.
 
+				# Write the keys to new file `config/keys.json`.
 				fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys, null, 4), (err) ->
 					if err
 						throw new Error err
