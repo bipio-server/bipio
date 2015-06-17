@@ -27,7 +27,7 @@
 
 ###### `Database.createTables`
 
-Creates tables based on the contents of [Models folder](../models).
+Creates tables based on the contents of [Models folder](../models). Bypasses if table exists already.
 
 		createTables: () ->
 			self = @
