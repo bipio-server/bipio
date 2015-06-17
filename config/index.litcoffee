@@ -18,6 +18,7 @@ All keys here must conform to the name of its own [Passport Strategy](http://pas
 For example, assume that `passport-foo`'s strategy is configured with an object like: 
 
 ```
+# Example
 	{
 		"id": {string},
 		"secret": {string}
@@ -28,12 +29,17 @@ For example, assume that `passport-foo`'s strategy is configured with an object 
 To use it here, it must be written below like this:
 
 ```
-	foo: 
+# Example
+	config.oauth.foo = 
 		id: "#{keys.pods.foo.id}"
 		secret: "#{keys.pods.foo.secret}"
 		callback: "http://#{config.api.host}:#{config.api.port}/rpc/oauth/foo/cb"
 
 ```
+
+The following code aims to automate this so you don't have to add per-pod custom objects, but if you need to, do it like above.
+
+Consult the documentation for your own Passport module for more details.
 
 		config.oauth = {}
 		
