@@ -5,7 +5,8 @@ HTTP Get
 
 		return {
 
-			'/rest/bip/:id': [ app.controllers.bip.get ]
+			'/rest/:resource': [ app.controllers.global.get ]
+			'/rest/:resource/:id': [ app.controllers.global.get ]
 
 			'/status': [ app.controllers.global.get_status ]
 

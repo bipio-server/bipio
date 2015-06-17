@@ -4,7 +4,7 @@ Bip.io API Server
 A place to discover, share, and automate your Internet of Things.  
 This is the [Node.js](http://nodejs.org)/[Express](http://expressjs.com/) app powering the server at http://api.bip.io - written in Literate Coffeescript, built using Gulp.  
 
-	Bipio  = () ->
+	Bipio  = (port) ->
 
 Here's where we require our [npm modules](https://npmjs.com).
 
@@ -30,7 +30,7 @@ Here's where we require our [npm modules](https://npmjs.com).
 
 Load the models, routes, and controllers from their directories in `server/models/`, `server/routes/`, and `server/controllers/`, respectively. 
 
-		models[model.replace('.litcoffee', '')] = require("./models/#{model.replace('.litcoffee', '')}") for model in fs.readdirSync(path.join(__dirname, "models"))
+		models[model.replace('.litcoffee', '')] = require("./models/#{model.replace('.litcoffee', '')}") for model in fs.readdirSync(path.join(__dirname, "models")) when model isnt 'index.litcoffee'
 		routes[route.replace('.litcoffee', '')] = require("./routes/#{route.replace('.litcoffee', '')}") for route in fs.readdirSync(path.join(__dirname, "routes"))
 		controllers[controller.replace('.litcoffee', '')] = require("./controllers/#{controller.replace('.litcoffee', '')}") for controller in fs.readdirSync(path.join(__dirname, "controllers"))
 
@@ -38,6 +38,7 @@ Instantiate the global `app` object. `app` will contain the main server instance
 
 		app	= express()
 		app.config = config({})
+		app.testPort = 5999
 
 Re-route console methods to app, put a timestamp and colors on output
 
@@ -48,7 +49,10 @@ Re-route console methods to app, put a timestamp and colors on output
 
 Set the TCP/IP port for the app to listen on. During development it's set at `localhost:5000`.
 
-		app.set 'port', process.env.BIPIO_API_PORT or app.config.api.port
+		if port is app.testPort
+			app.set 'port', port
+		else
+			app.set 'port', process.env.BIPIO_API_PORT or app.config.api.port
 
 Attach all to the Express instance.
 
@@ -67,19 +71,23 @@ Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middle
 
 		app.database = new Database app.config.db
 		
-		app.database.on "ready", () ->
+		app.database.on "ready", (accounts) ->
 			# Connected to database
 
 			app.dialog "Database Ready"
-			app.passport.use new BasicStrategy (username, password, done) ->
-				console.log "username: #{username}, password: #{password}"
-				app.database.get 'account_auths', {username: username}, (err, result) ->
-					done err if err
-					
-					if result.length > 0 # TODO match passwords
-						done null, result
+			
+			if app.get('port') is app.testPort
+				app.warn "Omitting auth for test environment"
+			else
+				app.passport.use new BasicStrategy (username, password, done) ->
+					console.log "username: #{username}, password: #{password}"
+					app.database.get 'account_auths', {username: username}, (err, result) ->
+						done err if err
+						
+						if result.length > 0 # TODO match passwords
+							done null, result
 
-					else done()
+						else done()
 
 		app.use app.passport.initialize()
 
@@ -107,6 +115,6 @@ Start the server.
 		server.listen app.get("port"), () ->
 			console.log "#{"Bipio".cyan} (version #{pkg.version.cyan}) on #{ip.address().blue}:#{app.get('port').toString().red}"
 
-		@
+		app
 
 	module.exports = Bipio

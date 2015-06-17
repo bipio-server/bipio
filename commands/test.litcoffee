@@ -14,9 +14,6 @@
 
 	module.exports = (args, end) ->
 
-		for el, i in args
-			testOptions[args[i].replace('--', '')] = true if i > 2 and testOptions.hasOwnProperty args[i].replace('--', '')
-		
 		# Set test options. Only 'console' is available right now.
 		fs.writeFile path.join(__dirname, '../test/config.json'), JSON.stringify(testOptions, null, 4), (err) ->
 			

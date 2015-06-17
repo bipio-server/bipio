@@ -14,6 +14,18 @@ Global handler, invoked per-request. Useful for debugging.
 				app.log "#{req.method.green} #{req.originalUrl}"
 				next()
 
+###### `controllers.global.get`
+
+Generic HTTP GET handler for a given resource.
+
+			get: (req, res) ->
+				console.log "controllers.global.get", req.params
+				app.database.get "#{req.params.resource}s", (req.params.id || {}),  (err, result) ->
+					if err
+						res.status(500).json err
+					else
+						res.status(200).json result
+
 ###### `controllers.global.get_status`
 
 Get status of API and underlying infrastructure.

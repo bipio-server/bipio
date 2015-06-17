@@ -24,10 +24,11 @@ Starts a bip.
 
 			start: (req, res, next) ->
 
-				console.log req.subdomains
+				app.log "Subdomains: ", req.subdomains
 				
 				app.database.get 'bips', req.params,  (err, result) ->
-					console.log "Retrieved Bip #{req.params.id}"
+					app.log "Retrieved Bip #{req.params.id}"
+					next()
 
 ###### `controllers.bip.get`
 

@@ -3,6 +3,7 @@
 Domains for bip.io accounts
 
 	dns = require 'dns'
+	Model = require './index'
 
 ##### Domain schema
 
@@ -20,13 +21,15 @@ Domains for bip.io accounts
 			super schema
 			@id = if object?.id then object.id 
 			@name = if object?.name then object.name.toLowerCase() else 'localhost'
-			@_available = id object?._available then object._available else false
+			@_available = if id object?._available then object._available else false
 
 			return @
 
 
 		verify: (name) ->
-			return true if name else return false
+			if name
+				return true
+			else return false
 
 
 		setToAvailable: () ->
