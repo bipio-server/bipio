@@ -85,10 +85,10 @@ Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middle
 					app.database.get 'account_auths', {username: username}, (err, result) ->
 						done err if err
 						
-						if result.length > 0 # TODO match passwords
+						if result is null # TODO match passwords
+							done()
+						else 
 							done null, result
-
-						else done()
 
 		app.use app.passport.initialize()
 

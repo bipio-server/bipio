@@ -12,7 +12,7 @@ bip-pod-slack
 			@_client = new Slack auth
 			@
 
-		send_message: (action) ->
+		post_to_channel: (action) ->
 			self = @
 			d = Q.defer()
 

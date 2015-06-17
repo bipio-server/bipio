@@ -70,13 +70,13 @@ If this is a pod install, begin the pod install prompt.
 						else
 							end "New Keys written to #{path.join(__dirname, "../config/keys.json")}" 
 
+If this is a new install, begin the new install prompt.
+
 		else
 			keys = {}
 			prompt.message = '[Bipio][New Install]'.cyan
 
-If this is a new install, begin the new install prompt.
-
-Here are the questions posed to users on first install.
+			# Here are the questions posed to users on first install.
 
 			prompt.get { 
 				properties: {
