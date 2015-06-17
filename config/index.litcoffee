@@ -18,7 +18,7 @@ All keys here must conform to the name of its own [Passport Strategy](http://pas
 For example, assume that `passport-foo`'s strategy is configured with an object like: 
 
 ```
-# Example
+# Example Code, Not Executed
 	{
 		"id": {string},
 		"secret": {string}
@@ -29,7 +29,7 @@ For example, assume that `passport-foo`'s strategy is configured with an object 
 To use it here, it must be written below like this:
 
 ```
-# Example
+# Example Code, Not Executed
 	config.oauth.foo = 
 		id: "#{keys.pods.foo.id}"
 		secret: "#{keys.pods.foo.secret}"
