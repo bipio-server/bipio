@@ -29,7 +29,9 @@ Begin tests.
 				res.statusCode.should.equal 200
 				done()
 
-#### [/rest/bip] should return a list of Bips in the 'bips' table.
+#### [/rest/bip] 
+
+should return a list of Bips in the 'bips' table.
 		
 		it '/rest/bip', (done) ->
 			
@@ -37,11 +39,23 @@ Begin tests.
 				res.statusCode.should.equal 200
 				done()
 
-#### [/rest/bip/:id] should return the bip with matching id
+#### [/rest/bip/:id] 
+
+should return the bip with matching id
 
 		it '/rest/bip/:id', (done) ->
 			
 			request 'http://localhost:5999/rest/bip/12345', (err, res, body) ->
+				res.statusCode.should.equal 200
+				done()
+
+#### [/rpc/bip/start] 
+
+should return the bip with matching id
+
+		it '/rpc/bip/start', (done) ->
+			
+			request 'http://localhost:5999/rpc/bip/12345/start', (err, res, body) ->
 				res.statusCode.should.equal 200
 				done()
 				

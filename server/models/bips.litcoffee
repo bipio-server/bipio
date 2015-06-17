@@ -74,5 +74,6 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 					edge.out.then (o) -> 
 						i.subscribe o
 						console.log "#{pipe} connected."
+			@
 
 	module.exports = Bip

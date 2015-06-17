@@ -12,16 +12,23 @@ A helper class, functionally replaces the DAO in legacy versions of Bipio.
 		constructor: (@options) ->
 			self = @
 
-			db.connect @options, (err, connection) ->
+			db.connect self.options, (err, connection) ->
 				if err
-					throw new Error err
+					throw "This Bipio server requires a RethinkDB running on #{self.options.host}:#{self.options.port}.".red
 				else
 					self.connection = connection
+
+					# List all dbs available.
 					db.dbList().run self.connection, (err, result) ->
-						if result.indexOf('bipio') < 0
-							db.dbCreate('bipio').run self.connection, (err, results) ->
+
+						# No `bipio` db?
+						if result.indexOf(self.options.db) < 0
+
+							# Create it, then!
+							db.dbCreate(self.options.db).run self.connection, (err, results) ->
 								throw new Error err if err
 								self.createTables()
+						# Is there alredy a `bipio` db?
 						else 
 							self.createTables()
 

@@ -78,7 +78,7 @@ Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middle
 			app.dialog "Database Ready"
 			
 			if app.get('port') is app.testPort
-				app.warn "Omitting auth for test environment"
+				app.warn "Disabling HTTP Basic Auth for test environment"
 			else
 				app.passport.use new BasicStrategy (username, password, done) ->
 					console.log "username: #{username}, password: #{password}"
@@ -116,6 +116,6 @@ Start the server.
 		server.listen app.get("port"), () ->
 			console.log "#{"Bipio".cyan} (version #{pkg.version.cyan}) on #{ip.address().blue}:#{app.get('port').toString().red}"
 
-		app
+		return app
 
 	module.exports = Bipio

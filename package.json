@@ -1,5 +1,4 @@
 {
-  "author": "Wot.IO",
   "name": "bipio",
   "version": "0.5.0",
   "scripts": {
@@ -110,5 +109,20 @@
     "gulp-nodemon": "^2.0.3",
     "mocha": "^2.2.5",
     "should": "^6.0.3"
-  }
+  },
+  "author": "Bip.IO Team <team@bip.io>",
+  "contributors": [
+    {
+        "name": "Scott Tuddenham",
+        "email": "scott@wot.io"
+    },
+    {
+        "name": "Alfonso Gober",
+        "email": "alfonso@wot.io"
+    },
+    {
+        "name": "Michael Pearson",
+        "email": "michael@wot.io"
+    }
+  ]
 }

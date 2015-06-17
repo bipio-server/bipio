@@ -10,6 +10,8 @@ HTTP Get
 
 			'/status': [ app.controllers.global.get_status ]
 
+			'/rpc/bip/:id/start': [ app.controllers.bip.start ]
+
 			'/rpc/oauth/twitter/auth': [ app.passport.authorize 'twitter' ]
 			'/rpc/oauth/twitter/cb': [ app.passport.authorize 'twitter' ]
 
