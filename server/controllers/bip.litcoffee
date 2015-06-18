@@ -2,6 +2,8 @@
 
 Handles bip-specific endpoints.
 
+	Bip = require "../models/bips"
+
 	module.exports = (app) ->
 
 		return {
@@ -11,8 +13,9 @@ Handles bip-specific endpoints.
 Starts a Bip by adding it to the [Job Queue](../utilities/bastion.litcoffee#addJob).
 
 			start: (req, res, next) ->
-				console.log "start bip"
-				res.status(200)
+
+				app.database.get "bips", req.params.id, (err, result) ->
+					bip = new Bip result
 				#next()
 
 		}
