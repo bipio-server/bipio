@@ -1,0 +1,41 @@
+{
+	"slack": {
+		"clientID": {
+			"description": "Slack Client ID",
+			"type": "string",
+			"hidden": true
+		},
+		"clientSecret": {
+			"description": "Slack Client Secret",
+			"type": "string",
+			"hidden": true
+		},
+		"web_hook": {
+			"description": "Slack Incoming Web Hook",
+			"type": "string",
+			"hidden": true
+		}
+	},
+	"twitter": {
+		"consumer_key": {
+			"description": "Twitter Consumer Key",
+			"type": "string",
+			"hidden": true
+		},
+		"consumer_secret": {
+			"description": "Twitter Consumer Secret",
+			"type": "string",
+			"hidden": true
+		},
+		"access_token_key": {
+			"description": "Twitter Access Token Key",
+			"type": "string",
+			"hidden": true
+		},
+		"access_token_secret": {
+			"description": "Twitter Access Token Secret",
+			"type": "string",
+			"hidden": true
+		}
+	}
+}

@@ -9,6 +9,7 @@ Command handler for `bipio install` command.
 	mkdir = require 'mkdirp'
 	path = require('path')
 	pkg = require(path.join(__dirname, '../package.json'))
+	podInstallPrompts = require '../config/pod-install'
 	prompt = require('prompt')
 	crypto = require 'crypto'
 	
@@ -34,46 +35,7 @@ If this is a pod install, begin the pod install prompt.
 			end "Is there already a Bipio API installed? Backup the old keys and remove them, then try `bipio install` again.".red if not args[3]
 
 			# Select pod from the command. `bipio install twitter`, for example, will trigger the 'twitter' switch statement case.
-			properties = switch args[3]
-				when 'slack' then {
-					clientID: {
-						description: "Slack Client ID"
-						type: 'string'
-						hidden: true
-					}
-					clientSecret: {
-						description: "Slack Client Secret"
-						type: 'string'
-						hidden: true
-					}
-					web_hook: {
-						description: "Slack Incoming Web Hook"
-						type: 'string'
-						hidden: true
-					}
-				}
-				when 'twitter' then {
-					consumer_key: {
-						description: "Twitter Consumer Key"
-						type: 'string'
-						hidden: true
-					}
-					consumer_secret: {
-						description: "Twitter Consumer Secret"
-						type: 'string'
-						hidden: true
-					}
-					access_token_key: {
-						description: "Twitter Access Token Key"
-						type: 'string'
-						hidden: true
-					}
-					access_token_secret: {
-						description: "Twitter Access Token Secret"
-						type: 'string'
-						hidden: true
-					}
-				}
+			properties = podInstallPrompts[args[3]]
 
 			prompt.get {
 					properties: properties
