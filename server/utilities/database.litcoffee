@@ -107,8 +107,8 @@ Saves an entry to the DB.
 				else if result.inserted is not 1
 					throw new Error "Document not inserted"
 				else
-					next null, result.changes[0].new_val if next
-					deferred.resolve result.changes[0].new_val
+					next null, result.changes?[0]?.new_val if next
+					deferred.resolve result.changes?[0]?.new_val
 
 			deferred.promise
 
@@ -124,8 +124,8 @@ Updates an entry in the DB.
 				if err
 					throw new Error err
 				else
-					next null, result.changes[0].new_val if next
-					deferred.resolve result.changes[0].new_val
+					next null, result.changes?[0]?.new_val if next
+					deferred.resolve result.changes?[0]?.new_val
 
 			deferred.promise
 

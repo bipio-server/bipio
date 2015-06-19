@@ -98,9 +98,10 @@ should return the bip with matching id
 				done()
 				
 		it 'teardown', (done) ->
-			request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
-				res.statusCode.should.equal 200
-				app.kill()
-				done()
+			#request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
+			#	res.statusCode.should.equal 200
+			#	app.kill()
+			#	done()
+			done()
 
 

@@ -71,10 +71,12 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 					out: pipe.w.split "."
 
 				actions = {}
+				
 				actions.in = node.value for node in self.nodes when node.v is pipe.v
 				actions.out = node.value for node in self.nodes when node.v is pipe.w
 
 				pods = {}
+
 				pods.in = new (require("../../pods/bip-pod-#{tokens.in[0]}"))(keys.pods[tokens.in[0]])
 				pods.out = new (require("../../pods/bip-pod-#{tokens.out[0]}"))(keys.pods[tokens.out[0]])
 
