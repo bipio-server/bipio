@@ -87,22 +87,13 @@ should return the bip with matching id
 				res.statusCode.should.equal 200
 				done()
 
-#### [/rpc/bip/start] 
-
-should return the bip with matching id
-
-		it '/rpc/bip/start', (done) ->
+		###it '/rpc/bip/start', (done) ->
 			
 			request 'http://localhost:5999/rpc/bip/12345/start', (err, res, body) ->
 				res.statusCode.should.equal 200
-				done()
+				done()###
 		
 		it 'teardown', (done) ->
-			#request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
-			#	res.statusCode.should.equal 200
-			#	app.kill()
-			#	done()
-
 			request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
 				res.statusCode.should.equal 200
 				app.kill()

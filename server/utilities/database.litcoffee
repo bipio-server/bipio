@@ -101,11 +101,14 @@ Saves an entry to the DB.
 			self = @
 			deferred = Q.defer()
 			
-			db.table(modelName).insert(object, options).run self.connection, (err, result) ->
-				if err or result.inserted is not 1
+			db.table(modelName).insert(object, options).run self.connection, (err, transaction) ->
+				if err or (transaction.inserted < 1)
 					throw new Error (err or "Document not inserted")
+				else if transaction.changes?.length
+					next null, transaction.changes[0].new_val if next
+					deferred.resolve transaction.changes[0].new_val
 				else 
-					db.table(modelName).get(result.generated_keys[0]).run self.connection, (err, result) ->
+					db.table(modelName).get(transaction.generated_keys[0]).run self.connection, (err, result) ->
 						next null, result if next
 						deferred.resolve result
 
@@ -123,8 +126,8 @@ Updates an entry in the DB.
 				if err
 					throw new Error err
 				else
-					next null, result.changes?[0]?.new_val if next
-					deferred.resolve result.changes?[0]?.new_val
+					next null, result.changes[0].new_val if next
+					deferred.resolve result.changes[0].new_val
 
 			deferred.promise
 

@@ -46,19 +46,33 @@ If this is a pod install, begin the pod install prompt.
 						type: 'string'
 						hidden: true
 					}
+					web_hook: {
+						description: "Slack Incoming Web Hook"
+						type: 'string'
+						hidden: true
+					}
 				}
 				when 'twitter' then {
-					consumerKey: {
+					consumer_key: {
 						description: "Twitter Consumer Key"
 						type: 'string'
 						hidden: true
 					}
-					consumerSecret: {
+					consumer_secret: {
 						description: "Twitter Consumer Secret"
 						type: 'string'
 						hidden: true
 					}
-
+					access_token_key: {
+						description: "Twitter Access Token Key"
+						type: 'string'
+						hidden: true
+					}
+					access_token_secret: {
+						description: "Twitter Access Token Secret"
+						type: 'string'
+						hidden: true
+					}
 				}
 
 			prompt.get {
@@ -68,7 +82,7 @@ If this is a pod install, begin the pod install prompt.
 					keys.pods[args[3]] = result
 
 					# Update the keys for the pod.
-					fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys), (err) ->
+					fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys, null, 4), (err) ->
 						if err
 							throw new Error err
 						else
@@ -148,6 +162,9 @@ If this is a new install, begin the new install prompt.
 					db: "bipio"
 					authKey: ""
 
+				keys.amqp =
+					url: "amqp://localhost"
+
 				keys.pods = {}
 
 				# Constuct a new user
@@ -160,23 +177,19 @@ If this is a new install, begin the new install prompt.
 					username: result.username
 					email: result.email
 					is_admin: true
-					password: token
-	
-				credentials = 
-					type: token
-					username: result.username
-					owner_id:  result.username   # open ? change this field to be genereated UUID for newly created user... (and backwards compatibility), or jsut keep as username
-			
-				console.log data
-				console.log 'going to write : ' + JSON.stringify user
+					password: token			
 				
 				data.on "ready", () ->
 					data.insert('accounts', user, {}).then (newUser)->
-						console.log newUser
-						# create your accountAuth from newUser.owner_id, etc 
+						#console.log "new user: ", newUser
+
+						credentials = 
+							type: token
+							username: newUser.username
+							owner_id:  newUser.id
+
 						data.insert('account_auths', credentials, {}).then (newAccountAuth) ->
-							console.log newAccountAuth
-						# done
+							#console.log "new account_auth:", newAccountAuth
 
 							# Write the keys to new file `config/keys.json`.
 							fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys, null, 4), (err) ->

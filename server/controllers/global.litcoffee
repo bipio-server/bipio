@@ -31,7 +31,6 @@ Generic HTTP GET handler. Retrieves a resource.
 Generic HTTP POST handler. Creates or updates a resource.
 
 			post: (req, res) ->
-				console.log req.body
 
 				id = if req.params.id then req.params.id else {}
 
@@ -47,10 +46,10 @@ Generic HTTP POST handler. Creates or updates a resource.
 
 				app.database.get "#{req.params.resource}s", req[req.params.resource].id, (err, result) ->
 					if result is null
-						# Item not found. Create it from the request
+						console.log "Item not found. Create it from the request"
 						app.database.insert "#{req.params.resource}s", req[req.params.resource].toJSON(), {returnChanges: true}, respond
 					else
-						# Item found. Update it (destructively for now)
+						console.log "Item found. Update it (destructively for now)"
 						app.database.update "#{req.params.resource}s", req[req.params.resource].toJSON(), respond
 
 ###### `del`
