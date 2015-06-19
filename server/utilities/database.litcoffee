@@ -102,13 +102,12 @@ Saves an entry to the DB.
 			deferred = Q.defer()
 			
 			db.table(modelName).insert(object, options).run self.connection, (err, result) ->
-				if err
-					throw new Error err
-				else if result.inserted is not 1
-					throw new Error "Document not inserted"
-				else
-					next null, result.changes?[0]?.new_val if next
-					deferred.resolve result.changes?[0]?.new_val
+				if err or result.inserted is not 1
+					throw new Error (err or "Document not inserted")
+				else 
+					db.table(modelName).get(result.generated_keys[0]).run self.connection, (err, result) ->
+						next null, result if next
+						deferred.resolve result
 
 			deferred.promise
 
