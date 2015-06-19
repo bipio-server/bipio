@@ -96,12 +96,15 @@ should return the bip with matching id
 			request 'http://localhost:5999/rpc/bip/12345/start', (err, res, body) ->
 				res.statusCode.should.equal 200
 				done()
-				
+		
 		it 'teardown', (done) ->
 			#request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
 			#	res.statusCode.should.equal 200
 			#	app.kill()
 			#	done()
-			done()
 
+			request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
+				res.statusCode.should.equal 200
+				app.kill()
+				done()
 

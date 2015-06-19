@@ -55,29 +55,29 @@ Auth profiles for accounts.
 			return bcrypt.compareSync(taintedClear, localHash)
 
 
-		AESCrypt: (value) ->
+		AESCrypt: (value, key) ->
 			iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
 			
 			# get latest key
-			key = config.k[keyVersion] for keyVersion in config.k
+			@key = key || config.k[keyVersion] for keyVersion in config.k
 
-			cipher = crypto.createCipheriv('aes-256-cbc', key, iv)
+			cipher = crypto.createCipheriv('aes-256-cbc', @key, iv)
 			crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64')
 			cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64')
 
 			return cryptEncoded
 
 
-		AESDecrypt: (cryptedStr, autoPadding) ->
-			crypted = new Buffer(cryptedStr, 'base64').toString('utf-8')
+		AESDecrypt: (cryptedString) ->
+			crypted = new Buffer(cryptedString, 'base64').toString('utf-8')
 			keyVersion = crypted.substr(0, 1)
 			iv = crypted.substr(1, 16)
 			key = CFG.k[keyVersion]
 			cypher = crypted.substr(17)
 			decipher = crypto.createDecipheriv('aes-256-cbc', key, iv)
-			if autoPadding then (autoPadding = false) else (autoPadding = true)
-			decipher.setAutoPadding autoPadding
+			decipher.setAutoPadding true
 			decrypted = decipher.update(cypher, 'base64', 'ascii') + decipher.final('ascii')
+
 			return decrypted
 
 

@@ -2,6 +2,7 @@
 
 Command handler for `bipio install` command.
 
+	Database = require '../server/utilities/database'
 	es = require 'event-stream'
 	fs = require 'fs'
 	path = require 'path'
@@ -10,7 +11,10 @@ Command handler for `bipio install` command.
 	pkg = require(path.join(__dirname, '../package.json'))
 	prompt = require('prompt')
 	crypto = require 'crypto'
+	
 	keys = null
+	user = null
+	credentials = null
 
 	module.exports = (args, end) ->
 
@@ -103,6 +107,13 @@ If this is a new install, begin the new install prompt.
 						message: "Username must contain only the characters A-Z|a-z"
 						default: 'admin'
 					}
+					email: {
+						description: 'Administrator email'
+						type: 'string'
+						pattern:  /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9.-]+$/    # or  /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/
+						message: 'Default admin email is root@localhost'
+						default: 'root@localhost'
+					}
 					AESkey: {
 						description: 'API key (optional, [Enter] to generate automatically)'
 						type: 'string'
@@ -139,14 +150,40 @@ If this is a new install, begin the new install prompt.
 
 				keys.pods = {}
 
-				# TODO encrypt AES key, create account_auth, domain, and other admin user stuff.
+				# Constuct a new user
+		
+				data = new Database keys.db
+				token = null
+				token = process.env.BIPIO_ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex')
 
-				# Write the keys to new file `config/keys.json`.
-				fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys, null, 4), (err) ->
-					if err
-						throw new Error err
-					else
-						end "New Keys written to #{path.join(__dirname, "../config/keys.json")}" 
-						end "Installation Complete!".green
+				user  = 
+					username: result.username
+					email: result.email
+					is_admin: true
+					password: token
+	
+				credentials = 
+					type: token
+					username: result.username
+					owner_id:  result.username   # open ? change this field to be genereated UUID for newly created user... (and backwards compatibility), or jsut keep as username
+			
+				console.log data
+				console.log 'going to write : ' + JSON.stringify user
+				
+				data.on "ready", () ->
+					data.insert('accounts', user, {}).then (newUser)->
+						console.log newUser
+						# create your accountAuth from newUser.owner_id, etc 
+						data.insert('account_auths', credentials, {}).then (newAccountAuth) ->
+							console.log newAccountAuth
+						# done
+
+							# Write the keys to new file `config/keys.json`.
+							fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys, null, 4), (err) ->
+								if err
+									throw new Error err
+								else
+									end "New Keys written to #{path.join(__dirname, "../config/keys.json")}" 
+									end "Installation Complete!".green
 
 			
