@@ -31,6 +31,7 @@ Generic HTTP GET handler. Retrieves a resource.
 Generic HTTP POST handler. Creates or updates a resource.
 
 			post: (req, res) ->
+				console.log req.body
 
 				id = if req.params.id then req.params.id else {}
 

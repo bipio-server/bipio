@@ -5,6 +5,8 @@
 	Graph = graphlib.Graph
 	_ = require 'underscore'
 	Model = require './index'
+	keys = require '../../config/keys'
+	Q = require 'q'
 
 #### Class Bip
 
@@ -52,28 +54,43 @@ Semantic wrapper method for Graph.node().
 		getAction: (id) ->
 			@node id
 
+		active_pipes: []
+
 ###### `Bip.run` 
 
 Runs the bip by instantiating pods with supplied auth, connecting the pipes via `Rx.Observer.subscribe()`.
 
-		run: () ->
+		start: () ->
+			self = @
 			# Retrieve each edge on the graph.
-			for pipe in @edges()
-				edge = @edge(pipe.v, pipe.w)
+			for pipe in self.edges
 
-				# Split edge.in and edge.out strings into tokens.
-				itokens = edge.in.split "."
-				otokens = edge.out.split "."
+				# Split pipe.v and pipe.w strings into tokens.
+				tokens = 
+					in: pipe.v.split "."
+					out: pipe.w.split "."
 
-				# Replace edge.in and edge.out with Promises containing the Observables/Observers.
-				edge.in = new require("../../pods/bip-pod-#{itokens[0]}")(@getAction(pipe.v).auth)[itokens[1]](@getAction(pipe.v))
-				edge.out = new require("../../pods/bip-pod-#{otokens[0]}")(@getAction(pipe.w).auth)[otokens[1]](@getAction(pipe.w))
+				actions = {}
+				actions.in = node.value for node in self.nodes when node.v is pipe.v
+				actions.out = node.value for node in self.nodes when node.v is pipe.w
+
+				pods = {}
+				pods.in = new (require("../../pods/bip-pod-#{tokens.in[0]}"))(keys.pods[tokens.in[0]])
+				pods.out = new (require("../../pods/bip-pod-#{tokens.out[0]}"))(keys.pods[tokens.out[0]])
+
+				# Create active pipe with Promises containing the Observables/Observers.
+				result = {}
+				result.in = pods.in[tokens.in[1]](actions.in)
+				result.out = pods.out[tokens.out[1]](actions.out)
 
 				# Connect the Observable to the Observer.
-				edge.in.then (i) -> 
-					edge.out.then (o) -> 
+				result.in.then (i) -> 
+					result.out.then (o) -> 
 						i.subscribe o
-						console.log "#{pipe} connected."
+						console.log "Pipe connected."
+
+				self.active_pipes.push result
+
 			@
 
 	module.exports = Bip

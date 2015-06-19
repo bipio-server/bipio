@@ -2,14 +2,13 @@ bip-pod-slack
 ===
 
 	Pod 	= require '../bip-pod'
-	Slack 	= require 'node-slack'
+	slack 	= require 'node-slack'
 	Q 		= require 'q'
 	Rx 		= require 'rx'
 
 	class Slack extends Pod
 
-		constructor: (auth) ->
-			@_client = new Slack auth
+		constructor: (@auth) ->
 			@
 
 		post_to_channel: (action) ->
@@ -17,9 +16,11 @@ bip-pod-slack
 			d = Q.defer()
 
 			next = (obj) ->
-				self._client.send self.Transform(action.config, action.transforms, obj)
+				process.nextTick () ->
+					self._client = new slack self.auth.web_hook
+					self._client.send self.Transform(action.config, action.transforms, obj)
 
-			d.resolve Rx.Observer.create next, error, complete
+			d.resolve Rx.Observer.create next, console.error, console.log
 
 			d.promise
 

@@ -30,22 +30,30 @@ To use it here, it must be written below like this:
 
 ```
 # Example Code, Not Executed
-	config.oauth.foo = 
-		id: "#{keys.pods.foo.id}"
-		secret: "#{keys.pods.foo.secret}"
-		callback: "http://#{config.api.host}:#{config.api.port}/rpc/oauth/foo/cb"
+	if keys.pods?.foo
+		config.oauth.foo = {
+			id: "#{keys.pods.foo.id}"
+			secret: "#{keys.pods.foo.secret}"
+			callback: "http://#{config.api.host}:#{config.api.port}/rpc/oauth/foo/cb"
+		}
 
 ```
-
-The following code aims to automate this so you don't have to add per-pod custom objects, but if you need to, do it like above.
 
 Consult the documentation for your own Passport module for more details.
 
 		config.oauth = {}
 		
-		for pod of keys.pods
-			config.oauth[pod] = {}
-			config.oauth[pod][key] = value for key, value of keys.pods[pod]
-			config.oauth[pod]["callbackURL"] = "http://#{config.api.host}:#{config.api.port}/rpc/oauth/#{pod}/cb" if not keys.pods.callbackURL
+		if keys.pods?.twitter
+			config.oauth.twitter = {
+				"consumerKey": "#{keys.pods.twitter.consumer_key}",
+				"consumerSecret": "#{keys.pods.twitter.consumer_secret}"
+				"callbackURL": "http://#{config.api.host}:#{config.api.port}/rpc/oauth/twitter/cb"
+			}
+
+		if keys.pods?.slack
+			config.oauth.slack = {
+				"clientID": "#{keys.pods.slack.clientID}",
+				"clientSecret": "#{keys.pods.slack.clientSecret}"
+			}
 
 		return config

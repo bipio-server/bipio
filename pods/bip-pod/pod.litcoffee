@@ -1,6 +1,8 @@
 bip-pod
 ===
 
+	_ = require 'underscore'
+
 	class Pod
 
 		constructor: () ->

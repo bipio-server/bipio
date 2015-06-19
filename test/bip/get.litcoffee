@@ -7,6 +7,7 @@ Unit tests for any bip-related GET endpoints.
 	colors = require 'colors'
 	moment = require 'moment'
 	chai = require 'chai'
+	keys = require
 	request = require 'request'
 	chai.should()
 	config = require('../../config')({})
@@ -19,11 +20,48 @@ Begin tests.
 
 		it 'setup', (done) ->
 			
-			testBip =
-				id: '12345'
-				name: 'testBip'
-				type: 'http'
-				options: {}
+			testBip = {
+				id: '12345',
+				name: 'testBip',
+				type: 'trigger',
+				nodes: [
+					{
+						v: "twitter.on_new_tweet",
+						value: {
+							id: "twitter.on_new_tweet",
+							type: "trigger",
+							config: {
+								track: 'IoT'
+							}
+						}
+					},
+					{
+						v: "slack.post_to_channel",
+						value: {
+							id: "slack.post_to_channel",
+							type: "http",
+							config: {
+								text: 'Default Text', # sane default, will be overridden by transforms
+								channel: '#iotwitter',
+								username: 'IoTwitter',
+								icon_emoji: ':bipio:',
+								unfurl_links: true,
+								link_names: 1
+							}
+							transforms: {
+								text: "{text}"
+								username: "{user.screen_name} - {user.location}"
+							}
+						}
+					}
+				],
+				edges: [
+					{
+						v: "twitter.on_new_tweet",
+						w: "slack.post_to_channel"
+					}
+				]
+			}
 
 			request { url: "http://localhost:5999/rest/bip/12345", method: "POST", headers: { "content-type": "application/json" }, json: true, body: testBip }, (err, res, body) ->
 				res.statusCode.should.equal 200
