@@ -6,7 +6,7 @@ Auth profiles for accounts.
 	uuid = require 'node-uuid'
 	bcrypt = require 'bcrypt'
 	crypto = require 'crypto'
-	config = require '../../config'
+	keys = require '../../config/keys'
 
 ###### Account_Auth schema
 
@@ -37,7 +37,8 @@ Auth profiles for accounts.
 				when 'token'
 					@username = if object?.username then @cryptSave object.username else throw new Error schemaNotMatching
 					@password = if object?.password then @cryptSave object.password else throw new Error schemaNotMatching
-					@key = if object?.key then @cryptSave object.key else throw new Error schemaNotMatching
+					#@key = if object?.key then @cryptSave object.key else throw new Error schemaNotMatching
+
 				when 'oauth'
 					@oauth_provider = ''
 					@oauth_refresh = ''
@@ -55,24 +56,25 @@ Auth profiles for accounts.
 			return bcrypt.compareSync(taintedClear, localHash)
 
 
-		AESCrypt: (value, key) ->
+		AESEncrypt: (value) ->
 			iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
 			
 			# get latest key
-			@key = key || config.k[keyVersion] for keyVersion in config.k
+			keyVersion = 0
+			@key = keys.k[keyVersion]
 
 			cipher = crypto.createCipheriv('aes-256-cbc', @key, iv)
 			crypted = cipher.update(value, 'ascii', 'base64') + cipher.final('base64')
-			cryptEncoded = new Buffer(keyVersion + iv + crypted).toString('base64')
+			encrypted = new Buffer(keyVersion + iv + crypted).toString('base64')
 
-			return cryptEncoded
+			return encrypted
 
 
-		AESDecrypt: (cryptedString) ->
-			crypted = new Buffer(cryptedString, 'base64').toString('utf-8')
+		AESDecrypt: (encryptedString) ->
+			crypted = new Buffer(encryptedString, 'base64').toString('utf-8')
 			keyVersion = crypted.substr(0, 1)
 			iv = crypted.substr(1, 16)
-			key = CFG.k[keyVersion]
+			key = keys.k[keyVersion]
 			cypher = crypted.substr(17)
 			decipher = crypto.createDecipheriv('aes-256-cbc', key, iv)
 			decipher.setAutoPadding true
@@ -84,7 +86,7 @@ Auth profiles for accounts.
 		passwordHash: (pwValue) ->
 			crypted = undefined
 			# tokens use AES
-			if @type != 'login_primary' then (crypted = AESCrypt(pwValue)) else (crypted = strCryptSync(pwValue))
+			if @type != 'login_primary' then (crypted = AESEncrypt(pwValue)) else (crypted = strCryptSync(pwValue))
 			return crypted
 
 
@@ -97,7 +99,7 @@ Auth profiles for accounts.
 					app.error "Trying to write login primary to account_auth [#{@id}]"
 					throw new Error('Bad Type')
 				else if @type != 'token_invite'
-					crypted = @AESCrypt(value)
+					crypted = @AESEncrypt(value)
 				return crypted
 			else
 				return value
