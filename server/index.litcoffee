@@ -46,6 +46,7 @@ Re-route console methods to app, put a timestamp and colors on output
 		app.log = (str) -> console.log "#{moment().format('D MMM YYYY H:mm:ss').bgCyan.black} #{"Info:".cyan} #{str.cyan}"
 		app.error = (str) -> console.error "#{moment().format('D MMM YYYY H:mm:ss').bgRed.black} #{"Error:".red} #{str.red}"
 		app.warn = (str) -> console.warn "#{moment().format('D MMM YYYY H:mm:ss').bgYellow.black} #{"Warning:".yellow} #{str.yellow}"
+
 		app.kill = () -> process.exit 0
 
 Set the TCP/IP port for the app to listen on. During development it's set at `localhost:5000`.
@@ -64,14 +65,27 @@ Attach all to the Express instance.
 Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middleware.
 
 		app.models = models
-
-		app.bastion = new Bastion app.config.amqp.url
+		
+		app.activeChildren = []
+		app.bastion = new Bastion app
 
 		app.passport = passport
 		strategies(app)
 
 		app.database = new Database app.config.db
+
+
+		# TODO pick up all bips marked active and put them on the queue
+		app.lastWill = () ->
+			app.log "Process #{process.pid} exiting, releasing active bips back to queue..."
+			console.log app.activeChildren
+			app.bastion.broker.addJob bip for bip in app.activeChildren
+			app.dialog "Done!"
+			process.exit(1)
 		
+		#process.on 'exit', app.lastWill
+		process.on 'SIGINT', app.lastWill
+
 		app.database.on "ready", (accounts) ->
 			# Connected to database
 

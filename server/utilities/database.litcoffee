@@ -102,8 +102,8 @@ Saves an entry to the DB.
 			deferred = Q.defer()
 			
 			db.table(modelName).insert(object, options).run self.connection, (err, transaction) ->
-				if err or (transaction.inserted < 1)
-					throw new Error (err or "Document not inserted")
+				if err
+					throw new Error err
 				else if transaction.changes?.length
 					next null, transaction.changes[0].new_val if next
 					deferred.resolve transaction.changes[0].new_val
@@ -118,16 +118,20 @@ Saves an entry to the DB.
 
 Updates an entry in the DB.
 
-		update: (modelName, object, next) ->
+		update: (modelName, id, update, next) ->
 			self = @
 			deferred = Q.defer()
 
-			db.table(modelName).get(object.id).update(object).run self.connection, (err, result) ->
+			db.table(modelName).get(id).update(update).run self.connection, (err, transaction) ->
 				if err
-					throw new Error err
+					throw new Error (err or "Document not updated")
+				else if transaction.changes?.length
+					next null, transaction.changes[0].new_val if next
+					deferred.resolve transaction.changes[0].new_val
 				else
-					next null, result.changes[0].new_val if next
-					deferred.resolve result.changes[0].new_val
+					db.table(modelName).get(id).run self.connection, (err, result) ->
+						next null, result if next
+						deferred.resolve result		
 
 			deferred.promise
 

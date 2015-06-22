@@ -90,8 +90,7 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 					result.out.then (o) -> 
 						i.subscribe o
 						console.log "Pipe connected."
-
-				self.active_pipes.push result
+						self.active_pipes.push { in: i, out: o }
 
 			@
 

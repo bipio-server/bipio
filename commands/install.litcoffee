@@ -135,7 +135,7 @@ If this is a new install, begin the new install prompt.
 				token = null
 				token = process.env.BIPIO_ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex')
 
-				user  = 
+				user = 
 					username: result.username
 					email: result.email
 					is_admin: true
@@ -143,7 +143,6 @@ If this is a new install, begin the new install prompt.
 				
 				data.on "ready", () ->
 					data.insert('accounts', user, {}).then (newUser)->
-						#console.log "new user: ", newUser
 
 						credentials = 
 							type: token
@@ -151,7 +150,6 @@ If this is a new install, begin the new install prompt.
 							owner_id:  newUser.id
 
 						data.insert('account_auths', credentials, {}).then (newAccountAuth) ->
-							#console.log "new account_auth:", newAccountAuth
 
 							# Write the keys to new file `config/keys.json`.
 							fs.writeFile path.join(__dirname, "../config/keys.json"), JSON.stringify(keys, null, 4), (err) ->

@@ -3,6 +3,7 @@
 Handles bip-specific endpoints.
 
 	Bip = require "../models/bips"
+	Rx = require 'rx'
 
 	module.exports = (app) ->
 
@@ -15,7 +16,11 @@ Starts a Bip by adding it to the [Job Queue](../utilities/bastion.litcoffee#addJ
 			start: (req, res, next) ->
 
 				app.database.get "bips", req.params.id, (err, result) ->
-					bip = app.bastion.broker.addJob(result)
-					
+					job = app.bastion.broker.addJob result
+					job.then (written) ->
+						if written?
+							res.status(200)
+						else
+							res.status(500)
 
 		}

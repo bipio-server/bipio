@@ -7,7 +7,7 @@
 	spawn = require('child_process').spawn
 	pkg = require(path.join(__dirname, '../package.json'))
 	Mocha = require 'mocha'
-	mocha = new Mocha
+	mocha = new Mocha { timeout: 10000 }
 	testOptions = {
 		console: false
 	}

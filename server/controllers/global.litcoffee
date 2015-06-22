@@ -46,11 +46,11 @@ Generic HTTP POST handler. Creates or updates a resource.
 
 				app.database.get "#{req.params.resource}s", req[req.params.resource].id, (err, result) ->
 					if result is null
-						console.log "Item not found. Create it from the request"
+						#console.log "Item not found. Create it from the request"
 						app.database.insert "#{req.params.resource}s", req[req.params.resource].toJSON(), {returnChanges: true}, respond
 					else
-						console.log "Item found. Update it (destructively for now)"
-						app.database.update "#{req.params.resource}s", req[req.params.resource].toJSON(), respond
+						#console.log "Item found. Update it (destructively for now)"
+						app.database.update "#{req.params.resource}s", req[req.params.resource].id, req[req.params.resource].toJSON(), respond
 
 ###### `del`
 

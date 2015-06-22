@@ -82,20 +82,21 @@ should return a list of Bips in the 'bips' table.
 should return the bip with matching id
 
 		it '/rest/bip/:id', (done) ->
-			
 			request 'http://localhost:5999/rest/bip/12345', (err, res, body) ->
 				res.statusCode.should.equal 200
 				done()
 
-		###it '/rpc/bip/start', (done) ->
-			
+		it '/rpc/bip/start', (done) ->
 			request 'http://localhost:5999/rpc/bip/12345/start', (err, res, body) ->
 				res.statusCode.should.equal 200
-				done()###
+				done()
 		
 		it 'teardown', (done) ->
-			request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
+			setTimeout () ->
+				app.kill()
+			, 8000
+			###request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
 				res.statusCode.should.equal 200
 				app.kill()
-				done()
+				done()###
 
