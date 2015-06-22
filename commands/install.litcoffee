@@ -135,6 +135,8 @@ If this is a new install, begin the new install prompt.
 				token = null
 				token = process.env.BIPIO_ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex')
 
+				keys.k = [token]
+	
 				user = 
 					username: result.username
 					email: result.email
