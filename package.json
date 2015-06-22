@@ -80,6 +80,7 @@
     "passport-slack": "0.0.1",
     "passport-twitter": "^1.0.3",
     "pkgcloud": ">=1.1.0",
+    "pm2": "^0.14.1",
     "posix-getopt": "1.1.0",
     "prompt": "^0.2.14",
     "q": "^1.4.1",
@@ -113,16 +114,16 @@
   "author": "Bip.IO Team <team@bip.io>",
   "contributors": [
     {
-        "name": "Scott Tuddenham",
-        "email": "scott@wot.io"
+      "name": "Scott Tuddenham",
+      "email": "scott@wot.io"
     },
     {
-        "name": "Alfonso Gober",
-        "email": "alfonso@wot.io"
+      "name": "Alfonso Gober",
+      "email": "alfonso@wot.io"
     },
     {
-        "name": "Michael Pearson",
-        "email": "michael@wot.io"
+      "name": "Michael Pearson",
+      "email": "michael@wot.io"
     }
   ]
 }

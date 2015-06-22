@@ -12,7 +12,7 @@ Unit tests for any bip-related GET endpoints.
 	chai.should()
 	config = require('../../config')({})
 	testConfig = require '../config.json'
-	app = require('../../server')(5999)
+	app = require('../../server')({port: 5999})
 
 Begin tests.
 

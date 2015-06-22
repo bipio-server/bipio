@@ -5,7 +5,6 @@ fs = require('fs-sync')
 path = require('path')
 pkg = require(path.join(__dirname, './package.json'))
 colors = require('colors')
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Generic process exit handler.
 done = function (exitmsg) {
@@ -24,7 +23,6 @@ if (process.argv[2]) {
 	else console.log("Not a valid parameter.")
 }
 else {
-
 	// Are there keys?
 	try { 
 		var keys = require('./config/keys')
@@ -34,5 +32,5 @@ else {
 		require('./commands/install')(null, require('./server/index.litcoffee'))
 	}
 	// Yes? Great, let's start Bipio!
-	if (keys) require('./server/index.litcoffee')() 
+	if (keys) require("./server/index.litcoffee")()
 }

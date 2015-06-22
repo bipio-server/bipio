@@ -16,7 +16,7 @@ Starts a Bip by adding it to the [Job Queue](../utilities/bastion.litcoffee#addJ
 			start: (req, res, next) ->
 
 				app.database.get "bips", req.params.id, (err, result) ->
-					job = app.bastion.broker.addJob result
+					job = app.bastion.addJob result
 					job.then (written) ->
 						if written?
 							res.status(200)

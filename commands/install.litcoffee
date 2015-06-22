@@ -1,4 +1,4 @@
-#### `bipio install`
+#### Install
 
 Command handler for `bipio install` command.
 
@@ -26,15 +26,17 @@ Detect whether this is a new install or not
 		catch error
 			console.log "Installing new API...".yellow
 
+##### `bipio install <pod name>`
+
 If this is a pod install, begin the pod install prompt.
 
 		if keys
 			prompt.message = '[Bipio][Pod Install]'.cyan
 
 			# If you `bipio install` from a folder that has a config/keys.json in it, we are side-eyeing you like so.
-			end "Is there already a Bipio API installed? Backup the old keys and remove them, then try `bipio install` again.".red if not args[3]
+			end "Whoa there champ, is there already a Bipio API installed? Backup the old keys and remove them, then try `bipio install` again.".red if not args[3]
 
-			# Select pod from the command. `bipio install twitter`, for example, will trigger the 'twitter' switch statement case.
+			# Select pod from the command args.
 			properties = podInstallPrompts[args[3]]
 
 			prompt.get {
@@ -49,6 +51,8 @@ If this is a pod install, begin the pod install prompt.
 							throw new Error err
 						else
 							end "New Keys written to #{path.join(__dirname, "../config/keys.json")}" 
+
+##### `bipio install`
 
 If this is a new install, begin the new install prompt.
 

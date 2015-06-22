@@ -21,7 +21,7 @@ A helper class. Manages work taken from the job queue.
 				self.pub = self.queue.socket('PUSH')
 				self.sub = self.queue.socket('WORKER', {prefetch: 1, persistent: true})
 
-				#self.broker = Rx.Observable.fromEvent self.sub, "data"
+				self.broker = Rx.Observable.fromEvent self.sub, "data"
 
 ###### `error`
 
@@ -42,21 +42,23 @@ Used as third argument to [Rx.Observer.create](https://github.com/Reactive-Exten
 Used as first argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
 
 				self.next = (buf) ->
-					self.sub.ack()
-					bip = new Bip(JSON.parse(buf.toString()))
-					bip.start()
-					app.database.update "bips", bip.id, { active: true }, (err, result) ->
-						if err
-							throw new Error err
-						else
-							app.dialog "Bip ##{result.id} is now active."
-							app.activeChildren.push result
+					process.nextTick () ->
+						self.sub.ack()
+						console.log "New Message on Queue", buf.toString()
+						bip = new Bip(JSON.parse(buf.toString()))
+						bip.start()
+						app.database.update "bips", bip.id, { active: true }, (err, result) ->
+							if err
+								throw new Error err
+							else
+								app.dialog "Bip ##{result.id} is now active."
+								app.activeChildren.push result
 						
 ###### `addJob`
 
 Adds a bip object representation to the AMQP exchange.
 
-				self.broker.addJob = (bip) ->
+				self.addJob = (bip) ->
 					deferred = Q.defer()
 
 					self.sub.connect 'bips', () ->
@@ -66,9 +68,8 @@ Adds a bip object representation to the AMQP exchange.
 
 					deferred.promise
 
-				#self.worker = Rx.Observer.create self.next, self.error, self.complete
-				self.sub.on "data", self.next
-				#self.broker.subscribe self.worker
+				self.worker = Rx.Observer.create self.next, self.error, self.complete
+				self.broker.subscribe self.worker
 
 			self.queue.on 'error', (err) ->
 				console.log err

@@ -4,7 +4,7 @@ Bip.io API Server
 A place to discover, share, and automate your Internet of Things.  
 This is the [Node.js](http://nodejs.org)/[Express](http://expressjs.com/) app powering the server at http://api.bip.io - written in Literate Coffeescript, built using Gulp.  
 
-	Bipio  = (port) ->
+	Bipio  = (options) ->
 
 Here's where we require our [npm modules](https://npmjs.com).
 
@@ -37,6 +37,7 @@ Load the models, routes, and controllers from their directories in `server/model
 Instantiate the global `app` object. `app` will contain the main server instance, as well as other properties we can add as we see fit. 
 
 		app	= express()
+		app.options = options
 		app.config = config({})
 		app.testPort = 5999
 
@@ -51,8 +52,8 @@ Re-route console methods to app, put a timestamp and colors on output
 
 Set the TCP/IP port for the app to listen on. During development it's set at `localhost:5000`.
 
-		if port is app.testPort
-			app.set 'port', port
+		if options?.port is app.testPort
+			app.set 'port', options.port
 		else
 			app.set 'port', process.env.BIPIO_API_PORT or app.config.api.port
 
@@ -74,12 +75,11 @@ Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middle
 
 		app.database = new Database app.config.db
 
-
 		# TODO pick up all bips marked active and put them on the queue
 		app.lastWill = () ->
 			app.log "Process #{process.pid} exiting, releasing active bips back to queue..."
 			console.log app.activeChildren
-			app.bastion.broker.addJob bip for bip in app.activeChildren
+			app.bastion.addJob bip for bip in app.activeChildren
 			app.dialog "Done!"
 			process.exit(1)
 		
