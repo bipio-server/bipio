@@ -42,17 +42,16 @@ Used as first argument to [Rx.Observer.create](https://github.com/Reactive-Exten
 
 					self.next = (buf) ->
 						process.nextTick () ->
-							self.sub.ack()
 							console.log "New Job", JSON.parse(buf.toString(), null, 4)
 							if JSON.parse(buf.toString())?.id
-								bip = new Bip(JSON.parse(buf.toString())) 
-								bip.start()
-								app.database.update "bips", bip.id, { active: true }, (err, result) ->
+								app.database.update "bips", JSON.parse(buf.toString())?.id, { active: true }, (err, result) ->
 									if err
 										throw new Error err
 									else
-										app.dialog "Bip ##{result.id} is now active."
-										app.activeChildren.push result
+										app.dialog "Bip #{result.id} (#{bip.type}) is now active."
+										bip = new Bip result
+										bip.start()
+										self.sub.ack()
 
 					self.sub.connect 'bips', () ->
 						self.worker = Rx.Observer.create self.next, self.error, self.complete

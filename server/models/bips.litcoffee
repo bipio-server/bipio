@@ -63,7 +63,7 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 		start: () ->
 			self = @
 			# Retrieve each edge on the graph.
-			for pipe in self.edges
+			for pipe, index in self.edges
 
 				# Split pipe.v and pipe.w strings into tokens.
 				tokens = 

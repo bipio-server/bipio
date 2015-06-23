@@ -14,7 +14,6 @@ Handles bip-specific endpoints.
 Starts a Bip by adding it to the [Job Queue](../utilities/bastion.litcoffee#addJob).
 
 			start: (req, res, next) ->
-
 				app.database.get "bips", req.params.id, (err, result) ->
 					job = app.bastion.addJob result
 					job.then (written) ->

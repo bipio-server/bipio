@@ -36,7 +36,6 @@ In a development environment, we just spawn a `gulp` process and pipe its output
 In a production environment, things get more real.  
 
 			if environment is 'production'
-				console.log "Production"
 				limit = Math.ceil(os.cpus().length / 2)
 
 				processes =
@@ -72,10 +71,14 @@ If there is a process of the same type, check to see if the max processes are ru
 								pm2.start scripts.worker, options.worker, (err, proc) ->
 									end err if err
 									console.log "[Bipio]".cyan, "Successfully spun up #{options.worker.instances} worker processes"
-
-									next null, "Bipio production API cluster is up, using max CPU threads.".green
+									pm2.disconnect () ->
+										console.log "[Bipio]".cyan, "Bipio production API cluster is up, using max CPU threads.".green
+										process.exit(0)
 							else
-								next null, "Max #{limit} worker processes already up, skipping...".yellow
+								console.log "[Bipio]".cyan, "Max #{limit} worker processes already up, skipping...".yellow
+								pm2.disconnect () ->
+									console.log "[Bipio]".cyan, "Bipio production API cluster is up, using max CPU threads.".green
+									process.exit(0)
 
 						spinOwners = () ->
 							if processes.owner.length < limit
@@ -91,6 +94,4 @@ If there is a process of the same type, check to see if the max processes are ru
 								spinWorkers()
 
 						spinOwners()
-
-		start (err, msg) ->
-			end msg
+		start()
