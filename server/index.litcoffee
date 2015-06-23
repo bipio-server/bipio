@@ -75,17 +75,6 @@ Configure models, Bastion, Passport and [RethinkDB](http://rethinkdb.com) middle
 
 		app.database = new Database app.config.db
 
-		# TODO pick up all bips marked active and put them on the queue
-		app.lastWill = () ->
-			app.log "Process #{process.pid} exiting, releasing active bips back to queue..."
-			console.log app.activeChildren
-			app.bastion.addJob bip for bip in app.activeChildren
-			app.dialog "Done!"
-			process.exit(1)
-		
-		#process.on 'exit', app.lastWill
-		process.on 'SIGINT', app.lastWill
-
 		app.database.on "ready", (accounts) ->
 			# Connected to database
 
