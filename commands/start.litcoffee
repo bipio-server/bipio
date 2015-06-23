@@ -24,7 +24,7 @@ Detect/assign environment
 
 Start the app. This function will be invoked later.
 
-		start = () ->
+		start = (next) ->
 
 In a development environment, we just spawn a `gulp` process and pipe its output to `process.stdout` (i.e. the Terminal).  
 
@@ -73,10 +73,9 @@ If there is a process of the same type, check to see if the max processes are ru
 									end err if err
 									console.log "[Bipio]".cyan, "Successfully spun up #{options.worker.instances} worker processes"
 
-									pm2.disconnect () ->
-										end "Bipio production API cluster is up, using max CPU threads.".green
+									next null, "Bipio production API cluster is up, using max CPU threads.".green
 							else
-								end "Max #{limit} worker processes already up, skipping...".yellow
+								next null, "Max #{limit} worker processes already up, skipping...".yellow
 
 						spinOwners = () ->
 							if processes.owner.length < limit
@@ -93,4 +92,5 @@ If there is a process of the same type, check to see if the max processes are ru
 
 						spinOwners()
 
-		start()
+		start (err, msg) ->
+			end msg
