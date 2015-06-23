@@ -40,14 +40,14 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 
 			self
 
-###### `Bip.setAction`
+###### `setAction`
 
 Semantic wrapper method for Graph.setNode().
 
 		setAction: (action) ->
 			@setNode action.id, action if action.hasOwnProperty id
 
-###### `Bip.getAction`
+###### `getAction`
 
 Semantic wrapper method for Graph.node().
 
@@ -56,7 +56,7 @@ Semantic wrapper method for Graph.node().
 
 		active_pipes: []
 
-###### `Bip.run` 
+###### `start` 
 
 Runs the bip by instantiating pods with supplied auth, connecting the pipes via `Rx.Observer.subscribe()`.
 
