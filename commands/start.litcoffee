@@ -37,7 +37,7 @@ In a production environment, things get more real.
 
 			if environment is 'production'
 				console.log "Production"
-				limit = os.cpus().length / 2
+				limit = Math.ceil(os.cpus().length / 2)
 
 				processes =
 					owner: []

@@ -43,7 +43,7 @@ Used as first argument to [Rx.Observer.create](https://github.com/Reactive-Exten
 					self.next = (buf) ->
 						process.nextTick () ->
 							self.sub.ack()
-							console.log "New Message on Queue", buf.toString()
+							console.log "New Job", JSON.parse(buf.toString(), null, 4)
 							if JSON.parse(buf.toString())?.id
 								bip = new Bip(JSON.parse(buf.toString())) 
 								bip.start()

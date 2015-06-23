@@ -116,19 +116,22 @@ Attach controllers and models.
 			app.controllers[category][name] = controller for name, controller of list app
 
 Configure middleware and REST routes
-
-		app.use.apply app, [route].concat methods for route, methods of routes.middleware app
-		app.get.apply app, [route].concat methods for route, methods of routes.get app
-		app.post.apply app, [route].concat methods for route, methods of routes.post app
-		app.put.apply app, [route].concat methods for route, methods of routes.put app
-		app.delete.apply app, [route].concat methods for route, methods of routes.delete app
-		app.use.apply app, [route].concat methods for route, methods of routes.error app
+		
+		if not app.options?.worker
+			app.use.apply app, [route].concat methods for route, methods of routes.middleware app
+			app.get.apply app, [route].concat methods for route, methods of routes.get app
+			app.post.apply app, [route].concat methods for route, methods of routes.post app
+			app.put.apply app, [route].concat methods for route, methods of routes.put app
+			app.delete.apply app, [route].concat methods for route, methods of routes.delete app
+			app.use.apply app, [route].concat methods for route, methods of routes.error app
 
 Start the server.
 
-		server = require('http').createServer app
-		server.listen app.get("port"), () ->
-			console.log "#{"Bipio".cyan} (version #{pkg.version.cyan}) on #{ip.address().blue}:#{app.get('port').toString().red}"
+			server = require('http').createServer app
+			server.listen app.get("port"), () ->
+				console.log "#{"Bipio".cyan} (version #{pkg.version.cyan}) on #{ip.address().blue}:#{app.get('port').toString().red}"
+
+			return app
 
 		return app
 
