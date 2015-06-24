@@ -14,12 +14,27 @@ Handles bip-specific endpoints.
 Starts a Bip by adding it to the [Job Queue](../utilities/bastion.litcoffee#addJob).
 
 			start: (req, res, next) ->
-				app.database.get "bips", req.params.id, (err, result) ->
-					job = app.bastion.addJob result
-					job.then (written) ->
-						if written?
-							res.status(200)
-						else
-							res.status(500)
+				job = app.bastion.addJob "bips", { do: "activate", to: req.params.id }
+				job.then (written) ->
+					res.status(200).json {status: "ok"}
+
+###### `pause`
+
+Pauses a Bip
+
+			pause: (req, res, next) ->
+				job = app.bastion.addJob "bips", { do: "pause", to: req.params.id }
+				job.then (written) ->
+					res.status(200).json {status: "ok"}
+
+###### `send`
+
+Sends a payload to an http Bip.
+
+			send: (req, res, next) ->
+				# TODO check domains, auth
+				job = app.bastion.addJob "bips", { do: "send", with: { body: req.body }, to: req.params.id }
+				job.then (written) ->
+					res.status(200).json {status: "ok"}
 
 		}

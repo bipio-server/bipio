@@ -40,6 +40,7 @@ Instantiate the global `app` object. `app` will contain the main server instance
 		app.options = options
 		app.config = config({})
 		app.testPort = 5999
+		app.pkg = pkg
 
 Re-route console methods to app, put a timestamp and colors on output
 

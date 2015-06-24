@@ -18,7 +18,8 @@ bip-pod-slack
 			next = (obj) ->
 				process.nextTick () ->
 					self._client = new slack self.auth.web_hook
-					self._client.send self.Transform(action.config, action.transforms, obj)
+					transform = self.Transform action.config, action.transforms, obj
+					self._client.send transform
 
 			d.resolve Rx.Observer.create next, console.error, console.log
 

@@ -22,7 +22,7 @@
 			@id = ''
 			@owner_id = ''
 
-######  Avatar
+###### `saveAvatar`
 
 This was handled as a preSave condition
 

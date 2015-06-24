@@ -12,9 +12,8 @@ bip-pod-twitter
 			@
 
 		on_new_tweet: (action) ->
-			d = Q.defer()
-
 			self = @
+			d = Q.defer()
 
 			process.nextTick () ->
 				self._client = new twitter self.auth

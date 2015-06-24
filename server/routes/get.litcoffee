@@ -11,6 +11,9 @@ HTTP Get
 			'/status': [ app.controllers.global.get_status ]
 
 			'/rpc/bip/:id/start': [ app.controllers.bip.start ]
+			'/rpc/bip/:id/pause': [ app.controllers.bip.pause ]
+
+			#'/bip/http/:id': [ app.controllers.bip.send ]
 
 			'/rpc/oauth/twitter/auth': [ app.passport.authorize 'twitter' ]
 			'/rpc/oauth/twitter/cb': [ app.passport.authorize 'twitter' ]

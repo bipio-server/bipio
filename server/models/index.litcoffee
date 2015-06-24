@@ -3,7 +3,11 @@
 	class Model
 		constructor: () ->
 			return @
-		
+
+###### `toJSON`
+
+Converts model to JSON representation.
+
 		toJSON: () ->
 			obj = {}
 			for key, value of @schema
@@ -12,4 +16,3 @@
 			return obj
 
 	module.exports = Model
-

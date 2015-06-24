@@ -14,68 +14,87 @@ A helper class. Manages work taken from the job queue.
 			self = @
 
 			self.queue = rabbit.createContext app.config.amqp.url
+			self.subscriptions = {}
 
 			self.queue.on 'ready', () ->
 				console.log "RabbitMQ Connected"
 
 				if app.options?.worker is true
-					self.sub = self.queue.socket('WORKER', {prefetch: 1, persistent: true})
+					self.sub = self.queue.socket('WORKER', {persistent: true})
 					self.broker = Rx.Observable.fromEvent self.sub, "data"
-				
-###### `error`
 
-Used as second argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
+					self.sub.connect "bips", () ->
 
-					self.error = (err) -> 
-						console.error "Graph Error: #{err.msg}".red
+						error = (err) -> 
+							console.error "Graph Error: #{err.msg}".red
 
-###### `complete`
+						complete = () -> 
+							console.log "Worker Idle.".yellow
 
-Used as third argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
+						next = (buf) ->
+							process.nextTick () ->
+								obj = JSON.parse(buf.toString())
+								console.log obj
+								if obj?.do
+									switch obj.do
+										when "pause"
+											console.log "Pausing #{obj.to}"
+											app.database.update "bips", obj.to, { active: false }, (err, result) ->
+												if err
+													throw new Error err
+												else
+													if self.subscriptions.hasOwnProperty result.id
+														pipe.dispose() for pipe in self.subscriptions[result.id].active_pipes
+														delete self.subscriptions[result.id]
+														self.sub.ack()
+														app.dialog "Bip #{result.id} (#{result.type}) is now paused."
 
-					self.complete = () -> 
-						console.log "Worker Idle.".yellow
+										when "activate"
+											console.log "Activating #{obj.to}"
+											app.database.update "bips", obj.to, { active: true }, (err, result) ->
+												if err
+													throw new Error err
+												else
+													bip = new Bip result
+													bip.start()
+													self.subscriptions[bip.id] = bip
+													self.sub.ack()
+													app.dialog "Bip #{result.id} (#{result.type}) is now active."
 
-###### `next`
+										when "send"
+											console.log "Sending #{obj.with} to #{obj.to}"
+											app.database.update "bips", obj.to, { active: true }, (err, result) ->
+												if err
+													throw new Error err
+												else
+													bip = new Bip result
+													bip.start(obj.with)
+													self.subscriptions[bip.id] = bip
+													self.sub.ack()
+													app.dialog "#{obj.with} has been sent to #{obj.to}"
 
-Used as first argument to [Rx.Observer.create](https://github.com/Reactive-Extensions/RxJS/blob/master/doc/api/core/observer.md#rxobservercreateonnext-onerror-oncompleted) when subscribing to the job queue.
-
-					self.next = (buf) ->
-						process.nextTick () ->
-							console.log "New Job", JSON.parse(buf.toString(), null, 4)
-							if JSON.parse(buf.toString())?.id
-								app.database.update "bips", JSON.parse(buf.toString())?.id, { active: true }, (err, result) ->
-									if err
-										throw new Error err
-									else
-										app.dialog "Bip #{result.id} (#{bip.type}) is now active."
-										bip = new Bip result
-										bip.start()
-										self.sub.ack()
-
-					self.sub.connect 'bips', () ->
-						self.worker = Rx.Observer.create self.next, self.error, self.complete
-						self.broker.subscribe self.worker
+						worker = Rx.Observer.create next, error, complete
+						self.start = self.broker.subscribe worker
 
 				else 
-					self.pub = self.queue.socket('PUSH')
+					self.push = self.queue.socket('PUSH')
 
 ###### `addJob`
 
 Adds a bip object representation to the AMQP exchange.
 
-					self.addJob = (bip) ->
+					self.addJob = (topic, obj) ->
 						deferred = Q.defer()
 
-						self.pub.connect 'bips', () ->
-							self.pub.write JSON.stringify(bip), 'utf8'
+						self.push.connect topic, () ->
+							self.push.write JSON.stringify(obj), 'utf8'
 							deferred.resolve true
 
 						deferred.promise
 
 			self.queue.on 'error', (err) ->
-				console.log err
+				throw new Error "RabbitMQ connection could not be established. Please make sure there is a RabbitMQ broker running at #{app.config.amqp.url}".red
 
-			return @
+			return self
 
 	module.exports = Bastion

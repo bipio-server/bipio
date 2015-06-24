@@ -26,12 +26,15 @@ Start the app. This function will be invoked later.
 
 		start = (next) ->
 
-In a development environment, we just spawn a `gulp` process and pipe its output to `process.stdout` (i.e. the Terminal).  
+In a development environment, we just spawn a `gulp` worker process and pipe its output to `process.stdout` (i.e. the Terminal).  
 
 			if environment is 'development'
-				server = spawn "gulp"
-				server.stdout.pipe(process.stdout) 
-				server.stderr.pipe(process.stderr)
+				owner = spawn "gulp", [], {stdio: 'inherit'}
+				worker = spawn "nodemon", [ "--watch", "server", "-e", "js,litcoffee", "worker.js" ], {stdio: 'inherit'}
+				process.on 'SIGINT', () ->
+					owner.kill 'SIGINT'
+					worker.kill 'SIGINT'
+					end "All processes terminated, exiting..."
 
 In a production environment, things get more real.  
 

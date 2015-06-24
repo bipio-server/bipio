@@ -65,7 +65,7 @@ If this is a new install, begin the new install prompt.
 			prompt.get { 
 				properties: {
 					host: {
-						description: "API Host"
+						description: "API Host (fqdn)"
 						type: 'string'
 						pattern: /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/
 						message: 'Must be a valid hostname'

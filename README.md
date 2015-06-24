@@ -31,6 +31,16 @@ Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 ![concept](https://bip.io/static/img/docs/bip_concept.png)
 
+### Installing your own Bipio API
+
+Before you begin, you must have an instance of [RethinkDB]() and [RabbitMQ]() running somewhere. The install script will guide you through entering your DB and AMQP credentials.
+
+```
+npm install -g bipio
+bipio install
+bipio start
+```
+
 ### Pods
 
 Pods are the standalone service containers bip.io uses to encapsulate and standardize the world's API's.  [Supported Services](https://github.com/bipio-server/bipio/wiki/Pod-List) are growing fast, and open source.
@@ -66,9 +76,9 @@ The UI is a thin client which is loaded entirely into your browser.  Once loaded
 
 ## Requirements
 
-  - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
-  - [MongoDB Server v2.6](http://www.mongodb.org) **data store**
-  - [RabbitMQ](http://www.rabbitmq.com) **message broker**
+  - [Node.js >= 0.12.0](http://nodejs.org) **API and graph resolver**
+  - [RethinkDB >= 2.0.1](http://www.mongodb.org) **data store**
+  - [RabbitMQ >= 3.5.3](http://www.rabbitmq.com) **message broker**
 
 SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bipio-contrib/haraka](https://github.com/bipio-server/bipio-contrib).
 
@@ -76,35 +86,39 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
 ## Installation
 
-### docker (offical)
-
-  [Find It Here](https://github.com/bipio-server/bipio-docker)
-
 #### npm (global)
 
     sudo npm install -g bipio
-    bipio
+    bipio install
+    bipio start
 
 #### npm (local)
 
     sudo npm install bipio
-    cd node_modules
-    npm start
+    npm link
+    bipio install
+    bipio start
 
 #### git
 
     git clone git@github.com:bipio-server/bipio.git
     cd bipio
     npm install
-    node . (or `npm start`)
+    npm link
+    bipio install
+    bipio start
+
+### docker (offical)
+
+  [Find It Here](https://github.com/bipio-server/bipio-docker)
 
 ## Technical Notes
 
-When setting bip.io up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
+When setting bip.io up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/keys.json).
 
     export NODE_CONFIG_DIR=<path_to_your_config_directory>
 
-Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
+Be sure to have a RethinkDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
 during the install process to get a basically sane server running that you can play with.
 
 For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
@@ -114,7 +128,7 @@ If you have a more complex deployment environment and the packaged sparse config
 
 For a non-interactive setup (ie: make install without any user interaction) - set environment variable HEADLESS=true
 
-bip.io does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
+bip.io CLI does not provide any load balancing beyond [PM2](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
 
 ## Developing and Contributing
 

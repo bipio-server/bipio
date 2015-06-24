@@ -68,7 +68,7 @@ Generic HTTP DELETE handler. Deletes a resource.
 Get status of API and underlying infrastructure.
 
 			get_status: (req, res) ->
-				res.status(200).json { status: "alive" }
+				res.status(200).json { version: app.pkg.version, status: "alive" }
 
 ###### `get_subdomain`
 

@@ -47,14 +47,23 @@ Auth profiles for accounts.
 
 			return @
 
+###### `strCryptSync`
+
+{Waiting for description}
 
 		strCryptSync: (str) ->
 			return bcrypt.hashSync(str, bcrypt.genSaltSync(10))
 
+###### `strCryptCompareSync`
+
+{Waiting for description}
 
 		strCryptCompareSync: (taintedClear, localHash) ->
 			return bcrypt.compareSync(taintedClear, localHash)
 
+###### `AESEncrypt`
+
+{Waiting for description}
 
 		AESEncrypt: (value) ->
 			iv = crypto.randomBytes(32).toString('hex').substr(0, 16);
@@ -69,6 +78,9 @@ Auth profiles for accounts.
 
 			return encrypted
 
+###### `AESDecrypt`
+
+{Waiting for description}
 
 		AESDecrypt: (encryptedString) ->
 			crypted = new Buffer(encryptedString, 'base64').toString('utf-8')
@@ -82,6 +94,9 @@ Auth profiles for accounts.
 
 			return decrypted
 
+###### `passwordHash`
+
+{Waiting for description}
 
 		passwordHash: (pwValue) ->
 			crypted = undefined
@@ -89,6 +104,9 @@ Auth profiles for accounts.
 			if @type != 'login_primary' then (crypted = AESEncrypt(pwValue)) else (crypted = strCryptSync(pwValue))
 			return crypted
 
+###### `cryptSave`
+
+{Waiting for description}
 
 		cryptSave: (value) ->
 			if value
@@ -104,6 +122,9 @@ Auth profiles for accounts.
 			else
 				return value
 
+###### `cryptSaveObject`
+
+{Waiting for description}
 
 		cryptSaveObject: (value) ->
 			return cryptSave(JSON.stringify(value))

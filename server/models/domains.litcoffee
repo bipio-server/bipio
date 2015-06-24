@@ -26,12 +26,19 @@ Domains for bip.io accounts
 
 			return @
 
+###### `verify`
+
+{Waiting for description}
 
 		verify: (name) ->
 			if /.?localhost$/.test(name) 
 				setToAvailable
 				return true
 			else return false
+
+###### `setToAvailable`
+
+{Waiting for description}
 
 		setToAvailable: () ->
 			@_available = true

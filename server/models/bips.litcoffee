@@ -60,8 +60,9 @@ Semantic wrapper method for Graph.node().
 
 Runs the bip by instantiating pods with supplied auth, connecting the pipes via `Rx.Observer.subscribe()`.
 
-		start: () ->
+		start: (payload) ->
 			self = @
+			d = Q.defer()
 			# Retrieve each edge on the graph.
 			for pipe, index in self.edges
 
@@ -73,6 +74,7 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 				actions = {}
 				
 				actions.in = node.value for node in self.nodes when node.v is pipe.v
+				actions.in = payload if pipe.v is "http.on_new_payload"
 				actions.out = node.value for node in self.nodes when node.v is pipe.w
 
 				pods = {}
@@ -87,11 +89,10 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 
 				# Connect the Observable to the Observer.
 				result.in.then (i) -> 
-					result.out.then (o) -> 
-						i.subscribe o
+					result.out.then (o) ->
 						console.log "Pipe connected."
-						self.active_pipes.push { in: i, out: o }
+						self.active_pipes.push i.subscribe o
 
-			@
+			self
 
 	module.exports = Bip
