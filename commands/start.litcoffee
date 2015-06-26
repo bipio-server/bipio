@@ -31,10 +31,12 @@ In a development environment, we just spawn a `gulp` worker process and pipe its
 			if environment is 'development'
 				owner = spawn "gulp", [], {stdio: 'inherit'}
 				worker = spawn "nodemon", [ "--watch", "server", "-e", "js,litcoffee", "worker.js" ], {stdio: 'inherit'}
-				process.on 'SIGINT', () ->
+				killAll = () ->
 					owner.kill 'SIGINT'
 					worker.kill 'SIGINT'
 					end "All processes terminated, exiting..."
+				process.on 'SIGINT', killAll
+				process.on 'exit', killAll
 
 In a production environment, things get more real.  
 
