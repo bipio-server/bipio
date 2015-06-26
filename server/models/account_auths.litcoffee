@@ -31,12 +31,12 @@ Auth profiles for accounts.
 			super schema
 			@type = if object?.type then object.type else 'token'
 			@id = if object?.id then object.id else uuid.v4()
-			@owner_id = if object?.owner_id then object.owner_id else throw new Error schemaNotMatching
+			@owner_id = if object?.owner_id then object.owner_id else console.error schemaNotMatching
 
 			switch @type
 				when 'token'
-					@username = if object?.username then @cryptSave object.username else throw new Error schemaNotMatching
-					@password = if object?.password then @cryptSave object.password else throw new Error schemaNotMatching
+					@username = if object?.username then @cryptSave object.username else console.error schemaNotMatching
+					@password = if object?.password then @cryptSave object.password else console.error schemaNotMatching
 					#@key = if object?.key then @cryptSave object.key else throw new Error schemaNotMatching
 
 				when 'oauth'

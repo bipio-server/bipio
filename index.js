@@ -12,7 +12,16 @@ done = function (exitmsg) {
 	process.exit(0)
 }
 
-if (process.argv[2]) {
+// Are there keys?
+try { 
+	var keys = require('./config/keys')
+}
+// No? okay, this is a new install.
+catch (error) {
+	require('./commands/install')(null, require('./server/index.litcoffee'))
+}
+
+if (keys && process.argv[2]) {
 	if (process.argv[2][0] === '-') {
 		switch (process.argv[2]) {
 			case '-v':
@@ -22,15 +31,7 @@ if (process.argv[2]) {
 	else if (fs.exists(__dirname+"/commands/"+process.argv[2]+".litcoffee")) require("./commands/"+process.argv[2]+".litcoffee")(process.argv, done) 
 	else console.log("Not a valid parameter.")
 }
-else {
-	// Are there keys?
-	try { 
-		var keys = require('./config/keys')
-	}
-	// No? okay, this is a new install.
-	catch (error) {
-		require('./commands/install')(null, require('./server/index.litcoffee'))
-	}
+else if (keys){
 	// Yes? Great, let's start Bipio!
-	if (keys) require("./server/index.litcoffee")()
+	require("./server/index.litcoffee")()
 }

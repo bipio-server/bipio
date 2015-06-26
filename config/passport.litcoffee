@@ -5,7 +5,7 @@ Passport Config
 
 		Strategies = {}
 
-		for name, value of app.config.oauth
+		for name, value of app.config.auth
 			Strategies[name] = require("passport-#{name}").Strategy
 
 		app.passport.serializeUser (user, done) ->
@@ -15,6 +15,6 @@ Passport Config
 			done null, obj
 
 		callback = (args...) ->
-			process.nextTick () -> done null, args[args.length-2]
+			process.nextTick () -> args[args.length-1](null, args[args.length-2])
 
-		app.passport.use new Strategies[name](app.config.oauth[name], callback) for name, value of Strategies
+		app.passport.use new Strategies[name](app.config.auth[name], callback) for name, value of Strategies

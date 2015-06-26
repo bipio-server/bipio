@@ -24,6 +24,7 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 			options: 'object'
 			nodes: 'object'
 			edges: 'object'
+			url: 'string'
 
 		constructor: (object) ->
 			self = @

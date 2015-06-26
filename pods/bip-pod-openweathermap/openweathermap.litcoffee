@@ -18,9 +18,10 @@ bip-pod-openweathermap
 			d = Q.defer()
 
 			next = (obj) ->
-				self._client.now self.Transform(action.config, action.transforms, obj)
+				process.nextTick () ->
+					self._client.now self.Transform(action.config, action.transforms, obj)
 
-			d.resolve Rx.Observer.create next, error, complete
+			d.resolve Rx.Observer.create next, console.error, console.log
 
 			d.promise
 

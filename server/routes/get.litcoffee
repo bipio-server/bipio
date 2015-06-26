@@ -15,10 +15,13 @@ HTTP Get
 
 			#'/bip/http/:id': [ app.controllers.bip.send ]
 
-			'/rpc/oauth/twitter/auth': [ app.passport.authorize 'twitter' ]
-			'/rpc/oauth/twitter/cb': [ app.passport.authorize 'twitter' ]
+			'/rpc/auth/twitter/auth': [ app.passport.authorize 'twitter' ]
+			'/rpc/auth/twitter/cb': [ app.passport.authorize 'twitter' ]
 
-			'/rpc/oauth/slack/auth': [ app.passport.authorize 'slack' ]
-			'/rpc/oauth/slack/cb': [ app.passport.authorize 'slack' ]
+			'/rpc/auth/slack/auth': [ app.passport.authorize 'slack' ]
+			'/rpc/auth/slack/cb': [ app.passport.authorize 'slack' ]
+
+			'/rpc/auth/google/auth': [ app.passport.authorize 'google' ]
+			'/rpc/auth/google/cb': [ app.passport.authorize 'google' ]
 
 		}
