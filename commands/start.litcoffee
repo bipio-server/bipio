@@ -36,7 +36,7 @@ In a development environment, we just spawn a `gulp` worker process and pipe its
 					worker.kill 'SIGINT'
 					end "All processes terminated, exiting..."
 				process.on 'SIGINT', killAll
-				process.on 'exit', killAll
+				#process.on 'exit', killAll
 
 In a production environment, things get more real.  
 
