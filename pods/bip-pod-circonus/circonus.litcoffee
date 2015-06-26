@@ -16,7 +16,7 @@ bip-pod-circonus
 			d = Q.defer()
 
 			next = (obj) ->
-				process.nextTick () ->
+				setImmediate () ->
 					self._client = circonus.setup self.auth.auth_token, self.auth.app_name
 					transform = self.Transform action.config, action.transforms, obj
 					self._client.send transform

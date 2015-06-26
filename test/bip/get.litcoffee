@@ -7,12 +7,12 @@ Unit tests for any bip-related GET endpoints.
 	colors = require 'colors'
 	moment = require 'moment'
 	chai = require 'chai'
-	keys = require
 	request = require 'request'
+	keys = require '../../config/keys'
 	chai.should()
 	config = require('../../config')({})
 	testConfig = require '../config.json'
-	app = require('../../server')({port: 5999})
+	#app = require('../../server')({port: 5999})
 
 Begin tests.
 
@@ -21,49 +21,50 @@ Begin tests.
 		it 'setup', (done) ->
 			
 			testBip = {
-				id: '12345',
-				name: 'testBip',
-				type: 'trigger',
-				nodes: [
+				"active": false,
+				"edges": [
 					{
-						v: "twitter.on_new_tweet",
-						value: {
-							id: "twitter.on_new_tweet",
-							type: "trigger",
-							config: {
-								track: 'IoT'
-							}
+						"v": "twitter.on_new_tweet",
+						"w": "slack.post_to_channel"
+					}
+				],
+				"id": "abcde",
+				"name": "testBip",
+				"nodes": [
+					{
+						"v": "twitter.on_new_tweet",
+						"value": {
+							"config": {
+								"track": "IoT"
+							},
+							"id": "abcde",
+							"type": "trigger"
 						}
 					},
 					{
-						v: "slack.post_to_channel",
-						value: {
-							id: "slack.post_to_channel",
-							type: "http",
-							config: {
-								text: 'Default Text', # sane default, will be overridden by transforms
-								channel: '#iotwitter',
-								username: 'IoTwitter',
-								icon_emoji: ':bipio:',
-								unfurl_links: true,
-								link_names: 1
-							}
-							transforms: {
-								text: "{text}"
-								username: "{user.screen_name} - {user.location}"
-							}
+						"v": "slack.post_to_channel",
+						"value": {
+							"config": {
+								"channel": "#iotwitter",
+								"icon_emoji": ":bipio:",
+								"link_names": 1,
+								"text": "Default Text",
+								"unfurl_links": "true",
+								"username": "IoTwitter"
+							},
+							"id": "abcde",
+							"transforms": {
+								"text": "{text}",
+								"username": "{user.screen_name} - {user.location}"
+							},
+							"type": "http"
 						}
 					}
 				],
-				edges: [
-					{
-						v: "twitter.on_new_tweet",
-						w: "slack.post_to_channel"
-					}
-				]
+				"type": "trigger"
 			}
 
-			request { url: "http://localhost:5999/rest/bip/12345", method: "POST", headers: { "content-type": "application/json" }, json: true, body: testBip }, (err, res, body) ->
+			request { url: "http://localhost:5999/rest/bip/abcde", method: "POST", headers: { "content-type": "application/json" }, json: true, body: testBip }, (err, res, body) ->
 				res.statusCode.should.equal 200
 				done()
 
@@ -82,21 +83,13 @@ should return a list of Bips in the 'bips' table.
 should return the bip with matching id
 
 		it '/rest/bip/:id', (done) ->
-			request 'http://localhost:5999/rest/bip/12345', (err, res, body) ->
-				res.statusCode.should.equal 200
-				done()
-
-		it '/rpc/bip/start', (done) ->
-			request 'http://localhost:5999/rpc/bip/12345/start', (err, res, body) ->
+			request 'http://localhost:5999/rest/bip/abcde', (err, res, body) ->
 				res.statusCode.should.equal 200
 				done()
 		
 		it 'teardown', (done) ->
-			setTimeout () ->
-				app.kill()
-			, 8000
-			###request { url: "http://localhost:5999/rest/bip/12345", method: "DELETE" }, (err, res, body) ->
+			request { url: "http://localhost:5999/rest/bip/abcde", method: "DELETE" }, (err, res, body) ->
 				res.statusCode.should.equal 200
 				app.kill()
-				done()###
+				done()
 

@@ -27,9 +27,8 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 			url: 'string'
 
 		constructor: (object) ->
-			self = @
-
-			self[name] = method.bind self for name, method of new Model()
+			model = new Model()
+			@[name] = method.bind @ for name, method of model
 			
 			# Set default graph options.
 			super { directed: true, multigraph: false, compound: true }
@@ -37,9 +36,9 @@ extends [Graph](https://github.com/cpettitt/graphlib)
 			# Set default bip id if none provided.
 			object.id = uuid.v4() if not object.hasOwnProperty 'id'
 
-			self[key] = object[key] for key, value of self.schema
+			@[key] = object[key] for key, value of @schema
 
-			self
+			@
 
 ###### `setAction`
 
@@ -55,7 +54,11 @@ Semantic wrapper method for Graph.node().
 		getAction: (id) ->
 			@node id
 
-		active_pipes: []
+		cleanup: () ->
+			@observables = null if @observables 
+			@observers = null if @observers
+			pipe.dispose() for pipe in @disposables
+			return null
 
 ###### `start` 
 
@@ -63,37 +66,35 @@ Runs the bip by instantiating pods with supplied auth, connecting the pipes via 
 
 		start: (payload) ->
 			self = @
-			d = Q.defer()
-			# Retrieve each edge on the graph.
+
+			subscribe = (edge, observable, observer) ->
+
+				self.observables = {}
+
+				self.observers = {}
+
+				self.disposables = []
+
+				observable.then (i) -> 
+					self.observables[edge.v] = i
+					#console.log "Observable Retrieved: ", i
+					
+				observer.then (o) ->
+					self.observers[edge.w] = o
+					self.disposables.push self.observables[edge.v].subscribe(self.observers[edge.w])
+					#console.log "Observer Retrieved: ", o
+
 			for pipe, index in self.edges
+				vtokens = pipe.v.split(".")
+				wtokens = pipe.w.split(".")
 
-				# Split pipe.v and pipe.w strings into tokens.
-				tokens = 
-					in: pipe.v.split "."
-					out: pipe.w.split "."
+				vnode = node.value for node in self.nodes when node.v is pipe.v
+				vnode = payload if pipe.v is "http.on_new_payload"
+				wnode = node.value for node in self.nodes when node.v is pipe.w
 
-				actions = {}
-				
-				actions.in = node.value for node in self.nodes when node.v is pipe.v
-				actions.in = payload if pipe.v is "http.on_new_payload"
-				actions.out = node.value for node in self.nodes when node.v is pipe.w
+				v = new (require("../../pods/bip-pod-#{vtokens[0]}"))(keys.pods[vtokens[0]])
+				w = new (require("../../pods/bip-pod-#{wtokens[0]}"))(keys.pods[wtokens[0]])
 
-				pods = {}
-
-				pods.in = new (require("../../pods/bip-pod-#{tokens.in[0]}"))(keys.pods[tokens.in[0]])
-				pods.out = new (require("../../pods/bip-pod-#{tokens.out[0]}"))(keys.pods[tokens.out[0]])
-
-				# Create active pipe with Promises containing the Observables/Observers.
-				result = {}
-				result.in = pods.in[tokens.in[1]](actions.in)
-				result.out = pods.out[tokens.out[1]](actions.out)
-
-				# Connect the Observable to the Observer.
-				result.in.then (i) -> 
-					result.out.then (o) ->
-						console.log "Pipe connected."
-						self.active_pipes.push i.subscribe o
-
-			self
+				subscribe(pipe, v[vtokens[1]](vnode), w[wtokens[1]](wnode)) 
 
 	module.exports = Bip

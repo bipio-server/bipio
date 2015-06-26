@@ -9,6 +9,7 @@ bip-pod-slack
 	class Slack extends Pod
 
 		constructor: (@auth) ->
+			@_client = new slack @auth.web_hook
 			@
 
 		post_to_channel: (action) ->
@@ -16,12 +17,13 @@ bip-pod-slack
 			d = Q.defer()
 
 			next = (obj) ->
-				process.nextTick () ->
-					self._client = new slack self.auth.web_hook
-					transform = self.Transform action.config, action.transforms, obj
-					self._client.send transform
+				setImmediate () ->
+					console.log obj
+					self._client.send(self.Transform action.config, action.transforms, obj)
 
-			d.resolve Rx.Observer.create next, console.error, console.log
+			observer = Rx.Observer.create next, console.error, console.log
+
+			d.resolve observer
 
 			d.promise
 

@@ -9,16 +9,16 @@ bip-pod-twitter
 	class Twitter extends Pod
 
 		constructor: (@auth) ->
+			@_client = new twitter @auth
 			@
 
 		on_new_tweet: (action) ->
 			self = @
 			d = Q.defer()
 
-			process.nextTick () ->
-				self._client = new twitter self.auth
-				self._client.stream 'statuses/filter', action.config, (stream) ->
-					d.resolve Rx.Observable.fromEvent stream, "data"
+			self._client.stream 'statuses/filter', action.config, (stream) ->
+				d.resolve Rx.Observable.fromEvent stream, "data"
+				stream = null
 
 			d.promise
 

@@ -20,7 +20,7 @@ A helper class. Manages work taken from the job queue.
 				console.log "RabbitMQ Connected"
 
 				if app.options?.worker is true
-					self.sub = self.queue.socket('WORKER', {persistent: true})
+					self.sub = self.queue.socket('WORKER', {prefetch: 1, persistent: true})
 					self.broker = Rx.Observable.fromEvent self.sub, "data"
 
 					self.sub.connect "bips", () ->
@@ -32,9 +32,10 @@ A helper class. Manages work taken from the job queue.
 							console.log "Worker Idle.".yellow
 
 						next = (buf) ->
-							process.nextTick () ->
+							setImmediate () ->
 								obj = JSON.parse(buf.toString())
 								console.log obj
+								buf = null
 								if obj?.do
 									switch obj.do
 										when "pause"
@@ -44,8 +45,7 @@ A helper class. Manages work taken from the job queue.
 													app.error "Graph error: #{err.msg}"
 												else
 													if self.subscriptions.hasOwnProperty result.id
-														pipe.dispose() for pipe in self.subscriptions[result.id].active_pipes
-														delete self.subscriptions[result.id]
+														self.subscriptions[result.id].cleanup()
 														self.sub.ack()
 														app.dialog "Bip #{result.id} (#{result.type}) is now paused."
 
@@ -55,9 +55,8 @@ A helper class. Manages work taken from the job queue.
 												if err
 													app.error "Graph error: #{err.msg}"
 												else
-													bip = new Bip result
-													bip.start()
-													self.subscriptions[bip.id] = bip
+													self.subscriptions[result.id] = new Bip(result)
+													self.subscriptions[result.id].start()
 													self.sub.ack()
 													app.dialog "Bip #{result.id} (#{result.type}) is now active."
 
@@ -67,11 +66,12 @@ A helper class. Manages work taken from the job queue.
 												if err
 													app.error "Graph error: #{err.msg}"
 												else
-													bip = new Bip result
-													bip.start(obj.with)
-													self.subscriptions[bip.id] = bip
-													self.sub.ack()
-													app.dialog "#{obj.with} has been sent to #{obj.to}"
+													setImmediate () ->
+														self.subscriptions[result.id] = new Bip(result)
+														self.subscriptions[result.id].start(obj.with)
+														self.sub.ack()
+														app.dialog "#{obj.with} has been sent to #{obj.to}"
+														#self.subscriptions[result.id].cleanup()###
 
 						worker = Rx.Observer.create next, error, complete
 						self.start = self.broker.subscribe worker

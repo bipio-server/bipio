@@ -14,9 +14,10 @@ bip-pod-http
 			self = @
 			d = Q.defer()
 
-			observable = Rx.Observable.create (observer) ->
-				process.nextTick () ->
-					observer.onNext payload
+			sendPayload = (observer) ->
+				observer.onNext payload
+
+			observable = Rx.Observable.create sendPayload
 
 			d.resolve observable
 
