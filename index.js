@@ -31,7 +31,7 @@ if (keys && process.argv[2]) {
 	else if (fs.exists(__dirname+"/commands/"+process.argv[2]+".litcoffee")) require("./commands/"+process.argv[2]+".litcoffee")(process.argv, done) 
 	else console.log("Not a valid parameter.")
 }
-else if (keys){
+else {
 	// Yes? Great, let's start Bipio!
 	require("./server/index.litcoffee")()
 }

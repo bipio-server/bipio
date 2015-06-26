@@ -41,7 +41,7 @@ A helper class. Manages work taken from the job queue.
 											console.log "Pausing #{obj.to}"
 											app.database.update "bips", obj.to, { active: false }, (err, result) ->
 												if err
-													throw new Error err
+													app.error "Graph error: #{err.msg}"
 												else
 													if self.subscriptions.hasOwnProperty result.id
 														pipe.dispose() for pipe in self.subscriptions[result.id].active_pipes
@@ -53,7 +53,7 @@ A helper class. Manages work taken from the job queue.
 											console.log "Activating #{obj.to}"
 											app.database.update "bips", obj.to, { active: true }, (err, result) ->
 												if err
-													throw new Error err
+													app.error "Graph error: #{err.msg}"
 												else
 													bip = new Bip result
 													bip.start()
@@ -65,7 +65,7 @@ A helper class. Manages work taken from the job queue.
 											console.log "Sending #{obj.with} to #{obj.to}"
 											app.database.update "bips", obj.to, { active: true }, (err, result) ->
 												if err
-													throw new Error err
+													app.error "Graph error: #{err.msg}"
 												else
 													bip = new Bip result
 													bip.start(obj.with)
