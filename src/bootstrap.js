@@ -42,7 +42,6 @@ os          = require('os'),
 Q           = require('q'),
 moment      = require('moment-timezone'),
 ipaddr = require('ipaddr.js'),
-memwatch = require('memwatch'),
 heapdump = require('heapdump');
 
 require('ssl-root-cas/latest').inject();
