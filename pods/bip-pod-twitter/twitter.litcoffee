@@ -16,9 +16,10 @@ bip-pod-twitter
 			self = @
 			d = Q.defer()
 
-			self._client.stream 'statuses/filter', action.config, (stream) ->
+			getStream = (stream) ->
 				d.resolve Rx.Observable.fromEvent stream, "data"
-				stream = null
+
+			self._client.stream 'statuses/filter', action.config, getStream
 
 			d.promise
 

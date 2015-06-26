@@ -48,7 +48,8 @@ A helper class. Manages work taken from the job queue.
 														self.subscriptions[result.id].cleanup()
 														self.sub.ack()
 														app.dialog "Bip #{result.id} (#{result.type}) is now paused."
-
+													else
+														self.sub.ack()
 										when "activate"
 											console.log "Activating #{obj.to}"
 											app.database.update "bips", obj.to, { active: true }, (err, result) ->

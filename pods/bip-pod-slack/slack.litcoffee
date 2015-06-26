@@ -18,7 +18,6 @@ bip-pod-slack
 
 			next = (obj) ->
 				setImmediate () ->
-					console.log obj
 					self._client.send(self.Transform action.config, action.transforms, obj)
 
 			observer = Rx.Observer.create next, console.error, console.log
