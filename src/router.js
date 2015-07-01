@@ -549,6 +549,7 @@ module.exports = {
               }
             }
           } else {
+
             exports.source = ('GET' === req.method) ? req.query : req.body;
 
             //exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
@@ -569,7 +570,8 @@ module.exports = {
                 bip.config.renderer,
                 req,
                 res
-                );
+              );
+
               restReponse = false;
             }
 

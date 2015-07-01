@@ -151,42 +151,38 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 
           if (err) {
             app.logmessage(err, 'error');
+
           } else {
 
-			if (!result) {
+      			if (!result) {
 
-				// might have failed for reasons other than the channel not being an action pointer...
-				if (!app.helper.getRegUUID().test(cid)) {
-					app.logmessage('Channel has disappeared [' + cid + ']', 'info');
-				}
+      				// might have failed for reasons other than the channel not being an action pointer...
+      				if (!app.helper.getRegUUID().test(cid)) {
+      					app.logmessage('Channel has disappeared [' + cid + ']', 'info');
+      				}
 
-				// STYLE NOTE:  This is hitting the DB to find the channel by channel_id, and upon NOT finding it, goes ahead
-				// with concocting a 'result' to process an action pointer.  i.e.  this imperative flow is a wasted round turn to the DB.
+      				// STYLE NOTE:  This is hitting the DB to find the channel by channel_id, and upon NOT finding it, goes ahead
+      				// with concocting a 'result' to process an action pointer.  i.e.  this imperative flow is a wasted round turn to the DB.
 
-				// check pod.action exists
+      				// check pod.action exists
 
-				var actionTokens = cid.split('.');
-				var pod = actionTokens[0];
-				var action = actionTokens[1];
+      				var actionTokens = cid.split('.');
+      				var pod = actionTokens[0];
+      				var action = actionTokens[1];
 
-				if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
-					result = {
-					'id' : cid,
-					'action' : pod + '.' + action,
-					'owner_id' : bip.owner_id,
-                    'config': bip.config ? bip.config.config : {}
-					};
+      				if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
+      					result = {
+      					'id' : cid,
+      					'action' : pod + '.' + action,
+      					'owner_id' : bip.owner_id,
+                          'config': bip.config ? bip.config.config : {}
+      					};
 
-
-				} else {
-					app.logmessage('BASTION:CRITICAL Couldnt load (channel) action:' + cid, 'warning');
-					return;
-				}
-			}
-
-
-
-
+      				} else {
+      					app.logmessage('BASTION:CRITICAL Couldnt load (channel) action:' + cid, 'warning');
+      					return;
+      				}
+      			}
 
             invokeChannel = self._dao.modelFactory('channel', result);
 
@@ -563,8 +559,6 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
 	  });
     }
   }
-
-
 
   for (var i = 0; i < numEdges; i++) {
     channelInvokePacket = {

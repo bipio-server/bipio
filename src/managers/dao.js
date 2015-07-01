@@ -492,23 +492,22 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   function channelTranslate(src) {
     // skip source in manifest
     if (src !== 'source') {
-      src = channels.get(src).action;
-      manifest[src] = true;
+      if (regUUID.test(src)) {
+        src = channels.get(src).action;
+        manifest[src] = true;
+      } else if (!regUUID.test(src)) {
+        var tokens = src.split('.');
+        src = tokens[0] + '.' + tokens[1];
+        manifest[src] = true;
+      }
     }
 
     return src;
   }
 
-  // ugh.
-  function keyNormalize(src) {
-    return src.replace('.', '-');
-  }
-
   for (var src in hub) {
     if (hub.hasOwnProperty(src)) {
       derivedSrc = channelTranslate(src);
-
-      derivedSrc = keyNormalize(derivedSrc);
 
       derivedHub[derivedSrc] = {
         edges : [],
@@ -521,8 +520,8 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
 
       if (hub[src].transforms) {
         for (var txSrc in hub[src].transforms) {
-          txSrcNorm = keyNormalize(channelTranslate(txSrc));
-          derivedHub[derivedSrc].transforms[txSrcNorm] = {};
+
+          derivedHub[derivedSrc].transforms[txSrc] = {};
 
           for (var cImport in hub[src].transforms[txSrc]) {
             template = hub[src].transforms[txSrc][cImport];
@@ -532,7 +531,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
                 template = template.replace(cMatch[j], channelTranslate(cMatch[j]));
               }
             }
-            derivedHub[derivedSrc].transforms[txSrcNorm][cImport] = template;
+            derivedHub[derivedSrc].transforms[txSrc][cImport] = template;
           }
         }
       }
