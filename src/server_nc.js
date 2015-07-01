@@ -311,5 +311,3 @@ if (GLOBAL.CFG.server.ssl && GLOBAL.CFG.server.ssl.key && GLOBAL.CFG.server.ssl.
   });
 
 });
-
-

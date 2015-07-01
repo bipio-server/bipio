@@ -188,7 +188,7 @@ AccountAuth.entitySchema = {
     writable : false,
     set : function(value) {
       if (value) {
-        return (new Date()).getTime() + value
+        return (new Date()).getTime() + (value * 1000)
       } else {
         return value;
       }
