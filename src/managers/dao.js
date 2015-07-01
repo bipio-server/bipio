@@ -521,7 +521,9 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
       if (hub[src].transforms) {
         for (var txSrc in hub[src].transforms) {
 
-          derivedHub[derivedSrc].transforms[txSrc] = {};
+          txSrcNorm = channelTranslate(txSrc);
+
+          derivedHub[derivedSrc].transforms[txSrcNorm] = {};
 
           for (var cImport in hub[src].transforms[txSrc]) {
             template = hub[src].transforms[txSrc][cImport];
@@ -531,7 +533,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
                 template = template.replace(cMatch[j], channelTranslate(cMatch[j]));
               }
             }
-            derivedHub[derivedSrc].transforms[txSrc][cImport] = template;
+            derivedHub[derivedSrc].transforms[txSrcNorm][cImport] = template;
           }
         }
       }
