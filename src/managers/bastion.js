@@ -580,16 +580,11 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
   }
 }
 
-
-
-
-
 /**
  * Loads and invokes a channel, then passes to next distribution if one exists
  */
 Bastion.prototype.processChannel = function(struct) {
   var self = this;
-
 
   var actionTokens = struct.channel_id.split('.');
 
@@ -611,7 +606,6 @@ Bastion.prototype.processChannel = function(struct) {
     struct.imports._bip = app._.clone(struct.bip);
     struct.imports._client = app._.clone(struct.client);
 
-
     this._dao.find(
       'channel',
       filter,
@@ -622,32 +616,30 @@ Bastion.prototype.processChannel = function(struct) {
           app.logmessage('BASTION:INVOKE:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
           var transforms = {};
 
+     		  //
+      		if (!result) {
+      		  // check pod.action exists
 
-		  //
-		if (!result) {
-		  // check pod.action exists
+      			var actionTokens = struct.channel_id.split('.');
+      			var pod = actionTokens[0];
+      			var action = actionTokens[1];
 
-			var actionTokens = struct.channel_id.split('.');
-			var pod = actionTokens[0];
-			var action = actionTokens[1];
+      			if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
+      				result = {
+      				  'id' : struct.channel_id,
+      				  'action' : pod + '.' + action,
+      				  'owner_id' : struct.bip.owner_id
+      				};
 
-			if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
-				result = {
-				  'id' : struct.channel_id,
-				  'action' : pod + '.' + action,
-				  'owner_id' : struct.bip.owner_id
-				};
-
-			} else {
+      			} else {
           		app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
-				return;
-			}
-		}
+      				return;
+      			}
+      		}
 
           if (struct.transforms && struct.transforms[struct.channel_id]) {
             transforms = struct.transforms[struct.channel_id];
           }
-
 
           var channel = self._dao.modelFactory('channel', result)
 
@@ -716,12 +708,10 @@ Bastion.prototype.processChannel = function(struct) {
                 self._dao.create(logModel);
               }
             });
+          }
         }
-      }
-    );
-
-
- }
+      );
+    }
 }
 
 
