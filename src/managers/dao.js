@@ -1085,22 +1085,40 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 }
 
 
-Dao.prototype.triggerByChannelAction = function(actionPath, next) {
+Dao.prototype.triggerByChannelAction = function(actionPath, next, ownerId) {
   var self = this,
     filter = {
       action : actionPath
     };
 
+  if (ownerId) {
+    filter.owner_id = ownerId;
+  }
+
   this.findFilter('channel', filter, function(err, results) {
     var cids = [];
-    if (!err && results.length) {
+
+    if (!err) {
 
       cids = results.map(function(channel) { return channel.id; });
 
       var bipFilter = {
-        "config.channel_id" : {
-          "$in" : cids
-        }
+         "$or" : [
+          {
+            "config.channel_id" : {
+              "$in" : cids,
+            }
+          },
+          {
+            "config.channel_id" : {
+              "$regex" : actionPath + '.*?'
+            }
+          }
+        ]
+      };
+
+      if (ownerId) {
+        bipFilter.owner_id = ownerId;
       }
 
       self.triggerAll(next, bipFilter, true);

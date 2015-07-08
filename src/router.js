@@ -492,7 +492,7 @@ module.exports = {
     // attach any modules which are route aware
     for (var k in app.modules) {
       if (app.modules.hasOwnProperty(k) && app.modules[k].routes) {
-        app.modules[k].routes(express, restAuthWrapper);
+        app.modules[k].routes(express, restAuthWrapper, app);
       }
     }
 
