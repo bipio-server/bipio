@@ -1084,8 +1084,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 	});
 }
 
-
-Dao.prototype.triggerByChannelAction = function(actionPath, next, ownerId) {
+Dao.prototype.getTriggerBipsByAction = function(actionPath, next, ownerId) {
   var self = this,
     filter = {
       action : actionPath
@@ -1121,12 +1120,27 @@ Dao.prototype.triggerByChannelAction = function(actionPath, next, ownerId) {
         bipFilter.owner_id = ownerId;
       }
 
-      self.triggerAll(next, bipFilter, true);
+      next(false, bipFilter);
 
     } else {
-      next();
+      next(err);
     }
   });
+}
+
+Dao.prototype.triggerByChannelAction = function(actionPath, next, ownerId) {
+  var self = this;
+  this.getTriggerBipsByAction(
+    actionPath,
+    function(err, bipFilter) {
+      if (err) {
+        next(err);
+      } else {
+        self.triggerAll(next, bipFilter, true);
+      }
+    },
+    ownerId
+  );
 }
 
 
