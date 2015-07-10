@@ -131,7 +131,7 @@ Bip.repr = function(accountInfo) {
   }
 
   if (this.type === 'http') {
-    repr = CFG.proto_public + domainName + '/bip/http/' + this.name;
+    repr = (CFG.proto_user ? CFG.proto_user : CFG.proto_public) + domainName + '/bip/http/' + this.name;
 
   } else if (this.type == 'smtp') {
     repr = this.name + '@' + domainName;
