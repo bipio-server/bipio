@@ -41,8 +41,8 @@ cluster     = require('cluster'),
 os          = require('os'),
 Q           = require('q'),
 moment      = require('moment-timezone'),
-ipaddr = require('ipaddr.js'),
-heapdump = require('heapdump');
+ipaddr = require('ipaddr.js');
+// heapdump = require('heapdump');
 
 require('ssl-root-cas/latest').inject();
 
