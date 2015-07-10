@@ -720,7 +720,7 @@ module.exports = {
       }
     });
 
-    express.get('/rpc/pod/:pod/render/:method/:arg?', restAuthWrapper, function(req, res) {
+    express.all('/rpc/pod/:pod/render/:method/:arg?', restAuthWrapper, function(req, res) {
       (function(req, res) {
         var method = req.params.method
         accountInfo = req.remoteUser,
@@ -751,7 +751,7 @@ module.exports = {
       })(req, res);
     });
 
-    express.get('/rpc/render/pod/:pod/:method/:arg?', restAuthWrapper, function(req, res) {
+    express.all('/rpc/render/pod/:pod/:method/:arg?', restAuthWrapper, function(req, res) {
       (function(req, res) {
         var method = req.params.method
         accountInfo = req.remoteUser,
