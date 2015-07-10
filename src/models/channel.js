@@ -244,7 +244,6 @@ Channel._transform = function(adjacentExports, transforms) {
       matchMap = {},
       mapKeys;
 
-
     app._.each(matches, function(matchStr) {
       var matchStrNorm,
 	      pathExp,
@@ -278,7 +277,6 @@ Channel._transform = function(adjacentExports, transforms) {
       resolvedImports[key] = transform;
     }
   });
-
 
   return helper.naturalize(resolvedImports);
 }
