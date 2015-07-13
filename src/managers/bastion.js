@@ -157,9 +157,9 @@ Bastion.prototype.jobRunner = function(jobPacket) {
       			if (!result) {
 
       				// might have failed for reasons other than the channel not being an action pointer...
-      				if (!app.helper.getRegUUID().test(cid)) {
-      					app.logmessage('Channel has disappeared [' + cid + ']', 'info');
-      				}
+      				//if (!app.helper.getRegUUID().test(cid)) {
+      				//	app.logmessage('Channel has disappeared [' + cid + ']', 'info');
+      				//}
 
       				// STYLE NOTE:  This is hitting the DB to find the channel by channel_id, and upon NOT finding it, goes ahead
       				// with concocting a 'result' to process an action pointer.  i.e.  this imperative flow is a wasted round turn to the DB.
@@ -422,8 +422,10 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
           (function(bipResult, client, firstBinding, next) {
             var bipModel = self._dao.modelFactory('bip', bipResult, accountInfo);
             bipModel.checkExpiry(function(expired) {
+
               if (expired) {
                 bipModel.expire(client.id, next);
+
               } else {
                 // add bip metadata to the container
                 next(

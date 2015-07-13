@@ -1033,7 +1033,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 			} else {
 				//check scheduled
 				bipModel.isScheduled( function(scheduled) {
-					if (!force && !scheduled) {
+					if (!force && !scheduled && !isSocket) {
 						next();
 					} else {
 						var payload = {
