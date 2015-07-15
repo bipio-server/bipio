@@ -679,6 +679,17 @@ hub: {
            }
          }
        },
+  exports : { // user timezone
+    type : Object,
+    renderable : true,
+    writable : true,
+    get : function(val) {
+      return val ? JSON.parse(val) : val;
+    },
+    set : function(val) {
+      return val ? JSON.stringify(val) : val;
+    }
+  },
   _tz : { // user timezone
     type : String,
     renderable : false,
