@@ -679,6 +679,7 @@ Channel.links = function( accountInfo ) {
       title : 'Invoke',
       description : 'Invokes the Channel with ad-hoc imports',
       contentType : DEFS.CONTENTTYPE_JSON,
+      // @todo deprecate - look to pod for invoke template
       _href : accountInfo.getDefaultDomainStr(true) + '/rpc/channel/' + this.getIdValue() + '/invoke'
     });
 

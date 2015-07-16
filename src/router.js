@@ -671,10 +671,45 @@ module.exports = {
       };
 
       dao.find('channel', filter, function(err, result) {
-        if (err || !result) {
-          app.logmessage(err, 'error');
-          res.status(404).end();
-        } else {
+        var ok = false;
+
+        if (!err ) {
+          if (!result) {
+            if (!app.helper.regUUID.test(req.params.channel_id)) {
+              var tokens = req.params.channel_id.split('.'),
+                pod = dao.pod(tokens[0]),
+                action;
+
+              if (pod && pod.getAction(tokens[1])) {
+                // check for RPC name and required fields
+                action = pod.getAction(tokens[1]);
+                if (action && action.rpcs[req.params.renderer]) {
+
+                  if (action.rpcs[req.params.renderer].required
+                    && action.rpcs[req.params.renderer].required.length
+                    && _.difference(
+                      action.rpcs[req.params.renderer].required,
+                      Object.keys(req.query)).length
+                  ) {
+                    res.status(400).send({ message : 'Missing Required Fields'});
+                    return;
+                  }
+
+                  result = {
+                    'id' : req.params.channel_id,
+                    'action' : tokens[0] + '.' + tokens[1],
+                    'owner_id' : req.remoteUser.getId()
+                  };
+                  ok = true;
+                }
+              }
+            }
+          } else {
+            ok = true;
+          }
+        }
+
+        if (ok) {
           var channel = dao.modelFactory('channel', result, req.remoteUser);
 
           channel.rpc(
@@ -683,8 +718,17 @@ module.exports = {
             getClientInfo(req),
             req,
             res
-            );
+          );
+
+        } else {
+          if (err) {
+            app.logmessage(err, 'error');
+          }
+
+          res.status(404).end();
+          return;
         }
+
       });
   });
 
