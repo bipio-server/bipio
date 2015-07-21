@@ -128,7 +128,10 @@ var BipModel = {
       this._repr = this.repr(accountInfo);
       this._links = this.links(accountInfo);
     }
-    this._href = this.href();
+
+    if (this.getEntityIndex() && this[this.getEntityIndex()]) {
+      this._href = this.href();
+    }
   },
 
   toObj : function() {
