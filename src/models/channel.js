@@ -197,6 +197,7 @@ Channel.staticChildInit = function() {
         cdnPublicBaseURL : CFG.cdn_public,
         cdnBasePath : 'cdn',
         emitterBaseURL :  (CFG.site_emitter || CFG.website_public) + '/emitter',
+        siteURL : CFG.website_public,
         timezone : CFG.timezone,
         isMaster : app.isMaster
       }
