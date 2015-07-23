@@ -156,7 +156,18 @@ restapi.use(function(err, req, res, next) {
 });
 
 restapi.use(bodyParser.urlencoded({ extended : true }));
+
+
+// if there's no content type set, try to parse it as json
+restapi.use(function(req, res, next) {
+  if (!req.headers['content-type'] && ('PUT' === req.method || 'POST' === req.method || 'PATCH' === req.method) ) {
+    req.headers['content-type'] = 'application/json';
+  }
+  next();
+});
+
 restapi.use(bodyParser.json());
+
 restapi.use(jwtConfirm);
 
 restapi.use(setCORS);

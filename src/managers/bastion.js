@@ -118,7 +118,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
       // clear bip error state
       this._dao.bipError(bip.id, false, function() {
     	 ;
-      }); 
+      });  
 
       // because channels don't always have channel_ids
 	  // i.e. action pointers
