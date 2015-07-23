@@ -1025,7 +1025,6 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 
 		var bipModel = self.modelFactory('bip', bipResult, accountInfo);
 
-
 		// check expiry
 		bipModel.checkExpiry(function(expired) {
 			if (expired) {
@@ -1052,7 +1051,11 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 
 						});
 
-						app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+            // clear bip error state
+            self.bipError(payload.bip.id, false, function() {
+              app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+            });
+
 						numProcessed++;
 
 						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
