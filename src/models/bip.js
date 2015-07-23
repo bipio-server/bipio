@@ -1171,5 +1171,17 @@ Bip.expire = function(transactionId, next) {
   }
 }
 
+// returns the transforms for an edge, if any are present
+Bip.getTransformFor = function(cid) {
+  var transforms = app._.pluck(this.hub, 'transforms');
+
+  for (var i = 0; i < transforms.length; i++) {
+    if (transforms[i] && transforms[i][cid]) {
+      return transforms[i][cid];
+    }
+  }
+
+  return;
+}
 
 module.exports.Bip = Bip;
