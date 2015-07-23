@@ -98,6 +98,7 @@ Bastion.prototype.jobRunnerAlert = function(err, message) {
 // @todo we have to assume the queue system is a DMZ for now :|
 Bastion.prototype.jobRunner = function(jobPacket) {
   var self = this;
+  
   app.logmessage('BASTION:REC:NAME:' + jobPacket.name +':CID: ['
     + (jobPacket.data.bip && jobPacket.data.bip.config && jobPacket.data.bip.channel_id ? jobPacket.data.bip.config.channel_id : '')
     + ']', 'info');
@@ -113,6 +114,11 @@ Bastion.prototype.jobRunner = function(jobPacket) {
     } else if (jobPacket.name == DEFS.JOB_BIP_TRIGGER) {
       var bip = jobPacket.data.bip;
       var cid = bip.config.channel_id;
+
+      // clear bip error state
+      this._dao.bipError(bip.id, false, function() {
+    	 ;
+      });  
 
       // because channels don't always have channel_ids
 	  // i.e. action pointers
@@ -494,6 +500,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
  *
  */
 Bastion.prototype.bipFire = function(bip, exports, client, content_parts, files) {
+	console.log("BIP fire")
   var self = this;
 
   if (files) {
