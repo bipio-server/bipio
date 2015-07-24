@@ -185,9 +185,9 @@ var restResponse = function(res) {
       return;
     }
     if (contentType == DEFS.CONTENTTYPE_JSON) {
-      res.status(!code ? code : '200').jsonp(payload);
+      res.status(!code ? '200' : code).jsonp(payload);
     } else {
-      res.status(!code ? code : '200').send(payload);
+      res.status(!code ? '200' : code).send(payload);
     }
     return;
   }
