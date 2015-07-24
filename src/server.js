@@ -180,7 +180,7 @@ restapi.use(session({
   resave : false,
   saveUninitialized : true,
   cookie: {
-    maxAge: 60 * 60 * 1000,
+    maxAge: null,
     httpOnly : true
   },
   secret: GLOBAL.CFG.server.sessionSecret,
