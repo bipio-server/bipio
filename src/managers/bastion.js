@@ -551,7 +551,9 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
 
     tokens.forEach(function(token, idx) {
 
-      ptr[token] = {}
+      if (!ptr[token]) {
+        ptr[token] = {}
+      }
 
       if (idx === tokens.length - 1) {
         ptr[token] = app._.clone(exports.local, {} );
