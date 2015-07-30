@@ -191,21 +191,6 @@ Dao.prototype.createUser = function(username, emailAddress, password, next, isAd
   }
 }
 
-Dao.prototype.checkUsername = function(username,next) {
-	  var self = this;
-	  if (username) {
-	    // check user exists
-		    self.find('account', { username : username }, function(err, result) {
-			      if (err) {
-			    	  next(err);
-			      } else if (result) {
-			        next(false,true);
-			      }
-			      next(false,false);
-			      
-	    });
-	  }
-	}
 /**
  * Creates a user notification entry.  Expects payload of the form
  *
