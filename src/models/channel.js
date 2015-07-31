@@ -625,7 +625,7 @@ Channel.getRendererUrl = function(renderer, accountInfo) {
 
   var action = this.getActionSchema();
   if (cid && action && action.rpcs[renderer]) {
-    ret = accountInfo.getDefaultDomainStr(true) + '/rpc/channel/' + cid + '/' + renderer;
+    ret = this._dao.getBaseUrl() + '/rpc/channel/' + cid + '/' + renderer;
   }
 
   return ret;
@@ -668,7 +668,7 @@ Channel.links = function( accountInfo ) {
       description : 'Invokes the Channel with ad-hoc imports',
       contentType : DEFS.CONTENTTYPE_JSON,
       // @todo deprecate - look to pod for invoke template
-      _href : accountInfo.getDefaultDomainStr(true) + '/rpc/channel/' + this.getIdValue() + '/invoke'
+      _href : this._dao.getBaseUrl() + '/rpc/channel/' + this.getIdValue() + '/invoke'
     });
 
     if (action.rpcs) {
