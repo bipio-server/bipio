@@ -77,7 +77,7 @@ Dao.prototype.getBaseUrl = function() {
 
 // ---------------------- USERS
 
-Dao.prototype._createUser = function(username, emailAddress, password, next) {
+Dao.prototype._createUser = function(username, emailAddress, password, next, isAdmin) {
   var self = this;
 
   // ----- CREATE ACCOUNT
@@ -86,7 +86,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
     {
       name : username,
       username : username,
-      is_admin : false,
+      is_admin : 'admin' === username || !!isAdmin,
       email_account : emailAddress
     });
 
@@ -163,7 +163,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next) {
   });
 }
 
-Dao.prototype.createUser = function(username, emailAddress, password, next) {
+Dao.prototype.createUser = function(username, emailAddress, password, next, isAdmin) {
   var self = this;
 
   if (app.helper.isFunction(password)) {
@@ -180,10 +180,10 @@ Dao.prototype.createUser = function(username, emailAddress, password, next) {
         next('Username ' + username + ' already exists');
       } else {
         if (password) {
-          self._createUser(username, emailAddress, password, next);
+          self._createUser(username, emailAddress, password, next, isAdmin);
         } else {
           crypto.randomBytes(16, function(ex, buf) {
-            self._createUser(username, emailAddress, buf.toString('hex'), next);
+            self._createUser(username, emailAddress, buf.toString('hex'), next, isAdmin);
           });
         }
       }
@@ -192,20 +192,20 @@ Dao.prototype.createUser = function(username, emailAddress, password, next) {
 }
 
 Dao.prototype.checkUsername = function(username,next) {
-	  var self = this;
-	  if (username) {
-	    // check user exists
-		    self.find('account', { username : username }, function(err, result) {
-			      if (err) {
-			    	  next(err);
-			      } else if (result) {
-			        next(false,true);
-			      }
-			      next(false,false);
-			      
-	    });
-	  }
-	}
+  var self = this;
+  if (username) {
+    // check user exists
+	    self.find('account', { username : username }, function(err, result) {
+		      if (err) {
+		    	  next(err);
+		      } else if (result) {
+		        next(false,true);
+		      }
+		      next(false,false);
+
+    });
+  }
+}
 
 /**
  * Creates a user notification entry.  Expects payload of the form
