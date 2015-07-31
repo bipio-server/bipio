@@ -550,6 +550,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
     MongooseClass.update(filter, model.toObj(), function(err) {
       if (err) {
         if (next) {
+        /*
           // conflict? Then load the record and return the payload
           // with an error response
           if (err.code == 11000) {
@@ -586,7 +587,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
                   );
               }
             });
-          } else {
+          } else {*/
             var errResp;
             // looks like a mongo validation error? then normalize it
             if (err.errors && err.name) {
@@ -604,7 +605,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
               errResp,
               self.errorMap(err)
               );
-          }
+         // }
         }
         return null;
       } else {
@@ -647,6 +648,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
 
 
 DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
+	console.log('update function')
   var self = this,
   propName,
   repr,
@@ -662,6 +664,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
     var mongoModel = this.toMongoModel(model);
     mongoModel.validate(function(err) {
       if (err) {
+    	  console.log('we are here');
         var errResp;
         // looks like a mongo validation error? then normalize it
         if (err.errors && err.name) {
@@ -673,6 +676,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         } else {
           errResp = err;
         }
+        
         next(
           self.errorParse(err, model),
           model.getEntityName(),
