@@ -26,8 +26,6 @@ HTTPBasic.prototype.test = function(username, password, opts, next) {
 	  
     this.__proto__._test.call(this, username, password, opts, function(err, result) {
 	  if (err) {
-		  
-		  console.log("err", err);
 	     // try to auth and sync off ldap auth service
 		  request.get(
 				  {
