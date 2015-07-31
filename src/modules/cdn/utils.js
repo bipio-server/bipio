@@ -37,14 +37,17 @@ module.exports = {
     var self = this;
 
     fs.stat(filePath, function(err, stats) {
-      if (err) next(err);
-      next(null, {
-        size : stats.size,
-        localpath : filePath,
-        name : self.get_filename_from_path(filePath),
-        type : mime.lookup(filePath),
-        encoding : 'binary'
-        });
+      if (err) {
+        next(err);
+      } else {
+        next(null, {
+          size : stats.size,
+          localpath : filePath,
+          name : self.get_filename_from_path(filePath),
+          type : mime.lookup(filePath),
+          encoding : 'binary'
+          });
+      }
     });
   }
 }

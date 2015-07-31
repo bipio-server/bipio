@@ -116,20 +116,7 @@ Channel.entitySchema = {
     renderable: true,
     required : true,
     writable: true,
-    "default" : {},
-    validate : [
-    {
-      validator : function(val, next) {
-        var ok = false;
-        if (validAction(this.action)) {
-          // validate the config for this action
-          ok = true;
-        }
-        next(ok);
-      },
-      msg : 'Invalid Config'
-    }
-    ]
+    "default" : {}
   },
 
   _available : {

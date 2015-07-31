@@ -698,7 +698,8 @@ module.exports = {
                   result = {
                     'id' : req.params.channel_id,
                     'action' : tokens[0] + '.' + tokens[1],
-                    'owner_id' : req.remoteUser.getId()
+                    'owner_id' : req.remoteUser.getId(),
+                    'config' : {}
                   };
                   ok = true;
                 }

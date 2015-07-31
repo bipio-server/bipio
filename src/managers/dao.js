@@ -1408,14 +1408,20 @@ Dao.prototype.getBipsByChannelId = function(channelId, accountInfo, next) {
 
 
 Dao.prototype.updateChannelIcon = function(channel, URL) {
-  channel.config.icon = URL;
+  var config = app._.clone(channel.config);
+
+  config.icon = URL;
+
   this.updateColumn(
     'channel',
     {
       id : channel.id
     },
     {
-      config : channel.config
+      icon : URL
+    },
+    function() {
+      console.log(arguments);
     }
   );
 }
