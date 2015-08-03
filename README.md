@@ -2,11 +2,11 @@
 <br/>
 =========
 
-Welcome to the [bip.io](https://bip.io) API Server (Sansa 0.3)
+Welcome to the [bip.io](https://bip.io) API Server (Snow 0.4)
 
-bip.io is Billion Instructions Per I/O - For People and Robots.  
+bip.io is Billion Instructions Per I/O - For People and Robots.
 
-Imagine you can send a single standard payload and have a limitless host of API's orchestrate at your command.  
+Imagine you can send a single standard payload and have a limitless host of API's orchestrate at your command.
 
 That's what bip.io does.
 
@@ -35,7 +35,7 @@ Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
 Pods are the standalone service containers bip.io uses to encapsulate and standardize the world's API's.  [Supported Services](https://github.com/bipio-server/bipio/wiki/Pod-List) are growing fast, and open source.
 
-This server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks and Time.  
+This server ships with a few handy '[Pods](https://github.com/bipio-server/bipio/wiki/Pods)' which you can use right away - Email, Text/HTML/Markdown Templating, Flow Control, Syndication, Web Hooks and Time.
 
 Extra Pods can be found in the [master repository](https://github.com/bipio-server).
 
@@ -43,8 +43,8 @@ To install a pod :
 
     npm install bip-pod-{pod-name}
     ./tools/pod-install.js -a {pod-name}
-  
-And follow the instructions. 
+
+And follow the instructions.
 
 Feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Pods#creating-pods).
 
@@ -54,7 +54,7 @@ The bip.io server is a light weight headless API server and ships without a User
 
 [![ScreenShot](https://bip.io/static/img/docs/vimeo_overlay.png)](https://vimeo.com/119869509)
 
-Sign in to [bip.io](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.  
+Sign in to [bip.io](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.
 
 ![Server Mount](https://bip.io/static/img/docs/server_mount.png)
 
@@ -107,7 +107,7 @@ When setting bip.io up for the first time, the install process will enter intera
 Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
 during the install process to get a basically sane server running that you can play with.
 
-For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to 
+For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to
 /etc/init and reconfigured to suit your environment.
 
 If you have a more complex deployment environment and the packaged sparse config doesn't suit, don't worry!  Set the environment variable BIPIO_SPARSE_CONFIG to the path of your preferred config file, and it will use that instead.
@@ -122,12 +122,12 @@ A healthy contributor community is great for everyone! Take a look at the [Contr
 
 ## Support
 
-Please log issues to the [repository issue tracker](https://github.com/bipio-server/bipio/issues) on GitHub.  
+Please log issues to the [repository issue tracker](https://github.com/bipio-server/bipio/issues) on GitHub.
 
 ## License
 
 [GPLv3](http://www.gnu.org/copyleft/gpl.html)
 
-Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3. 
+Our open source license is the appropriate option if you are creating an open source application under a license compatible with the GNU GPLv3.
 
 If you'd like to integrate bip.io with your proprietary system, GPLv3 is likely incompatible.  To secure a Commercial OEM License, please [reach us](mailto:hello@bip.io)
