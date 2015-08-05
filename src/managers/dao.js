@@ -511,8 +511,6 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
         src = channels.get(src).action;
         manifest[src] = true;
       } else if (!regUUID.test(src)) {
-        var tokens = src.split('.');
-        src = tokens[0] + '.' + tokens[1];
         manifest[src] = true;
       }
     }
