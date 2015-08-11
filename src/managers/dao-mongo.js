@@ -163,9 +163,17 @@ DaoMongo.prototype.getModelWritableProps = function(modelName) {
   return this.models[modelName]['class'].getWritablePropsArray();
 }
 
+DaoMongo.prototype.hasModel = function(modelName) {
+  return undefined !== this.models[modelName];
+}
+
 DaoMongo.prototype.registerModel = function(modelObj) {
   extend(true, modelObj, Object.create(this.getModelPrototype()));
   this.registerModelClass(modelObj);
+}
+
+DaoMongo.prototype.getModelClass = function(modelName) {
+  return this.models[modelName]['class'];
 }
 
 /**
@@ -180,7 +188,7 @@ DaoMongo.prototype.registerModelClass = function(modelClass) {
 
   // Already registered? then skip
   if (undefined != container[modelName]) {
-    return;
+    this._log('Overloading Model ' + modelName);
   }
 
   container[modelName] = {};
@@ -648,7 +656,6 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
 
 
 DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
-	console.log('update function')
   var self = this,
   propName,
   repr,
@@ -664,7 +671,6 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
     var mongoModel = this.toMongoModel(model);
     mongoModel.validate(function(err) {
       if (err) {
-    	  console.log('we are here');
         var errResp;
         // looks like a mongo validation error? then normalize it
         if (err.errors && err.name) {
@@ -676,7 +682,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         } else {
           errResp = err;
         }
-        
+
         next(
           self.errorParse(err, model),
           model.getEntityName(),
@@ -1060,7 +1066,7 @@ DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
     "$set" : props
   }
 
-  MongoModel.update( updateFilter, updateCols ).exec(next);
+  MongoModel.update( updateFilter, updateCols, { multi :  true } ).exec(next);
 };
 
 DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {

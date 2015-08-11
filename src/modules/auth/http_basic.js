@@ -23,7 +23,7 @@ HTTPBasic.prototype.test = function(username, password, opts, next) {
     next(self.MSG_NOT_AUTHORIZED, null);
 
   } else {
-	  
+
     this.__proto__._test.call(this, username, password, opts, function(err, result) {
 	  if (err) {
 	     // try to auth and sync off ldap auth service
@@ -49,16 +49,16 @@ HTTPBasic.prototype.test = function(username, password, opts, next) {
 								  },
 								  function(err, acctResult) {
 									  if (!err && (null != acctResult)) {
-										  
+
 										  var filter = {
 												  'owner_id' : acctResult.id,
 												  'type' : 'token'
 										  }
-										  
+
 										  dao.find('account_auth', filter, function(isErr, authResult) {
 											  var resultModel = null;
 											  if (!isErr && null != authResult) {
-												  
+
 												  self.acctBind(acctResult, authResult, options, function(err, accountInfo) {
 													  if (err) {
 														  next(err);
@@ -71,36 +71,36 @@ HTTPBasic.prototype.test = function(username, password, opts, next) {
 														  next(false, accountInfo);
 													  }
 												  });
-												  
+
 											  } else {
 												  next(self.MSG_NOT_AUTHORIZED, resultModel);
 											  }
 										  });
-										  
+
 										  // if user auths off and option set, auto create
 										  // local account
 									  } else if (!acctResult && options.auto_sync && options.auto_sync.mail_field) {
 										  var emailAddress;
-										  
+
 										  // if no email address found, create a local dummy
 										  if ('none' === options.auto_sync.mail_field) {
 											  emailAddress = 'noreply@' + username + '.' + CFG.domain;
 										  } else {
 											  emailAddress = app.helper.jsonPath(body, options.auto_sync.mail_field);
 										  }
-										  
+
 										  if (emailAddress) {
-											  
+
 											  dao.createUser(username, emailAddress, null, function(err, authResult) {
-												  
+
 												  authResult.username = username;
 												  authResult.name = username
-												  authResult.is_admin = false;
-												  
+												  authResult.account_level = GLOBAL.DEFS.ACCOUNT_LEVEL.USER;
+
 												  self.acctBind(authResult, authResult, options, function(err, accountInfo) {
 													  if (err) {
 														  next(err);
-														  
+
 													  } else {
 														  try {
 															  accountInfo._remoteBody = JSON.parse(body);
@@ -110,9 +110,9 @@ HTTPBasic.prototype.test = function(username, password, opts, next) {
 														  next(false, accountInfo);
 													  }
 												  });
-												  
+
 											  });
-											  
+
 										  } else {
 											  next(self.MSG_NOT_AUTHORIZED, null);
 										  }
@@ -129,7 +129,7 @@ HTTPBasic.prototype.test = function(username, password, opts, next) {
 	     next(err, result);
 	  }
 	});
-	  
+
   }
 }
 

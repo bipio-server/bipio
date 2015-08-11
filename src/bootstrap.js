@@ -264,7 +264,16 @@ module.exports.app.bastion = new bastion(module.exports.app.dao, process.HEADLES
 
 // bind dao to modules
 for (var k in app.modules) {
+
+  if (app.modules.hasOwnProperty(k) && app.modules[k].setApp) {
+    app.modules[k].setApp(module.exports.app);
+  }
+
   if (app.modules.hasOwnProperty(k) && app.modules[k].setDAO) {
     app.modules[k].setDAO(module.exports.app.dao);
+  }
+
+  if (app.modules.hasOwnProperty(k) && app.modules[k].initialize) {
+    app.modules[k].initialize(app);
   }
 }

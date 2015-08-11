@@ -11,3 +11,5 @@ npm-debug.log
 sftp_config.json
 .DS_Store
 src/modules/stats
+src/modules/permissions
+src/modules/provisioning

@@ -112,7 +112,7 @@ LDAP.prototype.test = function(username, password, opts, next) {
                       dao.createUser(username, emailAddress, null, function(err, authResult) {
                         authResult.username = username;
                         authResult.name = username
-                        authResult.is_admin = false;
+                        authResult.account_level = GLOBAL.DEFS.ACCOUNT_LEVEL.USER;
 
                         self.acctBind(authResult, authResult, options, function(err, accountInfo) {
                           next(false, accountInfo);

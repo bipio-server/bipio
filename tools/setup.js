@@ -24,7 +24,7 @@
 var inquirer = require("inquirer"),
   fs = require('node-fs'),
   path = require('path'),
-  sh = require('execSync'),
+  sh = require('sync-exec'),
   crypto = require('crypto'),
   defs = require('../config/defs'),
   mongoose = require('mongoose'),
@@ -275,7 +275,7 @@ function sslSetup() {
         fs.mkdirSync(targetDir, 0755);
       }
 
-      if (0 === sh.run(cmd)) {
+      if (0 === sh(cmd)) {
         sparseConfig.proto_public = 'https://';
         sparseConfig.server.ssl.key = targetDir + '/server.key';
         sparseConfig.server.ssl.cert = targetDir + '/server.crt';
@@ -380,7 +380,7 @@ function _createAccount(dao, next) {
         {
           name : credentials.username,
           username : credentials.username,
-          is_admin : true,
+          account_level : GLOBAL.DEFS.ACCOUNT_LEVEL.ADMIN,
           email_account : credentials.email
         });
 

@@ -20,33 +20,85 @@
  *
 
  */
-var BipModel = require('./prototype.js').BipModel;
+ var BipModel = require('./prototype.js').BipModel;
 
-var Account = Object.create(BipModel);
+ var Account = Object.create(BipModel);
+
+ GLOBAL.DEFS.ACCOUNT_LEVEL = {
+  USER : 'user',
+  ADMIN : 'admin'
+}
 
 Account.id = '';
 Account.name = '';
 Account.username = '';
 Account.email_account = '';
-Account.is_admin = false;
+Account.is_admin = false; // @todo deprecate
+Account.account_level = GLOBAL.DEFS.ACCOUNT_LEVEL.USER;
 
 // @todo what is uniqueKeys?>
 Account.uniqueKeys = ['username', 'email_account'];
 
 Account.compoundKeyConstraints = {
-    username : 1,
-    email_account : 1
+  username : 1,
+  email_account : 1
 };
 
 Account.entityName = 'account';
 Account.entitySchema = {
-    id: { type: String, renderable: true, writable: false, index: true },
-    username: { type: String, renderable: true, writable: false, index: true },
-    name: { type: String, renderable: true, writable: true },
-    is_admin: { type: Boolean, renderable: false, writable: false }, // @todo deprecate for account_level
-    email_account: { type: String, renderable: true, writable: false },
-    created : { type: Number, renderable: true, writable: false},
-    last_session : { type: Number, renderable: true, writable: false}
+  id: {
+   type: String,
+   renderable: true,
+   writable: false,
+   index: true
+  },
+  username: {
+    type: String,
+    renderable: true,
+    writable: false,
+    index: true
+  },
+  name: {
+    type: String,
+    renderable: true,
+    writable: true
+  },
+  is_admin: { // @todo deprecate for account_level
+    type: Boolean,
+    renderable: false,
+    writable: false
+  },
+  email_account: {
+    type: String,
+    renderable: true,
+    writable: false
+  },
+  created : {
+    type: Number,
+    renderable: true,
+    writable: false
+  },
+  last_session : {
+    type: Number,
+    renderable: true,
+    writable: false
+  },
+  account_level : {
+    type : String,
+    renderable : true,
+    writable : false,
+    default : GLOBAL.DEFS.ACCOUNT_LEVEL.USER,
+    validate : [
+      {
+        validator : function(val, next) {
+          next(
+            -1 !== app._.values().indexOf(val)
+          );
+        },
+        msg : 'Invalid Account Level'
+      }
+    ]
+  }
 };
 
 module.exports.Account = Account;

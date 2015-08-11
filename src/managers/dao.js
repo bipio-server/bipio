@@ -77,7 +77,7 @@ Dao.prototype.getBaseUrl = function() {
 
 // ---------------------- USERS
 
-Dao.prototype._createUser = function(username, emailAddress, password, next, isAdmin) {
+Dao.prototype._createUser = function(username, emailAddress, password, accountLevel, next) {
   var self = this;
 
   // ----- CREATE ACCOUNT
@@ -86,7 +86,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next, isA
     {
       name : username,
       username : username,
-      is_admin : 'admin' === username || !!isAdmin,
+      account_level : accountLevel,
       email_account : emailAddress
     });
 
@@ -163,7 +163,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, next, isA
   });
 }
 
-Dao.prototype.createUser = function(username, emailAddress, password, next, isAdmin) {
+Dao.prototype.createUser = function(username, emailAddress, password, next, accountLevel) {
   var self = this;
 
   if (app.helper.isFunction(password)) {
@@ -180,10 +180,10 @@ Dao.prototype.createUser = function(username, emailAddress, password, next, isAd
         next('Username ' + username + ' already exists');
       } else {
         if (password) {
-          self._createUser(username, emailAddress, password, next, isAdmin);
+          self._createUser(username, emailAddress, password, next, accountLevel ? accountLevel : 'user');
         } else {
           crypto.randomBytes(16, function(ex, buf) {
-            self._createUser(username, emailAddress, buf.toString('hex'), next, isAdmin);
+            self._createUser(username, emailAddress, buf.toString('hex'), next, accountLevel ? accountLevel : 'user');
           });
         }
       }

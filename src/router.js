@@ -329,12 +329,12 @@ var restAction = function(req, res) {
       }
 
       if (undefined !== req.params.id) {
-        if (resourceName == 'channel' && (req.params.id == 'actions' || req.params.id == 'emitters' )) {
-          dao.listChannelActions(req.params.id, accountInfo, restResponse(res));
-        } else {
+//        if (resourceName == 'channel' && (req.params.id == 'actions' || req.params.id == 'emitters' )) {
+//          dao.listChannelActions(req.params.id, accountInfo, restResponse(res));
+//        } else {
           var model = dao.modelFactory(resourceName, {}, accountInfo);
           dao.get(model, req.params.id, accountInfo, restResponse(res));
-        }
+//        }
       } else {
         var page_size = 10,
         page = 1,
@@ -773,7 +773,7 @@ module.exports = {
           owner_id : accountInfo.user.id,
           action : req.params.pod + '.'
         }),
-        pod = channel.getPods(req.params.pod);
+        pod = channel.getPods(req.params.pod, accountInfo);
 
         if (pod && method) {
           req.remoteUser = accountInfo;
@@ -1145,7 +1145,7 @@ module.exports = {
             owner_id : result.user.id,
             username : result.user.username,
             name : result.user.name,
-            is_admin : result.user.is_admin,
+            account_level : result.user.account_level,
             host : getClientInfo(req).host
           }
 

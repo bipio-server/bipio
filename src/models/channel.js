@@ -32,6 +32,9 @@ helper = require('../lib/helper');
 
 var Channel = Object.create(BipModel);
 
+var pods = {};
+
+Channel.pods = pods;
 Channel.entityName = 'channel';
 Channel.entitySchema = {
   id: {
@@ -77,7 +80,7 @@ Channel.entitySchema = {
     required : true,
     writable: true,
     set : function(action) {
-      var podAction = Channel.getPodTokens(action);
+      var podAction = this.getPodTokens(action);
       if (podAction.ok()) {
         this.config = pods[podAction.pod].getConfigDefaults(podAction.action);
       }
@@ -92,7 +95,7 @@ Channel.entitySchema = {
 
     {
       validator : function(val, next) {
-        next( validAction(val) );
+        next( this.validAction(val) );
       },
       msg : 'Invalid Pod or Action'
     },
@@ -100,7 +103,7 @@ Channel.entitySchema = {
     {
       validator : function(val, next) {
         var ok = false;
-        if (validAction(this.action)) {
+        if (this.validAction(this.action)) {
           // validate the config for this action
           ok = true;
         }
@@ -155,15 +158,19 @@ Channel.compoundKeyConstraints = {
   "action" : 1
 };
 
-function validAction(value) {
+Channel.validAction = function(value) {
   var ok = false;
+
+  value = value || this.action;
+
   ok = (undefined != value && value != '' && value != 0);
   if (ok) {
     var tTokens = value.split('.');
     var pod = tTokens[0], podAction = tTokens[1];
 
-    ok = (undefined != pods[pod] && undefined != pods[pod].getAction(podAction));
+    ok = (undefined != Channel.pods[pod] && undefined != Channel.pods[pod].getAction(podAction));
   }
+
   return ok;
 }
 
@@ -171,8 +178,8 @@ function validAction(value) {
 Channel.staticChildInit = function() {
   var self = this;
   // initialize each channel pod
-  for (var idx in pods) {
-    pods[idx].init(
+  for (var idx in Channel.pods) {
+    Channel.pods[idx].init(
       idx,
       this.getDao(),
       app.modules.cdn,
@@ -282,7 +289,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   var transformedImports = this._transform(adjacentExports, transforms),
     podTokens = this.getActionTokens(),
     podName = podTokens.pod,
-    pod = pods[podName];
+    pod = Channel.pods[podName];
 
   // attach bip and client configs
   var sysImports = {
@@ -295,7 +302,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
 
   pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
     if (!err) {
-      pods[podName].invoke(
+      Channel.pods[podName].invoke(
         podTokens.action,
         self,
         transformedImports,
@@ -318,33 +325,37 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
 Channel.rpc = function(rpcName, query, client, req, res) {
   var self = this,
     podTokens = this.getActionTokens(),
-    pod = pods[podTokens.pod],
+    pod = Channel.pods[podTokens.pod],
     sysImports = {
       client : client
     };
 
-  pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      pods[podTokens.pod].rpc(
-        podTokens.action,
-        rpcName,
-        sysImports,
-        req.query,
-        self,
-        req,
-        res
-      );
-    }
-  });
+  if (this.validAction()) {
+    pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        Channel.pods[podTokens.pod].rpc(
+          podTokens.action,
+          rpcName,
+          sysImports,
+          req.query,
+          self,
+          req,
+          res
+        );
+      }
+    });
+  } else {
+    res.status(404).end();
+  }
 }
 
 Channel.pod = function(podName) {
   var ret, tokens, schema;
   if (podName) {
-    if (undefined != pods[podName]) {
-      ret = pods[podName];
+    if (undefined != Channel.pods[podName]) {
+      ret = Channel.pods[podName];
     }
   } else if (this.action && '' !== this.action) {
     tokens = this.action.split('.');
@@ -360,7 +371,7 @@ Channel.isRealtime = function() {
   var ret = false, pod;
   if (this.action && '' !== this.action) {
     tokens = this.action.split('.');
-    pod = pods[tokens[0]];
+    pod = Channel.pods[tokens[0]];
     if (pod) {
       ret = pod.isRealtime(tokens[1]);
     }
@@ -379,7 +390,7 @@ Channel.getActionList = function() {
   var actions, result = [];
 
   for (pod in pods) {
-    actions = pods[pod].listActions();
+    actions = Channel.pods[pod].listActions();
     if (actions && actions.length) {
       for (var i = 0; i < actions.length; i++ ) {
         result.push(pod + '.' + actions[i].name);
@@ -394,7 +405,7 @@ Channel.getEmitterList = function() {
   var emitters, result = [];
 
   for (pod in pods) {
-    emitters = pods[pod].listEmitters();
+    emitters = Channel.pods[pod].listEmitters();
     if (emitters && emitters.length) {
       for (var i = 0; i < emitters.length; i++ ) {
         result.push(pod + '.' + emitters[i].name);
@@ -414,7 +425,7 @@ Channel.getEmitterList = function() {
 Channel.postSave = function(accountInfo, next, isNew) {
   var tTokens = this.action.split('.'),
   podName = tTokens[0], action = tTokens[1],
-  self = this, authType =  pods[podName].getAuthType();
+  self = this, authType =  Channel.pods[podName].getAuthType();
 
   if (undefined == podName || undefined == action) {
     // throw a constraint crit
@@ -430,7 +441,7 @@ Channel.postSave = function(accountInfo, next, isNew) {
   // after creation, which the pod actions themselves might want to dictate.
 
   if (authType && 'none' !== authType) {
-    self._dao.getPodAuthTokens(accountInfo.user.id, pods[podName], function(err, authStruct) {
+    self._dao.getPodAuthTokens(accountInfo.user.id, Channel.pods[podName], function(err, authStruct) {
       if (err) {
         next(err, 'channel', { message : err }, 500);
       } else if (!authStruct) {
@@ -447,13 +458,13 @@ Channel.postSave = function(accountInfo, next, isNew) {
       } else {
         var auth = {};
         auth[authType] = authStruct;
-        pods[podName].setup(action, self, accountInfo, auth, function(err) {
+        Channel.pods[podName].setup(action, self, accountInfo, auth, function(err) {
           next(err, 'channel', self);
         });
       }
     });
   } else {
-    pods[podName].setup(action, this, accountInfo, function(err) {
+    Channel.pods[podName].setup(action, this, accountInfo, function(err) {
       next(err, 'channel', self);
     });
   }
@@ -494,7 +505,7 @@ Channel.getActionSchema = function() {
     var tokens = this.action.split('.'),
       podName = tokens[0],
       actionName = tokens[1],
-      pod = pods[tokens[0]];
+      pod = Channel.pods[tokens[0]];
     return pod.getAction(actionName);
   }
   return null;
@@ -512,16 +523,16 @@ Channel.getPodTokens = function() {
     if (tokens.length == 2) {
       ret.name = ret.pod = tokens[0];
       ret.action = tokens[1];
-      ret._struct = pods[ret.pod];
+      ret._struct = Channel.pods[ret.pod];
       ret.getSchema = function(key) {
-        var ptr = JSON.parse(JSON.stringify(pods[this.pod].getSchema(this.action)));
+        var ptr = JSON.parse(JSON.stringify(Channel.pods[this.pod].getSchema(this.action)));
         if (key && ptr[key]) {
           return ptr[key];
         }
         return ptr;
       };
       ret.isTrigger = function() {
-        return pods[this.pod].isTrigger(this.action);
+        return Channel.pods[this.pod].isTrigger(this.action);
       },
       // get all unique keys
       ret.getSingletonConstraints = function() {
@@ -547,14 +558,14 @@ Channel.getPod = function() {
     podName = tokens[0],
     actionName = tokens[1];
 
-  return pods[tokens[0]];
+  return Channel.pods[tokens[0]];
 }
 
 Channel.getPods = function(name) {
-  if (name && pods[name]) {
-    return pods[name];
+  if (name && Channel.pods[name]) {
+    return Channel.pods[name];
   } else {
-    return pods;
+    return Channel.pods;
   }
 }
 
@@ -565,7 +576,7 @@ Channel.getConfig = function() {
 
   pod = this.getPodTokens();
 
-  var podConfig = pods[pod.name].getActionConfig(pod.action);
+  var podConfig = Channel.pods[pod.name].getActionConfig(pod.action);
 
   for (key in podConfig.properties) {
     if (!this.config[key] && podConfig.properties[key]['default']) {
@@ -586,7 +597,7 @@ Channel.testImport = function(importName) {
   pod = this.getPodTokens();
 
   if (pod.ok()) {
-    ok = pods[pod.name].testImport(pod.action, importName);
+    ok = Channel.pods[pod.name].testImport(pod.action, importName);
   }
 
   return ok;
@@ -611,7 +622,7 @@ Channel.getTransformDefault = function(transformSource) {
   action = this.getPodTokens();
 
   if (action.ok()) {
-    transform = pods[action.pod].getTransformDefault(transformSource, action.action);
+    transform = Channel.pods[action.pod].getTransformDefault(transformSource, action.action);
   }
 
   return transform;
@@ -645,7 +656,7 @@ Channel.repr = function(accountInfo) {
 
   if (this.action) {
     tokens = this.getActionTokens();
-    repr = pods[tokens.pod].repr(tokens.action, this);
+    repr = Channel.pods[tokens.pod].repr(tokens.action, this);
   }
 
   return repr;
@@ -692,10 +703,9 @@ Channel.isAvailable = function() {
 
 // register pods
 if (!process.HEADLESS) {
-  var pods = {};
   for (var podName in CFG.pods) {
     if (CFG.pods.hasOwnProperty(podName) && podName !== 'testing') {
-      pods[podName] = require('bip-pod-' + podName);
+      Channel.pods[podName] = require('bip-pod-' + podName);
       GLOBAL.app.logmessage('POD:' + podName + ':UP');
     }
   }

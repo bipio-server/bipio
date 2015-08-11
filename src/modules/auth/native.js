@@ -59,7 +59,7 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
       id : authModel.owner_id,
       name : authModel.name,
       username : authModel.username,
-      is_admin: authModel.is_admin,
+      account_level: authModel.account_level,
       settings: {
         api_token: null
       }
@@ -179,13 +179,13 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     activeDomainId = options.domainId,
     authModel = this.dao.modelFactory('account_auth', accountAuth);
 
-  if (masquerade && account.is_admin) {
+  if (masquerade && 'admin' === account.account_level) {
     this.getAccountStructByUsername(masquerade, next);
 
   } else {
     accountAuth.username = account.username;
     accountAuth.name = account.name;
-    accountAuth.is_admin = account.is_admin;
+    accountAuth.account_level = account.account_level;
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
       if (undefined == activeDomainId) {
