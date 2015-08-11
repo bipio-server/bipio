@@ -351,7 +351,7 @@ Channel.rpc = function(rpcName, query, client, req, res) {
   }
 }
 
-Channel.pod = function(podName) {
+Channel.pod = function(podName, accountInfo) {
   var ret, tokens, schema;
   if (podName) {
     if (undefined != Channel.pods[podName]) {
