@@ -463,7 +463,7 @@ hub: {
       },
       msg : "Loop Detected"
     },
-
+/*
     {
     	validator : function(val, next) {
 
@@ -477,42 +477,35 @@ hub: {
         if (undefined != val.source) {
           for (var cid in val) {
             if (val.hasOwnProperty(cid)) {
-              // check channel exists
-              ok = (cid == 'source' || userChannels.isAvailable(cid));
-              if (ok) {
-                numEdges = val[cid].edges.length;
-                if (numEdges > 0) {
-                  for (var e = 0; e < numEdges; e++) {
-                    /*
-                    ok = userChannels.isAvailable(val[cid].edges[e]);
-                    if (!ok) {
-                      break;
-                    }
-                    */
-                    ok = app.helper.getRegUUID().test(val[cid].edges[e]);
-                    ok =false;
-                    if (!ok) {
-                      var pointerDetails=val[cid].edges[e].split(".");
-                      if ( pointerDetails.length >= 2 ){
-                        if ( this.getDao().pod(pointerDetails[0]) ){
-                          if ( this.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1]) ){
-                            ok=true;
-                          } else {
-                            ok=false;
-                            break;
-                          }
+
+              numEdges = val[cid].edges.length;
+              if (numEdges > 0) {
+                for (var e = 0; e < numEdges; e++) {
+                  ok = app.helper.getRegUUID().test(val[cid].edges[e]);
+                  ok =false;
+                  if (!ok) {
+                    var pointerDetails=val[cid].edges[e].split(".");
+                    if ( pointerDetails.length >= 2 ){
+                      if ( this.getDao().pod(pointerDetails[0]) ){
+                        if ( this.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1]) ){
+                          ok=true;
                         } else {
                           ok=false;
                           break;
                         }
+                      } else {
+                        ok=false;
+                        break;
                       }
-                    } else {
-                      ok=false;
-                      break;
                     }
+                  } else {
+                    ok=false;
+                    break;
                   }
                 }
-              } else if (!ok && hasRenderer) {
+              }
+
+              if (!ok && hasRenderer) {
                 ok = true;
               }
             }
@@ -529,6 +522,7 @@ hub: {
       },
       msg : 'Invalid, Inactive or Missing Channel In Hub'
     },
+*/
     {
       // ensure hub has a source edge
       validator : function(hub, next) {
