@@ -483,10 +483,12 @@ hub: {
                 numEdges = val[cid].edges.length;
                 if (numEdges > 0) {
                   for (var e = 0; e < numEdges; e++) {
+                    /*
                     ok = userChannels.isAvailable(val[cid].edges[e]);
                     if (!ok) {
                       break;
                     }
+                    */
                     ok = app.helper.getRegUUID().test(val[cid].edges[e]);
                     ok =false;
                     if (!ok) {

@@ -80,10 +80,13 @@ Channel.entitySchema = {
     required : true,
     writable: true,
     set : function(action) {
-      var podAction = this.getPodTokens(action);
+      var podAction = Channel.getPodTokens(action);
+      /*
       if (podAction.ok()) {
-        this.config = pods[podAction.pod].getConfigDefaults(podAction.action);
+        this.config = Channel.pods[podAction.pod].getConfigDefaults(podAction.action);
       }
+      */
+
       return action;
     },
     "default" : "",
@@ -95,7 +98,7 @@ Channel.entitySchema = {
 
     {
       validator : function(val, next) {
-        next( this.validAction(val) );
+        next( Channel.validAction(val) );
       },
       msg : 'Invalid Pod or Action'
     },
@@ -103,7 +106,7 @@ Channel.entitySchema = {
     {
       validator : function(val, next) {
         var ok = false;
-        if (this.validAction(this.action)) {
+        if (Channel.validAction(this.action)) {
           // validate the config for this action
           ok = true;
         }
@@ -512,27 +515,28 @@ Channel.getActionSchema = function() {
 }
 
 // @todo deprecate
-Channel.getPodTokens = function() {
+Channel.getPodTokens = function(action) {
   var ret = {
     ok : function() {
       return (undefined != this.pod);
     }
   };
-  if (this.action) {
-    var tokens = this.action.split('.');
+  action = action || this.action;
+  if (action) {
+    var tokens = action.split('.');
     if (tokens.length == 2) {
       ret.name = ret.pod = tokens[0];
       ret.action = tokens[1];
       ret._struct = Channel.pods[ret.pod];
       ret.getSchema = function(key) {
-        var ptr = JSON.parse(JSON.stringify(Channel.pods[this.pod].getSchema(this.action)));
+        var ptr = JSON.parse(JSON.stringify(Channel.pods[this.pod].getSchema(action)));
         if (key && ptr[key]) {
           return ptr[key];
         }
         return ptr;
-      };
+      }
       ret.isTrigger = function() {
-        return Channel.pods[this.pod].isTrigger(this.action);
+        return Channel.pods[this.pod].isTrigger(action);
       },
       // get all unique keys
       ret.getSingletonConstraints = function() {

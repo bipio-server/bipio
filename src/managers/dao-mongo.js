@@ -188,7 +188,7 @@ DaoMongo.prototype.registerModelClass = function(modelClass) {
 
   // Already registered? then skip
   if (undefined != container[modelName]) {
-    this._log('Overloading Model ' + modelName);
+    return;
   }
 
   container[modelName] = {};
@@ -449,7 +449,6 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
       }
 
       var mongoModel = self.toMongoModel(model);
-
 	  mongoModel.validate(function (err) {
 		if (err) {
           next(err, model.getEntityName(), err, 500);
