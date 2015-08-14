@@ -242,6 +242,33 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                         content_parts
                       );
                     }
+
+                  } else if (err) {
+                    var errStr = err.toString();
+
+                    app.logmessage('Channel Invoke Failure:' + invokeChannel.id);
+                    app.logmessage(err);
+
+                    app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+                      owner_id : invokeChannel.owner_id,
+                      bip_id : bip.id,
+                      code : 'bip_channnel_error',
+                      message : errStr,
+                      source : invokeChannel.id
+                    });
+
+                    var logModel = self._dao.modelFactory(
+                      'channel_log',
+                      {
+                        owner_id : invokeChannel.owner_id,
+                        channel_id : invokeChannel.id,
+                        transaction_id : clientStruct.id,
+                        code : 'channel_error',
+                        bip_id : bip.id,
+                        message : errStr
+                      }
+                    );
+                    self._dao.create(logModel);
                   }
                 });
             }
@@ -652,6 +679,7 @@ Bastion.prototype.processChannel = function(struct) {
             struct.client, // system imports
             struct.content_parts,
             function(err, exports, contentParts, transferredBytes) {
+
               if (!err && exports) {
 
                 var newImports = app._.clone(struct.imports)
