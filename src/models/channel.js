@@ -536,7 +536,7 @@ Channel.getPodTokens = function(action) {
         return ptr;
       }
       ret.isTrigger = function() {
-        return Channel.pods[this.pod].isTrigger(action);
+        return Channel.pods[ret.pod].isTrigger(action);
       },
       // get all unique keys
       ret.getSingletonConstraints = function() {

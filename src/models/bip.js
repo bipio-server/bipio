@@ -297,8 +297,8 @@ Bip.entitySchema = {
             podTokens;
 
             if (channel) {
-              podTokens = channel.getPodTokens();
-              ok = userChannels.test(cid) && podTokens.isTrigger();
+              podTokens = channel.action.split('.');
+              ok = channel && this.getDao().pod(podTokens[0]).isTrigger(podTokens[1]);
             }
           } else {
             podTokens = cid.split('.');
