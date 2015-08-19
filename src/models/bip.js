@@ -21,11 +21,11 @@
 
  */
  var async = require('async'),
- baseConverter = require('base-converter'),
- BipModel = require('./prototype.js').BipModel,
- Bip = Object.create(BipModel),
-//cronParser = require('cron-parser'),
-Rrecur = require('rrecur').Rrecur;
+   baseConverter = require('base-converter'),
+   BipModel = require('./prototype.js').BipModel,
+   Bip = Object.create(BipModel),
+  //cronParser = require('cron-parser'),
+  Rrecur = require('rrecur').Rrecur;
 
 // setters
 /**
@@ -48,6 +48,10 @@ Rrecur = require('rrecur').Rrecur;
   return '.' + ret + '_';
 }
 
+  // strict formatting of date string required for scheduler to work
+function removeOffset(time) {
+  return normedStart = time.substr(0, 16);
+}
 
 function setSchedule(schedule) {
 	var sched, recur, recurStr, startTime;
@@ -61,29 +65,23 @@ function setSchedule(schedule) {
 	// FuelBox UI tacks on trailing semicolon, which breaks ability for rrecurjs to create() an iterable object.
 	recurStr = (recurStr.charAt(recurStr.length-1) == ';') ? recurStr.slice(0,-1) : recurStr;
 
-	// strict formatting of date string required for scheduler to work
-	removeOffset = function(time) {
-    return time.substr(0, 16);
-  }
-
   startTime = removeOffset(schedule.startDateTime);
 
   sched = {
     dtstart: {
      zoneless: startTime,
      locale: schedule.timeZone.offset
-   },
-   rrule: Rrecur.parse(recurStr)
- }
+    },
+    rrule: Rrecur.parse(recurStr)
+   };
 
- schedule['sched'] = sched;
+  schedule['sched'] = sched;
 
- recur = Rrecur.create(sched, schedule.startTime, schedule.timeZone.offset);
- schedule['nextTimeToRun'] = Date.parse(recur.next());
- return schedule;
+  recur = Rrecur.create(sched, schedule.startTime, schedule.timeZone.offset);
+  schedule['nextTimeToRun'] = moment(recur.next()).unix() * 1000;
+
+  return schedule;
 }
-
-
 
 /**
  * Takes a time string
@@ -1094,12 +1092,11 @@ Bip.prePatch = function(patch, accountInfo, next) {
 Bip.isScheduled = function( next) {
 	var accountInfo = this.getAccountInfo();
 //	var timeNow =  app.helper.nowTimeTz(accountInfo.user.settings.timezone);
-var timeNow = new Date();
+  var timeNow = new Date();
 
 	// check if the set schedule dictates that it is time to trigger this bip
 	if (this.schedule && this.schedule.nextTimeToRun) {
-
-		if (timeNow.getTime() > this.schedule.nextTimeToRun.getTime()) {
+		if (timeNow.getTime() >= this.schedule.nextTimeToRun) {
 			next(true);
 		} else {
 			next(false);
@@ -1115,8 +1112,8 @@ Bip.hasSchedule = function() {
 
 Bip.getNextScheduledRunTime = function(options) {
 	var options = options || this.schedule.sched;
-	var recur = Rrecur.create(options, Date(this._last_run.getLastRun), this.schedule.timeZone.offset);
-	var nextRecurrence = Date.parse(recur.next());
+	var recur = Rrecur.create(options, new Date(), this.schedule.timeZone.offset);
+	var nextRecurrence = moment(recur.next()).unix() * 1000;
 	return nextRecurrence;
 }
 

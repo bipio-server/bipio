@@ -991,6 +991,36 @@ Dao.prototype.bipError = function(id, errState, next) {
 
 }
 
+Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next) {
+    var self = this,
+      payload = {
+        bip : bip,
+        socketTrigger : isSocket,
+        accountInfo : accountInfo
+      };
+
+    delete payload.bip.accountInfo;
+
+    // update runtime
+    self.updateColumn(
+      'bip',
+      bip.id,
+      {
+        '_last_run' : Number(app.moment().utc())
+      },
+      function(err, result) {
+        if (err) {
+          app.logmessage(err, 'error');
+        }
+      }
+    );
+
+    // clear bip error state
+    self.bipError(payload.bip.id, false, function() {
+      app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
+    });
+}
+
 /**
  *
  * Trigger all trigger bips
@@ -1008,8 +1038,8 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 
   if (filterExtra) {
     Object.keys(filterExtra).forEach( function(fKey) {
-		filterExtra.hasOwnProperty(fKey) ? filter[fKey] = filterExtra[fKey] : '';
-	});
+	 	  filterExtra.hasOwnProperty(fKey) ? filter[fKey] = filterExtra[fKey] : '';
+	  });
   }
 
   this.findFilter('bip', filter, function(err, results) {
@@ -1036,68 +1066,61 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
                   }
                 }
 
-		var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+          		  var bipModel = self.modelFactory('bip', bipResult, accountInfo);
 
-		// check expiry
-		bipModel.checkExpiry(function(expired) {
-			if (expired) {
-				bipModel.expire('expired', next);
-			} else {
-				//check scheduled
-				bipModel.isScheduled( function(scheduled) {
-					if (!force && !scheduled && !isSocket) {
-						next();
-					} else {
-						var payload = {
-							bip : app._.clone(bipResult)._doc,
-							socketTrigger : isSocket,
-							accountInfo : accountInfo
-						}
+                if (force) {
+                  self.triggerBip(
+                    app._.clone(bipResult)._doc,
+                    accountInfo,
+                    isSocket,
+                    next
+                  );
 
-						delete payload.bip.accountInfo;
+                  app.logmessage('DAO:Trigger:' + bipResult.id + ':FORCED');
 
-						// update runtime
-						self.updateColumn('bip', bipResult.id, { '_last_run' : Number(app.moment().utc()) }, function(err, result) {
-							if (err) {
-								app.logmessage(err, 'error');
-							}
+                } else {
+              		// check expiry
+              		bipModel.checkExpiry(function(expired) {
+              			if (expired) {
+              				bipModel.expire('expired', next);
+              			} else {
+              				//check scheduled
+              				bipModel.isScheduled( function(scheduled) {
+              					if (!scheduled && !isSocket) {
+              						next();
+              					} else {
+                          self.triggerBip(
+                            app._.clone(bipResult)._doc,
+                            accountInfo,
+                            isSocket,
+                            next
+                          );
 
-						});
+                          numProcessed++;
 
-            // clear bip error state
-            self.bipError(payload.bip.id, false, function() {
-              app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
-            });
+                          app.logmessage('DAO:Trigger:' + bipResult.id + ':' + numProcessed + ':' + numResults);
+                          if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
 
-						numProcessed++;
+                            self.updateScheduledBipRunTime(bipModel);
+                          }
 
-						app.logmessage('DAO:Trigger:' + payload.bip.id + ':' + numProcessed + ':' + numResults);
+                          if (numProcessed >= (numResults -1)) {
+                            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+                          }
+              					}
+              				});
+              			}
+            		  });
 
-						setTimeout(function() {
-
-							if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
-								self.updateScheduledBipRunTime(bipModel);
-							}
-
-							if (numProcessed >= (numResults -1)) {
-								next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-							}
-
-						}, 1000);
-					}
-				});
-			}
-		});
-	}
-	}
-    );
-    })(results[i]);
-
-	}
-	} else {
-		next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
-	}
-	});
+                }
+         	    }
+      	    });
+        })(results[i]);
+      }
+    } else {
+	    next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
+    }
+  });
 }
 
 Dao.prototype.getTriggerBipsByAction = function(actionPath, next, ownerId) {
@@ -1170,7 +1193,7 @@ Dao.prototype.updateScheduledBipRunTime = function(bip) {
 		if (err) {
 			self._log(err, 'error');
 		} else {
-			self._log(bip.id + ' set to run at ' + bip.schedule.nextTimeToRun);
+			self._log(bip.id + ' set to run at ' + nextTime);
 		}
 	});
 }
@@ -1805,7 +1828,7 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
                   (function(deferred, migration, runVersion, runVersionInt) {
 
                     migration.run(app, targetConfig, function(msg, msgLevel) {
-                      console.log('Running ' + runVersion);
+                      app.logmessage('Running ' + runVersion);
                       app.logmessage(msg || 'Done', msgLevel);
                       if ('error' === msgLevel) {
                         deferred.reject(msg);

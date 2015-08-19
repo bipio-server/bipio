@@ -30,7 +30,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 var app = {
   workerId : ':PID:' + process.pid
 },
-sugar       = require('sugar'),
+//sugar       = require('sugar'),
 util        = require('util'),
 underscore  = require('underscore'),
 winston     = require('winston'),

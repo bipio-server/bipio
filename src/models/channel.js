@@ -80,12 +80,11 @@ Channel.entitySchema = {
     required : true,
     writable: true,
     set : function(action) {
-      var podAction = Channel.getPodTokens(action);
-      /*
-      if (podAction.ok()) {
-        this.config = Channel.pods[podAction.pod].getConfigDefaults(podAction.action);
+      var pod = Channel.getPodTokens(action);
+
+      if (pod._struct) {
+        this.config = Channel.pods[pod.name].getConfigDefaults(pod.action);
       }
-      */
 
       return action;
     },
@@ -233,7 +232,6 @@ Channel.getActionTokens = function() {
 Channel._transform = function(adjacentExports, transforms) {
 
   var self = this,
-    pod = this.getPodTokens(),
     resolvedImports = {}; // final imports for the channel
 
   app._.each(transforms, function(transform, key) {
@@ -514,13 +512,9 @@ Channel.getActionSchema = function() {
   return null;
 }
 
-// @todo deprecate
 Channel.getPodTokens = function(action) {
-  var ret = {
-    ok : function() {
-      return (undefined != this.pod);
-    }
-  };
+  var ret = {};
+
   action = action || this.action;
   if (action) {
     var tokens = action.split('.');
@@ -528,30 +522,7 @@ Channel.getPodTokens = function(action) {
       ret.name = ret.pod = tokens[0];
       ret.action = tokens[1];
       ret._struct = Channel.pods[ret.pod];
-      ret.getSchema = function(key) {
-        var ptr = JSON.parse(JSON.stringify(Channel.pods[this.pod].getSchema(action)));
-        if (key && ptr[key]) {
-          return ptr[key];
-        }
-        return ptr;
-      }
-      ret.isTrigger = function() {
-        return Channel.pods[ret.pod].isTrigger(action);
-      },
-      // get all unique keys
-      ret.getSingletonConstraints = function() {
-        var schema = this.getSchema(),
-        constraints = {}, singleton = false;
-
-        for (key in schema.config.properties) {
-          if (schema.config.properties[key].unique) {
-            singleton = true;
-            constraints[key] = schema.config.properties;
-          }
-        }
-
-        return singleton ? constraints : null;
-      }
+      ret.isTrigger = Channel.pods[ret.pod].isTrigger(action);
     }
   }
   return ret;
@@ -616,27 +587,8 @@ Channel.getBips = function(channelId, accountInfo, next) {
   this._dao.getBipsByChannelId(channelId, accountInfo, next);
 }
 
-/**
- * Given a transformSource lookup, retrieves the default transform for this
- * channels configured pod.action
- *
- */
-Channel.getTransformDefault = function(transformSource) {
-  var transform,
-  action = this.getPodTokens();
-
-  if (action.ok()) {
-    transform = Channel.pods[action.pod].getTransformDefault(transformSource, action.action);
-  }
-
-  return transform;
-}
-
 Channel.getRendererUrl = function(renderer, accountInfo) {
-  var action = this.getPodTokens(),
-    rStruct,
-    ret,
-    cid = this.getIdValue();
+  var rStruct, ret, cid = this.getIdValue();
 
   var action = this.getActionSchema();
   if (cid && action && action.rpcs[renderer]) {

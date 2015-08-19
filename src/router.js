@@ -861,8 +861,8 @@ module.exports = {
                 res.status(404).end();
               } else {
                 var channel = dao.modelFactory('channel', result),
-                podTokens = channel.getPodTokens(),
-                pod = dao.pod(podTokens.pod);
+                  pod = channel.getPod();
+
                 pod.rpc(podTokens.action, method, req, restResponse(res), channel);
               }
             });
