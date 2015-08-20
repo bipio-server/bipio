@@ -83,7 +83,7 @@ Channel.entitySchema = {
       var pod = Channel.getPodTokens(action);
 
       if (pod._struct) {
-        this.config = Channel.pods[pod.name].getConfigDefaults(pod.action);
+//        this.config = Channel.pods[pod.name].getConfigDefaults(pod.action);
       }
 
       return action;

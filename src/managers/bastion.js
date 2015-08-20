@@ -712,7 +712,7 @@ Bastion.prototype.processChannel = function(struct) {
                   contentParts || struct.content_parts
                   );
               } else if (err) {
-                var errStr = err.toString();
+                var errStr = err.message ? err.message : err.toString();
 
                 app.logmessage('Channel Invoke Failure:' + channel.id);
                 app.logmessage(err);
