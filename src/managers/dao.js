@@ -584,6 +584,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     manifest : Object.keys(manifest),
     owner_id : bip.owner_id,
     owner_name : bip.accountInfo.user.name,
+    schedule : bip.schedule,
     slug : bip.slug
   };
 

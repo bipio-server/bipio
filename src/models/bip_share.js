@@ -178,6 +178,12 @@ function unEscapeDot(val) {
         return hub;
       },
     },
+    schedule: {
+      type: Object,
+      renderable: true,
+      writable: true,
+      default : {}
+    },
     search : {
       type : String,
       renderable : false,
