@@ -116,7 +116,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, accountLe
           owner_id : accountResult.id
         }, accountInfo);
 
-      self.create(accountAuth, function(err) {
+      self.create(accountAuth, function(err, modelName, authResult) {
         if (err) {
           next(err);
 
@@ -125,7 +125,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, accountLe
           var domain = self.modelFactory(
             'domain',
             {
-              name : (username + '.' + CFG.domain_public).replace(/:.*$/, ''),
+              name : (username + '.' + CFG.domain),
               type : 'custom',
               _available : true
             }, accountInfo);
@@ -154,7 +154,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, accountLe
                 }, accountInfo);
 
               self.create(accountOptions, function(err, modelName, result) {
-                next(err, accountResult);
+                next(err, authResult);
               });
             }
           });

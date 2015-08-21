@@ -10,9 +10,8 @@ function AuthModule(options) {
   this.options = options;
 }
 
-AuthModule.MSG_NOT_AUTHORIZED = MSG_NOT_AUTHORIZED;
-
 AuthModule.prototype = {
+  MSG_NOT_AUTHORIZED : MSG_NOT_AUTHORIZED,
   setDAO : function(dao) {
     this.dao = dao;
   }
