@@ -39,77 +39,10 @@ var accountId = process.argv[2],
   modelName = 'account_auth';
 
 dao.on('ready', function(dao) {
-	// retain this drop order!
-	var models = [
-		'bip',
-		'bip_log',
-		'bip_share',
-
-		'channel',
-		'channel_log',
-
-		'domain',
-
-		'account_auth',
-		'account_option',
-		'account'
-	],
-	filter = {
-		owner_id : accountId
-	}, modelName, callbacks = {};
-
-	for (var i = 0; i < models.length; i++) {
-
-		callbacks[models[i]] = (function(modelName, dao) {
-			if ('channels' === modelName) {
-				return function(next) {
-					dao.findFilter(modelName, filter, function(err, results) {
-						if (err) {
-							next(err);
-						} else {
-							var proc = 0, errStr = '';
-							for (var i = 0; i < results.length; i++) {
-								dao.remove(modelName, results[i].id, function(err) {
-									proc++;
-									if (err) {
-										errStr += err + ';';
-									}
-
-									if (proc >= (results.length - 1)) {
-										next(errStr, true);
-									}
-								});
-							}
-						}
-					});
-				}
-			} else {
-				return function(next) {
-					if ('account' === modelName) {
-						dao.removeFilter(modelName, { "id" : filter.owner_id }, next);
-					} else {
-						dao.removeFilter(modelName, filter, next);
-					}
-				}
-			}
-		})(models[i], dao);
-	}
-
-
-	async.series(callbacks, function(err, results) {
+	dao.removeUser(accountId, function(err) {
 		if (err) {
 			console.error(err);
 		}
-		for (var k in results) {
-			if (results.hasOwnProperty(k)) {
-				if (results[k]) {
-					console.log(results[k][0], results[k][1]);
-				} else {
-					console.log(k + ' : ', results[k]);
-				}
-			}
-		}
 		process.exit(0);
 	});
-
 });

@@ -20,10 +20,13 @@
  *
  */
 
- var path = require('path');
+var path = require('path'),
+  getopt = require('posix-getopt'),
+  option,
+  parser = new getopt.BasicParser('f:(forks)', process.argv);
 
- process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
- process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
+process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
+process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 
 // includes
@@ -51,6 +54,14 @@ GLOBAL.app = app;
 GLOBAL.CFG = envConfig;
 GLOBAL.DEFS = defs;
 GLOBAL.SERVER_ROOT = path.resolve(__dirname);
+
+while ((option = parser.getopt()) !== undefined) {
+  switch (option.option) {
+    case 'f' :
+      GLOBAL.CFG.server.forks = parseInt(option.optarg);
+      break;
+  }
+}
 
 // attach general helpers to the app
 app.helper = helper;

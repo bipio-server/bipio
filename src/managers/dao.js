@@ -112,10 +112,11 @@ Dao.prototype._createUser = function(username, emailAddress, password, accountLe
         {
           username : username,
           password : password,
-          type : 'token'
+          type : 'token',
+          owner_id : accountResult.id
         }, accountInfo);
 
-      self.create(accountAuth, function(err, modelName, accountResult) {
+      self.create(accountAuth, function(err) {
         if (err) {
           next(err);
 
@@ -180,10 +181,10 @@ Dao.prototype.createUser = function(username, emailAddress, password, next, acco
         next('Username ' + username + ' already exists');
       } else {
         if (password) {
-          self._createUser(username, emailAddress, password, next, accountLevel ? accountLevel : 'user');
+          self._createUser(username, emailAddress, password, accountLevel ? accountLevel : 'user', next);
         } else {
           crypto.randomBytes(16, function(ex, buf) {
-            self._createUser(username, emailAddress, buf.toString('hex'), next, accountLevel ? accountLevel : 'user');
+            self._createUser(username, emailAddress, buf.toString('hex'), accountLevel ? accountLevel : 'user', next);
           });
         }
       }
@@ -191,20 +192,119 @@ Dao.prototype.createUser = function(username, emailAddress, password, next, acco
   }
 }
 
+Dao.prototype.removeUser = function(accountId, next) {
+  var self = this;
+  // retain this drop order!
+  var models = [
+    'bip',
+    'bip_log',
+    'bip_share',
+
+    'channel',
+    'channel_log',
+
+    'domain',
+
+    'account_auth',
+    'account_option',
+    'account'
+  ],
+  filter = {
+    owner_id : accountId
+  },
+  modelName = 'account_auth',
+  callbacks = {};
+
+  for (var i = 0; i < models.length; i++) {
+
+    callbacks[models[i]] = (function(modelName, dao) {
+      if ('channels' === modelName) {
+        return function(next) {
+          self.findFilter(modelName, filter, function(err, results) {
+            if (err) {
+              next(err);
+            } else {
+              var proc = 0, errStr = '';
+              for (var i = 0; i < results.length; i++) {
+                self.remove(modelName, results[i].id, function(err) {
+                  proc++;
+                  if (err) {
+                    errStr += err + ';';
+                  }
+
+                  if (proc >= (results.length - 1)) {
+                    next(errStr, true);
+                  }
+                });
+              }
+            }
+          });
+        }
+      } else {
+        return function(next) {
+          if ('account' === modelName) {
+            self.removeFilter(modelName, { "id" : filter.owner_id }, next);
+          } else {
+            self.removeFilter(modelName, filter, next);
+          }
+        }
+      }
+    })(models[i], self);
+  }
+
+  async.series(callbacks, function(err, results) {
+    if (err) {
+      next(err);
+    } else {
+      for (var k in results) {
+        if (results.hasOwnProperty(k)) {
+          if (results[k]) {
+            app.logmessage(results[k][0] + ':' + results[k][1].status);
+          } else {
+            app.logmessage(k + ' : ', results[k]);
+          }
+        }
+      }
+      next();
+    }
+  });
+}
+
+/*
+ * Regenerates a token for an owner_id
+ */
+Dao.prototype.regenToken = function(ownerId, next) {
+  var self = this;
+
+  crypto.randomBytes(16, function(ex, buf) {
+    var token = buf.toString('hex');
+    self.updateProperties(
+      'account_auth',
+      {
+        owner_id : ownerId,
+        type : 'token'
+      },
+      {
+        password : token
+      },
+      function(err) {
+        next(err, token);
+      }
+    );
+  });
+
+}
+
 Dao.prototype.checkUsername = function(username,next) {
   var self = this;
-  if (username) {
-    // check user exists
-	    self.find('account', { username : username }, function(err, result) {
-		      if (err) {
-		    	  next(err);
-		      } else if (result) {
-		        next(false,true);
-		      }
-		      next(false,false);
-
-    });
-  }
+  // check user exists
+  self.find('account', { username : username }, function(err, result) {
+    if (err) {
+  	  next(err);
+    } else if (result) {
+      next(false,true);
+    }
+  });
 }
 
 /**

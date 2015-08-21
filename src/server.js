@@ -195,13 +195,12 @@ restapi.use(passport.session());
 restapi.set('jsonp callback', true );
 restapi.disable('x-powered-by');
 
-
 //
 // ------ START CLUSTER
 //
 if (cluster.isMaster) {
   // when user hasn't explicitly configured a cluster size, use 1 process per cpu
-  var forks = GLOBAL.CFG.server.forks ? GLOBAL.CFG.server.forks : require('os').cpus().length;
+  var forks = (undefined !== GLOBAL.CFG.server.forks) ? GLOBAL.CFG.server.forks : require('os').cpus().length;
   app.logmessage('BIPIO:STARTED:' + new Date());
   app.logmessage('Node v' + process.versions.node);
   app.logmessage('Starting ' + forks + ' fork(s)');
@@ -210,7 +209,7 @@ if (cluster.isMaster) {
     cluster.fork();
   }
 
-  app.dao.on('ready', function(dao) {
+  app.dao.on('ready12', function(dao) {
     var crons = GLOBAL.CFG.crons;
 
     // Network chords and stats summaries
@@ -295,10 +294,10 @@ if (cluster.isMaster) {
     app.logmessage('Worker:' + worker.workerID + ':Disconnect');
     cluster.fork();
   });
+}
+if (!cluster.isMaster || !GLOBAL.CFG.server.forks) {
 
-} else {
-
-  workerId = cluster.worker.workerID;
+  workerId = cluster.worker ? cluster.worker.workerID : process.pid;
   app.logmessage('BIPIO:STARTED:' + new Date());
   helper.tldtools.init(
     function() {

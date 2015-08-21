@@ -38,61 +38,14 @@ var accountId = process.argv[2],
   modelName = 'account_auth';
 
 dao.on('ready', function(dao) {
-  crypto.randomBytes(16, function(ex, buf) {
-    var token = buf.toString('hex');
-    setTimeout(function() {
-      dao.find(
-      modelName,
-      {
-        owner_id : accountId,
-        type : 'token'
-      },
-      function(err, result) {
-        if (err) {
-          console.log(err);
-          console.log(result);
-        } else {
-          result.password = token;
-
-          /*
-          dao.update(
-            modelName,
-            result.id,
-            result,
-            function(err, result) {
-              if (err) {
-                console.log(err);
-                console.log(result);
-              } else {
-                console.log('new token : ' + token)
-                console.log('done');
-                process.exit(0);
-              }
-            }
-          );
-          */
-          // DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
-
-          dao.updateProperties(
-            modelName,
-            result.id,
-            {
-              password : token
-            },
-            function(err, result) {
-              if (err) {
-                console.log(err);
-                console.log(result);
-              } else {
-                console.log('new token : ' + token)
-                console.log('done');
-                process.exit(0);
-              }
-            }
-          );
-        }
-      }
-    );
-    }, 2000);
+  dao.regenToken(accountId, function(err, token) {
+    if (err) {
+      console.log(err);
+      console.log(result);
+    } else {
+      console.log('new token : ' + token)
+      console.log('done');
+      process.exit(0);
+    }
   });
 });

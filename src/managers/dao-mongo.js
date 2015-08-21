@@ -334,7 +334,7 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
       }
     }
 
-    if (undefined != accountInfo) {
+    if (undefined != accountInfo && accountInfo.user && accountInfo.user.id) {
       propArgs['owner_id'] = {
         value: accountInfo.user.id,
         enumerable: true
@@ -1118,7 +1118,11 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
     setProperties = {},
     value;
 
-  updateFilter[model.getEntityIndex()] = id;
+  if (app.helper.isObject(id)) {
+    updateFilter = id;
+  } else {
+    updateFilter[model.getEntityIndex()] = id;
+  }
 
   // cast to mongoose model
   var mongoModel = this.toMongoModel(model);
@@ -1138,18 +1142,5 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
 
   mongoose.model(model.getEntityName()).update( updateFilter, updateCols ).exec(next);
 };
-
-DaoMongo.prototype.copyTo = function(fromCollection, toCollection, next) {
-
-  console.log(mongoose.connection.collections[fromCollection].prototype);
-/*
-//console.log(this.models[fromCollection]);
-  collection.copyTo(toCollection, function() {
-    console.log(arguments);
-    next.apply(next, arguments);
-  })
-*/
-}
-
 
 module.exports = DaoMongo;

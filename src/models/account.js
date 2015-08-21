@@ -92,7 +92,7 @@ Account.entitySchema = {
       {
         validator : function(val, next) {
           next(
-            -1 !== app._.values().indexOf(val)
+            -1 !== app._.values(GLOBAL.DEFS.ACCOUNT_LEVEL).indexOf(val)
           );
         },
         msg : 'Invalid Account Level'
