@@ -817,6 +817,10 @@ Bip.exports = {
       'body' : {
         type : 'string',
         description: 'Message Body'
+      },
+      'rawBody' : {
+        type : 'string',
+        description: 'Raw Body'
       }
     },
     definitions : {

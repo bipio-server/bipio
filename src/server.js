@@ -157,7 +157,6 @@ restapi.use(function(err, req, res, next) {
 
 restapi.use(bodyParser.urlencoded({ extended : true }));
 
-
 // if there's no content type set, try to parse it as json
 restapi.use(function(req, res, next) {
   if (!req.headers['content-type'] && ('PUT' === req.method || 'POST' === req.method || 'PATCH' === req.method) ) {
@@ -167,6 +166,19 @@ restapi.use(function(req, res, next) {
 });
 
 restapi.use(bodyParser.json());
+
+// if there looks to be a body that's a json string, then try
+// casting it to json
+restapi.use(function(req, res, next) {
+  if (req.body && req.body.body && !app.helper.isObject(req.body.body)) {
+    try {
+      req.body.body = JSON.parse(req.body.body);
+    } catch (e) {
+
+    }
+  }
+  next();
+});
 
 restapi.use(jwtConfirm);
 

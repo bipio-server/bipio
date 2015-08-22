@@ -560,8 +560,7 @@ module.exports = {
 
             exports.source = ('GET' === req.method) ? req.query : req.body;
 
-            //exports.source._body = /xml/.test(utils.mime(req)) ? req.rawBody : req.body;
-            exports.source._body = req.rawBody;
+            exports.source.rawBody = req.rawBody;
           }
 
           var restReponse = true;
