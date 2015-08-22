@@ -184,6 +184,17 @@ function unEscapeDot(val) {
       writable: true,
       default : {}
     },
+    exports : { // user timezone
+      type : Object,
+      renderable : true,
+      writable : true,
+      get : function(val) {
+        return val ? JSON.parse(val) : val;
+      },
+      set : function(val) {
+        return val ? JSON.stringify(val) : val;
+      }
+    },
     search : {
       type : String,
       renderable : false,
