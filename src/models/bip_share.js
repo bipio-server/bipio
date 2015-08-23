@@ -94,6 +94,11 @@ function unEscapeDot(val) {
       renderable: true,
       writable: false
     },
+    user_name : {
+      type: String,
+      renderable: true,
+      writable: false
+    },
     manifest : {
       type: Array,
       renderable: true,

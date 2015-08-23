@@ -686,10 +686,11 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     manifest : Object.keys(manifest),
     owner_id : bip.owner_id,
     owner_name : bip.accountInfo.user.name,
+    user_name : bip.accountInfo.user.username,
     schedule : bip.schedule,
     slug : bip.slug
   };
-
+console.log(bip.accountInfo.user);
   bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
 
   // find & update or create for bip/owner pair
@@ -1936,7 +1937,6 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
                       if ('error' === msgLevel) {
                         deferred.reject(msg);
                       } else {
-
                         // save migration
                         self.create(
                           self.modelFactory('migration', {
