@@ -690,7 +690,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     schedule : bip.schedule,
     slug : bip.slug
   };
-console.log(bip.accountInfo.user);
+
   bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
 
   // find & update or create for bip/owner pair
