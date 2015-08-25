@@ -1140,7 +1140,7 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
     "$set" : app._.clone(setProperties)
   }
 
-  mongoose.model(model.getEntityName()).update( updateFilter, updateCols ).exec(next);
+  mongoose.model(model.getEntityName()).update( updateFilter, updateCols, { multi : true } ).exec(next);
 };
 
 module.exports = DaoMongo;

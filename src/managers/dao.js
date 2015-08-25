@@ -786,6 +786,16 @@ Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
   this.list('bip_share', null, pageSize, page, orderBy, filter, next);
 }
 
+Dao.prototype.incShareCount = function(shareId) {
+  this.accumulate(
+    'bip_share',
+    {
+      id : shareId
+    },
+    'installs'
+  );
+}
+
 /**
  * Gets a transformation hint for the requested adjacent channels
  */

@@ -208,7 +208,13 @@ function unEscapeDot(val) {
     votes: {
       type: Number,
       renderable: true,
-      writable: true,
+      writable: false,
+      "default" : 0
+    },
+    installs: {
+      type: Number,
+      renderable: true,
+      writable: false,
       "default" : 0
     },
     created : {

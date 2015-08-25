@@ -999,6 +999,10 @@ module.exports = {
                 }
               });
 
+            } else if (resourceId == 'inc' && subResourceId) {
+              var accountInfo = req.remoteUser;
+              dao.incShareCount(subResourceId, accountInfo);
+              restResponse(res)();
             } else {
               var filter = {
                 'owner_id' : accountInfo.getId(),
@@ -1025,13 +1029,10 @@ module.exports = {
             }
           }
         } else if (method == 'unshare' && resourceId) {
-          var accountInfo = req.remoteUser,
-          filter = {
-            'owner_id' : accountInfo.getId(),
-            'id' : resourceId
-          };
 
           dao.unshareBip(resourceId, accountInfo, restResponse(res));
+
+
 
         // alias into account options.  Returns RESTful account_options resource
         } else if (method == 'set_default' && resourceId) {
