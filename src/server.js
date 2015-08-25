@@ -221,7 +221,7 @@ if (cluster.isMaster) {
     cluster.fork();
   }
 
-  app.dao.on('ready12', function(dao) {
+  app.dao.on('ready', function(dao) {
     var crons = GLOBAL.CFG.crons;
 
     // Network chords and stats summaries
