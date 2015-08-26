@@ -42,6 +42,8 @@
  *  updateColumn(modelName, filter, props, next)
  *  expire(modelName, maxTime, next)
  *  aggregate(modelName, filter, next)
+ *  count(modelName, filter, next)
+ *
  * Factories
  *
  *  modelFactory(modelName, properties, accountInfo, tainted) //
@@ -932,6 +934,19 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
     }
   });
 };
+
+DaoMongo.prototype.count = function(modelName, filter, next) {
+  var model = mongoose.model(modelName),
+    countQuery = model.find( filter );
+
+  // count
+  countQuery.count(function(err, count) {
+    if (err) {
+      app.logmessage(err, 'error');
+    }
+    next(err, count);
+  });
+}
 
 DaoMongo.prototype.find = function(modelName, filter, next) {
   var self = this;
