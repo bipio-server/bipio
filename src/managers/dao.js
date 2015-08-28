@@ -1444,7 +1444,7 @@ Dao.prototype.expireAll = function(next) {
 // --------------------------------------------------------------- CHANNELS&PODS
 //
 // POD RPC
-Dao.prototype.pod = function(podName) {
+Dao.prototype.pod = function(podName, accountInfo) {
   return this.models['channel']['class'].pod(podName);
 }
 

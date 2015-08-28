@@ -287,7 +287,8 @@ Bip.entitySchema = {
         if (this.type == 'trigger') {
           ok = false;
           var cid = val.channel_id,
-            userChannels = this.getAccountInfo().user.channels,
+            accountInfo = this.getAccountInfo(),
+            userChannels = accountInfo.user.channels,
             channel, podTokens, pod;
 
           if (app.helper.getRegUUID().test(cid)) {
@@ -296,12 +297,14 @@ Bip.entitySchema = {
 
             if (channel) {
               podTokens = channel.action.split('.');
-              ok = channel && this.getDao().pod(podTokens[0]).isTrigger(podTokens[1]);
+              pod = this.getDao().pod(podTokens[0], accountInfo);
+
+              ok = channel && pod && pod.isTrigger(podTokens[1]);
             }
           } else {
             podTokens = cid.split('.');
 
-            pod = this.getDao().pod(podTokens[0]);
+            pod = this.getDao().pod(podTokens[0], accountInfo);
 
             if (pod) {
               ok = pod.isTrigger(podTokens[1])
@@ -375,13 +378,11 @@ hub: {
 
         if ( hub.hasOwnProperty(newSrc) ) {
           for (var cid in hub[newSrc].transforms) {
-
             newCid = escapeDot(cid);
             hub[newSrc].transforms[newCid] = hub[newSrc].transforms[cid];
             if (newCid !== cid) {
               delete hub[newSrc].transforms[cid];
             }
-
           }
         }
       }
@@ -461,15 +462,16 @@ hub: {
       },
       msg : "Loop Detected"
     },
-/*
+
     {
     	validator : function(val, next) {
-
         var ok = false,
-        userChannels = this.getAccountInfo().user.channels,
-        numEdges,
-        transforms,
-        hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
+          pod,
+          accountInfo = this.getAccountInfo(),
+          userChannels = accountInfo.user.channels,
+          numEdges,
+          transforms,
+          hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
 
         // check channels + transforms make sense
         if (undefined != val.source) {
@@ -479,23 +481,33 @@ hub: {
               numEdges = val[cid].edges.length;
               if (numEdges > 0) {
                 for (var e = 0; e < numEdges; e++) {
-                  ok = app.helper.getRegUUID().test(val[cid].edges[e]);
-                  ok =false;
-                  if (!ok) {
+                  ok = false;
+                  if (!app.helper.getRegUUID().test(val[cid].edges[e])) {
+
                     var pointerDetails=val[cid].edges[e].split(".");
+
                     if ( pointerDetails.length >= 2 ){
-                      if ( this.getDao().pod(pointerDetails[0]) ){
-                        if ( this.getDao().pod(pointerDetails[0]).getAction(pointerDetails[1]) ){
+                      pod = this.getDao().pod(pointerDetails[0], accountInfo);
+
+                      if ( pod ) {
+
+                        if ( pod.getAction(pointerDetails[1]) ){
                           ok=true;
+
                         } else {
+
                           ok=false;
                           break;
                         }
+
                       } else {
                         ok=false;
                         break;
                       }
                     }
+                  } else if (userChannels.get(cid)) {
+                    ok = true;
+
                   } else {
                     ok=false;
                     break;
@@ -520,7 +532,7 @@ hub: {
       },
       msg : 'Invalid, Inactive or Missing Channel In Hub'
     },
-*/
+
     {
       // ensure hub has a source edge
       validator : function(hub, next) {
