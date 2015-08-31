@@ -36,13 +36,51 @@ if (!process.argv[2]) {
 var accountId = process.argv[2],
   bootstrap = require(__dirname + '/../src/bootstrap'),
   dao = bootstrap.app.dao,
-  modelName = 'account_auth';
+  acctSearch = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(accountId),
+  emailSearch = -1 !== accountId.indexOf('@');
+
+function accountQuery(accountId) {
+  dao.removeUser(
+  	accountId,
+    function(err, result) {
+      if (err || !result) {
+        console.log(err);
+        if (!result) {
+          console.log('account id not found');
+        }
+        process.exit(0);
+      } else {
+      	console.log('removed user');
+        process.exit(0);
+      }
+    }
+  );
+}
 
 dao.on('ready', function(dao) {
-	dao.removeUser(accountId, function(err) {
-		if (err) {
-			console.error(err);
-		}
-		process.exit(0);
-	});
+  if (acctSearch) {
+    accountQuery(accountId);
+  } else {
+    var filter = {};
+    if (emailSearch) {
+      filter.email_account = accountId;
+    } else {
+      filter.username = accountId;
+    }
+
+    dao.find(
+      'account',
+      filter,
+      function(err, result) {
+        if (err || !result) {
+          if (!result) {
+            console.log('account id not found');
+          }
+          process.exit(0);
+        } else {
+          accountQuery(result.id);
+        }
+      }
+    );
+  }
 });

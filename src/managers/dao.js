@@ -154,7 +154,7 @@ Dao.prototype._createUser = function(username, emailAddress, password, accountLe
                 }, accountInfo);
 
               self.create(accountOptions, function(err, modelName, result) {
-                next(err, authResult);
+                next(err, authResult, accountLevel);
               });
             }
           });
