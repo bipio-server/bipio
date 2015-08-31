@@ -1079,6 +1079,7 @@ Dao.prototype.bipLog = function(payload) {
   modelName = 'bip_log';
 
   model = self.modelFactory(modelName, payload);
+  model.created = new Date().valueOf();
   self.create(model, function(err, result) {
     if (err) {
       app.logmessage(err, 'error');
