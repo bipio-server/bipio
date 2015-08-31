@@ -191,7 +191,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
 
             app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
               owner_id : result.owner_id,
-              bip_id : jobPacket.data.id,
+              bip_id : bip.id,
               code : 'bip_invoke'
             });
 
