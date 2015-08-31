@@ -298,13 +298,7 @@ Dao.prototype.regenToken = function(ownerId, next) {
 Dao.prototype.checkUsername = function(username,next) {
   var self = this;
   // check user exists
-  self.find('account', { username : username }, function(err, result) {
-    if (err) {
-  	  next(err);
-    } else if (result) {
-      next(false,true);
-    }
-  });
+  self.find('account', { username : username }, next);
 }
 
 /**
@@ -1134,6 +1128,8 @@ Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next) {
     self.bipError(payload.bip.id, false, function() {
       app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
     });
+
+    next();
 }
 
 /**
