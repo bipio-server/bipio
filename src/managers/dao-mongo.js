@@ -721,12 +721,21 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
   var self = this;
 
   var MongoClass = mongoose.model(model.getEntityName());
-
-  var findObject = self.getObjectIdFilter({
-    id : modelId
-  }, accountInfo);
-
-  MongoClass.findOne(findObject, function (err, result) {
+  
+  var filter = {};
+  
+  if(!app.helper.getRegUUID().test(modelId)) {
+	  filter.name = modelId;
+  } else {
+	  filter.id = modelId;
+  }
+  
+  if (accountInfo) {
+    // find with the owner id filter for the authenticated user
+    filter.owner_id = accountInfo.user.id
+  }
+  
+  MongoClass.findOne(filter, function (err, result) {
     var loadedModel;
     if (err) {
       self._log('Error: get(): ' + err);
