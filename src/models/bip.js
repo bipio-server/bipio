@@ -159,6 +159,10 @@ Bip.links = function(accountInfo) {
       }
     };
 
+    if (this.exports) {
+      schema.schema = this.exports;
+    }
+
     for (var sCID in this.hub) {
       if (this.hub.hasOwnProperty(sCID) && this.hub[sCID].transforms) {
         for (var eCID in this.hub[sCID].transforms) {
