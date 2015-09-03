@@ -56,7 +56,7 @@ function removeOffset(time) {
 function setSchedule(schedule) {
   	var sched, recur, recurStr, startTime;
 
-  if (schedule && app.helper.isObject(shedule) && Object.keys(shedule)) {
+  if (schedule && app.helper.isObject(schedule) && Object.keys(schedule)) {
   	recurStr = schedule.recurrencePattern;
 
     if (!schedule.startDateTime.trim()) {
