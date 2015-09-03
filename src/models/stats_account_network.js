@@ -31,7 +31,7 @@ StatsAccountNetwork.entitySchema = {
         writable: false
     },
     day: {   // day
-        type: String,
+        type: Number,
         renderable: true,
         writable: false
     },
@@ -55,7 +55,6 @@ StatsAccountNetwork.entitySchema = {
 StatsAccountNetwork.compoundKeyConstraints = {
     owner_id : 1,
     day : 1
-
 };
 
 module.exports.StatsAccountNetwork = StatsAccountNetwork;

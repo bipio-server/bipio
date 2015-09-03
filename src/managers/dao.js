@@ -1685,7 +1685,7 @@ Dao.prototype.setNetworkChordStat = function(ownerId, newNetwork, next) {
   var nowDay = helper.nowDay(),
   filter = {
     owner_id : ownerId,
-    day : nowDay
+    day : parseInt(nowDay)
   },
   self = this,
   model,

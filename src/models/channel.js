@@ -654,7 +654,7 @@ Channel.links = function( accountInfo ) {
 }
 
 Channel.isAvailable = function() {
-  return this._available;
+  return false === this._available ? false : true;
 }
 
 // register pods
