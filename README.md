@@ -21,7 +21,7 @@ bip.io is a nodejs based web automation framework that runs 'bips'. A Bip is a w
 
 Bips can take actions in sequence or in parallel, and chain web services together as you like. They can be put to work via Web Hooks, Email or Trigger when something happens.
 
-bip.io can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your [Rasberry Pi](http://www.raspberrypi.org/).
+bip.io can be installed alongside your existing open source app or prototype for out-of-band message transformation, feed aggregation, queuing, social network fanout or whatever you like, even on your [Raspberry Pi](http://www.raspberrypi.org/).
 
 This server software is a RESTful JSON API supporting account level namespacing and multiple domains ([fqdn](http://en.wikipedia.org/wiki/Fully_qualified_domain_name)) per account.  Clients authenticate over HTTP Basic.
 
