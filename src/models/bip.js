@@ -181,6 +181,11 @@ Bip.links = function(accountInfo) {
                       type : "string",
                       name : key
                     };
+
+                    if (!schema.schema.required) {
+                      schema.schema.required = [];
+                    }
+
                     schema.schema.required.push(key);
                   }
                 }

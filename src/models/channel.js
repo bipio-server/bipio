@@ -426,6 +426,7 @@ Channel.getEmitterList = function() {
 Channel.postSave = function(accountInfo, next, isNew) {
   var tTokens = this.action.split('.'),
   podName = tTokens[0], action = tTokens[1],
+  callMode = isNew ? 'setup' : 'update',
   self = this, authType =  Channel.pods[podName].getAuthType();
 
   if (undefined == podName || undefined == action) {
@@ -459,13 +460,13 @@ Channel.postSave = function(accountInfo, next, isNew) {
       } else {
         var auth = {};
         auth[authType] = authStruct;
-        Channel.pods[podName].setup(action, self, accountInfo, auth, function(err) {
+        Channel.pods[podName][callMode](action, self, accountInfo, auth, function(err) {
           next(err, 'channel', self);
         });
       }
     });
   } else {
-    Channel.pods[podName].setup(action, this, accountInfo, function(err) {
+    Channel.pods[podName][callMode](action, this, accountInfo, function(err) {
       next(err, 'channel', self);
     });
   }
