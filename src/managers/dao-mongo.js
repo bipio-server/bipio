@@ -721,20 +721,20 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
   var self = this;
 
   var MongoClass = mongoose.model(model.getEntityName());
-  
+
   var filter = {};
-  
+
   if(!app.helper.getRegUUID().test(modelId)) {
 	  filter.name = modelId;
   } else {
 	  filter.id = modelId;
   }
-  
+
   if (accountInfo) {
     // find with the owner id filter for the authenticated user
     filter.owner_id = accountInfo.user.id
   }
-  
+
   MongoClass.findOne(filter, function (err, result) {
     var loadedModel;
     if (err) {
@@ -970,6 +970,16 @@ DaoMongo.prototype.find = function(modelName, filter, next) {
 DaoMongo.prototype.findFilter = function(modelName, filter, next, projection) {
   var self = this;
   mongoose.model(modelName).find(filter, projection || {}, function (err, result) {
+    if (err) {
+      self._log('Error: findFilter(): ' + err, 'error');
+    }
+    next(err, result);
+  });
+};
+
+DaoMongo.prototype.findDistinct = function(modelName, filter, attribute, next) {
+  var self = this;
+  mongoose.model(modelName).find(filter).distinct(attribute, function (err, result) {
     if (err) {
       self._log('Error: findFilter(): ' + err, 'error');
     }
