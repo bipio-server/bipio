@@ -690,7 +690,7 @@ module.exports = {
               if (pod && pod.getAction(tokens[1])) {
                 // check for RPC name and required fields
                 action = pod.getAction(tokens[1]);
-                if (action && action.rpcs[req.params.renderer]) {
+                if (action && action.rpcs && action.rpcs[req.params.renderer]) {
 
                   if (action.rpcs[req.params.renderer].required
                     && action.rpcs[req.params.renderer].required.length
@@ -701,15 +701,22 @@ module.exports = {
                     res.status(400).send({ message : 'Missing Required Fields'});
                     return;
                   }
+                  ok = true;
 
+                } else if ('invoke' === req.params.renderer) {
+
+                  ok = true;
+                }
+
+                if (ok) {
                   result = {
                     'id' : req.params.channel_id,
                     'action' : tokens[0] + '.' + tokens[1],
                     'owner_id' : req.remoteUser.getId(),
                     'config' : {}
                   };
-                  ok = true;
                 }
+
               }
             }
           } else {
