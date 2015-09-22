@@ -938,7 +938,7 @@ Dao.prototype.reduceTransformDefaults = function(next) {
 					return lodash.find(uTransforms, el[0]);
 				})
 				.map( function(el) {
-					return Object.values(el);
+					return _.values(el);
 				})
 				.flatten()
 				.map( function(el) {
@@ -1571,6 +1571,42 @@ Dao.prototype.updateChannelIcon = function(channel, URL) {
       console.log(arguments);
     }
   );
+}
+
+/*
+ *
+ */
+Dao.prototype.getChannel = function(id, accountInfo, next, configOverride) {
+  if (app.helper.regUUID.test(id) ) {
+    this.find(
+      'channel',
+      {
+        id : id
+      },
+      function(err, result) {
+        if (err) {
+          next(err);
+        } else if (result) {
+          if (configOverride) {
+            result.config = configOverride;
+          }
+          next(false, result);
+        } else {
+          next();
+        }
+      }
+    );
+  } else {
+    var tokens = id.split('.'),
+      result = {
+        'id' : id,
+        'action' : tokens[0] + '.' + tokens[1],
+        'owner_id' : accountInfo.user.id,
+        'config': configOverride ? configOverride : {}
+      };
+
+    next(false, result);
+  }
 }
 
 // --------------------------------------------------------------------- UTILITY

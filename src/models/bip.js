@@ -889,7 +889,7 @@ if (CFG.server.smtp_bips) {
 Bip._createChannelIndex = function() {
   // create channel index
   var channels = [];
-  if ('trigger' === this.type && this.config.channel_id && '' !== this.config.channel_id) {
+  if (this.config.channel_id && '' !== this.config.channel_id) {
     channels.push(this.config.channel_id);
   }
 
@@ -1065,14 +1065,33 @@ Bip.preRemove = function(id, accountInfo, next) {
   });
 }
 
+Bip._postSaveChannels = function(accountInfo) {
+  var self = this;
+
+  for (var i = 0; i < this._channel_idx.length; i++) {
+    self._dao.getChannel(
+      this._channel_idx[i],
+      accountInfo,
+      function(err, channel) {
+        if (!err && channel) {
+          self._dao.modelFactory('channel', channel).postSave(accountInfo, function() {});
+        }
+      },
+      this.config && this.config.channel_id && this.config.channel_id === this._channel_idx[i]
+        ? this.config.config
+        : null
+    );
+  }
+}
+
 Bip.postSave = function(accountInfo, next, isNew) {
+  var self = this;
 
   this.normalizeTransformDefaults(accountInfo, function(payload) {
     if (payload.transform && Object.keys(payload.transform).length > 0) {
       app.bastion.createJob(DEFS.JOB_BIP_SET_DEFAULTS, payload);
     }
   });
-
 
   // create metric updates jobs
   if (isNew) {
@@ -1093,11 +1112,16 @@ Bip.postSave = function(accountInfo, next, isNew) {
   }
 
   next(false, this.getEntityName(), this);
+
+  accountInfo.bip = this;
+
+  this._postSaveChannels(accountInfo);
 };
 
 
 // ensure we have an up to date channel index
 Bip.prePatch = function(patch, accountInfo, next) {
+  var self = this;
 
   for (var k in patch) {
     if (patch.hasOwnProperty(k)) {
@@ -1113,6 +1137,10 @@ Bip.prePatch = function(patch, accountInfo, next) {
   patch._channel_idx = this._channel_idx;
 
   next(false, this.getEntityName(), patch);
+
+  accountInfo.bip = this;
+
+  this._postSaveChannels(accountInfo);
 };
 
 
