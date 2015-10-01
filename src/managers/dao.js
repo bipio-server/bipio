@@ -1162,68 +1162,85 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 
         (function(bipResult) {
 
-          // get user account
-          self.findFilter(
+          // get user account options
+          self.find(
             'account_option',
             {
               owner_id : bipResult.owner_id
             },
-            function(err, results) {
-              if (!err && results && results.length === 1) {
+            function(err, accountOpts) {
+              if (!err && accountOpts) {
                 // set up a pseudo account Info
                 var accountInfo = {
                   user : {
-                    settings : results[0]
+                    settings : accountOpts
                   }
                 }
 
-          		  var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+                //
+                self.find(
+                  'account',
+                  {
+                    id : accountOpts.owner_id
+                  },
+                  function(err, account) {
+                    if (!err) {
 
-                if (force) {
-                  self.triggerBip(
-                    app._.clone(bipResult)._doc,
-                    accountInfo,
-                    isSocket,
-                    next
-                  );
+                      _.each(account.toJSON(), function(value, key) {
+                        accountInfo.user[key] = value;
+                      });
 
-                  app.logmessage('DAO:Trigger:' + bipResult.id + ':FORCED');
+                      var bipModel = self.modelFactory('bip', bipResult, accountInfo);
 
-                } else {
-              		// check expiry
-              		bipModel.checkExpiry(function(expired) {
-              			if (expired) {
-              				bipModel.expire('expired', next);
-              			} else {
-              				//check scheduled
-              				bipModel.isScheduled( function(scheduled) {
-              					if (!scheduled && !isSocket) {
-              						next();
-              					} else {
-                          self.triggerBip(
-                            app._.clone(bipResult)._doc,
-                            accountInfo,
-                            isSocket,
-                            next
-                          );
+                      if (force) {
+                        self.triggerBip(
+                          app._.clone(bipResult)._doc,
+                          accountInfo,
+                          isSocket,
+                          next
+                        );
 
-                          numProcessed++;
+                        app.logmessage('DAO:Trigger:' + bipResult.id + ':FORCED');
 
-                          app.logmessage('DAO:Trigger:' + bipResult.id + ':' + numProcessed + ':' + numResults);
-                          if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
+                      } else {
+                        // check expiry
+                        bipModel.checkExpiry(function(expired) {
+                          if (expired) {
+                            bipModel.expire('expired', next);
+                          } else {
+                            //check scheduled
+                            bipModel.isScheduled( function(scheduled) {
+                              if (!scheduled && !isSocket) {
+                                next();
+                              } else {
+                                self.triggerBip(
+                                  app._.clone(bipResult)._doc,
+                                  accountInfo,
+                                  isSocket,
+                                  next
+                                );
 
-                            self.updateScheduledBipRunTime(bipModel);
+                                numProcessed++;
+
+                                app.logmessage('DAO:Trigger:' + bipResult.id + ':' + numProcessed + ':' + numResults);
+                                if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
+
+                                  self.updateScheduledBipRunTime(bipModel);
+                                }
+
+                                if (numProcessed >= (numResults -1)) {
+                                  next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+                                }
+                              }
+                            });
                           }
+                        });
 
-                          if (numProcessed >= (numResults -1)) {
-                            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-                          }
-              					}
-              				});
-              			}
-            		  });
+                      }
+                    }
+                  }
+                );
 
-                }
          	    }
       	    });
         })(results[i]);

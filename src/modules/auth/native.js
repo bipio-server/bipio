@@ -59,6 +59,7 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
       name : authModel.name,
       username : authModel.username,
       account_level: authModel.account_level,
+      plan_until : authModel.plan_until,
       settings: {
         api_token: null
       }
@@ -153,7 +154,7 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
 
       next(err, accountInfo);
     }
-    );
+  );
 }
 
 /**
@@ -184,7 +185,10 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
   } else {
     accountAuth.username = account.username;
     accountAuth.name = account.name;
+
+    // this should be injectable by the permissions module somehow
     accountAuth.account_level = account.account_level;
+    accountAuth.plan_until = account.get('plan_until');
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
       if (undefined == activeDomainId) {
@@ -192,7 +196,9 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
       } else {
         accountInfo.user.activeDomainId = activeDomainId;
       }
+
       accountInfo.user.username = account.username;
+
       next(false, accountInfo);
     });
   }

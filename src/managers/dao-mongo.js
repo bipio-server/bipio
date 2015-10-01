@@ -184,12 +184,12 @@ DaoMongo.prototype.getModelClass = function(modelName) {
  *
  * @param modelClass model prototype
  */
-DaoMongo.prototype.registerModelClass = function(modelClass) {
+DaoMongo.prototype.registerModelClass = function(modelClass, reRegister) {
   var modelName = modelClass.getEntityName(), validators, numValidators;
   var container = this.models;
 
   // Already registered? then skip
-  if (undefined != container[modelName]) {
+  if (undefined != container[modelName] && !reRegister) {
     return;
   }
 
