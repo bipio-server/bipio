@@ -188,7 +188,9 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
 
     // this should be injectable by the permissions module somehow
     accountAuth.account_level = account.account_level;
-    accountAuth.plan_until = account.get('plan_until');
+    if (account.get) {
+      accountAuth.plan_until = account.get('plan_until');
+    }
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
       if (undefined == activeDomainId) {
