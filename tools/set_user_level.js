@@ -27,15 +27,6 @@
 
 process.HEADLESS = true;
 
-function showUsage() {
-	console.log('Usage - token_get {account uuid|user_name|email address} (admin|user|..other)');
-	process.exit(0);
-}
-
-if (!process.argv[2]) {
-	showUsage();
-}
-
 var accountId = process.argv[2],
 	level = process.argv[3],
   bootstrap = require(__dirname + '/../src/bootstrap'),
@@ -43,6 +34,21 @@ var accountId = process.argv[2],
   modelName = 'account_auth',
   acctSearch = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(accountId),
   emailSearch = -1 !== accountId.indexOf('@');
+
+function showUsage() {
+	var levels = 'admin|user';
+
+	if (app.modules.permissions) {
+		levels = Object.keys(GLOBAL.CFG.modules.permissions.config.plans).join('|')
+	}
+
+	console.log('Usage - token_get {account uuid|user_name|email address} (' + levels + ')');
+	process.exit(0);
+}
+
+if (!process.argv[2]) {
+	showUsage();
+}
 
 dao.on('ready', function(dao) {
 	var levelOK = false;
