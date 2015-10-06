@@ -205,21 +205,25 @@ app.winstonLog = function(message, loglevel) {
   }
   var obj = helper.isObject(message);
   if (!obj) {
-   if (message && message.trim) {
-     message = message.trim();
-   }
-   if (!message) {
-     return;
-   }
- } else {
-  message = "Check Message";
-  meta["message"] = message;
-}
+     if (message && message.trim) {
+       message = message.trim();
+     }
+     if (!message) {
+       return;
+     }
+   } else {
+    message = "Check Message";
+    meta["message"] = message;
+  }
 
-serverLogger.log(loglevel, message, meta);
-if( typeof message === 'string' && -1 !== message.toLowerCase().indexOf('bastion')) {
-  transactionLogger.log(loglevel, message, meta);
-}
+  serverLogger.log(loglevel, message, meta);
+
+  if( typeof message === 'string' && -1 !== message.toLowerCase().indexOf('bastion')) {
+    transactionLogger.log(loglevel, message, meta);
+  }
+
+  delete message;
+  delete loglevel;
 }
 
 // exception catchall

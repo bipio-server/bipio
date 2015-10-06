@@ -53,7 +53,8 @@
                 "cfg": {
                     "type": "direct",
                     "durable": true,
-                    "autoDelete": false
+                    "autoDelete": false,
+                    "confirm" : true
                 }
             },
             "bastion_jobs": {
@@ -68,7 +69,8 @@
                 "cfg": {
                     "type": "direct",
                     "durable": true,
-                    "autoDelete": false
+                    "autoDelete": false,
+                    "confirm" : true
                 }
             },
             "bastion_ctl": {
@@ -83,7 +85,8 @@
                 "cfg": {
                     "type": "fanout",
                     "durable": false,
-                    "autoDelete": false
+                    "autoDelete": false,
+                    "confirm" : true
                 }
             }
         },
