@@ -475,7 +475,11 @@ hub: {
     },
 
     {
+      // disabled
     	validator : function(val, next) {
+        next(true);
+        return;
+        /*
         var ok = false,
           pod,
           accountInfo = this.getAccountInfo(),
@@ -540,6 +544,7 @@ hub: {
           ok = true;
         }
         next(ok);
+        */
       },
       msg : 'Invalid, Inactive or Missing Channel In Hub'
     },
@@ -907,7 +912,7 @@ Bip._createChannelIndex = function() {
     channels.push(this.config.renderer.channel_id);
   }
 
-this._channel_idx = app._.uniq(channels);
+  this._channel_idx = app._.uniq(channels);
 }
 
 /**
