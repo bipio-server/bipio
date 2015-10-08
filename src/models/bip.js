@@ -889,7 +889,7 @@ if (CFG.server.smtp_bips) {
 Bip._createChannelIndex = function() {
   // create channel index
   var channels = [];
-  if (this.config.channel_id && '' !== this.config.channel_id) {
+  if (this.config && this.config.channel_id && '' !== this.config.channel_id) {
     channels.push(this.config.channel_id);
   }
 
@@ -901,11 +901,11 @@ Bip._createChannelIndex = function() {
     }
   }
 
-  if ('http' === this.type && app.helper.isObject(this.config.renderer)
+  if (this.config && 'http' === this.type && app.helper.isObject(this.config.renderer)
     && this.config.renderer.channel_id
     && this.config.renderer.renderer) {
     channels.push(this.config.renderer.channel_id);
-}
+  }
 
 this._channel_idx = app._.uniq(channels);
 }
