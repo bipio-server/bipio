@@ -32,7 +32,7 @@ sprintf = require('sprintf').sprintf,
 uuid    = require('node-uuid'),
 helper = require('../lib/helper'),
 events = require('events'),
-heapdump = require('heapdump'),
+//heapdump = require('heapdump'),
 eventEmitter = new events.EventEmitter();
 
 //    msgpack = require('msgpack');
@@ -352,7 +352,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
     } else if (jobPacket.name === DEFS.JOB_HEAP_DUMP && CFG.dumpKey && jobPacket.data.key === CFG.dumpKey && process.pid === jobPacket.data.pid) {
       var f = '/tmp/bipio_' + process.pid + '_' + Date.now() + '.heapsnapshot';
       app.logmessage('Writing Heap Snapshot ' + f);
-      heapdump.writeSnapshot(f);
+//      heapdump.writeSnapshot(f);
 
     } else {
       console.log(jobPacket);
