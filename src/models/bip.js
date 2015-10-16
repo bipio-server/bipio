@@ -1070,7 +1070,7 @@ Bip.preRemove = function(id, accountInfo, next) {
   });
 }
 
-Bip._postSaveChannels = function(accountInfo) {
+Bip._postSaveChannels = function(accountInfo, isNew) {
   var self = this;
 
   for (var i = 0; i < this._channel_idx.length; i++) {
@@ -1079,7 +1079,7 @@ Bip._postSaveChannels = function(accountInfo) {
       accountInfo,
       function(err, channel) {
         if (!err && channel) {
-          self._dao.modelFactory('channel', channel).postSave(accountInfo, function() {});
+          self._dao.modelFactory('channel', channel).postSave(accountInfo, function() {}, isNew);
         }
       },
       this.config && this.config.channel_id && this.config.channel_id === this._channel_idx[i]
@@ -1120,7 +1120,7 @@ Bip.postSave = function(accountInfo, next, isNew) {
 
   accountInfo.bip = this;
 
-  this._postSaveChannels(accountInfo);
+  this._postSaveChannels(accountInfo, isNew);
 };
 
 
