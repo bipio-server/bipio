@@ -1065,9 +1065,39 @@ Bip.preRemove = function(id, accountInfo, next) {
     } else {
       self._dao.removeBipDupTracking(id, function(err) {
         next(err, 'bip', self);
+
+
+        accountInfo.bip = self;
+
+        self._postRemoveChannels(accountInfo);
+
       });
     }
   });
+}
+
+Bip._postRemoveChannels = function(accountInfo) {
+  var self = this;
+
+  for (var i = 0; i < this._channel_idx.length; i++) {
+    self._dao.getChannel(
+      this._channel_idx[i],
+      accountInfo,
+      function(err, channel) {
+        // only call postRemove for action pointers
+        if (!err && channel && !app.helper.getRegUUID().test(channel.id)) {
+          self._dao.modelFactory('channel', channel).postRemove(
+            channel.id,
+            accountInfo,
+            function() {}
+          );
+        }
+      },
+      this.config && this.config.channel_id && this.config.channel_id === this._channel_idx[i]
+        ? this.config.config
+        : null
+    );
+  }
 }
 
 Bip._postSaveChannels = function(accountInfo, isNew) {
@@ -1078,8 +1108,13 @@ Bip._postSaveChannels = function(accountInfo, isNew) {
       this._channel_idx[i],
       accountInfo,
       function(err, channel) {
-        if (!err && channel) {
-          self._dao.modelFactory('channel', channel).postSave(accountInfo, function() {}, isNew);
+        // only call postSave for action pointers
+        if (!err && channel && !app.helper.getRegUUID().test(channel.id)) {
+          self._dao.modelFactory('channel', channel).postSave(
+            accountInfo,
+            function() {},
+            isNew
+          );
         }
       },
       this.config && this.config.channel_id && this.config.channel_id === this._channel_idx[i]

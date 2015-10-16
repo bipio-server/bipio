@@ -503,6 +503,17 @@ Channel.preRemove = function(id, accountInfo, next) {
   });
 }
 
+Channel.postRemove = function(id, accountInfo, next) {
+  var tTokens = this.action.split('.'),
+  podName = tTokens[0], action = tTokens[1],
+  self = this;
+
+  pods[podName].teardown(action, self, accountInfo, function(err) {
+    next(err, 'channel', self);
+  });
+
+}
+
 Channel.getActionSchema = function() {
   if (this.action) {
     var tokens = this.action.split('.'),
