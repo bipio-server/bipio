@@ -1112,6 +1112,9 @@ DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
     } else {
 
       var model = self.modelFactory(modelName, result);
+      
+      //MFE, track the old values of the model
+      accountInfo["previous_"+modelName] = app._.clone(model);
 
       model.prePatch(props, accountInfo, function(err, modelName, patch) {
 

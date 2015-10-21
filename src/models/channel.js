@@ -506,11 +506,35 @@ Channel.preRemove = function(id, accountInfo, next) {
 Channel.postRemove = function(id, accountInfo, next) {
   var tTokens = this.action.split('.'),
   podName = tTokens[0], action = tTokens[1],
-  self = this;
+  self = this,  authType =  Channel.pods[podName].getAuthType();
 
-  pods[podName].teardown(action, self, accountInfo, function(err) {
-    next(err, 'channel', self);
-  });
+if (authType && 'none' !== authType) {
+    self._dao.getPodAuthTokens(accountInfo.user.id, Channel.pods[podName], function(err, authStruct) {
+      if (err) {
+        next(err, 'channel', { message : err }, 500);
+      } else if (!authStruct) {
+        next(
+          'Channel not authenticate',
+          'channel',
+          {
+            message : 'Channel not authenticated'
+          },
+          500
+        );
+       
+      } else {
+        var auth = {};
+        auth[authType] = authStruct;
+        Channel.pods[podName]['teardown'](action, self, accountInfo, auth, function(err) {
+          next(err, 'channel', self);
+        });
+      }
+    });
+  } else {
+    Channel.pods[podName]['teardown'](action, this, accountInfo, function(err) {
+      next(err, 'channel', self);
+    });
+  }
 
 }
 
