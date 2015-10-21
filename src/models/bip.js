@@ -1112,7 +1112,19 @@ Bip._postSaveChannels = function(accountInfo, isNew) {
         if (!err && channel && !app.helper.getRegUUID().test(channel.id)) {
           self._dao.modelFactory('channel', channel).postSave(
             accountInfo,
-            function() {},
+            function(err) {
+              if (err) {
+                err = app.helper.isObject(err) ? JSON.stringify(err) : err;
+                // if channel has propgated an error, then add it to this bips error log
+                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
+                  owner_id : self.owner_id,
+                  bip_id : self.id,
+                  code : 'bip_channnel_error',
+                  message : err,
+                  source : channel.id
+                });
+              }
+            },
             isNew
           );
         }
