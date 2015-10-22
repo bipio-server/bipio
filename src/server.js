@@ -77,6 +77,9 @@ function xmlBodyParser(req, res, next) {
   });
 }
 
+
+// some people expect json parsing even when not sending
+// a content type, so try our hardest to provide and parse the request body
 function rawBodyParser(req, res, next) {
   var contentType = req.headers['content-type'] || '',
     mime = contentType.split(';')[0];
@@ -87,6 +90,24 @@ function rawBodyParser(req, res, next) {
     // don't buffer payloads which are too large
     if (buf.length <= 1024 * 1024) {
       req.rawBody = buf;
+    }
+  });
+
+  req.on('end', function() {
+    if (req.body && req.body.body && !app.helper.isObject(req.body.body)) {
+      try {
+        req.body.body = JSON.parse(req.body.body);
+      } catch (e) {
+
+      }
+    }
+
+    if ( (!req.body || (app.helper.isObject(req.body) && !Object.keys(req.body).length ))  && req.rawBody) {
+     try {
+        req.body = JSON.parse(req.rawBody);
+      } catch (e) {
+
+      }
     }
   });
 
@@ -156,10 +177,8 @@ function setCORS(req, res, next) {
 //
 // ------ LOAD EXPRESS MIDDLEWARE
 //
-
 restapi.use(app.modules.cdn.utils.HTTPFormHandler());
 
-restapi.use(rawBodyParser);
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {
   if (err.status == 400) {
@@ -182,20 +201,35 @@ restapi.use(function(req, res, next) {
   next();
 });
 
+restapi.use(rawBodyParser);
 restapi.use(bodyParser.json());
 
 // if there looks to be a body that's a json string, then try
 // casting it to json
+/*
 restapi.use(function(req, res, next) {
-  if (req.body && req.body.body && !app.helper.isObject(req.body.body)) {
-    try {
-      req.body.body = JSON.parse(req.body.body);
-    } catch (e) {
+  req.on('end', function() {
+    if (req.body && req.body.body && !app.helper.isObject(req.body.body)) {
+      try {
+        req.body.body = JSON.parse(req.body.body);
+      } catch (e) {
 
+      }
     }
-  }
-  next();
+  console.log('trying to parse rawBody ', req.rawBody);
+    if (!req.body && req.rawBody) {
+     try {
+        req.body = JSON.parse(req.rawBody);
+      } catch (e) {
+
+      }
+    }
+
+    next();
+
+  });
 });
+*/
 
 restapi.use(jwtConfirm);
 
