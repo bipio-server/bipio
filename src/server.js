@@ -77,6 +77,26 @@ function xmlBodyParser(req, res, next) {
   });
 }
 
+function rawBodyParser(req, res, next) {
+  var contentType = req.headers['content-type'] || '',
+    mime = contentType.split(';')[0];
+
+  if (mime != 'text/plain') {
+    return next();
+  }
+
+  req.rawBody = '';
+  req.setEncoding('utf8');
+  req.on('data', function(chunk) {
+    req.rawBody += chunk;
+  });
+
+  req.on('end', function() {
+    console.log('ended');
+    next();
+  });
+}
+
 function _jwtDeny(res, extra) {
   res.status(403).send('Invalid X-JWT-Signature ' + (extra ? '- ' + extra : ''));
 }
@@ -143,6 +163,7 @@ function setCORS(req, res, next) {
 
 restapi.use(app.modules.cdn.utils.HTTPFormHandler());
 
+restapi.use(rawBodyParser);
 restapi.use(xmlBodyParser);
 restapi.use(function(err, req, res, next) {
   if (err.status == 400) {
