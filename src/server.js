@@ -81,20 +81,16 @@ function rawBodyParser(req, res, next) {
   var contentType = req.headers['content-type'] || '',
     mime = contentType.split(';')[0];
 
-  if (mime != 'text/plain') {
-    return next();
-  }
-
   req.rawBody = '';
-  req.setEncoding('utf8');
   req.on('data', function(chunk) {
-    req.rawBody += chunk;
+    var buf = req.rawBody + chunk;
+    // don't buffer payloads which are too large
+    if (buf.length <= 1024 * 1024) {
+      req.rawBody = buf;
+    }
   });
 
-  req.on('end', function() {
-    console.log('ended');
-    next();
-  });
+  next();
 }
 
 function _jwtDeny(res, extra) {
