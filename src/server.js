@@ -322,7 +322,7 @@ if (cluster.isMaster) {
 
     // oAuth refresh
     app.logmessage('DAO:Starting OAuth Refresh', 'info');
-    var oauthRefreshJob = new cron.CronJob('0 */15 * * * *', function() {
+    var oauthRefreshJob = new cron.CronJob('0 */20 * * * *', function() {
       dao.refreshOAuth();
     }, null, true, GLOBAL.CFG.timezone);
 
