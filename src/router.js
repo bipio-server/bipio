@@ -976,6 +976,7 @@ module.exports = {
             res.send(response);
           }
         } else if (method == 'share' && resourceId) {
+
           if (resourceId === 'list') {
             var page_size = 10,
             page = 1,
@@ -1009,7 +1010,7 @@ module.exports = {
             } else if (resourceId == 'inc' && subResourceId) {
               var accountInfo = req.remoteUser;
               dao.incShareCount(subResourceId, accountInfo);
-              restResponse(res)();
+              restResponse(res)(false, null, {"status" : "ok"});
             } else {
               var filter = {
                 'owner_id' : accountInfo.getId(),
