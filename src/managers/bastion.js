@@ -257,6 +257,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                       source : invokeChannel.id
                     });
 
+                    /*
                     var logModel = self._dao.modelFactory(
                       'channel_log',
                       {
@@ -269,6 +270,7 @@ Bastion.prototype.jobRunner = function(jobPacket) {
                       }
                     );
                     self._dao.create(logModel);
+                    */
                   }
                 });
             }
@@ -730,6 +732,7 @@ Bastion.prototype.processChannel = function(struct) {
                   source : channel.id
                 });
 
+                /*
                 var logModel = self._dao.modelFactory(
                   'channel_log',
                   {
@@ -742,6 +745,7 @@ Bastion.prototype.processChannel = function(struct) {
                   }
                 );
                 self._dao.create(logModel);
+                */
               }
             });
           }
