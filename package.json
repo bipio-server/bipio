@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.4.31",
+  "version": "0.4.32",
   "scripts": {
     "start": "node src/server.js >> logs/server.log &",
     "test": "make test",
@@ -88,7 +88,7 @@
     "sprintf": ">=0.1.1",
     "ssl-root-cas": "^1.1.7",
     "sugar": "^1.4.1",
-    "sync-exec": "^0.6.1",
+    "sync-exec": "0.6.2",
     "temp": ">=0.5.0",
     "time": ">=0.9.2",
     "tldtools": ">=0.0.6",

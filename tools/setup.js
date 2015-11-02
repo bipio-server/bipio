@@ -275,7 +275,7 @@ function sslSetup() {
         fs.mkdirSync(targetDir, 0755);
       }
 
-      if (0 === sh(cmd)) {
+      if (0 === sh(cmd).status) {
         sparseConfig.proto_public = 'https://';
         sparseConfig.server.ssl.key = targetDir + '/server.key';
         sparseConfig.server.ssl.cert = targetDir + '/server.crt';
