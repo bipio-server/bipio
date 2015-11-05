@@ -3,7 +3,7 @@
  * The Bipio API Server
  *
  * @author Michael Pearson <github@m.bip.io>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * Copyright (c) 2010-2015 Michael Pearson https://github.com/mjpearson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1776,6 +1776,7 @@ Dao.prototype.setNetworkChordStat = function(ownerId, newNetwork, next) {
 Dao.prototype.generateAccountStats = function(accountId, next) {
   var self = this;
   app.logmessage('STATS:Processing Account ' + accountId);
+
   step(
     function loadNetwork() {
       self.findFilter(

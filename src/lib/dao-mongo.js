@@ -869,9 +869,12 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         q[key] = filter[key];
         query = query.find(q);
         countQuery = countQuery.find(q);
+
       } else {
-        query = query.where(key).regex(new RegExp(filter[key], 'i'));
-        countQuery = countQuery.where(key).regex(new RegExp(filter[key], 'i'));
+        //query = query.where(key).regex(new RegExp(filter[key], 'i'));
+        //countQuery = countQuery.where(key).regex(new RegExp(filter[key], 'i'));
+        query = query.where(key).equals(filter[key]);
+        countQuery = countQuery.where(key).equals(filter[key]);
       }
     }
   }
@@ -1112,7 +1115,7 @@ DaoMongo.prototype.patch = function(modelName, id, props, accountInfo, next) {
     } else {
 
       var model = self.modelFactory(modelName, result);
-      
+
       //MFE, track the old values of the model
       accountInfo["previous_"+modelName] = app._.clone(model);
 

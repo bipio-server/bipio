@@ -270,8 +270,8 @@ if (ipaddr.IPv4.isValid(domainPublic) || ipaddr.IPv6.isValid(domainPublic) ) {
 }
 
 // initialize DAO and bastion (queue manager)
-var dao = new require('./managers/dao'),
-bastion = new require('./managers/bastion');
+var dao = new require('./lib/dao'),
+bastion = new require('./lib/bastion');
 
 module.exports.app = app;
 module.exports.app.dao = new dao(CFG, app.logmessage);

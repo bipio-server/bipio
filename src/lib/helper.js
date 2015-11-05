@@ -21,26 +21,27 @@
 
  */
 var bcrypt = require('bcrypt'),
-baseConverter = require('base-converter'),
-//cronParser = require('cron-parser'),
-crypto = require('crypto'),
-djs = require('datejs'),
-dns = require('dns'),
-favitest = require('favitest')
-fs = require('fs'),
-http = require('http'),
-https = require('https'),
-ipaddr = require('ipaddr.js'),
-JSONPath = require('JSONPath'),
-mkdirp = require('mkdirp'),
-path = require('path'),
-rimraf = require('rimraf'),
-tldtools = require('tldtools'),
-validator = require('validator'),
-uuid = require('node-uuid'),
-url = require('url'),
-_ = require('lodash'),
-htmlEncode = require('htmlencode').htmlEncode;
+  baseConverter = require('base-converter'),
+  //cronParser = require('cron-parser'),
+  crypto = require('crypto'),
+  djs = require('datejs'),
+  dns = require('dns'),
+  favitest = require('favitest')
+  fs = require('fs'),
+  http = require('http'),
+  https = require('https'),
+  ipaddr = require('ipaddr.js'),
+  JSONPath = require('JSONPath'),
+  mkdirp = require('mkdirp'),
+  path = require('path'),
+  rimraf = require('rimraf'),
+  tldtools = require('tldtools'),
+  validator = require('validator'),
+  uuid = require('node-uuid'),
+  url = require('url'),
+  _ = require('lodash'),
+  htmlEncode = require('htmlencode').htmlEncode,
+  Q = require('q');
 
 var helper = {
 
@@ -625,8 +626,40 @@ var helper = {
         );
       }
     });
-  }
+  },
 
+  /*
+   * given a scope and array of functions [ function, arguments ],
+   * returns promises
+   */
+  makePromise : function(scope, fns) {
+    var promises = [],
+      defer;
+
+    for (var f = 0; f < fns.length; f++) {
+      defer = Q.defer();
+
+      (function(fun, defer) {
+
+        fun[1].push(
+          function() {
+            if (arguments[0]) {
+              defer.reject(arguments[0]);
+            } else {
+              defer.resolve(arguments[1]);
+            }
+          }
+        )
+
+        fun[0].apply(scope, fun[1]);
+
+      })(fns[f], defer);
+
+      promises.push(defer.promise);
+    }
+
+    return Q.all(promises);
+  }
 }
 
 //

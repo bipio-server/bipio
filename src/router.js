@@ -326,10 +326,12 @@ var restAction = function(req, res) {
         filter.bip_id = req.params.id;
         resourceName = 'bip_log';
         req.params.id = undefined;
+
       } else if ('channel' === resourceName && 'bips' === subResourceId) {
         filter._channel_idx = resourceId;
         resourceName = 'bip';
         req.params.id = undefined;
+
       } else if ('channel' === resourceName && 'logs' === subResourceId) {
         filter.channel_id = req.params.id;
         resourceName = 'channel_log';
@@ -1039,8 +1041,6 @@ module.exports = {
         } else if (method == 'unshare' && resourceId) {
 
           dao.unshareBip(resourceId, accountInfo, restResponse(res));
-
-
 
         // alias into account options.  Returns RESTful account_options resource
         } else if (method == 'set_default' && resourceId) {

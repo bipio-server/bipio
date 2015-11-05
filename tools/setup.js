@@ -504,7 +504,7 @@ function auxServers() {
     // try connecting
     console.log('trying ' + sparseConfig.dbMongo.connect + ' Ctrl-C to quit');
     GLOBAL.CFG = sparseConfig;
-    var Dao = require(__dirname + '/../src/managers/dao');
+    var Dao = require(__dirname + '/../src/lib/dao');
     var dao = new Dao(sparseConfig,  function(message) {
       writeConfig(function() {
         var bootstrap = require(__dirname + '/../src/bootstrap');
