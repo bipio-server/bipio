@@ -117,13 +117,20 @@ var BipModel = {
   },
 
   /**
-     * populates this object with src, for matching properties
-     *
-     * trusts tainted sources
-     */
+   * populates this object with src
+   *
+   * trusts tainted sources
+   */
   populate: function(src, accountInfo) {
     // copy from source into this model, override
     helper.copyProperties(src, this, true, this.getPropNamesAsArray());
+    this.decorate(accountInfo);
+  },
+
+  /*
+   * adds attribute decorators
+   */
+  decorate: function(accountInfo) {
     if (undefined != accountInfo && this.id) {
       this._repr = this.repr(accountInfo);
       this._links = this.links(accountInfo);
@@ -242,6 +249,7 @@ var BipModel = {
         }
       }
     }
+
     return this.writablePropsArray;
   },
 

@@ -14,7 +14,7 @@ There are two ways to install fs-cdn.
 
 or
 
-    git clone git@github.com:WoTio/fs-cdn.git
+    git clone git@github.com:wotio/fs-cdn.git
     cd fs-cdn
     npm install
 

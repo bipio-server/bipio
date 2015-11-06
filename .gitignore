@@ -13,3 +13,5 @@ sftp_config.json
 src/modules/stats
 src/modules/permissions
 src/modules/provisioning
+src/modules/mozu
+logs

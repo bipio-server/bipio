@@ -2,8 +2,8 @@
  *
  * The Bipio API Server
  *
- * @author Michael Pearson <github@m.bip.io>
- * Copyright (c) 2010-2013 Michael Pearson https://github.com/mjpearson
+ * @author Michael Pearson <github@x0rz.com>
+ * Copyright (c) 2014-2015 wot.io inc http://wot.io
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
-
  */
 
 /**
@@ -80,6 +79,8 @@ function DaoMongo(config, log, next) {
   options.server.socketOptions = options.replset.socketOptions = {
     keepAlive: 1
   };
+
+  //mongoose.set('debug', true);
 
   mongoose.connection.on('error', function(err) {
     log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
@@ -300,9 +301,9 @@ DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
  * Returns a populated Object of properties
  * <script type="text/javascript">alert('XSS!');</script>
  */
-DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
-
+DaoMongo.prototype.modelFactorySLOW = function(modelName, initProperties, accountInfo, tainted) {
   var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
+
   writable = true;
   // get properties
   if (undefined == tainted) {
@@ -351,6 +352,67 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
   this.models[modelName]['class'].constructor.apply(model);
   if (!tainted || (tainted && undefined !== accountInfo)) {
     model.populate(initProperties, accountInfo);
+  }
+
+  return model;
+};
+
+DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
+  var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
+
+  writable = true;
+  // get properties
+  if (undefined == tainted) {
+    tainted = false;
+  }
+
+  if (undefined != initProperties) {
+    modelProperties = this.models[modelName]['class'].getPropNamesAsArray();
+
+    numProperties = modelProperties.length;
+
+    var propArgs = {};
+
+    for (i = 0; i < numProperties; i++) {
+
+      propArgs[modelProperties[i]] = {
+        enumerable: true,
+        writable : true,
+        value : initProperties[modelProperties[i]]
+      };
+
+      if (!(tainted && !helper.inArray(writeOnlyProps, modelProperties[i]))) {
+
+        // custom getters are a nasty workaround for some mongoose woes.
+        // see bip.js model, hub getter
+        var getter = this.models[modelName]['class'].entitySchema[modelProperties[i]].customGetter;
+
+        if (getter && initProperties[modelProperties[i]]) {
+          propArgs[modelProperties[i]].value = getter(initProperties[modelProperties[i]]);
+        } else {
+          propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
+        }
+
+      }
+    }
+
+    if (undefined != accountInfo && accountInfo.user && accountInfo.user.id) {
+      propArgs['owner_id'] = {
+        value: accountInfo.user.id,
+        enumerable: true
+      };
+    }
+
+  } else {
+    initProperties = {};
+  }
+
+  var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
+
+  this.models[modelName]['class'].constructor.apply(model);
+
+  if (accountInfo) {
+    model.decorate(accountInfo);
   }
 
   return model;
@@ -410,23 +472,6 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
   return model;
 };
 
-DaoMongo.prototype._hydrateModelFromFilter = function(model, filter, accountInfo, next) {
-  var self = this;
-  mongoose.model(model.getEntityName()).findOne(filter, function(err, result) {
-    if (err || !result) {
-      next(self.errorParse(err), null, null, self.errorMap(err) );
-    } else {
-      model.populate(result, accountInfo);
-      next(
-        self.errorParse(err, model),
-        model.getEntityName(),
-        model,
-        self.errorMap(err)
-      );
-    }
-  });
-}
-
 // ------------------------------------------------------------------------ CRUD
 
 /**
@@ -444,6 +489,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
   if (model) {
     model[ model.getEntityIndex() ] = uuid();
     if ( !model[ model.getEntityCreated() ] ) model[ model.getEntityCreated() ] = nowTime;
+
     model.preSave(accountInfo, function(err, model) {
       if (err) {
         next(err, model.getEntityName(), model, 500);
@@ -451,41 +497,16 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
       }
 
       var mongoModel = self.toMongoModel(model);
-	  mongoModel.validate(function (err) {
-		if (err) {
+
+  	  mongoModel.validate(function (err) {
+    		if (err) {
           next(err, model.getEntityName(), err, 500);
           return;
-		}
-		mongoModel.save(function(err) {
-        if (err) {
-          self._log(err, 'error');
-          if (next) {
-
-            // conflict? Then load the record and return the payload
-            // with an error response
-            /*
-            console.log(err.code);
-            if (err.code == 11000) {
-              console.log('SHOULD BE 409!?')
-              // always bind to the authed user
-              var filter = {
-                'owner_id' : accountInfo.user.id
-              };
-
-              // get key constraints from model
-              var compoundConstraints = model.getCompoundKeyConstraints();
-              if (undefined != compoundConstraints) {
-                for (key in compoundConstraints) {
-                  if (key != 'owner_id') {
-                    filter[key] = mongoModel[key];
-                  }
-                }
-              }
-
-              self._hydrateModelFromFilter(model, filter, accountInfo, next);
-
-            } else {
-              */
+    		}
+    		mongoModel.save(function(err) {
+          if (err) {
+            self._log(err, 'error');
+            if (next) {
               var errResp;
               // looks like a mongo validation error? then normalize it
               if (err.errors && err.name) {
@@ -499,39 +520,38 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
               }
 
               next(self.errorParse(err, model), model.getEntityName(), errResp, self.errorMap(err) );
-            //}
+            }
+            return null;
           }
-          return null;
-        }
-        // populate from mongo model into our model, and build a representation
-        model.populate(mongoModel, accountInfo);
-        model.postSave(accountInfo, function(err, modelName, retModel, code) {
-          if (err) {
-            self.remove(modelName, retModel.id, accountInfo, function() {
-              if (next) {
-                next(err, modelName, retModel, code );
-              }
-            });
-          } else if (next) {
-            next(
-              err,
-              modelName,
-              self.modelFactory(model.getEntityName(), retModel, accountInfo),
-              code
-            );
-          }
+          // populate from mongo model into our model, and build a representation
+          model.populate(mongoModel, accountInfo);
+          model.postSave(accountInfo, function(err, modelName, retModel, code) {
+            if (err) {
+              self.remove(modelName, retModel.id, accountInfo, function() {
+                if (next) {
+                  next(err, modelName, retModel, code );
+                }
+              });
+            } else if (next) {
+              next(
+                err,
+                modelName,
+                self.modelFactory(model.getEntityName(), retModel, accountInfo),
+                code
+              );
+            }
 
-          // depending on the model, we can inject post-saves which are
-          // outside the model's scope, such as notifications, or other
-          // types of bindings.
-          if (daoPostSave) {
-            daoPostSave(err, modelName, retModel, code );
-          }
-        }, true);
+            // depending on the model, we can inject post-saves which are
+            // outside the model's scope, such as notifications, or other
+            // types of bindings.
+            if (daoPostSave) {
+              daoPostSave(err, modelName, retModel, code );
+            }
+          }, true);
 
-        return model;
-      });
-	  });
+          return model;
+        });
+  	  });
 
     });
 
@@ -559,44 +579,6 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
     MongooseClass.update(filter, model.toObj(), function(err) {
       if (err) {
         if (next) {
-        /*
-          // conflict? Then load the record and return the payload
-          // with an error response
-          if (err.code == 11000) {
-            // always bind to the authed user
-            var filter = {
-              'owner_id' : accountInfo.user.id
-            };
-
-            // get key constraints from model
-            var compoundConstraints = model.getCompoundKeyConstraints();
-            if (undefined != compoundConstraints) {
-              for (key in compoundConstraints) {
-                if (key != 'owner_id') {
-                  filter[key] = model[key];
-                }
-              }
-            }
-
-            MongooseClass.findOne(filter, function(gErr, result) {
-              if (gErr || !result) {
-                next(
-                  self.errorParse(gErr),
-                  null,
-                  null,
-                  self.errorMap(gErr)
-                  );
-              } else {
-                model.populate(result, accountInfo);
-                next(
-                  self.errorParse(gErr, model),
-                  model.getEntityName(),
-                  model,
-                  self.errorMap(gErr)
-                  );
-              }
-            });
-          } else {*/
             var errResp;
             // looks like a mongo validation error? then normalize it
             if (err.errors && err.name) {
@@ -614,7 +596,6 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
               errResp,
               self.errorMap(err)
               );
-         // }
         }
         return null;
       } else {
@@ -636,16 +617,6 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
               var model = self.modelFactory(modelName, {}, accountInfo);
               model.populate(result, accountInfo);
               next(false, model.getEntityName(), model);
-/*
-                          model.postSave(accountInfo, function(err, modelName, retModel, code) {
-                               next(
-                                   self.errorParse(err, model),
-                                   model.getEntityName(),
-                                   model
-                               );
-                           });
-*/
-
             }
           });
       }
@@ -747,7 +718,6 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
 
     if (result) {
       // hydrate model
-      //model.populate(result, accountInfo);
       model = self.modelFactory(model.getEntityName(), result, accountInfo);
     }
 
@@ -903,6 +873,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
       }
 
       query.exec(function (err, results) {
+
         var model,
           modelPublicFilter = self.getModelReadableProps(modelName);
 
@@ -916,7 +887,10 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
           var modelStruct, realResult = [], publicModel, publicAttribute;
 
           for (key in results) {
+
+
             model = self.modelFactory(modelName, results[key], accountInfo);
+
             modelStruct = model.toObj();
 
             publicModel = {};
