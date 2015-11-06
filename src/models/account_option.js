@@ -42,98 +42,10 @@ AccountOption.uniqueKeys = ['owner_id'],
         },
 
         bip_hub: {
-            type: Object,
-            renderable: true,
-            writable: true,
-            validate : [
-            {
-                // not a very good validator, but will do for know.
-                // @todo ensure edge > vertex > edge doesn't exist. linked list,
-                // tortoise+hare is fine.'
-                validator : function(hub, next) {
-                    var numEdges, edges = {}, edge, loop = false;
-
-                    if (hub) {
-                        for (key in hub) {
-                            edges[key] = 1;
-                            numEdges = hub[key].edges.length;
-                            for (var i = 0; i < numEdges; i++ ) {
-                                edge = hub[key].edges[i];
-
-                                if (!edges[edge]) {
-                                    edges[edge] = 1;
-                                } else {
-                                    edges[edge]++;
-                                    break;
-                                }
-                            }
-                        }
-
-                        for (edge in edges) {
-                            loop = edges[edge] > 2;
-                            if (loop) {
-                                break;
-                            }
-                        }
-                    }
-
-                    next(!loop);
-                },
-                msg : "Routing Loop Detected"
-            },
-            {
-                validator : function(val, next) {
-                    var ok = false,
-                    userChannels = this.getAccountInfo().user.channels,
-                    numEdges,
-                    transforms;
-
-                    // check channels + transforms make sense
-                    if (val && undefined != val.source) {
-
-                        // http can have dynamic exports, so inject them
-                        if (this.type == 'http' && this.config.exports) {
-                            var expLen = this.config.exports.length;
-                            if (expLen > 0) {
-                                for (var i = 0; i < expLen; i++) {
-                                    localExports[this.config.exports[i]] = {
-                                        type : 'string'
-                                    }
-                                }
-                            }
-                        }
-
-                        for (var channelSource in val) {
-                            // check channel exists
-                            ok = (channelSource == 'source' || userChannels.test(channelSource));
-
-                            if (ok) {
-                                // check edges point to channels for this account
-                                numEdges = val[channelSource].edges;
-                                if (numEdges > 0) {
-                                    for (var e = 0; e < numEdges; e++) {
-                                        ok = userChannels.test(val[channelSource].edges[e]);
-                                        if (!ok) {
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-
-
-                            if (!ok) {
-                                break;
-                            }
-                        }
-                    } else {
-                        ok = true;
-                    }
-
-                    next(ok);
-                },
-                msg : 'Bad Channel in Hub'
-            }
-            ]
+          type: Object,
+          renderable: true,
+          writable: true
+          // @todo use hub validator
         },
         bip_domain_id: {
             type: String,

@@ -88,14 +88,12 @@ Account.entitySchema = {
     renderable : true,
     writable : false,
     default : GLOBAL.DEFS.ACCOUNT_LEVEL.USER,
-    validate : [
-      {
-        validator : function(val, next) {
-          next(
-            -1 !== app._.values(GLOBAL.DEFS.ACCOUNT_LEVEL).indexOf(val)
-          );
-        },
-        msg : 'Invalid Account Level'
+    validators : [
+      function(val, next) {
+        next(
+          -1 !== app._.values(GLOBAL.DEFS.ACCOUNT_LEVEL).indexOf(val)
+          ? 'Invalid Account Level' : false
+        );
       }
     ]
   }
