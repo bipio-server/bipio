@@ -1,13 +1,14 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.4.32",
+  "version": "0.4.34",
   "scripts": {
     "start": "node src/server.js >> logs/server.log &",
     "test": "make test",
     "install": "make install"
   },
   "main": "src/server.js",
+  "license": "GPL-3.0",
   "bin": {
     "bipio": "./src/server.js",
     "bipio-setup": "./tools/setup.js",

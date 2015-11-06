@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/WoTio/fs-cdn"
+    "url": "https://github.com/wotio/fs-cdn"
   },
   "author": "Alfonso Gober <alfonso@wot.io>",
   "license": "Apache",
   "bugs": {
-    "url": "https://github.com/WoTio/fs-cdn/issues"
+    "url": "https://github.com/wotio/fs-cdn/issues"
   },
-  "homepage": "https://github.com/WoTio/fs-cdn",
+  "homepage": "https://github.com/wotio/fs-cdn",
   "devDependencies": {
     "mocha": "latest",
     "should": "^4.0.4"
