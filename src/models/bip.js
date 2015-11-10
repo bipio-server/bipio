@@ -20,15 +20,14 @@
  *
 
  */
- var async = require('async'),
-   baseConverter = require('base-converter'),
-   BipModel = require('./prototype.js').BipModel,
-   Bip = Object.create(BipModel),
-  //cronParser = require('cron-parser'),
+var async = require('async'),
+  baseConverter = require('base-converter'),
+  BipModel = require('./prototype.js').BipModel,
+  Bip = Object.create(BipModel),
   Rrecur = require('rrecur').Rrecur;
 
 // setters
-/**
+/*
  *
  */
  function generate_random_base() {
@@ -48,7 +47,7 @@
   return '.' + ret + '_';
 }
 
-  // strict formatting of date string required for scheduler to work
+// strict formatting of date string required for scheduler to work
 function removeOffset(time) {
   return normedStart = time.substr(0, 16);
 }
@@ -139,10 +138,12 @@ Bip.repr = function(accountInfo) {
   return repr;
 }
 
+// normalizes an object key to mongo
 function escapeDot(val) {
   return val.replace(/\./g, '\u0001');
 }
 
+// normalises an object key from mongo
 function unEscapeDot(val) {
   return val.replace(/\u0001/g, '.');
 }
@@ -193,7 +194,6 @@ Bip.links = function(accountInfo) {
             }
           }
         }
-
       }
     }
 
@@ -226,10 +226,10 @@ Bip.entitySchema = {
     renderable: true,
     writable: true,
     validate : [
-    {
-      'validator' : BipModel.validators.max_64,
-      'msg' : "64 characters max"
-    }
+      {
+        'validator' : BipModel.validators.max_64,
+        'msg' : "64 characters max"
+      }
     ]
   },
   domain_id: {
@@ -562,29 +562,7 @@ hub: {
       },
       msg : "Hub Cannot Be Empty"
     },
-    /* @todo stubbed
-        {
-            // ensure no orphans
-            validator : function(hub, next) {
-                var cid,
-                    k,
-                    egress = {};
-
-                for (cid in hub) {
-                    if (hub.hasOwnProperty(cid)) {
-                        egress[cid] = 1;
-                        for (k = 0; k < hub[cid].edges.length; k++) {
-                            if (undefined === egress[hub[cid].edges[k]]) {
-                                egress[hub[cid].edges[k]] = 1;
-                            }
-                            egress[hub[cid].edges[k]]--;
-                        }
-                    }
-                }
-            },
-            msg : "Orphaned Channel"
-          }*/
-          ]
+    ]
         },
         note: {
           type: String,
