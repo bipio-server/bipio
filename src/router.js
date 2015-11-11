@@ -1165,11 +1165,13 @@ module.exports = {
             host : getClientInfo(req).host
           }
 
-          if (result._remoteBody) {
-            result.user.settings['remote_settings'] = result._remoteBody || {};
-          }
+          result.getSettings(function(err, settings) {
+            if (result._remoteBody) {
+              result.user.settings['remote_settings'] = result._remoteBody || {};
+            }
 
-          res.send(publicFilter('account_option', result.user.settings));
+            res.send(publicFilter('account_option', settings));
+          });
 
           // update session
           app.dao.updateColumn(

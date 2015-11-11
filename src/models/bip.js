@@ -712,11 +712,7 @@ hub: {
       return val ? JSON.stringify(val) : val;
     }
   },
-  _tz : { // user timezone
-    type : String,
-    renderable : false,
-    writable : false
-  },
+
   // channel secondary index
   _channel_idx : {
     type : Array,
@@ -920,69 +916,74 @@ Bip._createChannelIndex = function() {
  */
  Bip.preSave = function(accountInfo, next) {
   var self = this;
-  if ('' !== this.id && undefined !== this.id) {
-    var props = {
-      'domain_id' : accountInfo.getSetting('bip_domain_id'),
-      //        '_tz' : accountInfo.user.settings.timezone,
-      'type' :  accountInfo.getSetting('bip_type'),
-      'anonymize' :  accountInfo.getSetting('bip_anonymize'),
-      'config' :  accountInfo.getSetting('bip_config'),
-      'end_life' :  accountInfo.getSetting('bip_end_life'),
-      'hub' :  accountInfo.getSetting('bip_hub'),
-      'icon' : ''
-    };
 
-    app.helper.copyProperties(props, this, false);
-  }
+  accountInfo.getSettings(
+    function(err, settings) {
 
-  if (!this.end_life.action || '' === this.end_life.action) {
-    this.end_life.action = accountInfo.getSetting('bip_expire_behaviour');
-  }
+      if ('' !== self.id && undefined !== self.id) {
+        var props = {
+          'domain_id' : settings["bip_domain_id"],
+          'type' :  settings["bip_type"],
+          'anonymize' :  settings["bip_anonymize"],
+          'config' :  settings["bip_config"],
+          'end_life' :  settings["bip_end_life"],
+          'hub' :  settings["bip_hub"],
+          'icon' : ''
+        };
 
-  if (this.domain_id === '') {
-    this.domain_id = undefined;
-  }
+        app.helper.copyProperties(props, self, false);
+      }
 
-  var transformUnpack = [], ptr;
+      if (!self.end_life.action || '' === self.end_life.action) {
+        self.end_life.action = settings["bip_expire_behaviour"];
+      }
 
-  // translate 'default' transforms
-  for (cid in this.hub) {
-    if (this.hub.hasOwnProperty(cid)) {
-      if (this.hub[cid].transforms) {
-        for (edgeCid in this.hub[cid].transforms) {
-          if ('default' === this.hub[cid].transforms[edgeCid]) {
-            this.hub[cid].transforms[edgeCid] = {};
-            transformUnpack.push(
-              (function(accountInfo, from, to, ptr) {
-                return function(cb) {
-                  self._dao.getTransformHint(accountInfo, from, to, function(err, modelName, result) {
-                    if (!err && result && result.transform) {
-                      app.helper.copyProperties(result.transform, ptr, true);
+      if (self.domain_id === '') {
+        self.domain_id = undefined;
+      }
+
+      var transformUnpack = [], ptr;
+
+      // translate 'default' transforms
+      for (cid in self.hub) {
+        if (self.hub.hasOwnProperty(cid)) {
+          if (self.hub[cid].transforms) {
+            for (edgeCid in self.hub[cid].transforms) {
+              if ('default' === self.hub[cid].transforms[edgeCid]) {
+                self.hub[cid].transforms[edgeCid] = {};
+                transformUnpack.push(
+                  (function(accountInfo, from, to, ptr) {
+                    return function(cb) {
+                      self._dao.getTransformHint(accountInfo, from, to, function(err, modelName, result) {
+                        if (!err && result && result.transform) {
+                          app.helper.copyProperties(result.transform, ptr, true);
+                        }
+
+                        cb(err);
+                      });
                     }
-
-                    cb(err);
-                  });
-                }
-              })(accountInfo,
-              'bip.' + this.type,
-              accountInfo.user.channels.get(edgeCid).action,
-              this.hub[cid].transforms[edgeCid])
-              );
+                  })(accountInfo,
+                  'bip.' + self.type,
+                  accountInfo.user.channels.get(edgeCid).action,
+                  self.hub[cid].transforms[edgeCid])
+                );
+              }
+            }
           }
         }
       }
+
+      self._createChannelIndex();
+
+      if (transformUnpack.length > 0) {
+        async.parallel(transformUnpack, function(err) {
+          next(err, self);
+        });
+      } else {
+        next(false, self);
+      }
     }
-  }
-
-  this._createChannelIndex();
-
-  if (transformUnpack.length > 0) {
-    async.parallel(transformUnpack, function(err) {
-      next(err, self);
-    });
-  } else {
-    next(false, this);
-  }
+  );
 };
 
 function getAction(accountInfo, channelId) {
@@ -1198,7 +1199,7 @@ Bip.prePatch = function(patch, accountInfo, next) {
 
 Bip.isScheduled = function( next) {
 	var accountInfo = this.getAccountInfo();
-//	var timeNow =  app.helper.nowTimeTz(accountInfo.user.settings.timezone);
+
   var timeNow = new Date();
 
 	// check if the set schedule dictates that it is time to trigger this bip
@@ -1226,35 +1227,39 @@ Bip.getNextScheduledRunTime = function(options) {
 
 
 Bip.checkExpiry = function(next) {
-  var accountInfo = this.getAccountInfo();
-
-  if (this.end_life) {
-    // convert bip expiry to user timezone
-    var endTime = (app.moment(this.end_life.time).utc() / 1000) + (app.moment().utcOffset() * 60),
-    nowTime = app.helper.nowTimeTz(accountInfo.user.settings.timezone),
-    endImp =  parseInt(this.end_life.imp * 1),
-    expired = false,
+  var accountInfo = this.getAccountInfo(),
     self = this;
 
-    if (endTime > 0) {
-      // if its an integer, then treat as a timestamp
-      if (!isNaN(endTime)) {
-        // expired? then pause
-        if (nowTime >= endTime) {
-          // pause this bip
-          expired = true;
+  accountInfo.getSettings(
+    function(err, settings) {
+      if (self.end_life) {
+        // convert bip expiry to user timezone
+        var endTime = (app.moment(self.end_life.time).utc() / 1000) + (app.moment().utcOffset() * 60),
+        nowTime = app.helper.nowTimeTz(settings.timezone),
+        endImp =  parseInt(self.end_life.imp * 1),
+        expired = false;
+
+        if (endTime > 0) {
+          // if its an integer, then treat as a timestamp
+          if (!isNaN(endTime)) {
+            // expired? then pause
+            if (nowTime >= endTime) {
+              // pause this bip
+              expired = true;
+            }
+          }
+        }
+
+        if (endImp > 0) {
+          if (self._imp_actual && self._imp_actual >= endImp) {
+            expired = true;
+          }
         }
       }
-    }
 
-    if (endImp > 0) {
-      if (this._imp_actual && this._imp_actual >= endImp) {
-        expired = true;
-      }
+      next(expired);
     }
-  }
-
-  next(expired);
+  );
 };
 
 

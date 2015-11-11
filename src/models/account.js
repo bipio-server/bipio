@@ -133,6 +133,17 @@ Account.getSetting = function(name, next) {
   });
 };
 
+Account.getSettings = function(next) {
+  this._load('account_option', function(err, settings) {
+    if (settings && settings.length) {
+      next(err, settings[0])
+
+    } else {
+      next(err);
+    }
+  });
+};
+
 Account.getName : function() {
   return this.name;
 };

@@ -22,8 +22,15 @@ function AccountInfo(account) {
 }
 
 AccountInfo.prototype = {
-  getSetting : function(setting) {
-    return this.user.settings.getValue(setting);
+  getSettings : function(next) {
+    next(false, this.user.settings);
+  },
+
+  getSetting : function(name, next) {
+    this.getSettings(function(err, settings) {
+      next(err, settings[name]);
+    });
+
   },
   getId : function() {
     return this.user.id;
@@ -41,22 +48,23 @@ AccountInfo.prototype = {
   getActiveDomain : function() {
     return this.user.activeDomainId;
   },
+
   getActiveDomainObj : function() {
     return this.user.domains.get(this.user.activeDomainId);
   },
+
   getDefaultDomain: function() {
     return this.user.domains.get(this.user.defaultDomainId);
   },
+
   getDefaultDomainStr : function(incProto) {
     var defaultDomain = this.getDefaultDomain();
     var proto = (incProto) ? CFG.proto_public : '';
     return proto + defaultDomain.name;
   },
-  getName : function() {
-    return this.user.name;
-  },
-  getTimezone : function() {
-    return this.getSetting('timezone');
+
+  getTimezone : function(next) {
+    this.getSetting('timezone', next);
   }
 };
 
@@ -159,11 +167,13 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
         resultModel.settings = options;
       }
 
-      var accountInfo = new AccountInfo(resultModel);
-
-      next(err, accountInfo);
+      next(err, new AccountInfo(resultModel));
     }
   );
+}
+
+AuthModule.prototype.accountFactory = function(props) {
+  return new AccountInfo(props);
 }
 
 /**
@@ -174,6 +184,19 @@ AuthModule.prototype.getAccountStructByUsername = function(username, next) {
   var self = this;
 
   this.dao.find('account', { username : username }, function(err, result) {
+    if (err || !result) {
+      next(err ? err : "Not Found");
+    } else {
+      result.owner_id = result.id;
+      self.getAccountStruct(result, next);
+    }
+  });
+}
+
+AuthModule.prototype.getAccountStructById = function(id, next) {
+  var self = this;
+
+  this.dao.find('account', { id : id }, function(err, result) {
     if (err || !result) {
       next(err ? err : "Not Found");
     } else {
