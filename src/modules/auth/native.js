@@ -22,8 +22,32 @@ function AccountInfo(account) {
 }
 
 AccountInfo.prototype = {
+
+  _load : function(collection, next) {
+    var self = this;
+
+    if (!this.collections[collection]) {
+      this.dao.find(
+        collection,
+        {
+          owner_id : this.account.id
+        },
+        function(err, result) {
+          if (err) {
+            next(err);
+          } else {
+            self.collections[collection] = result;
+          }
+        }
+      );
+    } else {
+      next(false, this.collections[collection]);
+    }
+  },
+
   getSettings : function(next) {
-    next(false, this.user.settings);
+    this._load('account_option', next);
+    //next(false, this.user.settings);
   },
 
   getSetting : function(name, next) {
@@ -85,13 +109,14 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
   // finally, try to pull out the users auth token and account options
   step(
     function loadAcctInfo() {
+      /*
       dao.find(
         'account_option',
         {
           'owner_id' : authModel.owner_id
         },
         this.parallel());
-
+*/
       // get domains (for bip/channel representations
       dao.findFilter(
         'domain',
@@ -108,8 +133,8 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
         },
         this.parallel());
     },
-    function collateResults(err, options, domains, channels) {
-      if (err || !options || !domains || !channels) {
+    function collateResults(err, domains, channels) {
+      if (err || !domains || !channels) {
         err = true;
         resultModel = null;
       } else {
@@ -164,7 +189,7 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
 
         resultModel.domains = domainModels;
         resultModel.channels = channelModels;
-        resultModel.settings = options;
+        //resultModel.settings = options;
       }
 
       next(err, new AccountInfo(resultModel));
