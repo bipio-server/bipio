@@ -34,15 +34,9 @@ var BipModel = {
   entityCreated: 'created',
 
   entitySetters: {},
-  // validators : field : function(value, cb) {} // where cb(true) or cb(false)
-  // entityValidators: {},
 
   accountInfo : null,
-  /*
-    getValidators: function() {
-        return this.entityValidators;
-    },
-    */
+
   compoundKeyConstraints: undefined,
 
   // list of unique keys

@@ -28,6 +28,15 @@ AccountInfo.prototype = {
   getId : function() {
     return this.user.id;
   },
+
+  getName : function() {
+    return this.user.name;
+  },
+
+  getUserName : function() {
+    return this.user.username;
+  },
+
   // @todo refactor - naming makes no sense
   getActiveDomain : function() {
     return this.user.activeDomainId;

@@ -786,7 +786,7 @@ module.exports = {
         var method = req.params.method
         accountInfo = req.remoteUser,
         channel = dao.modelFactory('channel', {
-          owner_id : accountInfo.user.id,
+          owner_id : accountInfo.getId(),
           action : req.params.pod + '.'
         }),
         pod = channel.getPods(req.params.pod, accountInfo);
@@ -817,7 +817,7 @@ module.exports = {
         var method = req.params.method
         accountInfo = req.remoteUser,
         channel = dao.modelFactory('channel', {
-          owner_id : accountInfo.user.id,
+          owner_id : accountInfo.getId(),
           action : req.params.pod + '.'
         }),
         pod = channel.getPods(req.params.pod);
@@ -876,7 +876,7 @@ module.exports = {
             });
           } else {
             var channel = dao.modelFactory('channel', {
-              owner_id : accountInfo.user.id,
+              owner_id : accountInfo.getId(),
               action : pod.getName() + '.' + action
             });
 
@@ -1058,7 +1058,7 @@ module.exports = {
                 dao.modelFactory('account_option', result, accountInfo),
                 accountInfo,
                 restResponse(res)
-                );
+              );
             }
           });
 
