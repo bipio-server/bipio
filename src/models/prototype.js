@@ -94,8 +94,8 @@ var BipModel = {
     return this.compoundKeyConstraints;
   },
 
-  repr: function() {
-    return '';
+  repr: function(accountInfo, next) {
+    next(false, '');
   },
 
   links : function() {
@@ -136,8 +136,25 @@ var BipModel = {
   },
 
   toObj : function() {
-    return JSON.parse(JSON.stringify(this));
-  //return helper.copyProperties(this, {}, true, this.getPropNamesAsArray());
+
+    var obj = {},
+      self = this;
+
+    _.each(this.entitySchema, function(value, key) {
+      var selfVal = self[key];
+      if (self[key]) {
+        obj[key] = (_.isObject(selfVal) || _.isArray(selfVal)) ?  JSON.parse(JSON.stringify(selfVal)) : selfVal;
+      }
+    });
+
+    // copy any decorators
+    for (var k in this) {
+      if (this.hasOwnProperty(k) && 0 === k.indexOf('_') ) {
+        obj[k] = (_.isObject(this[k]) || _.isArray(this[k])) ?  JSON.parse(JSON.stringify(this[k])) : this[k];
+      }
+    }
+
+    return obj;
   },
 
   toMongoModel: function(mongoModel) {

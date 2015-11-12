@@ -428,7 +428,8 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
     filter.owner_id = ownerId;
   }
 
-  var domainId = accountInfo.getActiveDomain();
+  var domainId = accountInfo.getActiveDomain().id;
+
   if (domainId) {
     filter.domain_id = domainId;
   }

@@ -319,7 +319,6 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
         } else {
           propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
         }
-
       }
     }
 
@@ -426,6 +425,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
       var mongoModel = self.toMongoModel(model);
 
   	  mongoModel.validate(function (err) {
+
     		if (err) {
           next(err, model.getEntityName(), err, 500);
           return;
@@ -814,7 +814,6 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
           var modelStruct, realResult = [], publicModel, publicAttribute;
 
           for (key in results) {
-
 
             model = self.modelFactory(modelName, results[key], accountInfo);
 

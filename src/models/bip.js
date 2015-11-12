@@ -114,37 +114,42 @@ function setSchedule(schedule) {
   return end_life;
 }
 
-// -----------------------------------------------------------------------------
-Bip.repr = function(accountInfo) {
-  if (undefined === this.domain_id || '' === this.domain_id) {
-    return '';
-  } else if (!accountInfo.user.domains) {
-    return this.name;
-  }
-
-  var repr = '',
-  domainName = accountInfo.user.domains.get(this.domain_id).repr();
-
-  // inject the port for dev
-  if (process.env.NODE_ENV == 'development') {
-    domainName += ':' + CFG.server.port;
-  }
-
-  if (this.type === 'http') {
-    repr = (CFG.proto_user ? CFG.proto_user : CFG.proto_public) + domainName + '/bip/http/' + this.name;
-
-  } else if (this.type == 'smtp') {
-    repr = this.name + '@' + domainName;
-  }
-  return repr;
-}
-
 function escapeDot(val) {
   return val.replace(/\./g, '\u0001');
 }
 
 function unEscapeDot(val) {
   return val.replace(/\u0001/g, '.');
+}
+
+// -----------------------------------------------------------------------------
+Bip.repr = function(accountInfo, next) {
+  var self = this,
+    repr = '',
+    domains = accountInfo.getDomains(),
+    domainName;
+
+  if (!domains) {
+    repr = this.name;
+
+  } else if (this.domain_id) {
+
+    domainName = this._dao.modelFactory('domain', _.findWhere(domains, { id : this.domain_id})).repr();
+
+    // inject the port for dev
+    if (process.env.NODE_ENV == 'development') {
+      domainName += ':' + CFG.server.port;
+    }
+
+    if (self.type === 'http') {
+      repr = (CFG.proto_user ? CFG.proto_user : CFG.proto_public) + domainName + '/bip/http/' + this.name;
+
+    } else if (this.type == 'smtp') {
+      repr = self.name + '@' + domainName;
+    }
+  }
+
+  return repr;
 }
 
 Bip.links = function(accountInfo) {
@@ -239,9 +244,13 @@ Bip.entitySchema = {
     writable: true,
     validate : [ {
       validator : function(val, next) {
-        next(this.type === 'trigger' ? true :
-          this.getAccountInfo().user.domains.test(val)
-          );
+        if ('trigger' === this.type) {
+          next(true);
+        } else {
+          this.getAccountInfo().testDomain(val, function(err, ok) {
+            next(!err && ok);
+          });
+        }
       },
       msg : 'Domain Not Found'
     }
@@ -1261,7 +1270,6 @@ Bip.checkExpiry = function(next) {
     }
   );
 };
-
 
 Bip.expire = function(transactionId, next) {
   var accountInfo = this.getAccountInfo(),

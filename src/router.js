@@ -36,7 +36,6 @@ var dao,
   uuid    = require('node-uuid'),
   pkg = require('../package.json'),
   // restful models
-//  restResources = [ 'bip', 'channel', 'domain', 'account_option', 'bip_share' ],
   restResources = [ 'bip', 'channel', 'domain', 'account_option' ],
   modelPublicFilter;
 
@@ -50,13 +49,6 @@ function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
   }
 
   return result;
-/*
-  if (decode) {
-    return helper.naturalize(result);
-  } else {
-    return helper.pasteurize(result);
-  }
-*/
 }
 
 /**
@@ -339,12 +331,9 @@ var restAction = function(req, res) {
       }
 
       if (undefined !== req.params.id) {
-//        if (resourceName == 'channel' && (req.params.id == 'actions' || req.params.id == 'emitters' )) {
-//          dao.listChannelActions(req.params.id, accountInfo, restResponse(res));
-//        } else {
           var model = dao.modelFactory(resourceName, {}, accountInfo);
           dao.get(model, req.params.id, accountInfo, restResponse(res));
-//        }
+
       } else {
         var page_size = 10,
         page = 1,
@@ -454,7 +443,7 @@ function bipAuthWrapper(req, res, cb) {
         'name' : req.params.bip_name,
         'type' : 'http',
         'paused' : false,
-        'domain_id' : acctResult.domain_id
+        'domain_id' : acctResult.getActiveDomain().id
       };
 
       dao.find('bip', filter, function(err, result) {
@@ -1227,19 +1216,19 @@ module.exports = {
         // try to find a default renderer for this domain
         app.modules.auth.domainAuth(
           helper.getDomain(req.headers.host, true),
-          function(err, accountResult) {
+          function(err, accountInfo) {
             if (err) {
               res.status(500).end();
-            } else if (!accountResult) {
+            } else if (!accountInfo) {
               next();
             } else {
 
               // find default renderer
-              var ownerId = accountResult.getId(),
-              domain = accountResult.getActiveDomainObj(),
+              var ownerId = accountInfo.getId(),
+              domain = accountInfo.getActiveDomain(),
               filter;
 
-              req.remoteUser = accountResult;
+              req.remoteUser = accountInfo;
 
               if (app.helper.isObject(domain.renderer) && domain.renderer.channel_id && '' !== domain.renderer.channel_id) {
                 filter = {

@@ -1485,52 +1485,6 @@ Dao.prototype.refreshOAuth = function() {
   });
 }
 
-/**
- * Lists all actions for an account
- *
- * @todo cache
- */
-DaoMongo.prototype.listChannelActions = function(type, accountInfo, callback) {
-  // get available actions for account
-  var modelName = 'channel',
-  self = this,
-  c = this.modelFactory(modelName),
-  owner_id = accountInfo.user.id,
-  actions = type == 'actions' ? c.getActionList() : c.getEmitterList(),
-  filter = {
-    action : {
-      $in : actions
-    },
-    owner_id : owner_id
-  };
-
-  this.findFilter('channel', filter, function (err, results) {
-    var model;
-
-    if (err) {
-      self.log('Error: list(): ' + err);
-      if (callback) {
-        callback(false, err);
-      }
-    } else {
-      // convert to models
-      realResult = [];
-      for (key in results) {
-        model = self.modelFactory(modelName, results[key], accountInfo);
-        realResult.push(model);
-      }
-
-      var resultStruct = {
-        'data' : realResult
-      }
-
-      if (callback) {
-        callback(false, modelName, resultStruct );
-      }
-    }
-  });
-}
-
 Dao.prototype.getBipsByChannelId = function(channelId, accountInfo, next) {
   var filter = {
     owner_id : accountInfo.getId(),

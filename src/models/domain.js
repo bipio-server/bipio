@@ -198,7 +198,7 @@ Domain.postSave = function(accountInfo, next) {
   }
 }
 
-Domain.repr = function() {
+Domain.repr = function(accountInfo, next) {
   return this.name;
 }
 

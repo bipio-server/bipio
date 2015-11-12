@@ -1,4 +1,4 @@
-var step = require('../../lib/step'); // @todo deprecate, use Q
+var AccountInfo = require('./models/account_info.js');
 
 const MSG_NOT_AUTHORIZED = 'Not Authorized';
 
@@ -17,85 +17,9 @@ AuthModule.prototype = {
   }
 };
 
-function AccountInfo(account) {
-  this.user = account;
-}
-
-AccountInfo.prototype = {
-
-  _load : function(collection, next) {
-    var self = this;
-
-    if (!this.collections[collection]) {
-      this.dao.find(
-        collection,
-        {
-          owner_id : this.account.id
-        },
-        function(err, result) {
-          if (err) {
-            next(err);
-          } else {
-            self.collections[collection] = result;
-          }
-        }
-      );
-    } else {
-      next(false, this.collections[collection]);
-    }
-  },
-
-  getSettings : function(next) {
-    this._load('account_option', next);
-    //next(false, this.user.settings);
-  },
-
-  getSetting : function(name, next) {
-    this.getSettings(function(err, settings) {
-      next(err, settings[name]);
-    });
-
-  },
-  getId : function() {
-    return this.user.id;
-  },
-
-  getName : function() {
-    return this.user.name;
-  },
-
-  getUserName : function() {
-    return this.user.username;
-  },
-
-  // @todo refactor - naming makes no sense
-  getActiveDomain : function() {
-    return this.user.activeDomainId;
-  },
-
-  getActiveDomainObj : function() {
-    return this.user.domains.get(this.user.activeDomainId);
-  },
-
-  getDefaultDomain: function() {
-    return this.user.domains.get(this.user.defaultDomainId);
-  },
-
-  getDefaultDomainStr : function(incProto) {
-    var defaultDomain = this.getDefaultDomain();
-    var proto = (incProto) ? CFG.proto_public : '';
-    return proto + defaultDomain.name;
-  },
-
-  getTimezone : function(next) {
-    this.getSetting('timezone', next);
-  }
-};
-
 AuthModule.prototype.getAccountStruct = function(authModel, next) {
-  var self = this,
-    dao = this.dao,
-    resultModel = { // session usable abstract model of the account
+  // session usable abstract model of the account
+  var account = new AccountInfo({
       id : authModel.owner_id,
       name : authModel.name,
       username : authModel.username,
@@ -104,97 +28,12 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
       settings: {
         api_token: null
       }
-    };
+    }, this.dao);
 
-  // finally, try to pull out the users auth token and account options
-  step(
-    function loadAcctInfo() {
-      /*
-      dao.find(
-        'account_option',
-        {
-          'owner_id' : authModel.owner_id
-        },
-        this.parallel());
-*/
-      // get domains (for bip/channel representations
-      dao.findFilter(
-        'domain',
-        {
-          'owner_id' : authModel.owner_id
-        },
-        this.parallel());
-
-      // get channels (for id lookups)
-      dao.findFilter(
-        'channel',
-        {
-          'owner_id' : authModel.owner_id
-        },
-        this.parallel());
-    },
-    function collateResults(err, domains, channels) {
-      if (err || !domains || !channels) {
-        err = true;
-        resultModel = null;
-      } else {
-
-        var domainModels = {
-          domains : {},
-          set: function(model) {
-            this.domains[model.id] = model;
-          },
-          get: function( id ) {
-            return this.domains[id];
-          },
-          test: function(id) {
-            return (undefined != this.domains[id]);
-          }
-        };
-
-        for (idx in domains ) {
-          domainModels.set(dao.modelFactory('domain', domains[idx]));
-          // set default domain.  system allocated 'vanity' domains
-          // will respond to RPC calls etc.
-          if (domains[idx].type == 'vanity') {
-            resultModel.defaultDomainId = domains[idx].id;
-          }
-        }
-
-        if (undefined === resultModel.defaultDomainId) {
-          resultModel.defaultDomainId = "";
-        }
-
-        // there may be quite a few channels, but this
-        // still seems a little cheaper
-        var channelModels = {
-          channels : {},
-          set: function(model) {
-            this.channels[model.id] = model;
-          },
-          get: function( id ) {
-            return this.channels[id];
-          },
-          test: function(id) {
-            return (undefined != this.channels[id]);
-          },
-          isAvailable : function(id) {
-            return (!this.channels[id] || undefined === this.channels[id]._available || (undefined != this.channels[id] && true === this.channels[id].isAvailable() ) );
-          }
-        };
-
-        for (idx in channels ) {
-          channelModels.set(dao.modelFactory('channel', channels[idx]));
-        }
-
-        resultModel.domains = domainModels;
-        resultModel.channels = channelModels;
-        //resultModel.settings = options;
-      }
-
-      next(err, new AccountInfo(resultModel));
-    }
-  );
+  // always load domain records for the account
+  account.getDomains(function() {
+    next(false, account);
+  });
 }
 
 AuthModule.prototype.accountFactory = function(props) {
@@ -248,12 +87,6 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     accountAuth.plan_until = account.get('plan_until');
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
-      if (undefined == activeDomainId) {
-        accountInfo.user.activeDomainId = accountInfo.defaultDomainId;
-      } else {
-        accountInfo.user.activeDomainId = activeDomainId;
-      }
-
       accountInfo.user.username = account.username;
 
       next(false, accountInfo);
@@ -325,27 +158,28 @@ AuthModule.prototype.test = function(username, password, options, next) {
  * @param string domain domain name
  * @param function next callback(error, accountResult)
  */
-AuthModule.prototype.domainAuth = function(domain, next) {
+AuthModule.prototype.domainAuth = function(domainName, next) {
   var self = this;
 
   this.dao.find('domain', {
-    'name' : domain
-  }, function(err, result) {
+    'name' : domainName
+  }, function(err, domain) {
     if (err) {
       next(err);
     } else {
-      if (result) {
+      if (domain) {
         self._test(
-          result.owner_id,
+          domain.owner_id,
           '',
           {
             asOwner : true,
             acctBind : true,
-            domainId : result.id
+            domainId : domain.id
           },
-          function(err, acctResult) {
-            acctResult.domain_id = result.id;
-            next(err, acctResult);
+          function(err, accountInfo) {
+            accountInfo.activeDomain = domain;
+
+            next(err, accountInfo);
           }
         );
       } else {

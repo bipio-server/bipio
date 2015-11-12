@@ -437,7 +437,7 @@ Channel.postSave = function(accountInfo, next, isNew) {
   }
 
   this.accountInfo = undefined;
-  accountInfo.user.channels.set(this);
+  //accountInfo.user.channels.set(this);
 
   // channels behave a little differently, they can have postponed availability
   // after creation, which the pod actions themselves might want to dictate.
@@ -521,7 +521,7 @@ if (authType && 'none' !== authType) {
           },
           500
         );
-       
+
       } else {
         var auth = {};
         auth[authType] = authStruct;
@@ -643,7 +643,7 @@ Channel.href = function() {
 /**
  * Channel representation
  */
-Channel.repr = function(accountInfo) {
+Channel.repr = function(accountInfo, next) {
   var repr = '',
     tokens;
 
