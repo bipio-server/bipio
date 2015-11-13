@@ -208,7 +208,6 @@ DaoMongo.prototype.registerModelClass = function(modelClass, reRegister) {
   });
 
   //
-
   var model = this.modelFactory(modelClass.getEntityName());
 
   // swap out 'object' types for mixed.  This lets us separate mongoose
@@ -238,18 +237,6 @@ DaoMongo.prototype.registerModelClass = function(modelClass, reRegister) {
       unique: true
     });
   }
-
-  // get item setters
-  /*
-  if (undefined != modelClass.entitySetters) {
-    var setters = modelClass.entitySetters;
-
-    // apply magic setters @todo deprecate into schema 'set' attribute
-    for (key in setters) {
-      container[modelName]['schema'].path(key).set(setters[key]);
-    }
-  }
-  */
 
   // register mongoose schema
   try {
@@ -292,70 +279,10 @@ DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
 
   if (accountInfo) {
     // find with the owner id filter for the authenticated user
-    filter.owner_id = accountInfo.user.id
+    filter.owner_id = accountInfo.getId()
   }
   return filter;
 }
-
-/**
- * Returns a populated Object of properties
- * <script type="text/javascript">alert('XSS!');</script>
- */
-DaoMongo.prototype.modelFactorySLOW = function(modelName, initProperties, accountInfo, tainted) {
-  var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
-
-  writable = true;
-  // get properties
-  if (undefined == tainted) {
-    tainted = false;
-  }
-
-  if (undefined != initProperties) {
-    modelProperties = this.models[modelName]['class'].getPropNamesAsArray();
-    numProperties = modelProperties.length;
-
-    var propArgs = {};
-
-    for (i = 0; i < numProperties; i++) {
-      propArgs[modelProperties[i]] = {
-        //            value: initProperties[modelProperties[i]],
-        enumerable: true,
-        //writable: writable
-        writable : true
-      };
-
-      if (!(tainted && !helper.inArray(writeOnlyProps, modelProperties[i]))) {
-        // custom getters are a nasty workaround for some mongoose woes.
-        // see bip.js model, hub getter
-
-        var getter = this.models[modelName]['class'].entitySchema[modelProperties[i]].customGetter;
-        if (getter && initProperties[modelProperties[i]]) {
-          propArgs[modelProperties[i]].value = getter(initProperties[modelProperties[i]]);
-        } else {
-          propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
-        }
-      }
-    }
-
-    if (undefined != accountInfo && accountInfo.user && accountInfo.user.id) {
-      propArgs['owner_id'] = {
-        value: accountInfo.user.id,
-        enumerable: true
-      } ;
-    }
-  } else {
-    initProperties = {};
-  }
-
-  var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
-
-  this.models[modelName]['class'].constructor.apply(model);
-  if (!tainted || (tainted && undefined !== accountInfo)) {
-    model.populate(initProperties, accountInfo);
-  }
-
-  return model;
-};
 
 DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
   var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
@@ -392,13 +319,12 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
         } else {
           propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
         }
-
       }
     }
 
-    if (undefined != accountInfo && accountInfo.user && accountInfo.user.id) {
+    if (accountInfo) {
       propArgs['owner_id'] = {
-        value: accountInfo.user.id,
+        value: accountInfo.getId(),
         enumerable: true
       };
     }
@@ -498,8 +424,9 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
 
       var mongoModel = self.toMongoModel(model);
 
-      mongoModel.validate(function (err) {
-        if (err) {
+  	  mongoModel.validate(function (err) {
+
+    		if (err) {
           next(err, model.getEntityName(), err, 500);
           return;
         }
@@ -811,7 +738,7 @@ DaoMongo.prototype.removeFilter = function(modelName, filter, next) {
  * @param function callback completed callback
  */
 DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orderBy, filter, callback) {
-  var owner_id = accountInfo ? accountInfo.user.id : undefined;
+  var owner_id = accountInfo ? accountInfo.getId() : undefined;
   var self = this;
   var mongoFilter = {
     'owner_id' : owner_id
@@ -887,7 +814,6 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
           var modelStruct, realResult = [], publicModel, publicAttribute;
 
           for (key in results) {
-
 
             model = self.modelFactory(modelName, results[key], accountInfo);
 

@@ -1097,18 +1097,14 @@ Dao.prototype.bipError = function(id, errState, next) {
     },
     next
   );
-
 }
 
 Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next) {
     var self = this,
       payload = {
         bip : bip,
-        socketTrigger : isSocket,
-        accountInfo : accountInfo
+        socketTrigger : isSocket
       };
-
-    delete payload.bip.accountInfo;
 
     // update runtime
     self.updateColumn(
@@ -1162,87 +1158,61 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
 
         (function(bipResult) {
 
-          // get user account options
-          self.find(
-            'account_option',
-            {
-              owner_id : bipResult.owner_id
-            },
-            function(err, accountOpts) {
-              if (!err && accountOpts) {
-                // set up a pseudo account Info
-                var accountInfo = {
-                  user : {
-                    settings : accountOpts
-                  }
-                }
+          app.modules.auth.getAccountStructById(
+            bipResult.owner_id,
+            function(err, accountInfo) {
+              if (!err) {
+                var bipModel = self.modelFactory('bip', bipResult, accountInfo);
 
-                //
-                self.find(
-                  'account',
-                  {
-                    id : accountOpts.owner_id
-                  },
-                  function(err, account) {
-                    if (!err) {
+                if (force) {
+                  self.triggerBip(
+                    app._.clone(bipResult)._doc,
+                    accountInfo,
+                    isSocket,
+                    next
+                  );
 
-                      _.each(account.toJSON(), function(value, key) {
-                        accountInfo.user[key] = value;
-                      });
+                  app.logmessage('DAO:Trigger:' + bipResult.id + ':FORCED');
 
-                      var bipModel = self.modelFactory('bip', bipResult, accountInfo);
+                } else {
+                  // check expiry
+                  bipModel.checkExpiry(function(expired) {
+                    if (expired) {
+                      bipModel.expire('expired', next);
+                    } else {
+                      //check scheduled
+                      bipModel.isScheduled( function(scheduled) {
+                        if (!scheduled && !isSocket) {
+                          next();
+                        } else {
+                          self.triggerBip(
+                            app._.clone(bipResult)._doc,
+                            accountInfo,
+                            isSocket,
+                            next
+                          );
 
-                      if (force) {
-                        self.triggerBip(
-                          app._.clone(bipResult)._doc,
-                          accountInfo,
-                          isSocket,
-                          next
-                        );
+                          numProcessed++;
 
-                        app.logmessage('DAO:Trigger:' + bipResult.id + ':FORCED');
+                          app.logmessage('DAO:Trigger:' + bipResult.id + ':' + numProcessed + ':' + numResults);
+                          if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
 
-                      } else {
-                        // check expiry
-                        bipModel.checkExpiry(function(expired) {
-                          if (expired) {
-                            bipModel.expire('expired', next);
-                          } else {
-                            //check scheduled
-                            bipModel.isScheduled( function(scheduled) {
-                              if (!scheduled && !isSocket) {
-                                next();
-                              } else {
-                                self.triggerBip(
-                                  app._.clone(bipResult)._doc,
-                                  accountInfo,
-                                  isSocket,
-                                  next
-                                );
-
-                                numProcessed++;
-
-                                app.logmessage('DAO:Trigger:' + bipResult.id + ':' + numProcessed + ':' + numResults);
-                                if (bipModel.schedule && bipModel.schedule.nextTimeToRun) {
-
-                                  self.updateScheduledBipRunTime(bipModel);
-                                }
-
-                                if (numProcessed >= (numResults -1)) {
-                                  next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
-                                }
-                              }
-                            });
+                            self.updateScheduledBipRunTime(bipModel);
                           }
-                        });
 
-                      }
+                          if (numProcessed >= (numResults -1)) {
+                            next(false, 'DAO:Trigger:' + (numResults)  + ' Triggers Fired');
+                          }
+                        }
+                      });
                     }
-                  }
-                );
+                  });
 
-         	    }
-      	    });
+                }
+              }
+            }
+          );
+
         })(results[i]);
       }
     } else {
@@ -1510,52 +1480,6 @@ Dao.prototype.refreshOAuth = function() {
     if (!err) {
       for (var i = 0; i < results.length; i++) {
         pods[results[i].oauth_provider].oAuthRefresh(self.modelFactory('account_auth', results[i]));
-      }
-    }
-  });
-}
-
-/**
- * Lists all actions for an account
- *
- * @todo cache
- */
-DaoMongo.prototype.listChannelActions = function(type, accountInfo, callback) {
-  // get available actions for account
-  var modelName = 'channel',
-  self = this,
-  c = this.modelFactory(modelName),
-  owner_id = accountInfo.user.id,
-  actions = type == 'actions' ? c.getActionList() : c.getEmitterList(),
-  filter = {
-    action : {
-      $in : actions
-    },
-    owner_id : owner_id
-  };
-
-  this.findFilter('channel', filter, function (err, results) {
-    var model;
-
-    if (err) {
-      self.log('Error: list(): ' + err);
-      if (callback) {
-        callback(false, err);
-      }
-    } else {
-      // convert to models
-      realResult = [];
-      for (key in results) {
-        model = self.modelFactory(modelName, results[key], accountInfo);
-        realResult.push(model);
-      }
-
-      var resultStruct = {
-        'data' : realResult
-      }
-
-      if (callback) {
-        callback(false, modelName, resultStruct );
       }
     }
   });

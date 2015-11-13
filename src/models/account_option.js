@@ -149,8 +149,8 @@ AccountOption.entitySchema = {
 };
 
 AccountOption.preSave = function(accountInfo, next) {
-  var self = this;
-		if (this.avatar && 0 === this.avatar.toLowerCase().indexOf('http') && 0 !== this.avatar.indexOf(CFG.cdn_public ) ) {
+    var self = this;
+	if (this.avatar && 0 === this.avatar.toLowerCase().indexOf('http') && 0 !== this.avatar.indexOf(CFG.cdn_public ) ) {
 		app.modules.cdn.saveAvatar(this.owner_id, request.get(this.avatar), '/cdn/img/av/', function(err, avatarPath) {
 			if (err) {
 				next(err);
