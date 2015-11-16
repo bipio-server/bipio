@@ -59,7 +59,9 @@ AccountInfo.prototype = {
   },
 
   getDomain : function(domainId, next) {
+    console.log('getting domains');
     this.getDomains(function(err, domains) {
+      console.log('got domains.', domains);
       next(err, _.findWhere(domains, { id : domainId }) );
     });
   },

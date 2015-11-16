@@ -229,12 +229,14 @@ Bip.entitySchema = {
     type: String,
     renderable: true,
     writable: true,
+    /*
     validate : [
       {
         'validator' : BipModel.validators.max_64,
         'msg' : "64 characters max"
       }
     ]
+    */
   },
   domain_id: {
     type: String,
@@ -577,10 +579,12 @@ hub: {
           renderable: true,
           writable: true,
           "default" : '',
+          /*
           validate : [{
             'validator' : BipModel.validators.max_text,
             'msg' : "1024 characters max"
           }]
+          */
         },
         end_life: {
           type: Object,
@@ -619,10 +623,12 @@ hub: {
             return newValue;
             */
           },
+          /*
           validate : [{
             'validator' : BipModel.validators.bool_any,
             'msg' : 'Expected 1,0,true,false'
           }]
+          */
         },
         schedule: {
           type: Object,

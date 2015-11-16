@@ -57,6 +57,7 @@ Channel.entitySchema = {
     required : true,
     writable: true,
     "default" : "",
+    /*
     validate : [
     {
       validator : BipModel.validators.notempty,
@@ -67,6 +68,7 @@ Channel.entitySchema = {
       msg : "64 characters max"
     }
     ]
+    */
   },
   app_id : {
     type: String,
@@ -89,6 +91,7 @@ Channel.entitySchema = {
       return action;
     },
     "default" : "",
+    /*
     validate : [
     {
       validator : BipModel.validators.notempty,
@@ -114,6 +117,7 @@ Channel.entitySchema = {
       msg : 'Action Configuration Error'
     }
     ]
+    */
   },
 
   config:  {
@@ -134,12 +138,14 @@ Channel.entitySchema = {
     type: String,
     renderable: true,
     writable: true,
+    /*
     validate : [
     {
       validator : BipModel.validators.max_text,
       msg : "Text is too long, 1kb max"
     }
     ]
+    */
   },
   icon : {
     type: String,

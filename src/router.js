@@ -108,8 +108,11 @@ function publicFilter(modelName, modelStruct) {
  * if fails, defers to http basic auth.
  */
 function restAuthWrapper(req, res, next) {
+
   if (!req.header('authorization') && req.session.account && req.session.account.host === getClientInfo(req).host && !req.masqUser) {
+  console.log('re-authing');
     app.modules.auth.getAccountStruct(req.session.account, function(err, accountInfo) {
+console.log('account struct', arguments);
       if (!err) {
         req.remoteUser = req.user = accountInfo;
         next();
@@ -231,7 +234,7 @@ var restAction = function(req, res) {
   resourceId = req.params.id,
   subResourceId = req.params.subresource_id,
   postSave;
-
+console.log('doing...');
   // User is authenticated and the requested model is marked as restful?
   if (undefined != owner_id && helper.indexOf(restResources, resourceName) != -1) {
 
@@ -434,7 +437,9 @@ function bipBasicFail(req, res) {
  * HTTP auth on this endpoint unless the bip is explicitly 'none'
  */
 function bipAuthWrapper(req, res, cb) {
+  console.log('calling auth wrapper');
   app.modules.auth.domainAuth(helper.getDomain(req.headers.host, true), function(err, acctResult) {
+    console.log('domain authed');
     if (err) {
       // reject always
       bipBasicFail(req, res);

@@ -53,13 +53,14 @@
  *
  */
 var uuid        = require('node-uuid'),
-  mongoose    = require('mongoose'),
+  MongoClient = require('mongodb').MongoClient,
+  mongoose    = require('mongoose'), // @todo deprecate
   helper      = require('../lib/helper'),
   extend = require('extend'),
   time        = require('time'),
   events = require('events'),
   eventEmitter = new events.EventEmitter(),
-  mongooseOpen = false;
+  mongoOpen = false;
 
 /**
  * Mongoose DAO Constructor
@@ -80,28 +81,30 @@ function DaoMongo(config, log, next) {
     keepAlive: 1
   };
 
-  //mongoose.set('debug', true);
-
-  mongoose.connection.on('error', function(err) {
-    log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
-    log(err, 'error');
-    if (/missing hostname/i.test(err.message)) {
-      log('Exiting...', 'error');
-      process.exit(0);
-    } else {
-      self.emit('error', err);
-    }
-  });
-
-  mongoose.connection.on('open', function() {
-    log('DAO:MONGODB:Connected');
-    self.emit('ready', self);
-    mongooseOpen = true;
-  });
-
-  if (!mongooseOpen) {
+  if (!mongoOpen) {
     try {
-      mongoose.connect(config.dbMongo.connect, options);
+      MongoClient.connect(
+        config.dbMongo.connect,
+        function(err, db) {
+          if (err) {
+            log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
+            log(err, 'error');
+            if (/missing hostname/i.test(err.message)) {
+              log('Exiting...', 'error');
+              process.exit(0);
+            } else {
+              self.emit('error', err);
+            }
+          } else {
+            log('DAO:MONGODB:Connected');
+            self._connection = db;
+
+            self.emit('ready', self);
+            mongoOpen = true;
+
+          }
+        }
+      );
     } catch (e) {
     }
   }
@@ -110,7 +113,11 @@ function DaoMongo(config, log, next) {
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
 
 DaoMongo.prototype.getConnection = function() {
-  return mongoose.connection;
+  return this._connection;
+}
+
+DaoMongo.prototype._mongoPath = function(path) {
+  return this.getConnection().collection(path + 's');
 }
 
 /**
@@ -750,7 +757,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
     'alphabetical' : 'name'
   }
 
-  var model = mongoose.model(modelName),
+  var model = this._mongoPath(modelName),
     m = this.modelFactory(modelName);
 
   var query = model.find( mongoFilter.owner_id ? mongoFilter : null ),
@@ -775,7 +782,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
       }
     }
   }
-
+console.log('listing..')
   // count
   countQuery.count(function(err, count) {
     if (err) {

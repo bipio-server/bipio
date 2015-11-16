@@ -248,7 +248,7 @@ restapi.use(session({
   },
   secret: GLOBAL.CFG.server.sessionSecret,
   store: new MongoStore({
-    mongooseConnection : app.dao.getConnection()
+    url : GLOBAL.CFG.dbMongo.connect
   })
 }));
 

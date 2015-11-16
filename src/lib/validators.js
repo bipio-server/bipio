@@ -65,9 +65,7 @@ Validator.prototype = {
 			0 === val ||
 			(_.isString(val) && ['false', '0','no','n'].indexOf(val.toLowerCase()) >= 0)
 		);
-  },
-
-
+  }
 }
 
 module.exports = Validator;
