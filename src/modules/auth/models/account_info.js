@@ -17,7 +17,7 @@ AccountInfo.prototype = {
     var self = this;
 
     if (!this.collections[collection]) {
-      this.dao.find(
+      this.dao.findFilter(
         collection,
         {
           owner_id : this.user.id
@@ -27,6 +27,7 @@ AccountInfo.prototype = {
           if (next) {
             next(err, result);
           }
+
           return self.collections[collection];
         }
       );
@@ -43,8 +44,15 @@ AccountInfo.prototype = {
   getSettings : function(next) {
     var self = this;
     return this._load('account_option', function(err, settings) {
-      self.settings = settings;
-      next(err, settings);
+
+      if (app.helper.isArray(settings)) {
+        self.settings = settings[0];
+
+      } else {
+        self.settings = settings;
+      }
+
+      next(err, self.settings);
     });
   },
 
@@ -60,7 +68,7 @@ AccountInfo.prototype = {
 
   getDomain : function(domainId, next) {
     this.getDomains(function(err, domains) {
-      next(err, _.findWhere(domains, { id : domainId }) );
+      next(err, _.where(domains, { id : domainId }) );
     });
   },
 

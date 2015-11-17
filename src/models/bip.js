@@ -127,6 +127,7 @@ Bip.repr = function(accountInfo, next) {
   var self = this,
     repr = '',
     domains = accountInfo.getDomains(),
+    domain,
     domainName;
 
   if (!domains) {
@@ -134,7 +135,15 @@ Bip.repr = function(accountInfo, next) {
 
   } else if (this.domain_id) {
 
-    domainName = this._dao.modelFactory('domain', _.findWhere(domains, { id : this.domain_id})).repr();
+    domain = _.findWhere(domains, { id : this.domain_id});
+
+    if (app.helper.isArray(domain)) {
+      domain = array_pop(domain);
+    }
+
+    domain = this._dao.modelFactory('domain', domain);
+
+    domainName = domain.repr();
 
     // inject the port for dev
     if (process.env.NODE_ENV == 'development') {
@@ -245,6 +254,8 @@ Bip.entitySchema = {
     writable: true,
     validate : [ {
       validator : function(val, next) {
+        //next(true);
+        //return;
         var accountInfo = this.getAccountInfo();
         if ('trigger' === this.type) {
           next(true);
@@ -1246,6 +1257,7 @@ Bip.checkExpiry = function(next) {
   accountInfo.getSettings(
     function(err, settings) {
       if (self.end_life) {
+
         // convert bip expiry to user timezone
         var endTime = (app.moment(self.end_life.time).utc() / 1000) + (app.moment().utcOffset() * 60),
         nowTime = app.helper.nowTimeTz(settings.timezone),
