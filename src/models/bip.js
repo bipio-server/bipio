@@ -245,12 +245,15 @@ Bip.entitySchema = {
     writable: true,
     validate : [ {
       validator : function(val, next) {
+        var accountInfo = this.getAccountInfo();
         if ('trigger' === this.type) {
           next(true);
+
         } else {
-          this.getAccountInfo().testDomain(val, function(err, ok) {
+          accountInfo.testDomain(val, function(err, ok) {
             next(!err && ok);
           });
+
         }
       },
       msg : 'Domain Not Found'
