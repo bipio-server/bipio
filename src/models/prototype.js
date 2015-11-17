@@ -94,8 +94,8 @@ var BipModel = {
     return this.compoundKeyConstraints;
   },
 
-  repr: function(accountInfo, next) {
-    next(false, '');
+  repr: function(accountInfo) {
+    return '';
   },
 
   links : function() {
