@@ -1154,6 +1154,10 @@ module.exports = {
             host : getClientInfo(req).host
           }
 
+          if (req.session && req.session.account) {
+            app.logmessage('LOGIN:' + req.session.account.username);
+          }
+
           result.getSettings(function(err, settings) {
             if (result._remoteBody) {
               result.user.settings['remote_settings'] = result._remoteBody || {};
@@ -1177,6 +1181,10 @@ module.exports = {
     });
 
     express.get('/logout', function(req, res) {
+      if (req.session && req.session.account) {
+        app.logmessage('LOGOUT:' + req.session.account.username);
+      }
+
       req.session.destroy();
       res.status(200).end();
     });

@@ -336,6 +336,10 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
   var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
 
   this.models[modelName]['class'].constructor.apply(model);
+  if (!tainted || (tainted && undefined !== accountInfo)) {
+    model.populate(initProperties, accountInfo);
+  }
+
 
   if (accountInfo) {
     model.decorate(accountInfo);
