@@ -107,7 +107,7 @@ AccountInfo.prototype = {
   getDefaultDomain: function(next) {
     this.getDomains(
       function(err, domains) {
-        next(err, _.where(domains, { type : 'vanity'} ) );
+        next(err, _.findWhere(domains, { type : 'vanity'} ) );
       }
     );
   },
@@ -116,6 +116,21 @@ AccountInfo.prototype = {
     this.getDefaultDomain(function(err, domain) {
       next(err, CFG.proto_public + domain.name)
     });
+  },
+
+  setActiveDomain : function(domainId, next) {
+    var self = this;
+    if (domainId) {
+      this.getDomains(function(err, domains) {
+        self.activeDomain = _.findWhere(domains, { id : domainId } );
+        next();
+      });
+    } else {
+      this.getDefaultDomain(function(err, domain) {
+        self.activeDomain = domain;
+        next();
+      });
+    }
   },
 
   getTimezone : function(next) {

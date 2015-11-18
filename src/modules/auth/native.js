@@ -31,9 +31,11 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
     }, this.dao);
 
   // always load domain records for the account
-  account.getDomains(function() {
-    next(false, account);
-  });
+  (function(account) {
+    account.getDomains(function() {
+      next(false, account);
+    });
+  })(account);
 }
 
 AuthModule.prototype.accountFactory = function(props) {
@@ -87,9 +89,13 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     accountAuth.plan_until = account.get('plan_until');
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
+
       accountInfo.user.username = account.username;
 
-      next(false, accountInfo);
+      accountInfo.setActiveDomain(activeDomainId, function() {
+        next(false, accountInfo);
+      });
+
     });
   }
 }

@@ -73,6 +73,8 @@ app.isMaster = cluster.isMaster;
 
 app.modules = {};
 
+app.winston = winston;
+
 app.getConfig = function() {
   return envConfig;
 }
@@ -254,8 +256,6 @@ if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
     });
   }
 }
-
-
 
 // validate config
 if (/^http(s?):\/\//i.test(envConfig.domain_public)) {

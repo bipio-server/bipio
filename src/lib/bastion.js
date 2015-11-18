@@ -418,7 +418,6 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
     'paused' : false
   };
 
-
   if (name) {
     filter.name = name;
   }
