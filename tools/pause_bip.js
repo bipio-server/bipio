@@ -26,6 +26,7 @@
  */
 
 process.NOCONSUME = true;
+process.REQ_PODS = "email";
 
 var bootstrap = require(__dirname + '/../src/bootstrap'),
   dao = bootstrap.app.dao,
@@ -52,7 +53,7 @@ function pauseBip(id, reason, next) {
 					pod = dao.pod('email');
 
         if (pod && pod.getConfig().sender) {
-        	message += ' Please Contact ' + pod.getConfig().sender + ' for more info';
+        	message += ' - Please Contact ' + pod.getConfig().sender + ' for more info';
         }
 
 				dao.pauseBip(bip, true, function(err) {
