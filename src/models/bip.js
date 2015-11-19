@@ -254,8 +254,8 @@ Bip.entitySchema = {
     writable: true,
     validate : [ {
       validator : function(val, next) {
-        next(true);
-        return;
+        //next(true);
+        //return;
         // @todo fix domain validator
         var accountInfo = this.getAccountInfo();
         if ('trigger' === this.type) {
@@ -265,7 +265,6 @@ Bip.entitySchema = {
           accountInfo.testDomain(val, function(err, ok) {
             next(!err && ok);
           });
-
         }
       },
       msg : 'Domain Not Found'

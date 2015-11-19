@@ -5,13 +5,12 @@
 function AccountInfo(account, dao) {
   this.user = account;
   this.dao = dao;
+
+  this.collections = {};
+  this.activeDomain = null;
 }
 
 AccountInfo.prototype = {
-
-  collections : {},
-
-  activeDomain : null,
 
   _load : function(collection, next) {
     var self = this;

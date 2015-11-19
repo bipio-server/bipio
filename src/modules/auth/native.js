@@ -31,11 +31,11 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
     }, this.dao);
 
   // always load domain records for the account
-  (function(account) {
-    account.getDomains(function() {
-      next(false, account);
-    });
-  })(account);
+  account.getDomains(function() {
+    console.log(account.user.name, arguments)
+    next(false, account);
+  });
+
 }
 
 AuthModule.prototype.accountFactory = function(props) {
