@@ -32,7 +32,6 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
 
   // always load domain records for the account
   account.getDomains(function() {
-    console.log(account.user.name, arguments)
     next(false, account);
   });
 
