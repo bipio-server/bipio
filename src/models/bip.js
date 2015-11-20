@@ -904,6 +904,80 @@ if (CFG.server.smtp_bips) {
       'reply_to' : {
         type : 'string',
         description: 'Sender'
+      },
+      'headers' : {
+        type : 'object',
+        description : 'Headers',
+        properties : {
+          'from' : {
+            type : 'string',
+            description : 'From'
+          },
+          'to' : {
+            type : 'string',
+            description : 'To'
+          },
+          'subject' : {
+            type : 'string',
+            description : 'Subject'
+          },
+          'date' : {
+            type : 'string',
+            description : 'Date'
+          },
+          'message-id' : {
+            type : 'string',
+            description : 'Message ID'
+          },
+          'bcc' : {
+            type : 'string',
+            description : 'Bcc'
+          },
+          'cc' : {
+            type : 'string',
+            description : 'Cc'
+          },
+          'content-type' : {
+            type : 'string',
+            description : 'Content Type'
+          },
+          'in-reply-to' : {
+            type : 'string',
+            description : 'In Reply To'
+          },
+          'precedence' : {
+            type : 'string',
+            description : 'Precedence'
+          },
+          'received' : {
+            type : 'string',
+            description : 'Received'
+          },
+          'references' : {
+            type : 'string',
+            description : 'References'
+          },
+          'reply-to' : {
+            type : 'string',
+            description : 'Reply To'
+          },
+          'sender' : {
+            type : 'string',
+            description : 'Sender'
+          },
+          'return-path' : {
+            type : 'string',
+            description : 'Return Path'
+          },
+          'error-to' : {
+            type : 'string',
+            description : 'Error To'
+          }
+        }
+      },
+      headers_raw : {
+        type : 'string',
+        description : 'Raw Headers'
       }
     },
     definitions : {
