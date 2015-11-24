@@ -81,6 +81,12 @@ AccountInfo.prototype = {
     this._load('channel', next);
   },
 
+  getChannel : function(cid, next) {
+    this.getChannels(function(err, channels) {
+      next(err, _.findWhere(channels, { id : cid}) );
+    });
+  },
+
   testChannel : function(cid, next) {
     this.getChannels(function(err, channels) {
       next(err, !!_.where(channels, { id : cid}).length );

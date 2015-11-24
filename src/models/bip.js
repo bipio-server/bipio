@@ -382,13 +382,17 @@ Bip.entitySchema = {
   },
   {
     validator : function(val, next) {
-      var ok = true;
       if (this.type == 'http' && val.renderer) {
-        ok = this.getDao().validateRenderer(val, this.getAccountInfo());
+        this.getDao().validateRPC(
+          val,
+          this.getAccountInfo(),
+          function(err, ok) {
+            next(!err && ok)
+          }
+        );
+      } else {
+        next(true);
       }
-
-      next(ok);
-      return;
     },
     msg : 'Renderer RPC Not Found'
   }

@@ -89,7 +89,13 @@ Domain.entitySchema = {
     validate : [
       {
         validator : function(val, next) {
-          next(self._dao.validateRenderer(val, this.getAccountInfo()));
+          self._dao.validateRPC(
+            val,
+            this.getAccountInfo(),
+            function(err, ok) {
+              next(!err && ok);
+            }
+          );
         },
         msg : 'Renderer RPC Not Found'
       }

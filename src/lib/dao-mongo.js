@@ -434,6 +434,7 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
           next(err, model.getEntityName(), err, 500);
           return;
     		}
+
     		mongoModel.save(function(err) {
           if (err) {
             self._log(err, 'error');

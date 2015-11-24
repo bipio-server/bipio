@@ -1432,22 +1432,35 @@ Dao.prototype.pod = function(podName, accountInfo) {
   return this.models['channel']['class'].pod(podName);
 }
 
-
 // validate a renderer struct for a given user
-Dao.prototype.validateRenderer = function(struct, accountInfo) {
+Dao.prototype.validateRPC = function(struct, accountInfo, next) {
   var ok = app.helper.isObject(struct.renderer)
       && (struct.renderer.channel_id || struct.renderer.pod)
       && struct.renderer.renderer;
 
   // check channel exists
   if (ok && struct.renderer.channel_id ) {
-    userChannels = accountInfo.user.channels,
-    ok = userChannels.test(struct.renderer.channel_id);
-    // check renderer exists
-    if (ok) {
-      var channel = userChannels.get(struct.renderer.channel_id);
-      ok = channel.hasRenderer(struct.renderer.renderer);
-    }
+
+    accountInfo.getChannel(
+      struct.renderer.channel_id,
+      function(err, channel) {
+
+        if (err) {
+          next(err);
+
+        // check renderer exists
+        } else if (channel) {
+
+          next(
+            false,
+            channel.hasRenderer(struct.renderer.renderer)
+          );
+        } else {
+          next();
+        }
+      }
+    );
+
   // if a pod, check pod and renderer exist
   } else if (ok && struct.renderer.pod) {
     pod = this.pod(struct.renderer.pod);
@@ -1725,6 +1738,8 @@ Dao.prototype.generateAccountStats = function(accountId, next) {
         next(true);
       } else {
         var channelMap = {},
+        kEsc,
+        kTokens,
         j,
         bip,
         from,
@@ -1747,9 +1762,22 @@ Dao.prototype.generateAccountStats = function(accountId, next) {
           for (var key in bip.hub) {
             if (bip.hub.hasOwnProperty(key)) {
               if (key === 'source') {
-                from = bip.type === 'trigger' ?
-                channelMap[bip.config.channel_id] :
-                'bip.' + bip.type;
+                if (bip.type === 'trigger') {
+                  if (app.helper.getRegUUID().test(bip.config.channel_id)) {
+                    from = channelMap[bip.config.channel_id];
+                  } else {
+
+                    kTokens = bip.config.channel_id.split('.');
+                    from = kTokens[0] + '.' + kTokens[1];
+                  }
+                } else {
+                  from = 'bip.' + bip.type;
+                }
+
+              } else if (!app.helper.getRegUUID().test(key)) {
+                kTokens = key.split('\u0001');
+                from = kTokens[0] + '.' + kTokens[1];
+
               } else {
                 from = channelMap[key]
               }
@@ -1758,10 +1786,21 @@ Dao.prototype.generateAccountStats = function(accountId, next) {
               // are yet to resolve.
               if (from) {
                 for (var k = 0; k < bip.hub[key].edges.length; k++) {
-                  to = channelMap[bip.hub[key].edges[k]];
+
+                  if (!app.helper.getRegUUID().test(bip.hub[key].edges[k])) {
+                    kTokens = bip.hub[key].edges[k].split('.');
+
+                    to = kTokens[0] + '.' + kTokens[1];
+                  } else {
+                    to = channelMap[bip.hub[key].edges[k]]
+                  }
+
+                  //console.log('CHORD ' , from, to, '\n\n')
+
                   if (to) {
                     // nasty. mongodb normaliser
                     chordKey = (from + ';' + to).replace(new RegExp('\\.', 'g'), '#');
+
                     if (!networkData[chordKey]) {
                       networkData[chordKey] = 0;
                     }
