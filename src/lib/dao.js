@@ -592,133 +592,134 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   exports = helper.copyProperties(bip.exports, {}, true),
   derivedHub = {},
   manifest = {},
-  channels = bip.accountInfo.user.channels,
   derivedSrc = '',
   txSrcNorm = '',
   template = '',
   regUUID = helper.getRegUUID(),
   cMatch;
 
-  function channelTranslate(src) {
-    // skip source in manifest
-    if (src !== 'source') {
-      if (regUUID.test(src)) {
-        src = channels.get(src).action;
-        manifest[src] = true;
-      } else if (!regUUID.test(src)) {
-        manifest[src] = true;
+  bip.accountInfo.getChannels(function(err, channels) {
+    function channelTranslate(src) {
+      // skip source in manifest
+      if (src !== 'source') {
+        if (regUUID.test(src)) {
+          src = _.find(channels, { id : src }).action;
+          manifest[src] = true;
+        } else if (!regUUID.test(src)) {
+          manifest[src] = true;
+        }
       }
+
+      return src;
     }
 
-    return src;
-  }
+    for (var src in hub) {
+      if (hub.hasOwnProperty(src)) {
+        derivedSrc = channelTranslate(src);
 
-  for (var src in hub) {
-    if (hub.hasOwnProperty(src)) {
-      derivedSrc = channelTranslate(src);
+        derivedHub[derivedSrc] = {
+          edges : [],
+          transforms : {}
+        };
 
-      derivedHub[derivedSrc] = {
-        edges : [],
-        transforms : {}
-      };
+        for (var i = 0; i < hub[src].edges.length; i++) {
+          derivedHub[derivedSrc].edges.push(channelTranslate(hub[src].edges[i]));
+        }
 
-      for (var i = 0; i < hub[src].edges.length; i++) {
-        derivedHub[derivedSrc].edges.push(channelTranslate(hub[src].edges[i]));
-      }
+        if (hub[src].transforms) {
+          for (var txSrc in hub[src].transforms) {
 
-      if (hub[src].transforms) {
-        for (var txSrc in hub[src].transforms) {
+            txSrcNorm = channelTranslate(txSrc);
 
-          txSrcNorm = channelTranslate(txSrc);
+            derivedHub[derivedSrc].transforms[txSrcNorm] = {};
 
-          derivedHub[derivedSrc].transforms[txSrcNorm] = {};
-
-          for (var cImport in hub[src].transforms[txSrc]) {
-            template = hub[src].transforms[txSrc][cImport];
-            cMatch = template.match(regUUID);
-            if (cMatch && cMatch.length) {
-              for (var j = 0; j < cMatch.length; j++) {
-                template = template.replace(cMatch[j], channelTranslate(cMatch[j]));
+            for (var cImport in hub[src].transforms[txSrc]) {
+              template = hub[src].transforms[txSrc][cImport];
+              cMatch = template.match(regUUID);
+              if (cMatch && cMatch.length) {
+                for (var j = 0; j < cMatch.length; j++) {
+                  template = template.replace(cMatch[j], channelTranslate(cMatch[j]));
+                }
               }
+              derivedHub[derivedSrc].transforms[txSrcNorm][cImport] = template;
             }
-            derivedHub[derivedSrc].transforms[txSrcNorm][cImport] = template;
           }
         }
       }
     }
-  }
 
-  var config = helper.copyProperties(bip.config, {});
+    var config = helper.copyProperties(bip.config, {});
 
-  // always force auth on shared http bips.
-  if (bip.type === 'http') {
-    config.auth = 'token'
-    delete config.username;
-    delete config.password;
+    // always force auth on shared http bips.
+    if (bip.type === 'http') {
+      config.auth = 'token'
+      delete config.username;
+      delete config.password;
 
-    if (config.renderer && config.renderer.channel_id) {
-      config.renderer.channel_id = channelTranslate(config.renderer.channel_id);
-    }
-
-  } else if (bip.type === 'trigger' && bip.config.channel_id) {
-    config.channel_id = channelTranslate(bip.config.channel_id);
-    if (triggerConfig) {
-      config.config = triggerConfig;
-    }
-  }
-
-  // bip share struct
-  var bipShare = {
-    bip_id : bip.id,
-    type : bip.type,
-    name : bip.name,
-    note : bip.note,
-    icon : bip.icon,
-    exports : exports,
-    config : config,
-    hub : derivedHub,
-    manifest : Object.keys(manifest),
-    owner_id : bip.owner_id,
-    owner_name : bip.accountInfo.user.name,
-    user_name : bip.accountInfo.user.username,
-    schedule : bip.schedule,
-    slug : bip.slug
-  };
-
-  bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
-
-  // find & update or create for bip/owner pair
-  self.find(
-    'bip_share',
-    {
-      owner_id : bip.accountInfo.user.id,
-      bip_id : bip.id
-    },
-    function(err, result) {
-      if (err) {
-        cb(self.errorParse(err), null, null, self.errorMap(err) );
-      } else {
-        var model = self.modelFactory(modelName, bipShare, bip.accountInfo);
-        if (!result) {
-          self.create(model, cb, bip.accountInfo);
-
-          var jobPacket = {
-            owner_id : bip.owner_id,
-            bip_id : bip.id,
-            code : 'bip_share'
-          };
-
-          app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
-          app.bastion.createJob(DEFS.JOB_USER_STAT, {
-            owner_id : bip.owner_id,
-            type : 'share_total'
-          } );
-
-        } else {
-          self.update(modelName, result.id, bipShare , cb, bip.accountInfo);
-        }
+      if (config.renderer && config.renderer.channel_id) {
+        config.renderer.channel_id = channelTranslate(config.renderer.channel_id);
       }
-    });
+
+    } else if (bip.type === 'trigger' && bip.config.channel_id) {
+      config.channel_id = channelTranslate(bip.config.channel_id);
+      if (triggerConfig) {
+        config.config = triggerConfig;
+      }
+    }
+
+    // bip share struct
+    var bipShare = {
+      bip_id : bip.id,
+      type : bip.type,
+      name : bip.name,
+      note : bip.note,
+      icon : bip.icon,
+      exports : exports,
+      config : config,
+      hub : derivedHub,
+      manifest : Object.keys(manifest),
+      owner_id : bip.owner_id,
+      owner_name : bip.accountInfo.user.name,
+      user_name : bip.accountInfo.user.username,
+      schedule : bip.schedule,
+      slug : bip.slug
+    };
+
+    bipShare.manifest_hash = helper.strHash(bipShare.manifest.join());
+
+    // find & update or create for bip/owner pair
+    self.find(
+      'bip_share',
+      {
+        owner_id : bip.accountInfo.user.id,
+        bip_id : bip.id
+      },
+      function(err, result) {
+        if (err) {
+          cb(self.errorParse(err), null, null, self.errorMap(err) );
+        } else {
+          var model = self.modelFactory(modelName, bipShare, bip.accountInfo);
+          if (!result) {
+            self.create(model, cb, bip.accountInfo);
+
+            var jobPacket = {
+              owner_id : bip.owner_id,
+              bip_id : bip.id,
+              code : 'bip_share'
+            };
+
+            app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, jobPacket);
+            app.bastion.createJob(DEFS.JOB_USER_STAT, {
+              owner_id : bip.owner_id,
+              type : 'share_total'
+            } );
+
+          } else {
+            self.update(modelName, result.id, bipShare , cb, bip.accountInfo);
+          }
+        }
+      });
+  });
 }
 
 Dao.prototype.unshareBip = function(id, accountInfo, cb) {
