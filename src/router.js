@@ -387,7 +387,7 @@ function callRenderer(ownerId, renderer, req, res) {
         res.status(404).end();
       } else {
         dao.modelFactory('channel', result).rpc(
-          renderer,
+          renderer.renderer,
           req.query,
           getClientInfo(req),
           req,
@@ -407,8 +407,7 @@ function callRenderer(ownerId, renderer, req, res) {
       getClientInfo(req),
       req,
       res
-      );
-
+    );
 
   } else {
     res.status(404).end();
@@ -455,7 +454,6 @@ function bipAuthWrapper(req, res, cb) {
 
           } else {
             connect.basicAuth(function(username, password, next) {
-
               if ('basic' === result.config.auth) {
                 var authed = result.config.username
                   && result.config.username == username
