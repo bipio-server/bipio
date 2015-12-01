@@ -1435,7 +1435,8 @@ Dao.prototype.pod = function(podName, accountInfo) {
 
 // validate a renderer struct for a given user
 Dao.prototype.validateRPC = function(struct, accountInfo, next) {
-  var ok = app.helper.isObject(struct.renderer)
+  var self = this,
+    ok = app.helper.isObject(struct.renderer)
       && (struct.renderer.channel_id || struct.renderer.pod)
       && struct.renderer.renderer;
 
@@ -1451,6 +1452,8 @@ Dao.prototype.validateRPC = function(struct, accountInfo, next) {
 
         // check renderer exists
         } else if (channel) {
+
+          channel = self.modelFactory('channel', channel);
 
           next(
             false,
