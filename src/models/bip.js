@@ -1337,7 +1337,7 @@ Bip.checkExpiry = function(next) {
       if (self.end_life) {
 
         // convert bip expiry to user timezone
-        var endTime = (app.moment(self.end_life.time).utc() / 1000) + (app.moment().utcOffset() * 60),
+        var endTime = (app.moment(self.end_life.time).utc() ) + (app.moment().utcOffset() * 60),
         nowTime = app.helper.nowTimeTz(settings.timezone),
         endImp =  parseInt(self.end_life.imp * 1),
         expired = false;

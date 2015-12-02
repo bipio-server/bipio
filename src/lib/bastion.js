@@ -616,6 +616,9 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
     });
   }
 
+  // do not export account object reference with bip (circular ref)
+  delete bip.accountInfo;
+
   for (var i = 0; i < numEdges; i++) {
     channelInvokePacket = {
       'bip' : bip,
@@ -629,7 +632,6 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
     }
 
     app.logmessage('BASTION:FWD:TX:' + client.id + ':CID:' + channel_id);
-
     // produce an export for the next upstream
     // adjacent channel
     this._queue.producePublic(channelInvokePacket, function() {
