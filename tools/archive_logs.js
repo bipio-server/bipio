@@ -158,6 +158,7 @@ dao.on('ready', function(dao) {
 												//promise.resolve('DONE ' + yearMonth );
 												//return;
 										// cleanup
+										console.log('CLEANING UP ' + yearMonth)
 										dao.removeFilter('bip_log', filter, function(err) {
 											if (err) {
 												promise.reject(err);

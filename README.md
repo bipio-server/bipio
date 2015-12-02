@@ -48,22 +48,6 @@ And follow the instructions.
 
 Feel free to [craft your own](https://github.com/bipio-server/bipio/wiki/Pods#creating-pods).
 
-### Visual Tools
-
-The bip.io server is a light weight headless API server and ships without a User Interface (UI).  The official UI can be found on the [bip.io](https://bip.io) hosted platform.  It's completely free.
-
-[![ScreenShot](https://bip.io/static/img/docs/vimeo_overlay.png)](https://vimeo.com/119869509)
-
-Sign in to [bip.io](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.
-
-![Server Mount](https://bip.io/static/img/docs/server_mount.png)
-
-#### Mounting Security Notes
-
-Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
-
-The UI is a thin client which is loaded entirely into your browser.  Once loaded you can reach any bipio server your browser can connect to such as from behind any firewall, over VPN or IP tunnel etc.
-
 ## Requirements
 
   - [Node.js >= 0.10.15](http://nodejs.org) **API and graph resolver**
@@ -98,23 +82,44 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
     npm install
     node . (or `npm start`)
 
+### Visual Tools
+
+The bip.io server is a light weight headless API server and ships without a User Interface (UI).  The official UI can be found on the [bip.io](https://bip.io) hosted platform.  It's completely free.
+
+[![ScreenShot](https://bip.io/static/img/docs/vimeo_overlay.png)](https://vimeo.com/147186752)
+
+To learn about the UI, the [community knowledgebase](https://bip.uservoice.com/knowledgebase) is the best place to start.
+
+Although bip.io is a hosted cloud platform, you can still use it to manage your own bip.io server with a feature called ['Mounts'](https://bip.uservoice.com/knowledgebase/articles/764829-where-is-the-user-interface-for-my-open-source-bip)
+
+Sign in to [bip.io](https://bip.io) to mount your local install from your browser under My Account > Mounts > Create Mount.
+
+![Server Mount](https://bip.io/static/img/docs/server_mount.png)
+
+#### Mounting Security Notes
+
+Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
+
+The UI is a thin client which is loaded entirely into your browser.  Once loaded you can reach any bipio server your browser can connect to such as from behind any firewall, over VPN or IP tunnel etc.
+
 ## Technical Notes
 
-When setting bip.io up for the first time, the install process will enter interactive mode, saving to the path of NODE_CONFIG_DIR environment variable,if set (otherwise, just config/{environment.json}.
+When setting bip.io up for the first time, the install process will enter interactive mode, saving the generated config to `config/default.json`.
+
+The location of the config file can be overrideen using the `NODE_CONFIG_DIR` environment variable.
 
     export NODE_CONFIG_DIR=<path_to_your_config_directory>
 
-Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts
-during the install process to get a basically sane server running that you can play with.
+Be sure to have a MongoDB server and Rabbit broker ready and available before install.  Otherwise, follow the prompts during the install process to get a basically sane server running that you can play with.
 
-For Ubuntu users, a sample upstart script is supplied in config/upstart_bip.conf which should be copied to
-/etc/init and reconfigured to suit your environment.
+For Ubuntu users, a sample upstart script is supplied in `config/upstart_bip.conf` which should be copied to
+`/etc/init` and reconfigured to suit your environment.
 
-If you have a more complex deployment environment and the packaged sparse config doesn't suit, don't worry!  Set the environment variable BIPIO_SPARSE_CONFIG to the path of your preferred config file, and it will use that instead.
+If you have a more complex deployment environment and the packaged sparse config doesn't suit, don't worry!  Set the environment variable `BIPIO_SPARSE_CONFIG` to the path of your preferred config file, and it will use that instead.
 
-For a non-interactive setup (ie: make install without any user interaction) - set environment variable HEADLESS=true
+For a non-interactive setup (ie: make install without any user interaction) - set environment variable `HEADLESS=true`
 
-bip.io does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should ideally be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
+bip.io does not provide any load balancing beyond [node-cluster](http://nodejs.org/api/cluster.html).  It can provide SSL termination but this is unsuitable for a production environment.  If you need SSL termination this should be delegated to the forward proxy of your choice such as Nginx, Apache, HAProxy etc.
 
 ## Developing and Contributing
 
