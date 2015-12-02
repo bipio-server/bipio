@@ -29,7 +29,8 @@ bip.io is dynamic, flexible, fast, modular, opinionless and GPLv3 open source.
 
 Find out more in [the wiki](https://github.com/bipio-server/bipio/wiki).
 
-![concept](https://bip.io/static/img/docs/bip_example.png)
+<div style="text-align:center"><img width="400px" src ="https://bip.io/static/img/docs/bip_example.png" /></div>
+
 
 ### Pods
 
