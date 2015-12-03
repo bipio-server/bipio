@@ -1126,7 +1126,9 @@ Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next) {
       app.bastion.createJob( DEFS.JOB_BIP_TRIGGER, payload);
     });
 
-    next();
+    if (next) {
+      next();
+    }
 }
 
 /**
