@@ -23,6 +23,8 @@
  /**
   * Dedicated worker
   */
+process.env.WORKER = true;
+
 var bootstrap = require(__dirname + '/bootstrap'),
   app = bootstrap.app,
   helper  = require('./lib/helper'),

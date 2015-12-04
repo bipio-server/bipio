@@ -69,7 +69,7 @@ app._ = underscore;
 app.Q = Q;
 app.moment = moment;
 
-app.isMaster = cluster.isMaster;
+app.isMaster = cluster.isMaster && !process.env.WORKER;
 
 app.modules = {};
 
