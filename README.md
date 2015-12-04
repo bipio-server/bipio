@@ -11,7 +11,6 @@ Imagine you can send a single standard payload and have a limitless host of API'
 That's what bip.io does.
 
 [![NPM](https://nodei.co/npm/bipio.png?downloads=true)](https://nodei.co/npm/bipio/)
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/bipio-server/bipio/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
 Follow <a href="https://twitter.com/bipioapp" class="twitter-follow-button" data-show-count="false">@bipioapp</a> on Twitter for regular news and updates.
 
