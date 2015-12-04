@@ -99,7 +99,11 @@ Sign in to [bip.io](https://bip.io) to mount your local install from your browse
 
 #### Mounting Security Notes
 
-Be sure to answer 'yes' to the SSL question during setup to install a self signed SSL certificate.  This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
+Be sure to answer **yes** to the SSL question during setup to install a self signed SSL certificate.  
+
+`Enable SSL? This will let you mount this server from the https://bip.io dashboard :`
+
+This will avoid any browser security restrictions when mounting your server via the hosted website.  You *must* visit your bipio server in a browser first and accept the self signed certificate, or the mount may not work eg : `https://localhost:5000/status`
 
 The UI is a thin client which is loaded entirely into your browser.  Once loaded you can reach any bipio server your browser can connect to such as from behind any firewall, over VPN or IP tunnel etc.
 
