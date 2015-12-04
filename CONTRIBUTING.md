@@ -51,7 +51,7 @@ top of thing and are all speaking the same language.
 
 ## Migrations
 
-[Migrations](http://en.wikipedia.org/wiki/Software_modernization) is the mechanism BipIO uses to upgrade itself when its software version changes.  To create a migration, create the file `migrations/<% pkg.version%>/index.js`.
+[Migrations](http://en.wikipedia.org/wiki/Software_modernization) is the mechanism bip.io uses to upgrade itself when its software version changes.  To create a migration, create the file `migrations/<% pkg.version%>/index.js`.
 
 [Example Migration](https://github.com/bipio-server/bipio/blob/master/migrations/0.2.50/index.js)
  
