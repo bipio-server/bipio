@@ -1,7 +1,7 @@
 {
   "author": "Michael Pearson",
   "name": "bipio",
-  "version": "0.4.51",
+  "version": "0.4.52",
   "scripts": {
     "start": "node src/server.js >> logs/server.log &",
     "test": "make test",
@@ -43,11 +43,11 @@
     "bip-pod-syndication": ">=0.4.5",
     "bip-pod-templater": ">=0.0.1",
     "bip-pod-time": ">=0.0.1",
-    "body-parser": "^1.0.2",
+    "body-parser": "~1.13.2",
     "clone": ">=0.1.0",
     "commander": ">=2.0.0",
     "config": "0.4.36",
-    "connect": "^2.14.5",
+    "connect": ">=2.14.5",
     "connect-mongo": ">=0.4.0",
     "cookie-parser": "^1.0.1",
     "cron": ">=1.0.1",
