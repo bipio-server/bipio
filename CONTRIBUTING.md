@@ -1,6 +1,6 @@
 # How to contribute
 
-Your contributions are essential to keeping BipIO fit and healthy.  With tens of thousands of API's on the web ripe for integration, there's plenty of challenges and opportunity for you to be a valued community partner and for BipIO to make it worth your while.  We want to keep it as easy as possible to contribute changes that
+Your contributions are essential to keeping bip.io fit and healthy.  With tens of thousands of API's on the web ripe for integration, there's plenty of challenges and opportunity for you to be a valued community partner and for bip.io to make it worth your while.  We want to keep it as easy as possible to contribute changes that
 get things working in your environment. There are a few guidelines that we
 need contributors to follow so that we can have a chance of keeping on
 top of thing and are all speaking the same language.
