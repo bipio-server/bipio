@@ -1100,7 +1100,7 @@ Dao.prototype.bipError = function(id, errState, next) {
   );
 }
 
-Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next) {
+Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next, force) {
     var self = this,
       payload = {
         bip : bip,
@@ -1172,7 +1172,8 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
                     app._.clone(bipResult)._doc,
                     accountInfo,
                     isSocket,
-                    next
+                    next,
+                    force
                   );
 
                   app.logmessage('DAO:Trigger:' + bipResult.id + ':FORCED');
