@@ -26,7 +26,8 @@
  *
  */
 var clone = require('clone'),
-helper      = require('../lib/helper');
+  lodash      = require('lodash'),
+  helper      = require('../lib/helper');
 
 var BipModel = {
   entityIndex: 'id',
@@ -94,8 +95,8 @@ var BipModel = {
     return this.compoundKeyConstraints;
   },
 
-  repr: function(accountInfo, next) {
-    next(false, '');
+  repr: function(accountInfo) {
+    return '';
   },
 
   links : function() {
@@ -117,7 +118,8 @@ var BipModel = {
    */
   populate: function(src, accountInfo) {
     // copy from source into this model, override
-    helper.copyProperties(src, this, true, this.getPropNamesAsArray());
+    //helper.copyProperties(src, this, true, this.getPropNamesAsArray());
+    lodash.assign(this, src);
     this.decorate(accountInfo);
   },
 

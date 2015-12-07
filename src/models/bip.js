@@ -126,6 +126,7 @@ Bip.repr = function(accountInfo, next) {
   var self = this,
     repr = '',
     domains = accountInfo.getDomains(),
+    domain,
     domainName;
 
   if (!domains) {
@@ -133,7 +134,15 @@ Bip.repr = function(accountInfo, next) {
 
   } else if (this.domain_id) {
 
-    domainName = this._dao.modelFactory('domain', _.findWhere(domains, { id : this.domain_id})).repr();
+    domain = _.findWhere(domains, { id : this.domain_id});
+
+    if (app.helper.isArray(domain)) {
+      domain = array_pop(domain);
+    }
+
+    domain = this._dao.modelFactory('domain', domain);
+
+    domainName = domain.repr();
 
     // inject the port for dev
     if (process.env.NODE_ENV == 'development') {
@@ -245,10 +254,15 @@ Bip.entitySchema = {
     writable: true,
     validate : [ {
       validator : function(val, next) {
+        //next(true);
+        //return;
+        // @todo fix domain validator
+        var accountInfo = this.getAccountInfo();
         if ('trigger' === this.type) {
           next(true);
+
         } else {
-          this.getAccountInfo().testDomain(val, function(err, ok) {
+          accountInfo.testDomain(val, function(err, ok) {
             next(!err && ok);
           });
         }
@@ -298,7 +312,9 @@ Bip.entitySchema = {
     "default" : {},
     validate : [{
       validator : function(val, next) {
-        var ok = false;
+        var ok = false,
+          self = this;
+
         if (!val) {
           next(ok);
           return;
@@ -309,19 +325,23 @@ Bip.entitySchema = {
           ok = false;
           var cid = val.channel_id,
             accountInfo = this.getAccountInfo(),
-            userChannels = accountInfo.user.channels,
             channel, podTokens, pod;
 
           if (app.helper.getRegUUID().test(cid)) {
-            channel = userChannels.get(cid),
-            podTokens;
+            accountInfo.getChannel(cid, function(err, channel) {
+              if (err || !channel) {
+                next(false);
+              } else {
 
-            if (channel) {
-              podTokens = channel.action.split('.');
-              pod = this.getDao().pod(podTokens[0], accountInfo);
+                podTokens = channel.action.split('.');
+                pod = self.getDao().pod(podTokens[0], accountInfo);
 
-              ok = channel && pod && pod.isTrigger(podTokens[1]);
-            }
+                ok = channel && pod && pod.isTrigger(podTokens[1]);
+
+                next(ok);
+              }
+            })
+
           } else {
             podTokens = cid.split('.');
 
@@ -330,6 +350,7 @@ Bip.entitySchema = {
             if (pod) {
               ok = pod.isTrigger(podTokens[1])
             }
+            next(ok);
           }
 
         // ------------------------------
@@ -339,42 +360,47 @@ Bip.entitySchema = {
           if (val.auth == 'basic') {
             ok = val.username && val.password;
           } else {
-              // none and token don't require extra config
-              ok = true;
-            }
-          }
-
-          if (val.exports && app.helper.isArray(val.exports)) {
-            ok = true;
-            for (var i = 0; i < val.exports.length; i++) {
-              // @todo make sure inputs has been sanitized
-              ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
-              if (!ok) {
-                break;
-              }
-            }
-          } else if (!val.exports) {
+            // none and token don't require extra config
             ok = true;
           }
+        }
 
+        if (val.exports && app.helper.isArray(val.exports)) {
+          ok = true;
+          for (var i = 0; i < val.exports.length; i++) {
+            // @todo make sure inputs has been sanitized
+            ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
+            if (!ok) {
+              break;
+            }
+          }
+        } else if (!val.exports) {
+          ok = true;
+        }
+
+        next(ok);
         // ------------------------------
       } else if (this.type == 'smtp') {
         ok = true;
+        next(ok);
       }
 
-      next(ok);
     },
     msg : 'Bad Config'
   },
   {
     validator : function(val, next) {
-      var ok = true;
       if (this.type == 'http' && val.renderer) {
-        ok = this.getDao().validateRenderer(val, this.getAccountInfo());
+        this.getDao().validateRPC(
+          val,
+          this.getAccountInfo(),
+          function(err, ok) {
+            next(!err && ok)
+          }
+        );
+      } else {
+        next(true);
       }
-
-      next(ok);
-      return;
     },
     msg : 'Renderer RPC Not Found'
   }
@@ -872,6 +898,80 @@ if (CFG.server.smtp_bips) {
       'reply_to' : {
         type : 'string',
         description: 'Sender'
+      },
+      'headers' : {
+        type : 'object',
+        description : 'Headers',
+        properties : {
+          'from' : {
+            type : 'string',
+            description : 'From'
+          },
+          'to' : {
+            type : 'string',
+            description : 'To'
+          },
+          'subject' : {
+            type : 'string',
+            description : 'Subject'
+          },
+          'date' : {
+            type : 'string',
+            description : 'Date'
+          },
+          'message-id' : {
+            type : 'string',
+            description : 'Message ID'
+          },
+          'bcc' : {
+            type : 'string',
+            description : 'Bcc'
+          },
+          'cc' : {
+            type : 'string',
+            description : 'Cc'
+          },
+          'content-type' : {
+            type : 'string',
+            description : 'Content Type'
+          },
+          'in-reply-to' : {
+            type : 'string',
+            description : 'In Reply To'
+          },
+          'precedence' : {
+            type : 'string',
+            description : 'Precedence'
+          },
+          'received' : {
+            type : 'string',
+            description : 'Received'
+          },
+          'references' : {
+            type : 'string',
+            description : 'References'
+          },
+          'reply-to' : {
+            type : 'string',
+            description : 'Reply To'
+          },
+          'sender' : {
+            type : 'string',
+            description : 'Sender'
+          },
+          'return-path' : {
+            type : 'string',
+            description : 'Return Path'
+          },
+          'error-to' : {
+            type : 'string',
+            description : 'Error To'
+          }
+        }
+      },
+      headers_raw : {
+        type : 'string',
+        description : 'Raw Headers'
       }
     },
     definitions : {
@@ -1225,8 +1325,9 @@ Bip.checkExpiry = function(next) {
   accountInfo.getSettings(
     function(err, settings) {
       if (self.end_life) {
+
         // convert bip expiry to user timezone
-        var endTime = (app.moment(self.end_life.time).utc() / 1000) + (app.moment().utcOffset() * 60),
+        var endTime = (app.moment(self.end_life.time).utc() ) + (app.moment().utcOffset() * 60),
         nowTime = app.helper.nowTimeTz(settings.timezone),
         endImp =  parseInt(self.end_life.imp * 1),
         expired = false;

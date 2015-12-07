@@ -5,19 +5,18 @@
 function AccountInfo(account, dao) {
   this.user = account;
   this.dao = dao;
+
+  this.collections = {};
+  this.activeDomain = null;
 }
 
 AccountInfo.prototype = {
-
-  collections : {},
-
-  activeDomain : null,
 
   _load : function(collection, next) {
     var self = this;
 
     if (!this.collections[collection]) {
-      this.dao.find(
+      this.dao.findFilter(
         collection,
         {
           owner_id : this.user.id
@@ -27,6 +26,7 @@ AccountInfo.prototype = {
           if (next) {
             next(err, result);
           }
+
           return self.collections[collection];
         }
       );
@@ -43,8 +43,15 @@ AccountInfo.prototype = {
   getSettings : function(next) {
     var self = this;
     return this._load('account_option', function(err, settings) {
-      self.settings = settings;
-      next(err, settings);
+
+      if (app.helper.isArray(settings)) {
+        self.settings = settings[0];
+
+      } else {
+        self.settings = settings;
+      }
+
+      next(err, self.settings);
     });
   },
 
@@ -59,10 +66,8 @@ AccountInfo.prototype = {
   },
 
   getDomain : function(domainId, next) {
-    console.log('getting domains');
     this.getDomains(function(err, domains) {
-      console.log('got domains.', domains);
-      next(err, _.findWhere(domains, { id : domainId }) );
+      next(err, _.where(domains, { id : domainId }) );
     });
   },
 
@@ -74,6 +79,12 @@ AccountInfo.prototype = {
 
   getChannels : function(next) {
     this._load('channel', next);
+  },
+
+  getChannel : function(cid, next) {
+    this.getChannels(function(err, channels) {
+      next(err, _.findWhere(channels, { id : cid}) );
+    });
   },
 
   testChannel : function(cid, next) {
@@ -101,7 +112,7 @@ AccountInfo.prototype = {
   getDefaultDomain: function(next) {
     this.getDomains(
       function(err, domains) {
-        next(err, _.where(domains, { type : 'vanity'} ) );
+        next(err, _.findWhere(domains, { type : 'vanity'} ) );
       }
     );
   },
@@ -110,6 +121,21 @@ AccountInfo.prototype = {
     this.getDefaultDomain(function(err, domain) {
       next(err, CFG.proto_public + domain.name)
     });
+  },
+
+  setActiveDomain : function(domainId, next) {
+    var self = this;
+    if (domainId) {
+      this.getDomains(function(err, domains) {
+        self.activeDomain = _.findWhere(domains, { id : domainId } );
+        next();
+      });
+    } else {
+      this.getDefaultDomain(function(err, domain) {
+        self.activeDomain = domain;
+        next();
+      });
+    }
   },
 
   getTimezone : function(next) {

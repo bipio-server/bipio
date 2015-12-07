@@ -69,9 +69,11 @@ app._ = underscore;
 app.Q = Q;
 app.moment = moment;
 
-app.isMaster = cluster.isMaster;
+app.isMaster = cluster.isMaster && !process.env.WORKER;
 
 app.modules = {};
+
+app.winston = winston;
 
 app.getConfig = function() {
   return envConfig;
@@ -162,35 +164,54 @@ transactionLogger.exitOnError = false;
 var serverLogger =  winston.loggers.get('serverLogs');
 serverLogger.exitOnError = false;
 
+// setup loglevel filter from server config
+var logLevels = [
+  'error',
+  'warning',
+  'info'
+];
+
+var allowedLogLevels = {};
+for (var i = 0; i < logLevels.length; i++) {
+  allowedLogLevels[logLevels[i]] = true;
+  if (GLOBAL.CFG.server.logLevel == logLevels[i]) {
+    break;
+  }
+}
+
 // default logger: keep it for now and call winston logger from it
 app.logmessage = function(message, loglevel, skip) {
+  loglevel = loglevel || 'info';
 
-   if(!skip) //To skip winston on recursive calls of app.logmessage
-     app.winstonLog(message, loglevel)
+  if (allowedLogLevels[loglevel]) {
 
-   if ('error' === loglevel) {
-    console.trace(message);
-  }
+    if(!skip) //To skip winston on recursive calls of app.logmessage
+      app.winstonLog(message, loglevel)
 
-  var obj = helper.isObject(message);
-  if (!obj) {
-    if (message && message.trim) {
-      message = message.trim();
+     if ('error' === loglevel) {
+      console.trace(message);
     }
 
-    if (!message) {
-      return;
-    }
-    message = (app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':' + message;
-  } else {
-    app.logmessage((app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':OBJECT', loglevel, true);
-  }
+    var obj = helper.isObject(message);
+    if (!obj) {
+      if (message && message.trim) {
+        message = message.trim();
+      }
 
-  if ('error' === loglevel) {
-   console.trace(message);
- } else {
-  console.log(message);
-}
+      if (!message) {
+        return;
+      }
+      message = (app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':' + message;
+    } else {
+      app.logmessage((app.workerId ? 'WORKER' + app.workerId : process.pid ) + ':' + (new Date()).getTime() + ':OBJECT', loglevel, true);
+    }
+
+    if ('error' === loglevel) {
+     console.trace(message);
+    } else {
+      console.log(message);
+    }
+  }
 }
 
 // winston logger
@@ -254,8 +275,6 @@ if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
     });
   }
 }
-
-
 
 // validate config
 if (/^http(s?):\/\//i.test(envConfig.domain_public)) {

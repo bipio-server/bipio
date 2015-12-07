@@ -390,7 +390,7 @@ function callRenderer(ownerId, renderer, req, res) {
         res.status(404).end();
       } else {
         dao.modelFactory('channel', result).rpc(
-          renderer,
+          renderer.renderer,
           req.query,
           getClientInfo(req),
           req,
@@ -410,8 +410,7 @@ function callRenderer(ownerId, renderer, req, res) {
       getClientInfo(req),
       req,
       res
-      );
-
+    );
 
   } else {
     res.status(404).end();
@@ -460,7 +459,6 @@ function bipAuthWrapper(req, res, cb) {
 
           } else {
             connect.basicAuth(function(username, password, next) {
-
               if ('basic' === result.config.auth) {
                 var authed = result.config.username
                   && result.config.username == username
@@ -1159,6 +1157,10 @@ module.exports = {
             host : getClientInfo(req).host
           }
 
+          if (req.session && req.session.account) {
+            app.logmessage('LOGIN:' + req.session.account.username);
+          }
+
           result.getSettings(function(err, settings) {
             if (result._remoteBody) {
               result.user.settings['remote_settings'] = result._remoteBody || {};
@@ -1182,6 +1184,10 @@ module.exports = {
     });
 
     express.get('/logout', function(req, res) {
+      if (req.session && req.session.account) {
+        app.logmessage('LOGOUT:' + req.session.account.username);
+      }
+
       req.session.destroy();
       res.status(200).end();
     });

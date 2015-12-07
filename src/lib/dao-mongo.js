@@ -343,6 +343,9 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
   var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
 
   this.models[modelName]['class'].constructor.apply(model);
+  if (!tainted || (tainted && undefined !== accountInfo)) {
+    model.populate(initProperties, accountInfo);
+  }
 
   if (accountInfo) {
     model.decorate(accountInfo);
@@ -436,8 +439,9 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
     		if (err) {
           next(err, model.getEntityName(), err, 500);
           return;
-        }
-        mongoModel.save(function(err) {
+    		}
+
+    		mongoModel.save(function(err) {
           if (err) {
             self._log(err, 'error');
             if (next) {
@@ -859,7 +863,7 @@ DaoMongo.prototype.count = function(modelName, filter, next) {
     countQuery = model.find( filter );
 
   // count
-  countQuery.count(function(err, count) {
+  countQuery.count(function anonCount(err, count) {
     if (err) {
       app.logmessage(err, 'error');
     }
@@ -869,7 +873,7 @@ DaoMongo.prototype.count = function(modelName, filter, next) {
 
 DaoMongo.prototype.find = function(modelName, filter, next) {
   var self = this;
-  mongoose.model(modelName).findOne(filter, function (err, result) {
+  mongoose.model(modelName).findOne(filter, function anonFind(err, result) {
     if (err) {
       self._log('Error: find(): ' + err);
     }
@@ -879,7 +883,7 @@ DaoMongo.prototype.find = function(modelName, filter, next) {
 
 DaoMongo.prototype.findFilter = function(modelName, filter, next, projection) {
   var self = this;
-  mongoose.model(modelName).find(filter, projection || {}, function (err, result) {
+  mongoose.model(modelName).find(filter, projection || {}, function anonFindFilter(err, result) {
     if (err) {
       self._log('Error: findFilter(): ' + err, 'error');
     }
@@ -889,7 +893,7 @@ DaoMongo.prototype.findFilter = function(modelName, filter, next, projection) {
 
 DaoMongo.prototype.findDistinct = function(modelName, filter, attribute, next) {
   var self = this;
-  mongoose.model(modelName).find(filter).distinct(attribute, function (err, result) {
+  mongoose.model(modelName).find(filter).distinct(attribute, function anonFindDistinct(err, result) {
     if (err) {
       self._log('Error: findFilter(): ' + err, 'error');
     }
@@ -903,14 +907,16 @@ DaoMongo.prototype.findDistinct = function(modelName, filter, attribute, next) {
  * Increments an accumulator field on a model
  */
 DaoMongo.prototype.accumulate = function(modelName, props, accumulator, inc) {
-  var model = this.modelFactory(modelName, props);
+//  var model = this.modelFactory(modelName, props);
+
+  var model = this.models[modelName]['class'];
 
   // cast to mongoose model
   var MongoModel = mongoose.model(model.getEntityName());
   var idx = model.getEntityIndex();
 
   var filter = {};
-  filter[idx] = model.getIdValue()
+  filter[idx] = props[idx]
 
   var acc = {};
   acc[accumulator] = inc || 1;

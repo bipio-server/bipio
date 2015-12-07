@@ -307,7 +307,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   // invoke method
   client.owner_id = this.owner_id;
 
-  pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
+  pod.bindUserAuth(sysImports, this.owner_id, function anonBoundUser(err, sysImports) {
     if (!err) {
       Channel.pods[podName].invoke(
         podTokens.action,
@@ -701,11 +701,15 @@ Channel.isAvailable = function() {
 }
 
 // register pods
-if (!process.HEADLESS) {
+if (!process.HEADLESS || process.REQ_PODS) {
+  var podList = process.REQ_PODS ? process.REQ_PODS.split(',') : []
+
   for (var podName in CFG.pods) {
-    if (CFG.pods.hasOwnProperty(podName) && podName !== 'testing') {
-      Channel.pods[podName] = require('bip-pod-' + podName);
-      GLOBAL.app.logmessage('POD:' + podName + ':UP');
+    if (!podList.length || podList.length && podList.indexOf(podName) !== -1) {
+      if (CFG.pods.hasOwnProperty(podName) && podName !== 'testing') {
+        Channel.pods[podName] = require('bip-pod-' + podName);
+        GLOBAL.app.logmessage('POD:' + podName + ':UP');
+      }
     }
   }
 }

@@ -35,6 +35,7 @@ AuthModule.prototype.getAccountStruct = function(authModel, next) {
 console.log('got domains...');
     next(false, account);
   });
+
 }
 
 AuthModule.prototype.accountFactory = function(props) {
@@ -88,9 +89,13 @@ AuthModule.prototype.acctBind = function(account, accountAuth, options, next) {
     accountAuth.plan_until = account.get('plan_until');
 
     this.getAccountStruct(accountAuth, function(err, accountInfo) {
+
       accountInfo.user.username = account.username;
 
-      next(false, accountInfo);
+      accountInfo.setActiveDomain(activeDomainId, function() {
+        next(false, accountInfo);
+      });
+
     });
   }
 }

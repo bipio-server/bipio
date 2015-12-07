@@ -1,5 +1,5 @@
 {
-    "site_name" : "BipIO",
+    "site_name" : "bip.io",
     "domain": "localhost",
     "domain_public" : "localhost:5000",
     "website_public": "http://localhost",
@@ -21,6 +21,7 @@
         "sessionSecret" : "",
         "forks": 1,
         "smtp_bips" : false,
+        "logLevel" : "info",
         "ssl" : {
           "key" : "",
           "cert" : ""

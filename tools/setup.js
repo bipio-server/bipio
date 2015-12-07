@@ -394,11 +394,15 @@ function _createAccount(dao, next) {
             {
               user : {
                 id : result.id
-              }
+              },
+              getId : (function(id) {
+                return function() {
+                  return id
+                }
+              })(result.id)
             },
             next);
         }
-
       });
     }
   });

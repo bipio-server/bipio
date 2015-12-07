@@ -418,7 +418,6 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
     'paused' : false
   };
 
-
   if (name) {
     filter.name = name;
   }
@@ -466,7 +465,7 @@ Bastion.prototype.bipUnpack = function(type, name, accountInfo, client, next) {
 
             accountInfo.getSetting(
               'timezone',
-              function(err, timezone) {
+              function cbGetTimezone(err, timezone) {
                 if (timezone) {
                   client.date += app.helper.tzDiff(timezone);
                 }
@@ -617,6 +616,9 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
     });
   }
 
+  // do not export account object reference with bip (circular ref)
+  delete bip.accountInfo;
+
   for (var i = 0; i < numEdges; i++) {
     channelInvokePacket = {
       'bip' : bip,
@@ -630,7 +632,6 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
     }
 
     app.logmessage('BASTION:FWD:TX:' + client.id + ':CID:' + channel_id);
-
     // produce an export for the next upstream
     // adjacent channel
     this._queue.producePublic(channelInvokePacket, function() {
@@ -671,7 +672,7 @@ Bastion.prototype.processChannel = function(struct) {
     this._dao.find(
       'channel',
       filter,
-      function(err, result) {
+      function anonFindChannel(err, result) {
         if (err) {
           app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
         } else {
@@ -794,7 +795,7 @@ Bastion.prototype.consumeLoop = function() {
 
       }
     } else if (queueConsume == 'queue_jobs') {
-      consumer = function (message, headers, deliveryInfo) {
+      consumer = function anonConsumeQueue(message, headers, deliveryInfo) {
         self.jobRunner(JSON.parse(message.data.toString()));
 
       }
