@@ -172,17 +172,18 @@ var logLevels = [
 ];
 
 var allowedLogLevels = {};
-if (GLOBAL.CFG.server.logLevel) {
-  for (var i = 0; i < logLevels.length; i++) {
-    allowedLogLevels[logLevels[i]] = true;
-    if (GLOBAL.CFG.server.logLevel == logLevels[i]) {
-      break;
-    }
+for (var i = 0; i < logLevels.length; i++) {
+  allowedLogLevels[logLevels[i]] = true;
+  if (GLOBAL.CFG.server.logLevel == logLevels[i]) {
+    break;
   }
 }
 
+console.log(allowedLogLevels);
+
 // default logger: keep it for now and call winston logger from it
 app.logmessage = function(message, loglevel, skip) {
+  loglevel = loglevel || 'info';
 
   if (allowedLogLevels[loglevel]) {
 
