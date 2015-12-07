@@ -179,8 +179,6 @@ for (var i = 0; i < logLevels.length; i++) {
   }
 }
 
-console.log(allowedLogLevels);
-
 // default logger: keep it for now and call winston logger from it
 app.logmessage = function(message, loglevel, skip) {
   loglevel = loglevel || 'info';

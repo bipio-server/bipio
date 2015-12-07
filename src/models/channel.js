@@ -301,7 +301,7 @@ Channel.invoke = function(adjacentExports, transforms, client, contentParts, nex
   // invoke method
   client.owner_id = this.owner_id;
 
-  pod.bindUserAuth(sysImports, this.owner_id, function(err, sysImports) {
+  pod.bindUserAuth(sysImports, this.owner_id, function anonBoundUser(err, sysImports) {
     if (!err) {
       Channel.pods[podName].invoke(
         podTokens.action,
