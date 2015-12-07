@@ -312,7 +312,9 @@ Bip.entitySchema = {
     "default" : {},
     validate : [{
       validator : function(val, next) {
-        var ok = false;
+        var ok = false,
+          self = this;
+
         if (!val) {
           next(ok);
           return;
@@ -323,19 +325,23 @@ Bip.entitySchema = {
           ok = false;
           var cid = val.channel_id,
             accountInfo = this.getAccountInfo(),
-            userChannels = accountInfo.user.channels,
             channel, podTokens, pod;
 
           if (app.helper.getRegUUID().test(cid)) {
-            channel = userChannels.get(cid),
-            podTokens;
+            accountInfo.getChannel(cid, function(err, channel) {
+              if (err || !channel) {
+                next(false);
+              } else {
 
-            if (channel) {
-              podTokens = channel.action.split('.');
-              pod = this.getDao().pod(podTokens[0], accountInfo);
+                podTokens = channel.action.split('.');
+                pod = self.getDao().pod(podTokens[0], accountInfo);
 
-              ok = channel && pod && pod.isTrigger(podTokens[1]);
-            }
+                ok = channel && pod && pod.isTrigger(podTokens[1]);
+
+                next(ok);
+              }
+            })
+
           } else {
             podTokens = cid.split('.');
 
@@ -344,6 +350,7 @@ Bip.entitySchema = {
             if (pod) {
               ok = pod.isTrigger(podTokens[1])
             }
+            next(ok);
           }
 
         // ------------------------------
@@ -353,30 +360,31 @@ Bip.entitySchema = {
           if (val.auth == 'basic') {
             ok = val.username && val.password;
           } else {
-              // none and token don't require extra config
-              ok = true;
-            }
-          }
-
-          if (val.exports && app.helper.isArray(val.exports)) {
-            ok = true;
-            for (var i = 0; i < val.exports.length; i++) {
-              // @todo make sure inputs has been sanitized
-              ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
-              if (!ok) {
-                break;
-              }
-            }
-          } else if (!val.exports) {
+            // none and token don't require extra config
             ok = true;
           }
+        }
 
+        if (val.exports && app.helper.isArray(val.exports)) {
+          ok = true;
+          for (var i = 0; i < val.exports.length; i++) {
+            // @todo make sure inputs has been sanitized
+            ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
+            if (!ok) {
+              break;
+            }
+          }
+        } else if (!val.exports) {
+          ok = true;
+        }
+
+        next(ok);
         // ------------------------------
       } else if (this.type == 'smtp') {
         ok = true;
+        next(ok);
       }
 
-      next(ok);
     },
     msg : 'Bad Config'
   },
