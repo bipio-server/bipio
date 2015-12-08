@@ -449,7 +449,7 @@ hub: {
 
       return hub;
     },
-    customGetter : function(hub) {
+    get : function(hub) {
       var newSrc, newCid;
 
       // normalize

@@ -25,63 +25,64 @@
  * BipModel is our local representation of a persistent model
  *
  */
-var clone = require('clone'),
-  lodash      = require('lodash'),
-  helper      = require('../lib/helper');
+var lodash = require('lodash');
 
-var BipModel = {
+var BipModel = function(dao, accountInfo, properties) {
+  this._dao = dao;
+  this._accountInfo = accountInfo;
+
+  this.populate(properties);
+}
+
+BipModel.prototype = {
   entityIndex: 'id',
-  entityExpiration: 60*5,
   entityCreated: 'created',
 
-  entitySetters: {},
+  properties : {},
 
-  accountInfo : null,
+  _accountInfo : null,
 
   compoundKeyConstraints: undefined,
 
   // list of unique keys
   uniqueKeys: [],
 
-  helper : helper,
   _dao : undefined,
 
   serverInfo : undefined,
+
+  getIdValue: function() {
+    return this.id;
+  },
+
+  setId: function(newId) {
+    this.id = newId;
+  },
+
+  getEntityName: function() {
+    return this.entityName
+  },
+
+  getEntityIndex: function() {
+    return this.entityIndex;
+  },
+
+  getEntityCreated: function() {
+    return this.entityCreated;
+  },
+
+  getEntitySchema: function() {
+    return this.entitySchema;
+  },
 
   bindServerMeta: function(serverInfo) {
     this.serverInfo = serverInfo;
   },
 
+  // default href for resource
   href: function() {
     return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
   },
-
-  // static prototype constructor
-  staticInit: function(dao) {
-
-    // initialize property helpers
-    this.getPropNamesAsArray();
-    this.getRenderablePropsArray();
-    this.getWritablePropsArray();
-    this._dao = dao;
-
-    this.staticChildInit();
-  },
-
-  // @todo create a proper inheritence chain
-  staticChildInit : function() {
-
-  },
-
-  // instance constructor
-  init: function(accountInfo) {
-    this.accountInfo = accountInfo;
-    return this;
-  },
-
-  propNamesAsArray : undefined,
-  renderablePropsArray : undefined,
-  writablePropsArray : undefined,
 
   getDao: function() {
     return this._dao;
@@ -103,23 +104,22 @@ var BipModel = {
     return [];
   },
 
-  decorate : function() {
-
-  },
-
-  setValue: function(key, value) {
-    this.key = value;
-  },
-
   /**
    * populates this object with src
    *
    * trusts tainted sources
    */
-  populate: function(src, accountInfo) {
-    // copy from source into this model, override
-    //helper.copyProperties(src, this, true, this.getPropNamesAsArray());
-    lodash.assign(this, src);
+  populate: function(properties, accountInfo) {
+    this.properties = lodash.cloneDeep(properties);
+
+    // apply setters
+    // apply getters
+    lodash.each(this.entitySchema, function(schema, attr) {
+      if (schema.set) {
+        this.properties[attr] = schema.set(properties[attr]);
+      }
+    });
+
     this.decorate(accountInfo);
   },
 
@@ -127,7 +127,7 @@ var BipModel = {
    * adds attribute decorators
    */
   decorate: function(accountInfo) {
-    if (undefined != accountInfo && this.id) {
+    if (undefined != accountInfo && this.get('id') ) {
       this._repr = this.repr(accountInfo);
       this._links = this.links(accountInfo);
     }
@@ -137,41 +137,40 @@ var BipModel = {
     }
   },
 
+  get : function(attr) {
+    return this.properties[attr];
+  },
+
+  set : function(attr, value) {
+    this.properties[attr] = value;
+  },
+
   toObj : function() {
+    var obj = lodash.cloneDeep(this.properties);
 
-    var obj = {},
-      self = this;
-
-    _.each(this.entitySchema, function(value, key) {
-      var selfVal = self[key];
-      if (self[key]) {
-        obj[key] = (_.isObject(selfVal) || _.isArray(selfVal)) ?  JSON.parse(JSON.stringify(selfVal)) : selfVal;
+    // apply getters
+    lodash.each(this.entitySchema, function(schema, attr) {
+      if (schema.get) {
+        obj[attr] = schema.get(obj[attr]);
       }
     });
 
-    // copy any decorators
-    for (var k in this) {
-      if (this.hasOwnProperty(k) && 0 === k.indexOf('_') ) {
-        obj[k] = (_.isObject(this[k]) || _.isArray(this[k])) ?  JSON.parse(JSON.stringify(this[k])) : this[k];
-      }
-    }
+    obj._repr = this._repr;
+    obj._links = this._links;
+    obj._href = this._href;
 
     return obj;
   },
 
-  toMongoModel: function(mongoModel) {
-    var model = helper.copyProperties(this, mongoModel, true);
-    var self = this;
-    model.getAccountInfo = function() {
-      return self.getAccountInfo();
-    }
-
-    model.getDao = function() {
-      return self.getDao();
-    }
-
-    return model;
+  isWritable : function(attr) {
+    return this.entitySchema && this.entitySchema[attr] && this.entitySchema[attr].writable;
   },
+
+  isRenderable : function(attr) {
+    return this.entitySchema && this.entitySchema[attr] && this.entitySchema[attr].renderable;
+  },
+
+  // DAO hooks
 
   // called after successfully saving the object
   postSave: function(accountInfo, cb) {
@@ -189,99 +188,6 @@ var BipModel = {
 
   prePatch : function(patch, accountInfo, cb) {
     cb(false, this.getEntityName(), patch);
-  },
-
-  getIdValue: function() {
-    return this.id;
-  },
-
-  getValue: function(prop) {
-    return (this.hasOwnProperty(prop)) ? this[prop] : undefined;
-  },
-
-  setId: function(newId) {
-    this.id = newId;
-  },
-
-  getEntityName: function() {
-    return this.entityName
-  },
-
-  getEntityIndex: function() {
-    return this.entityIndex;
-  },
-
-  getEntityExpiration: function() {
-    return this.entityExpiration;
-  },
-
-  getEntityCreated: function() {
-    return this.entityCreated;
-  },
-
-  getEntitySchema: function() {
-    return this.entitySchema;
-  },
-
-  // builds the all properties list for this model
-  getPropNamesAsArray: function() {
-    var schema = this.getEntitySchema();
-    if (undefined == this.propNamesAsArray) {
-      this.propNamesAsArray = [];
-      for (key in schema) {
-        this.propNamesAsArray.push(key);
-      }
-    }
-
-    return this.propNamesAsArray;
-  },
-
-  // builds the renderable properities for this model
-  getRenderablePropsArray: function() {
-    var schema = this.getEntitySchema();
-    if (undefined == this.renderablePropsArray) {
-      this.renderablePropsArray = [];
-      for (key in schema) {
-        if (schema[key].renderable) {
-          this.renderablePropsArray.push(key);
-        }
-      }
-    }
-    return this.renderablePropsArray;
-  },
-
-  // builds the publicly writable properties for this model
-  getWritablePropsArray: function() {
-    var schema = this.getEntitySchema();
-
-    if (undefined == this.writablePropsArray) {
-      this.writablePropsArray = [];
-      for (key in schema) {
-        if (schema[key].writable) {
-          this.writablePropsArray.push(key);
-        }
-      }
-    }
-
-    return this.writablePropsArray;
-  },
-
-  getClass: function() {
-    return this;
-  },
-
-  getValidators : function(attr) {
-    var validators,
-      schema = this.getEntitySchema();
-
-    if (schema[attr] && schema[attr].validate) {
-      validators = schema[attr].validate;
-    }
-    return validators;
-  },
-
-  testProperty : function(prop) {
-    return this.getEntitySchema().hasOwnProperty(prop);
   }
 }
 

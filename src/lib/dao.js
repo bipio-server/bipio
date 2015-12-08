@@ -65,7 +65,7 @@ function Dao(config, log, next) {
 
   this.models = { };
   for (var key in modelSrc) {
-    this.registerModelClass(modelSrc[key]);
+    this.registerModelClass(modelSrc[key] );
   }
 }
 

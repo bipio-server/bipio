@@ -208,13 +208,6 @@ Domain.repr = function(accountInfo, next) {
   return this.name;
 }
 
-Domain.entitySetters = {
-  'name' : function(name) {
-    return name.toLowerCase();
-
-  }
-};
-
 Domain.compoundKeyConstraints = {
   name : 1
 };

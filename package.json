@@ -44,7 +44,6 @@
     "bip-pod-templater": ">=0.0.1",
     "bip-pod-time": ">=0.0.1",
     "body-parser": "~1.13.2",
-    "clone": ">=0.1.0",
     "commander": ">=2.0.0",
     "config": "0.4.36",
     "connect": ">=2.14.5",

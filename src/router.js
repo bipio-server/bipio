@@ -110,9 +110,7 @@ function publicFilter(modelName, modelStruct) {
 function restAuthWrapper(req, res, next) {
 
   if (!req.header('authorization') && req.session.account && req.session.account.host === getClientInfo(req).host && !req.masqUser) {
-  console.log('re-authing');
     app.modules.auth.getAccountStruct(req.session.account, function(err, accountInfo) {
-console.log('account struct', arguments);
       if (!err) {
         req.remoteUser = req.user = accountInfo;
         next();

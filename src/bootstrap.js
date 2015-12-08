@@ -265,6 +265,7 @@ process.addListener('uncaughtException', function (err, stack) {
 
 });
 
+
 if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   GLOBAL.CFG.server.public_interfaces = [];
   var ifaces = os.networkInterfaces();
