@@ -643,6 +643,73 @@ Bastion.prototype.distributeChannel = function(bip, channel_id, content_type, en
   }
 }
 
+Bastion.prototype._invokeChannel = function(channel, struct) {
+  var transforms = {},
+    self = this;
+
+  if (struct.transforms && struct.transforms[struct.channel_id]) {
+    transforms = struct.transforms[struct.channel_id];
+  }
+
+  channel = self._dao.modelFactory('channel', channel);
+
+  channel.invoke(
+    struct.imports,
+    transforms,
+    struct.client, // system imports
+    struct.content_parts,
+    function(err, exports, contentParts, transferredBytes) {
+
+      if (!err && exports) {
+
+        var newImports = app._.clone(struct.imports)
+        newImports.local = exports;
+
+        // any channel which pushes data outside the system
+        // should provide a #bytes sent for outbound accounting
+        if (null !== transferredBytes) {
+
+          self.createJob(DEFS.JOB_USER_STAT, {
+            owner_id : channel.owner_id,
+            type : 'traffic_outbound_mb',
+            inc : sprintf('%.4f', (transferredBytes / (1024 * 1024)) )
+          });
+
+          self.createJob(DEFS.JOB_USER_STAT, {
+            owner_id : channel.owner_id,
+            type : 'delivered_channel_outbound'
+          });
+        }
+
+        self.distributeChannel(
+          struct.bip,
+          channel.id,
+          struct.content_type,
+          struct.encoding,
+          // exports,
+          newImports,
+          struct.client,
+          contentParts || struct.content_parts
+        );
+
+      } else if (err) {
+        var errStr = err.message ? err.message : err.toString();
+
+        app.logmessage('Channel Invoke Failure:' + channel.id);
+        app.logmessage(err);
+
+        self.createJob(DEFS.JOB_BIP_ACTIVITY, {
+          owner_id : channel.owner_id,
+          bip_id : struct.bip.id,
+          code : 'bip_channnel_error',
+          message : errStr,
+          source : channel.id
+        });
+      }
+    }
+  );
+}
+
 /**
  * Loads and invokes a channel, then passes to next distribution if one exists
  */
@@ -651,118 +718,59 @@ Bastion.prototype.processChannel = function(struct) {
 
   var actionTokens = struct.channel_id.split('.');
 
-  // unpack the bip and deliver
-  app.logmessage('BASTION:PROC:TX:' + struct.client.id, 'info'); // transaction started
-  app.logmessage('BASTION:FWD:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
+  struct.imports._bip = app._.clone(struct.bip);
+  struct.imports._client = app._.clone(struct.client);
 
+  // unpack the bip and deliver
   if (undefined != struct.bip) {
 
-    app.logmessage('BASTION:PROC:TX:' + struct.client.id + ':BIPID:' + struct.bip.id + ':CID:' + struct.channel_id, 'info');
+    app.logmessage('BASTION:TX_PTR:TX:' + struct.client.id + ':BIPID:' + struct.bip.id + ':CID:' + struct.channel_id, 'info');
 
+    if (app.helper.getRegUUID().test(struct.channel_id) ) {
 
-    // Load channels & distribute
-    var filter = {
-      'id' : struct.channel_id,
-      'owner_id' : struct.bip.owner_id
-    };
+      // Load channels & distribute
+      var filter = {
+        'id' : struct.channel_id,
+        'owner_id' : struct.bip.owner_id
+      };
 
-    struct.imports._bip = app._.clone(struct.bip);
-    struct.imports._client = app._.clone(struct.client);
+      this._dao.find(
+        'channel',
+        filter,
+        function anonFindChannel(err, channel) {
+          if (err || !channel) {
+            app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
 
-    this._dao.find(
-      'channel',
-      filter,
-      function anonFindChannel(err, result) {
-        if (err) {
-          app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
-        } else {
-          app.logmessage('BASTION:INVOKE:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
-          var transforms = {};
+          } else {
+            app.logmessage('BASTION:INVOKE:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
 
-     		  //
-      		if (!result) {
-      		  // check pod.action exists
-
-      			var actionTokens = struct.channel_id.split('.');
-      			var pod = actionTokens[0];
-      			var action = actionTokens[1];
-
-      			if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
-      				result = {
-      				  'id' : struct.channel_id,
-      				  'action' : pod + '.' + action,
-      				  'owner_id' : struct.bip.owner_id
-      				};
-
-      			} else {
-          		app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
-      				return;
-      			}
-      		}
-
-          if (struct.transforms && struct.transforms[struct.channel_id]) {
-            transforms = struct.transforms[struct.channel_id];
-          }
-
-          var channel = self._dao.modelFactory('channel', result)
-
-          channel.invoke(
-            struct.imports,
-            transforms,
-            struct.client, // system imports
-            struct.content_parts,
-            function(err, exports, contentParts, transferredBytes) {
-
-              if (!err && exports) {
-
-                var newImports = app._.clone(struct.imports)
-                newImports.local = exports;
-
-                // any channel which pushes data outside the system
-                // should provide a #bytes sent for outbound accounting
-                if (null !== transferredBytes) {
-
-                  app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                    owner_id : channel.owner_id,
-                    type : 'traffic_outbound_mb',
-                    inc : sprintf('%.4f', (transferredBytes / (1024 * 1024)) )
-                  });
-
-                  app.bastion.createJob(DEFS.JOB_USER_STAT, {
-                    owner_id : channel.owner_id,
-                    type : 'delivered_channel_outbound'
-                  });
-                }
-
-                self.distributeChannel(
-                  struct.bip,
-                  channel.id,
-                  struct.content_type,
-                  struct.encoding,
-                  // exports,
-                  newImports,
-                  struct.client,
-                  contentParts || struct.content_parts
-                  );
-              } else if (err) {
-                var errStr = err.message ? err.message : err.toString();
-
-                app.logmessage('Channel Invoke Failure:' + channel.id);
-                app.logmessage(err);
-
-                app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
-                  owner_id : channel.owner_id,
-                  bip_id : struct.bip.id,
-                  code : 'bip_channnel_error',
-                  message : errStr,
-                  source : channel.id
-                });
-              }
-            });
+            this._invokeChannel(channel, struct);
           }
         }
       );
+
+    } else {
+      // check pod.action exists
+      var actionTokens = struct.channel_id.split('.');
+      var pod = actionTokens[0];
+      var action = actionTokens[1];
+
+      if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
+        this._invokeChannel(
+          {
+            'id' : struct.channel_id,
+            'action' : pod + '.' + action,
+            'owner_id' : struct.bip.owner_id
+          },
+          struct
+        );
+
+      } else {
+        app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
+        return;
+      }
     }
+  }
 }
 
 /*
@@ -805,16 +813,7 @@ Bastion.prototype.consumeLoop = function() {
       q.subscribe(consumer);
     }
 
-/*
-    if (consumer) {
 
-      q.subscribe(consumer).addCallback(function(ok) {
-        self.setConsumerTag(ok.consumerTag, q);
-      });
-
-      app.logmessage('BASTION:' + queueConsume + ':consumer attached');
-    }
-*/
   }
 }
 

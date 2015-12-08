@@ -36,72 +36,7 @@ var dao,
   uuid    = require('node-uuid'),
   pkg = require('../package.json'),
   // restful models
-  restResources = [ 'bip', 'channel', 'domain', 'account_option' ],
-  modelPublicFilter;
-
-function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
-  var result = {};
-  for (var i = 0; i < filterLen; i++) {
-    publicAttribute = modelPublicFilters[i];
-    if (undefined != modelStruct[publicAttribute]) {
-      result[publicAttribute] = modelStruct[publicAttribute];
-    }
-  }
-
-  return result;
-}
-
-/**
- * takes a result JSON struct and filters out whatever is not in a public
- * filter for the supplied model. Public filter means readable flag is 'true' in the
- * rest exposed model
- */
-function publicFilter(modelName, modelStruct) {
-  var result = {}, filterLen, modelLen,
-  publicAttribute,
-  context = modelStruct,
-  modelPublicFilters;
-
-  if (modelName) {
-    modelPublicFilters = modelPublicFilter[modelName]['read'];
-  } else {
-    modelPublicFilters = [];
-  }
-
-  // always allow representations and meta data
-  modelPublicFilters.push('_repr');
-  modelPublicFilters.push('_href');
-  modelPublicFilters.push('_links');
-  modelPublicFilters.push('status');
-  modelPublicFilters.push('message');
-  modelPublicFilters.push('code');
-  modelPublicFilters.push('errors');
-
-  filterLen = modelPublicFilters.length;
-
-  // if it looks like a collection, then filter into the collection
-  if (undefined != modelStruct.data) {
-    for (key in modelStruct) {
-      if (key == 'data') {
-        result['data'] = [];
-
-        context = modelStruct.data;
-        modelLen = context.length;
-
-        // filter every model in the collection
-        for (var i = 0; i < modelLen; i++) {
-          result['data'].push(filterModel(filterLen, modelPublicFilters, context[i], true));
-        }
-      } else {
-        result[key] = modelStruct[key];
-      }
-    }
-  } else {
-    result = filterModel(filterLen, modelPublicFilters, modelStruct, true);
-  }
-
-  return result;
-}
+  restResources = [ 'bip', 'channel', 'domain', 'account_option' ];
 
 /**
  * Wrapper for connect.basicAuth. Checks the session for an authed flag and
@@ -138,24 +73,6 @@ var restResponse = function(res) {
 
     res.contentType(contentType);
 
-    /**
-         * Post filter. Don't expose attributes that aren't in the public filter
-         * list.
-         */
-    if (null != modelName && results) {
-      if (results instanceof Array) {
-        realResult = [];
-        for (key in results) {
-          realResult.push(publicFilter(modelName, results[key]));
-        }
-      } else {
-        realResult = publicFilter(modelName, results);
-      }
-    } else {
-      realResult = results;
-    }
-
-    var payload = realResult;
     if (error) {
       if (!code) {
         code = 500;
@@ -165,10 +82,19 @@ var restResponse = function(res) {
       res.status(code).send({ message : error.toString() });
       return;
     } else {
+
       if (!results) {
         res.status(404).end();
         return;
       }
+    }
+
+    /**
+     * Post filter. Don't expose attributes that aren't in the public filter
+     * list.
+     */
+    if (modelName) {
+      dao.filterModel('read', modelName, results);
     }
 
     // results should contain a '_redirect' url
@@ -177,9 +103,9 @@ var restResponse = function(res) {
       return;
     }
     if (contentType == DEFS.CONTENTTYPE_JSON) {
-      res.status(!code ? '200' : code).jsonp(payload);
+      res.status(!code ? '200' : code).jsonp(results);
     } else {
-      res.status(!code ? '200' : code).send(payload);
+      res.status(!code ? '200' : code).send(results);
     }
     return;
   }
@@ -273,13 +199,14 @@ var restAction = function(req, res) {
         model = dao.modelFactory(resourceName, helper.pasteurize(req.body), accountInfo, true);
         dao.create(model, restResponse(res), accountInfo, postSave);
       } else if (rMethod == 'PUT') {
-        // filter request body to public writable
-        var writeFilters = modelPublicFilter[resourceName]['write'];
+
+        dao.filterModel('write', resourceName, req.body);
+
         if (undefined != req.body.id) {
           dao.update(
             resourceName,
             req.body.id,
-            filterModel(writeFilters.length, writeFilters, req.body),
+            req.body,
             restResponse(res),
             accountInfo
             );
@@ -299,11 +226,13 @@ var restAction = function(req, res) {
       }
     } else if (rMethod == 'PATCH') {
       if (undefined != req.params.id) {
-        var writeFilters = modelPublicFilter[resourceName]['write'];
+
+        dao.filterModel('write', resourceName, req.body);
+
         dao.patch(
           resourceName,
           req.params.id,
-          filterModel(writeFilters.length, writeFilters, req.body),
+          req.body,
           accountInfo,
           restResponse(res)
           );
@@ -484,7 +413,6 @@ function bipAuthWrapper(req, res, cb) {
 module.exports = {
   init : function(express, _dao) {
     dao = _dao;
-    modelPublicFilter = _dao.getModelPublicFilters();
 
     // attach any modules which are route aware
     for (var k in app.modules) {
@@ -1161,7 +1089,8 @@ module.exports = {
               result.user.settings['remote_settings'] = result._remoteBody || {};
             }
 
-            res.send(publicFilter('account_option', settings));
+            dao.filterModel('read', 'account_option', settings);
+            res.send(settings);
           });
 
           // update session

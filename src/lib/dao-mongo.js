@@ -133,39 +133,6 @@ DaoMongo.prototype.errorMap = function(error) {
   return ret;
 }
 
-/**
- * Returns a collection of model_name => public/private/readonly filters
- */
-DaoMongo.prototype.getModelPublicFilters = function() {
-  var filters = {};
-  for (key in this.models) {
-    filters[key] = {
-      // 'public': this.models[key]['class'].publicProps
-      'read': this.models[key]['class'].getRenderablePropsArray(),
-      'write' : this.models[key]['class'].getWritablePropsArray()
-    }
-  }
-  return filters;
-};
-
-DaoMongo.prototype.getModelReadableProps = function(modelName) {
-  var modelPublicFilters = this.models[modelName]['class'].getRenderablePropsArray();
-
-  modelPublicFilters.push('_repr');
-  modelPublicFilters.push('_links');
-  modelPublicFilters.push('_href');
-  modelPublicFilters.push('status');
-  modelPublicFilters.push('message');
-  modelPublicFilters.push('code');
-  modelPublicFilters.push('errors');
-
-  return modelPublicFilters;
-}
-
-DaoMongo.prototype.getModelWritableProps = function(modelName) {
-  return this.models[modelName]['class'].getWritablePropsArray();
-}
-
 DaoMongo.prototype.hasModel = function(modelName) {
   return undefined !== this.models[modelName];
 }
@@ -285,7 +252,7 @@ DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
 }
 
 DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
-  var writeOnlyProps = this.models[modelName]['class'].getWritablePropsArray();
+  var schema, propArgs;
 
   writable = true;
   // get properties
@@ -294,30 +261,26 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
   }
 
   if (undefined != initProperties) {
-    modelProperties = this.models[modelName]['class'].getPropNamesAsArray();
-
-    numProperties = modelProperties.length;
-
-    var propArgs = {};
-
-    for (i = 0; i < numProperties; i++) {
-
-      propArgs[modelProperties[i]] = {
+    schema = this.models[modelName]['class'].getEntitySchema();
+    propArgs = {};
+    for (var attr in schema) {
+      propArgs[attr] = {
         enumerable: true,
         writable : true,
-        value : initProperties[modelProperties[i]]
+        value : initProperties[attr]
       };
 
-      if (!(tainted && !helper.inArray(writeOnlyProps, modelProperties[i]))) {
+      if (!(tainted && !schema[attr].writable) ) {
 
         // custom getters are a nasty workaround for some mongoose woes.
         // see bip.js model, hub getter
-        var getter = this.models[modelName]['class'].entitySchema[modelProperties[i]].customGetter;
+        var getter = schema[attr].customGetter;
 
-        if (getter && initProperties[modelProperties[i]]) {
-          propArgs[modelProperties[i]].value = getter(initProperties[modelProperties[i]]);
+        if (getter && initProperties[attr]) {
+          propArgs[attr].value = getter(initProperties[attr]);
+
         } else {
-          propArgs[modelProperties[i]].value = initProperties[modelProperties[i]];
+          propArgs[attr].value = initProperties[attr];
         }
       }
     }
@@ -334,6 +297,7 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
   }
 
   var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
+  //var model = new this.models[modelName]['class'](this, propArgs, accountInfo)
 
   this.models[modelName]['class'].constructor.apply(model);
   if (!tainted || (tainted && undefined !== accountInfo)) {
@@ -772,8 +736,6 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         countQuery = countQuery.find(q);
 
       } else {
-        //query = query.where(key).regex(new RegExp(filter[key], 'i'));
-        //countQuery = countQuery.where(key).regex(new RegExp(filter[key], 'i'));
         query = query.where(key).equals(filter[key]);
         countQuery = countQuery.where(key).equals(filter[key]);
       }
@@ -803,48 +765,31 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         query = query.sort(s);
       }
 
-      query.exec(function (err, results) {
-
-        var model,
-          modelPublicFilter = self.getModelReadableProps(modelName);
+      query.exec(function anonQuery(err, results) {
 
         if (err) {
           self._log('Error: list(): ' + err);
           if (callback) {
             callback(false, err);
           }
+
         } else {
-          // convert to models
-          var modelStruct, realResult = [], publicModel, publicAttribute;
-
-          for (key in results) {
-
-            model = self.modelFactory(modelName, results[key], accountInfo);
-
-            modelStruct = model.toObj();
-
-            publicModel = {};
-            for (var i = 0; i < modelPublicFilter.length; i++) {
-              publicAttribute = modelPublicFilter[i];
-              if (undefined != modelStruct[publicAttribute]) {
-                publicModel[publicAttribute] = modelStruct[publicAttribute];
-              }
-            }
-            realResult.push(publicModel);
-          }
-
           var resultStruct = {
             'page' : page,
             'page_size' : page_size,
             'num_pages' : page_size ? (Math.ceil( count / page_size )) : 1,
             'order_by' : orderBy,
             'total' : count,
-            'data' : realResult
+            'data' : []
           }
 
-          if (callback) {
-            callback(false, modelName, resultStruct );
+          for (var i = 0; i < results.length; i++) {
+            resultStruct.data.push(
+              self.modelFactory(modelName, results[i], accountInfo).toObj()
+            );
           }
+
+          callback(false, modelName, resultStruct );
         }
       });
     }

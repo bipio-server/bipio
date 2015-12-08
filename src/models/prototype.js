@@ -59,10 +59,6 @@ var BipModel = {
   // static prototype constructor
   staticInit: function(dao) {
 
-    // initialize property helpers
-    this.getPropNamesAsArray();
-    this.getRenderablePropsArray();
-    this.getWritablePropsArray();
     this._dao = dao;
 
     this.staticChildInit();
@@ -79,7 +75,6 @@ var BipModel = {
     return this;
   },
 
-  propNamesAsArray : undefined,
   renderablePropsArray : undefined,
   writablePropsArray : undefined,
 
@@ -103,10 +98,6 @@ var BipModel = {
     return [];
   },
 
-  decorate : function() {
-
-  },
-
   setValue: function(key, value) {
     this.key = value;
   },
@@ -118,7 +109,6 @@ var BipModel = {
    */
   populate: function(src, accountInfo) {
     // copy from source into this model, override
-    //helper.copyProperties(src, this, true, this.getPropNamesAsArray());
     lodash.assign(this, src);
     this.decorate(accountInfo);
   },
@@ -139,22 +129,16 @@ var BipModel = {
 
   toObj : function() {
 
-    var obj = {},
+    var obj = {
+        _repr : this._repr,
+        _href : this._href,
+        _links : this._links
+      },
       self = this;
 
     _.each(this.entitySchema, function(value, key) {
-      var selfVal = self[key];
-      if (self[key]) {
-        obj[key] = (_.isObject(selfVal) || _.isArray(selfVal)) ?  JSON.parse(JSON.stringify(selfVal)) : selfVal;
-      }
+      obj[key] = lodash.cloneDeep(self[key]);
     });
-
-    // copy any decorators
-    for (var k in this) {
-      if (this.hasOwnProperty(k) && 0 === k.indexOf('_') ) {
-        obj[k] = (_.isObject(this[k]) || _.isArray(this[k])) ?  JSON.parse(JSON.stringify(this[k])) : this[k];
-      }
-    }
 
     return obj;
   },
@@ -223,48 +207,34 @@ var BipModel = {
     return this.entitySchema;
   },
 
-  // builds the all properties list for this model
-  getPropNamesAsArray: function() {
-    var schema = this.getEntitySchema();
-    if (undefined == this.propNamesAsArray) {
-      this.propNamesAsArray = [];
-      for (key in schema) {
-        this.propNamesAsArray.push(key);
-      }
+  isReadable: function(attr) {
+    var ok = false,
+      schema = this.getEntitySchema();
+
+    switch (attr) {
+      case '_repr' :
+      case '_href' :
+      case '_links' :
+      case 'status' :
+      case 'message' :
+      case 'code' :
+      case 'errors' :
+        ok = true;
+        break;
+
+      default :
+        ok = schema[attr] && schema[attr].renderable;
     }
 
-    return this.propNamesAsArray;
+    return ok;
   },
 
-  // builds the renderable properities for this model
-  getRenderablePropsArray: function() {
-    var schema = this.getEntitySchema();
-    if (undefined == this.renderablePropsArray) {
-      this.renderablePropsArray = [];
-      for (key in schema) {
-        if (schema[key].renderable) {
-          this.renderablePropsArray.push(key);
-        }
-      }
-    }
-    return this.renderablePropsArray;
-  },
-
-  // builds the publicly writable properties for this model
-  getWritablePropsArray: function() {
+  isWritable: function(attr) {
     var schema = this.getEntitySchema();
 
-    if (undefined == this.writablePropsArray) {
-      this.writablePropsArray = [];
-      for (key in schema) {
-        if (schema[key].writable) {
-          this.writablePropsArray.push(key);
-        }
-      }
-    }
-
-    return this.writablePropsArray;
+    return schema[attr] && schema[attr].isWritable;
   },
+
 
   getClass: function() {
     return this;

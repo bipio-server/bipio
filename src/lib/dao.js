@@ -2010,5 +2010,42 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
   });
 }
 
+/*
+ * applies read/write property filter to model, mutates model
+ */
+function applyFilter(func, modelClass, modelStruct) {
+  _.each(modelStruct, function(value, key) {
+    if (!modelClass[func](key)) {
+      delete modelStruct[key];
+    }
+  });
+}
+
+/**
+ * takes a result JSON struct and filters out whatever is not in a public
+ * filter for the supplied model. for mode.  mode is 'read' or 'write'
+ */
+DaoMongo.prototype.filterModel = function(mode, modelName, struct) {
+  var func = 'read' === mode ? 'isReadable' : 'isWritable',
+    result = {},
+    context = struct,
+    modelClass = this.getModelClass(modelName);
+
+  // if it looks like a collection, then filter into the collection
+  if (undefined != struct.data) {
+
+    context = struct.data;
+
+    modelLen = context.length;
+
+    // filter every model in the collection
+    for (var i = 0; i < modelLen; i++) {
+      applyFilter(func, modelClass, context[i])
+    }
+
+  } else {
+    applyFilter(func, modelClass, context);
+  }
+}
 
 module.exports = Dao;
