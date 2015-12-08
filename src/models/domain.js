@@ -164,33 +164,39 @@ Domain.verify = function(accountInfo, next) {
         } else {
           next(err, 'domain', self, 500);
         }
-      } else {
-        var acctDomain = accountInfo.getDefaultDomain().name;
-        var ok = false;
 
-        if (MXAddr && MXAddr.length > 0) {
-          for (var i = 0; i < MXAddr.length; i++) {
-            if (MXAddr[i].exchange && MXAddr[i].exchange == acctDomain) {
+      } else {
+
+        accountInfo.getDefaultDomain(function(err, domain) {
+
+          var ok = false;
+
+          if (MXAddr && MXAddr.length > 0) {
+            for (var i = 0; i < MXAddr.length; i++) {
+              if (MXAddr[i].exchange && MXAddr[i].exchange == domain.name) {
+                ok = true;
+              }
+            }
+          }
+
+          if (CNAMEAddr && CNAMEAddr.length > 0) {
+            if (app.helper.inArray(CNAMEAddr, domain.name)) {
               ok = true;
             }
           }
-        }
 
-        if (CNAMEAddr && CNAMEAddr.length > 0) {
-          if (app.helper.inArray(CNAMEAddr, acctDomain)) {
-            ok = true;
+          if (ok) {
+            self.setAvailable(true, next);
+          } else {
+            // accepted - domain exists but is not bound to local application
+            next(err, 'domain', self, 202);
           }
-        }
 
-        if (ok) {
-          self.setAvailable(true, next);
-        } else {
-          // accepted - domain exists but is not bound to local application
-          next(err, 'domain', self, 202);
-        }
+        });
       }
+
     }
-    );
+  );
 }
 
 // domains behave a little differently, they can have postponed availability
