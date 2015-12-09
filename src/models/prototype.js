@@ -231,8 +231,7 @@ var BipModel = {
 
   isWritable: function(attr) {
     var schema = this.getEntitySchema();
-
-    return schema[attr] && schema[attr].isWritable;
+    return schema[attr] && schema[attr].writable;
   },
 
 

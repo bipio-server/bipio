@@ -563,6 +563,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         // create a model and then cast it back to plain'ol/JSON
         // so that setter middleware is applied :|
         var cleanModel = mongoModel.toJSON();
+
         delete cleanModel._id;
         self._update(modelName, self.getObjectIdFilter(mongoModel, accountInfo), cleanModel, accountInfo, next);
       }
