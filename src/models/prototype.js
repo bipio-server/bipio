@@ -36,7 +36,7 @@ var BipModel = {
 
   entitySetters: {},
 
-  accountInfo : null,
+  _accountInfo : null,
 
   compoundKeyConstraints: undefined,
 
@@ -71,7 +71,7 @@ var BipModel = {
 
   // instance constructor
   init: function(accountInfo) {
-    this.accountInfo = accountInfo;
+    this._accountInfo = accountInfo;
     return this;
   },
 
@@ -83,7 +83,7 @@ var BipModel = {
   },
 
   getAccountInfo: function() {
-    return this.accountInfo;
+    return this._accountInfo;
   },
 
   getCompoundKeyConstraints: function() {

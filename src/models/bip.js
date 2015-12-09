@@ -1217,7 +1217,7 @@ Bip._postSaveChannels = function(accountInfo, isNew) {
   for (var i = 0; i < this._channel_idx.length; i++) {
     self._dao.getChannel(
       this._channel_idx[i],
-      accountInfo,
+      accountInfo.getId(),
       function(err, channel) {
         // only call postSave for action pointers
         if (!err && channel && !app.helper.getRegUUID().test(channel.id)) {

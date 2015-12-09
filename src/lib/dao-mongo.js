@@ -419,8 +419,11 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
             return null;
           }
           // populate from mongo model into our model, and build a representation
+
           model.populate(mongoModel, accountInfo);
+
           model.postSave(accountInfo, function(err, modelName, retModel, code) {
+
             if (err) {
               self.remove(modelName, retModel.id, accountInfo, function() {
                 if (next) {

@@ -53,7 +53,6 @@ function Bastion(dao, noConsume, cb) {
     self.emit('readyQueue', readyQueue);
   };
 
-  //this._queue = new Rabbit(CFG.rabbit, noConsume ? undefined : eventWrapper);
   this._queue = new Rabbit(CFG.rabbit, noConsume ? eventWrapper : cb);
 
   if (noConsume) {
@@ -64,7 +63,6 @@ function Bastion(dao, noConsume, cb) {
 }
 
 Bastion.prototype.__proto__ = events.EventEmitter.prototype;
-
 
 Bastion.prototype.isRabbitConnected = function() {
 	app.logmessage('BASTION:AMQPCONNECTION:' + this._queue.amqpConn.connectionStatus);
@@ -81,10 +79,10 @@ Bastion.prototype.getQueue = function(queueName) {
 
 Bastion.prototype.createJob = function(jobName, payload, cb) {
   this.getQueue().produceJob({
-    name : jobName,
-    data : payload
-  },
-  cb
+      name : jobName,
+      data : payload
+    },
+    cb
   );
 }
 
@@ -726,62 +724,22 @@ Bastion.prototype.processChannel = function(struct) {
 
     app.logmessage('BASTION:TX_PTR:TX:' + struct.client.id + ':BIPID:' + struct.bip.id + ':CID:' + struct.channel_id, 'info');
 
-    if (app.helper.getRegUUID().test(struct.channel_id) ) {
+    this._dao.getChannel(
+      struct.channel_id,
+      struct.bip.owner_id,
+      function(err, channel) {
+        if (err) {
+          app.logmessage('BASTION:Couldnt load channel:' + struct.channel_id + ' ' + err, 'warning');
+        } else {
 
-      // Load channels & distribute
-      var filter = {
-        'id' : struct.channel_id,
-        'owner_id' : struct.bip.owner_id
-      };
+          app.logmessage('BASTION:INVOKE:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
 
-      this._dao.find(
-        'channel',
-        filter,
-        function anonFindChannel(err, channel) {
-          if (err || !channel) {
-            app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
-
-          } else {
-            app.logmessage('BASTION:INVOKE:TX:' + struct.client.id + ':CID:' + struct.channel_id, 'info');
-
-            this._invokeChannel(channel, struct);
-          }
+          self._invokeChannel(channel, struct);
         }
-      );
-
-    } else {
-      // check pod.action exists
-      var actionTokens = struct.channel_id.split('.');
-      var pod = actionTokens[0];
-      var action = actionTokens[1];
-
-      if (self._dao.pod(pod) && self._dao.pod(pod).getAction(action)) {
-        this._invokeChannel(
-          {
-            'id' : struct.channel_id,
-            'action' : pod + '.' + action,
-            'owner_id' : struct.bip.owner_id
-          },
-          struct
-        );
-
-      } else {
-        app.logmessage('BASTION:CRITICAL Couldnt load channel:' + struct.channel_id, 'warning');
-        return;
       }
-    }
+    );
   }
 }
-
-/*
-Bastion.prototype.setConsumerTag = function(consumerTag, queue) {
-  if (this.consumerTags[consumerTag]) {
-    delete this.consumerTags[consumerTag];
-  }
-
-  this.consumerTags[consumerTag] = queue;
-}
-*/
 
 /**
  *
@@ -797,13 +755,13 @@ Bastion.prototype.consumeLoop = function() {
     consumer;
 
     if (queueConsume == 'queue_bastion') {
-      consumer = function (message, headers, deliveryInfo) {
+      consumer = function anonConsumeGraph(message, headers, deliveryInfo) {
 
         self.processChannel(JSON.parse(message.data.toString()));
 
       }
     } else if (queueConsume == 'queue_jobs') {
-      consumer = function anonConsumeQueue(message, headers, deliveryInfo) {
+      consumer = function anonConsumeJobs(message, headers, deliveryInfo) {
         self.jobRunner(JSON.parse(message.data.toString()));
 
       }
@@ -816,19 +774,5 @@ Bastion.prototype.consumeLoop = function() {
 
   }
 }
-
-/*
-Bastion.prototype.close = function() {
-  var ct = this.consumerTags;
-  for (k in ct) {
-    if (ct.hasOwnProperty(k)) {
-      app.logmessage('BASTION:consumer tag:unsubscribed');
-      ct[k].unsubscribe(k);
-    }
-  }
-
-  this._queue.disconnect();
-}
-*/
 
 module.exports = Bastion;

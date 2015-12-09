@@ -248,6 +248,7 @@ app.winstonLog = function(message, loglevel) {
 }
 
 // exception catchall
+
 process.addListener('uncaughtException', function (err, stack) {
   var message = 'Caught exception: ' + err + '\n' + err.stack;
   if (app && app.logmessage) {

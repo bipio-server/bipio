@@ -436,12 +436,8 @@ Channel.postSave = function(accountInfo, next, isNew) {
     return;
   }
 
-  this.accountInfo = undefined;
-  //accountInfo.user.channels.set(this);
-
   // channels behave a little differently, they can have postponed availability
   // after creation, which the pod actions themselves might want to dictate.
-
   if (authType && 'none' !== authType) {
     self._dao.getPodAuthTokens(accountInfo.user.id, Channel.pods[podName], function(err, authStruct) {
       if (err) {

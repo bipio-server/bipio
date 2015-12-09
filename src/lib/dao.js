@@ -1537,12 +1537,16 @@ Dao.prototype.updateChannelIcon = function(channel, URL) {
 /*
  *
  */
-Dao.prototype.getChannel = function(id, accountInfo, next, configOverride) {
+Dao.prototype.getChannel = function(id, ownerId, next, configOverride) {
+  var pod,
+    self = this;
+
   if (app.helper.regUUID.test(id) ) {
     this.find(
       'channel',
       {
-        id : id
+        id : id,
+        owner_id : ownerId
       },
       function(err, result) {
         if (err) {
@@ -1559,14 +1563,24 @@ Dao.prototype.getChannel = function(id, accountInfo, next, configOverride) {
     );
   } else {
     var tokens = id.split('.'),
+      result;
+
+    pod = self.pod(tokens[0]);
+
+    if (pod && pod.getAction(tokens[1])) {
+
       result = {
         'id' : id,
         'action' : tokens[0] + '.' + tokens[1],
-        'owner_id' : accountInfo.user.id,
+        'owner_id' : ownerId,
         'config': configOverride ? configOverride : {}
       };
 
-    next(false, result);
+      next(false, result);
+
+    } else {
+      next('NO SUCH POD');
+    }
   }
 }
 
@@ -2003,8 +2017,6 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
           } else {
             next('Nothing To Do');
           }
-
-
         }
     }
   });
