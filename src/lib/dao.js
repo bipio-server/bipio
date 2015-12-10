@@ -757,9 +757,7 @@ Dao.prototype.unshareBip = function(id, accountInfo, cb) {
 }
 
 Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
-  var pageSize = pageSize || 10,
-    page = page || 1,
-    orderBy = orderBy || 'recent',
+  var orderBy = orderBy || 'recent',
     filter = {};
 
   if (listBy) {

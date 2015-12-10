@@ -1177,7 +1177,6 @@ Bip.preRemove = function(id, accountInfo, next) {
       self._dao.removeBipDupTracking(id, function(err) {
         next(err, 'bip', self);
 
-
         accountInfo.bip = self;
 
         self._postRemoveChannels(accountInfo);

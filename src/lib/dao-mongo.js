@@ -521,9 +521,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
       return model;
     });
   });
-
 };
-
 
 DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
   var self = this,
