@@ -598,7 +598,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   regUUID = helper.getRegUUID(),
   cMatch;
 
-  bip.accountInfo.getChannels(function(err, channels) {
+  bip.getAccountInfo().getChannels(function(err, channels) {
     function channelTranslate(src) {
       // skip source in manifest
       if (src !== 'source') {
@@ -679,8 +679,8 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
       hub : derivedHub,
       manifest : Object.keys(manifest),
       owner_id : bip.owner_id,
-      owner_name : bip.accountInfo.user.name,
-      user_name : bip.accountInfo.user.username,
+      owner_name : bip.getAccountInfo().getName(),
+      user_name : bip.getAccountInfo().getUserName(),
       schedule : bip.schedule,
       slug : bip.slug
     };
@@ -691,16 +691,16 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     self.find(
       'bip_share',
       {
-        owner_id : bip.accountInfo.user.id,
+        owner_id : bip.getAccountInfo().getId(),
         bip_id : bip.id
       },
       function(err, result) {
         if (err) {
           cb(self.errorParse(err), null, null, self.errorMap(err) );
         } else {
-          var model = self.modelFactory(modelName, bipShare, bip.accountInfo);
+          var model = self.modelFactory(modelName, bipShare, bip.getAccountInfo());
           if (!result) {
-            self.create(model, cb, bip.accountInfo);
+            self.create(model, cb, bip.getAccountInfo());
 
             var jobPacket = {
               owner_id : bip.owner_id,
@@ -715,7 +715,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
             } );
 
           } else {
-            self.update(modelName, result.id, bipShare , cb, bip.accountInfo);
+            self.update(modelName, result.id, bipShare , cb, bip.getAccountInfo());
           }
         }
       });
@@ -1624,7 +1624,6 @@ Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
         }
       }
     });
-
 }
 
 Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
@@ -1653,7 +1652,7 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
               return pods[podName].authStatus( accountInfo.getId(), cb );
             }
           }(key) // self exec
-          );
+        );
       }
     }
 
@@ -1666,8 +1665,12 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
             authType = results[idx][1],
             result = results[idx][2];
 
-            if (null !== result && resp[podName]) {
+            if (result && resp[podName]) {
               resp[podName].auth.status = 'accepted';
+
+              if (result.repr) {
+                resp[podName].auth._repr = result.repr;
+              }
             }
           }
           next(false, null, resp);

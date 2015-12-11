@@ -261,8 +261,19 @@ AccountAuth.getOAuthRefresh = function() {
   }
 }
 
+// gets oauth profile, handles legacy (json string)
+// and new object translation
 AccountAuth.getOauthProfile = function() {
-  return JSON.parse(AESDecrypt(this.oauth_profile, true));
+  var profile = AESDecrypt(this.oauth_profile, true);
+  if (app.helper.isObject(profile)) {
+    return profile;
+  } else {
+    try {
+      return JSON.parse(profile);
+    } catch (e) {
+      return 'Profile Not Available';
+    }
+  }
 }
 
 module.exports.AccountAuth = AccountAuth;
