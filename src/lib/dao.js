@@ -1098,11 +1098,12 @@ Dao.prototype.bipError = function(id, errState, next) {
   );
 }
 
-Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next, force) {
+Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next, force, dryRun) {
     var self = this,
       payload = {
         bip : bip,
-        socketTrigger : isSocket
+        socketTrigger : isSocket,
+        dryRun : dryRun || false
       };
 
     // update runtime
@@ -1191,7 +1192,9 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
                             app._.clone(bipResult)._doc,
                             accountInfo,
                             isSocket,
-                            next
+                            next,
+                            force,
+                            dryRun
                           );
 
                           numProcessed++;
@@ -1218,7 +1221,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
         })(results[i]);
       }
     } else {
-	    next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
+	    next(false, 'No Bips');
     }
   });
 }

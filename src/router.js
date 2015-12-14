@@ -1090,6 +1090,7 @@ module.exports = {
             }
 
             dao.filterModel('read', 'account_option', settings);
+
             res.send(settings);
           });
 

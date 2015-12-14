@@ -51,7 +51,7 @@ AccountInfo.prototype = {
         self.settings = settings;
       }
 
-      next(err, self.settings);
+      next(err, self.settings.toJSON ? self.settings.toJSON() : self.settings);
     });
   },
 
