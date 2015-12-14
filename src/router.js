@@ -199,13 +199,12 @@ var restAction = function(req, res) {
         model = dao.modelFactory(resourceName, helper.pasteurize(req.body), accountInfo, true);
         dao.create(model, restResponse(res), accountInfo, postSave);
       } else if (rMethod == 'PUT') {
-
         dao.filterModel('write', resourceName, req.body);
 
-        if (undefined != req.body.id) {
+        if (undefined != req.params.id) {
           dao.update(
             resourceName,
-            req.body.id,
+            req.params.id,
             req.body,
             restResponse(res),
             accountInfo

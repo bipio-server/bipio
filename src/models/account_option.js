@@ -147,7 +147,12 @@ AccountOption.entitySchema = {
             },
             {
                 validator : function(val, next) {
-                    next(this.getAccountInfo().user.domains.test(val));
+                    this.getAccountInfo().testDomain(
+                        val,
+                        function(err, ok) {
+                            next(!err && ok);
+                        }
+                    );
                 },
                 msg : 'Domain Not Found'
             }
