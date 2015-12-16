@@ -1645,7 +1645,7 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
       if (subdomain && key != subdomain) {
         continue;
       }
-      resp[key] = pods[key].describe(accountInfo);
+      resp[key] = JSON.parse(JSON.stringify(pods[key].describe(accountInfo)));
 
       // prep the oAuthChecks array for a parallel datasource check
       if (resp[key].auth.strategy && resp[key].auth.strategy != 'none' && accountInfo) {
