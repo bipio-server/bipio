@@ -360,10 +360,10 @@ var helper = {
   },
 
   tzDiff : function(tz) {
-    var localTz = app.moment().utc().tz(CFG.timezone).utcOffset(),
+    var utcTZ = app.moment().utc().tz('UTC').utcOffset(),
       tzTz = app.moment().utc().tz(tz).utcOffset();
 
-    return (tzTz - localTz) * 60;
+    return (tzTz - utcTZ) * 60;
   },
 
   // @return string yyyymmdd UTC
