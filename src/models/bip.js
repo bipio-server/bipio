@@ -437,6 +437,7 @@ hub: {
       // parse
       for (var src in hub) {
         if (hub.hasOwnProperty(src)) {
+
           for (var cid in hub[src].transforms) {
             if (hub[src].transforms.hasOwnProperty(cid)) {
               for (var k in hub[src].transforms[cid]) {
@@ -444,6 +445,11 @@ hub: {
               }
             }
           }
+
+          if (hub[src].exports && app.helper.isObject(hub[src].exports)) {
+            hub[src].exports = JSON.stringify(hub[src].exports);
+          }
+
         }
       }
 
@@ -470,8 +476,16 @@ hub: {
             if (newCid !== cid) {
               delete hub[newSrc].transforms[cid];
             }
-
           }
+
+          if (hub[newSrc].exports && !app.helper.isObject(hub[newSrc].exports)) {
+            try {
+              hub[newSrc].exports = JSON.parse(hub[newSrc].exports);
+            } catch (e) {
+              hub[newSrc].exports = {};
+            }
+          }
+
         }
       }
 
