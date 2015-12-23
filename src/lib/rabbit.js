@@ -63,8 +63,6 @@ function Rabbit(cfg, next) {
           cfg.exchanges[xName].cfg,
           function() {
             var exchange = this;
-            //app.logmessage('Exchange [' + this.name + '] is UP');
-            // @todo winston migration
             app.logmessage('RABBIT:X:' + this.name + ':UP');
             var xStruct = cfg.exchanges[this.name];
 
@@ -74,8 +72,6 @@ function Rabbit(cfg, next) {
               xStruct.queue_default.config,
               function() {
                 this.bind(exchange, xStruct.route_default);
-                // @todo winston migration
-                // app.logmessage('Queue [' + this.name + '] is UP');
                 app.logmessage('RABBIT:Q:' + (undefined !== next ? 'PUBSUB' : 'PUB') + this.name + ':UP' );
                 if (next) {
                   next(this.name);
@@ -93,14 +89,10 @@ function Rabbit(cfg, next) {
     self.amqpConn.connectionStatus = null;
   	app.logmessage('RABBIT:' + err, 'error');
   });
-
-//  this.amqpConn.connect();
 }
 
 Rabbit.prototype.produce = function(xName, route, payload, cb) {
   this.exchanges[xName].publish(route, JSON.stringify(payload), {}, cb);
-  // amqp has stopped giving us 'ack' now!?!?!??
-//  this.exchanges[xName].publish(route, JSON.stringify(payload), {});
 }
 
 Rabbit.prototype.producePublic = function(payload, cb) {

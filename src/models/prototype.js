@@ -25,20 +25,16 @@
  * BipModel is our local representation of a persistent model
  *
  */
-var lodash = require('lodash');
+var clone = require('clone'),
+  lodash      = require('lodash'),
+  helper      = require('../lib/helper');
 
-var BipModel = function(dao, accountInfo, properties) {
-  this._dao = dao;
-  this._accountInfo = accountInfo;
-
-  this.populate(properties);
-}
-
-BipModel.prototype = {
+var BipModel = {
   entityIndex: 'id',
+  entityExpiration: 60*5,
   entityCreated: 'created',
 
-  properties : {},
+  entitySetters: {},
 
   _accountInfo : null,
 
@@ -47,49 +43,47 @@ BipModel.prototype = {
   // list of unique keys
   uniqueKeys: [],
 
+  helper : helper,
   _dao : undefined,
 
   serverInfo : undefined,
-
-  getIdValue: function() {
-    return this.id;
-  },
-
-  setId: function(newId) {
-    this.id = newId;
-  },
-
-  getEntityName: function() {
-    return this.entityName
-  },
-
-  getEntityIndex: function() {
-    return this.entityIndex;
-  },
-
-  getEntityCreated: function() {
-    return this.entityCreated;
-  },
-
-  getEntitySchema: function() {
-    return this.entitySchema;
-  },
 
   bindServerMeta: function(serverInfo) {
     this.serverInfo = serverInfo;
   },
 
-  // default href for resource
   href: function() {
     return this._dao.getBaseUrl() + '/rest/' + this.entityName + '/' + this.getIdValue();
   },
+
+  // static prototype constructor
+  staticInit: function(dao) {
+
+    this._dao = dao;
+
+    this.staticChildInit();
+  },
+
+  // @todo create a proper inheritence chain
+  staticChildInit : function() {
+
+  },
+
+  // instance constructor
+  init: function(accountInfo) {
+    this._accountInfo = accountInfo;
+    return this;
+  },
+
+  renderablePropsArray : undefined,
+  writablePropsArray : undefined,
 
   getDao: function() {
     return this._dao;
   },
 
   getAccountInfo: function() {
-    return this.accountInfo;
+    return this._accountInfo;
   },
 
   getCompoundKeyConstraints: function() {
@@ -104,22 +98,18 @@ BipModel.prototype = {
     return [];
   },
 
+  setValue: function(key, value) {
+    this.key = value;
+  },
+
   /**
    * populates this object with src
    *
    * trusts tainted sources
    */
-  populate: function(properties, accountInfo) {
-    this.properties = lodash.cloneDeep(properties);
-
-    // apply setters
-    // apply getters
-    lodash.each(this.entitySchema, function(schema, attr) {
-      if (schema.set) {
-        this.properties[attr] = schema.set(properties[attr]);
-      }
-    });
-
+  populate: function(src, accountInfo) {
+    // copy from source into this model, override
+    lodash.assign(this, src);
     this.decorate(accountInfo);
   },
 
@@ -127,7 +117,7 @@ BipModel.prototype = {
    * adds attribute decorators
    */
   decorate: function(accountInfo) {
-    if (undefined != accountInfo && this.get('id') ) {
+    if (undefined != accountInfo && this.id) {
       this._repr = this.repr(accountInfo);
       this._links = this.links(accountInfo);
     }
@@ -137,40 +127,35 @@ BipModel.prototype = {
     }
   },
 
-  get : function(attr) {
-    return this.properties[attr];
-  },
-
-  set : function(attr, value) {
-    this.properties[attr] = value;
-  },
-
   toObj : function() {
-    var obj = lodash.cloneDeep(this.properties);
 
-    // apply getters
-    lodash.each(this.entitySchema, function(schema, attr) {
-      if (schema.get) {
-        obj[attr] = schema.get(obj[attr]);
-      }
+    var obj = {
+        _repr : this._repr,
+        _href : this._href,
+        _links : this._links
+      },
+      self = this;
+
+    _.each(this.entitySchema, function(value, key) {
+      obj[key] = lodash.cloneDeep(self[key]);
     });
-
-    obj._repr = this._repr;
-    obj._links = this._links;
-    obj._href = this._href;
 
     return obj;
   },
 
-  isWritable : function(attr) {
-    return this.entitySchema && this.entitySchema[attr] && this.entitySchema[attr].writable;
-  },
+  toMongoModel: function(mongoModel) {
+    var model = helper.copyProperties(this, mongoModel, true);
+    var self = this;
+    model.getAccountInfo = function() {
+      return self.getAccountInfo();
+    }
 
-  isRenderable : function(attr) {
-    return this.entitySchema && this.entitySchema[attr] && this.entitySchema[attr].renderable;
-  },
+    model.getDao = function() {
+      return self.getDao();
+    }
 
-  // DAO hooks
+    return model;
+  },
 
   // called after successfully saving the object
   postSave: function(accountInfo, cb) {
@@ -188,6 +173,144 @@ BipModel.prototype = {
 
   prePatch : function(patch, accountInfo, cb) {
     cb(false, this.getEntityName(), patch);
+  },
+
+  getIdValue: function() {
+    return this.id;
+  },
+
+  getValue: function(prop) {
+    return (this.hasOwnProperty(prop)) ? this[prop] : undefined;
+  },
+
+  setId: function(newId) {
+    this.id = newId;
+  },
+
+  getEntityName: function() {
+    return this.entityName
+  },
+
+  getEntityIndex: function() {
+    return this.entityIndex;
+  },
+
+  getEntityExpiration: function() {
+    return this.entityExpiration;
+  },
+
+  getEntityCreated: function() {
+    return this.entityCreated;
+  },
+
+  getEntitySchema: function() {
+    return this.entitySchema;
+  },
+
+  isReadable: function(attr) {
+    var ok = false,
+      schema = this.getEntitySchema();
+
+    switch (attr) {
+      case '_repr' :
+      case '_href' :
+      case '_links' :
+      case 'status' :
+      case 'message' :
+      case 'code' :
+      case 'errors' :
+        ok = true;
+        break;
+
+      default :
+        ok = schema[attr] && schema[attr].renderable;
+    }
+
+    return ok;
+  },
+
+  isWritable: function(attr) {
+    var schema = this.getEntitySchema();
+    return schema[attr] && schema[attr].writable;
+  },
+
+
+  getClass: function() {
+    return this;
+  },
+
+  getValidators : function(attr) {
+    var validators,
+      schema = this.getEntitySchema();
+
+    if (schema[attr] && schema[attr].validate) {
+      validators = schema[attr].validate;
+    }
+    return validators;
+  },
+
+  testProperty : function(prop) {
+    return this.getEntitySchema().hasOwnProperty(prop);
+  },
+
+  // inspects the schema of this model and attempts to
+  // validate
+  validate  : function(next) {
+    var schema = this.getEntitySchema(),
+      promises = [],
+      validators,
+      defer,
+      err;
+
+    for (var k  in schema) {
+      if (schema.hasOwnProperty(k) && schema[k].validate) {
+        validators = [];
+        // expect either a function or an array of functions
+        if (app.validator('isFunction')(schema[k].validate)) {
+          validators.push(schema[k].validate);
+
+        } else {
+          validators = validators.concat(schema[k].validate)
+        }
+
+        for (var i = 0; i < validators.length; i++) {
+          defer = Q.defer();
+
+          promises.push(defer.promise);
+
+          // create validation promises
+          (
+            function(attribute, validator, model, promise) {
+//              console.log('VALIDATING ', attribute, ' FOR VALUE ', model[attribute])
+              validator.call(model, model[attribute], function(err) {
+                if (err) {
+                  promise.reject({ message : err, attribute : attribute });
+                } else {
+                  promise.resolve();
+                }
+              });
+            }
+          )(k, validators[i], this, defer);
+        }
+
+        if (err) {
+          break;
+        }
+      }
+    }
+
+    if (promises.length) {
+      Q.all(promises).then(
+        function() {
+          next();
+        },
+        function(err) {
+          next(err);
+        }
+      )
+    } else {
+      next();
+    }
   }
 }
 

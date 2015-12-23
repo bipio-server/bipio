@@ -44,14 +44,14 @@ AccountInfo.prototype = {
     var self = this;
     return this._load('account_option', function(err, settings) {
 
-      if (app.helper.isArray(settings)) {
+      if (app.validator('isArray')(settings)) {
         self.settings = settings[0];
 
       } else {
         self.settings = settings;
       }
 
-      next(err, self.settings);
+      next(err, self.settings.toJSON ? self.settings.toJSON() : self.settings);
     });
   },
 

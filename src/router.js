@@ -36,79 +36,13 @@ var dao,
   uuid    = require('node-uuid'),
   pkg = require('../package.json'),
   // restful models
-  restResources = [ 'bip', 'channel', 'domain', 'account_option' ],
-  modelPublicFilter;
-
-function filterModel(filterLen, modelPublicFilters, modelStruct, decode) {
-  var result = {};
-  for (var i = 0; i < filterLen; i++) {
-    publicAttribute = modelPublicFilters[i];
-    if (undefined != modelStruct[publicAttribute]) {
-      result[publicAttribute] = modelStruct[publicAttribute];
-    }
-  }
-
-  return result;
-}
-
-/**
- * takes a result JSON struct and filters out whatever is not in a public
- * filter for the supplied model. Public filter means readable flag is 'true' in the
- * rest exposed model
- */
-function publicFilter(modelName, modelStruct) {
-  var result = {}, filterLen, modelLen,
-  publicAttribute,
-  context = modelStruct,
-  modelPublicFilters;
-
-  if (modelName) {
-    modelPublicFilters = modelPublicFilter[modelName]['read'];
-  } else {
-    modelPublicFilters = [];
-  }
-
-  // always allow representations and meta data
-  modelPublicFilters.push('_repr');
-  modelPublicFilters.push('_href');
-  modelPublicFilters.push('_links');
-  modelPublicFilters.push('status');
-  modelPublicFilters.push('message');
-  modelPublicFilters.push('code');
-  modelPublicFilters.push('errors');
-
-  filterLen = modelPublicFilters.length;
-
-  // if it looks like a collection, then filter into the collection
-  if (undefined != modelStruct.data) {
-    for (key in modelStruct) {
-      if (key == 'data') {
-        result['data'] = [];
-
-        context = modelStruct.data;
-        modelLen = context.length;
-
-        // filter every model in the collection
-        for (var i = 0; i < modelLen; i++) {
-          result['data'].push(filterModel(filterLen, modelPublicFilters, context[i], true));
-        }
-      } else {
-        result[key] = modelStruct[key];
-      }
-    }
-  } else {
-    result = filterModel(filterLen, modelPublicFilters, modelStruct, true);
-  }
-
-  return result;
-}
+  restResources = [ 'bip', 'channel', 'domain', 'account_option' ];
 
 /**
  * Wrapper for connect.basicAuth. Checks the session for an authed flag and
  * if fails, defers to http basic auth.
  */
 function restAuthWrapper(req, res, next) {
-
   if (!req.header('authorization') && req.session.account && req.session.account.host === getClientInfo(req).host && !req.masqUser) {
     app.modules.auth.getAccountStruct(req.session.account, function(err, accountInfo) {
       if (!err) {
@@ -139,37 +73,28 @@ var restResponse = function(res) {
 
     res.contentType(contentType);
 
-    /**
-         * Post filter. Don't expose attributes that aren't in the public filter
-         * list.
-         */
-    if (null != modelName && results) {
-      if (results instanceof Array) {
-        realResult = [];
-        for (key in results) {
-          realResult.push(publicFilter(modelName, results[key]));
-        }
-      } else {
-        realResult = publicFilter(modelName, results);
-      }
-    } else {
-      realResult = results;
-    }
-
-    var payload = realResult;
     if (error) {
       if (!code) {
         code = 500;
         app.logmessage('Error response propogated without code', 'warning');
       }
 
-      res.status(code).send({ message : error.toString() });
+      res.status(code).send(app.validator('isObject')(error) ? error : { message : error.toString() });
       return;
     } else {
+
       if (!results) {
         res.status(404).end();
         return;
       }
+    }
+
+    /**
+     * Post filter. Don't expose attributes that aren't in the public filter
+     * list.
+     */
+    if (modelName) {
+      dao.filterModel('read', modelName, results);
     }
 
     // results should contain a '_redirect' url
@@ -178,9 +103,9 @@ var restResponse = function(res) {
       return;
     }
     if (contentType == DEFS.CONTENTTYPE_JSON) {
-      res.status(!code ? '200' : code).jsonp(payload);
+      res.status(!code ? '200' : code).jsonp(results);
     } else {
-      res.status(!code ? '200' : code).send(payload);
+      res.status(!code ? '200' : code).send(results);
     }
     return;
   }
@@ -232,11 +157,12 @@ var restAction = function(req, res) {
   resourceId = req.params.id,
   subResourceId = req.params.subresource_id,
   postSave;
-console.log('doing...');
+
   // User is authenticated and the requested model is marked as restful?
   if (undefined != owner_id && helper.indexOf(restResources, resourceName) != -1) {
 
     if (rMethod == 'POST' || rMethod == 'PUT') {
+
       // hack for bips, inject a referer note if no note has been sent
       if (resourceName == 'bip') {
         var referer = getReferer(req);
@@ -272,15 +198,24 @@ console.log('doing...');
         // populate our model with the request.  Set an owner_id to be the
         // authenticated user before doing anything else
         model = dao.modelFactory(resourceName, helper.pasteurize(req.body), accountInfo, true);
-        dao.create(model, restResponse(res), accountInfo, postSave);
+        dao.create(
+          model,
+          function(error, modelName, result) {
+            restResponse(res).apply(this, arguments);
+            if (postSave) {
+              postSave.apply(this, arguments);
+            }
+          },
+          accountInfo
+        );
       } else if (rMethod == 'PUT') {
-        // filter request body to public writable
-        var writeFilters = modelPublicFilter[resourceName]['write'];
-        if (undefined != req.body.id) {
+        dao.filterModel('write', resourceName, req.body);
+
+        if (undefined != req.params.id) {
           dao.update(
             resourceName,
-            req.body.id,
-            filterModel(writeFilters.length, writeFilters, req.body),
+            req.params.id,
+            req.body,
             restResponse(res),
             accountInfo
             );
@@ -300,11 +235,13 @@ console.log('doing...');
       }
     } else if (rMethod == 'PATCH') {
       if (undefined != req.params.id) {
-        var writeFilters = modelPublicFilter[resourceName]['write'];
+
+        dao.filterModel('write', resourceName, req.body);
+
         dao.patch(
           resourceName,
           req.params.id,
-          filterModel(writeFilters.length, writeFilters, req.body),
+          req.body,
           accountInfo,
           restResponse(res)
           );
@@ -434,9 +371,7 @@ function bipBasicFail(req, res) {
  * HTTP auth on this endpoint unless the bip is explicitly 'none'
  */
 function bipAuthWrapper(req, res, cb) {
-  console.log('calling auth wrapper');
   app.modules.auth.domainAuth(helper.getDomain(req.headers.host, true), function(err, acctResult) {
-    console.log('domain authed');
     if (err) {
       // reject always
       bipBasicFail(req, res);
@@ -487,7 +422,6 @@ function bipAuthWrapper(req, res, cb) {
 module.exports = {
   init : function(express, _dao) {
     dao = _dao;
-    modelPublicFilter = _dao.getModelPublicFilters();
 
     // attach any modules which are route aware
     for (var k in app.modules) {
@@ -1164,7 +1098,9 @@ module.exports = {
               result.user.settings['remote_settings'] = result._remoteBody || {};
             }
 
-            res.send(publicFilter('account_option', settings));
+            dao.filterModel('read', 'account_option', settings);
+
+            res.send(settings);
           });
 
           // update session
@@ -1239,7 +1175,7 @@ module.exports = {
 
               req.remoteUser = accountInfo;
 
-              if (app.helper.isObject(domain.renderer) && domain.renderer.channel_id && '' !== domain.renderer.channel_id) {
+              if (app.validator('isObject')(domain.renderer) && domain.renderer.channel_id && '' !== domain.renderer.channel_id) {
                 filter = {
                   id : domain.renderer.channel_id,
                   owner_id : ownerId
@@ -1262,7 +1198,7 @@ module.exports = {
                       res);
                   }
                 });
-              } else if (app.helper.isObject(domain.renderer) && domain.renderer.pod && '' !== domain.renderer.pod) {
+              } else if (app.validator('isObject')(domain.renderer) && domain.renderer.pod && '' !== domain.renderer.pod) {
                 callRenderer(
                   ownerId,
                   domain.renderer,

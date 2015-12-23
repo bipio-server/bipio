@@ -18,12 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
-
+ 
  */
 /**
- *
+ * 
  * Rolling account activity
- *
+ * 
  */
 var AccountLogModel = require('./prototype.js').BipModel,
 AccountLog = Object.create(AccountLogModel);
@@ -50,17 +50,14 @@ AccountLog.entitySchema = {
         writable: false
     },
     owner_id : {
-        type: String,
-        renderable: false,
+        type: String, 
+        renderable: false, 
         writable: false
     },
     code : {
         type: String,
         renderable: true,
-        writable: false,
-        set : function(code) {
-            this.description = AccountLog.codes[code];
-        }
+        writable: false
     },
     description : {
         type: String,
@@ -81,7 +78,15 @@ AccountLog.entitySchema = {
         type: Number,
         renderable: true,
         writable: false
-    }
+    }    
+};
+
+function setDescription(code) {
+    this.description = AccountLog.codes[code];
+}
+
+Bip.entitySetters = {
+    'code' : setDescription    
 };
 
 module.exports.AccountLog = AccountLog;

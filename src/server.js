@@ -94,7 +94,7 @@ function rawBodyParser(req, res, next) {
   });
 
   req.on('end', function() {
-    if (req.body && req.body.body && !app.helper.isObject(req.body.body)) {
+    if (req.body && req.body.body && !app.validator('isObject')(req.body.body)) {
       try {
         req.body.body = JSON.parse(req.body.body);
       } catch (e) {
@@ -102,7 +102,7 @@ function rawBodyParser(req, res, next) {
       }
     }
 
-    if ( (!req.body || (app.helper.isObject(req.body) && !Object.keys(req.body).length ))  && req.rawBody) {
+    if ( (!req.body || (app.validator('isObject')(req.body) && !Object.keys(req.body).length ))  && req.rawBody) {
      try {
         req.body = JSON.parse(req.rawBody);
       } catch (e) {
@@ -209,7 +209,7 @@ restapi.use(bodyParser.json());
 /*
 restapi.use(function(req, res, next) {
   req.on('end', function() {
-    if (req.body && req.body.body && !app.helper.isObject(req.body.body)) {
+    if (req.body && req.body.body && !app.validator('isObject')(req.body.body)) {
       try {
         req.body.body = JSON.parse(req.body.body);
       } catch (e) {
@@ -248,7 +248,7 @@ restapi.use(session({
   },
   secret: GLOBAL.CFG.server.sessionSecret,
   store: new MongoStore({
-    url : GLOBAL.CFG.dbMongo.connect
+    mongooseConnection : app.dao.getConnection()
   })
 }));
 

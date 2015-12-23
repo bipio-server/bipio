@@ -20,16 +20,12 @@
  *
 
  */
-var async = require('async'),
-  baseConverter = require('base-converter'),
-  BipModel = require('./prototype.js').BipModel,
-  Bip = Object.create(BipModel),
-  Rrecur = require('rrecur').Rrecur;
+ var async = require('async'),
+   baseConverter = require('base-converter'),
+   BipModel = require('./prototype.js').BipModel,
+   Bip = Object.create(BipModel),
+   Rrecur = require('rrecur').Rrecur;
 
-// setters
-/*
- *
- */
  function generate_random_base() {
   var ret = '';
   var charRanges = {
@@ -47,7 +43,7 @@ var async = require('async'),
   return '.' + ret + '_';
 }
 
-// strict formatting of date string required for scheduler to work
+  // strict formatting of date string required for scheduler to work
 function removeOffset(time) {
   return normedStart = time.substr(0, 16);
 }
@@ -55,7 +51,7 @@ function removeOffset(time) {
 function setSchedule(schedule) {
   	var sched, recur, recurStr, startTime;
 
-  if (schedule && app.helper.isObject(schedule) && Object.keys(schedule)) {
+  if (schedule && app.validator('isObject')(schedule) && Object.keys(schedule)) {
   	recurStr = schedule.recurrencePattern;
 
     if (!schedule.startDateTime.trim()) {
@@ -136,7 +132,7 @@ Bip.repr = function(accountInfo, next) {
 
     domain = _.findWhere(domains, { id : this.domain_id});
 
-    if (app.helper.isArray(domain)) {
+    if (app.validator('isArray')(domain)) {
       domain = array_pop(domain);
     }
 
@@ -228,65 +224,57 @@ Bip.links = function(accountInfo) {
 
 Bip.entityName = 'bip';
 Bip.entitySchema = {
+
+  // primary key
   id: {
     type: String,
     index: true,
     renderable: true,
     writable: false
   },
+
+  // bip name
+  // empty name setter is handled by 'type' setter instead
   name: {
     type: String,
     renderable: true,
     writable: true,
-    /*
-    validate : [
-      {
-        'validator' : BipModel.validators.max_64,
-        'msg' : "64 characters max"
-      }
-    ]
-    */
+    validate : function(value, next) {
+      next(app.validator('max_64')(value) ? '64 Characters Max' : false);
+    }
   },
+
   domain_id: {
     type: String,
     index : true,
     renderable: true,
     writable: true,
-    validate : [ {
-      validator : function(val, next) {
-        //next(true);
-        //return;
-        // @todo fix domain validator
-        var accountInfo = this.getAccountInfo();
-        if ('trigger' === this.type) {
-          next(true);
+    validate : function(value, next) {
+      var accountInfo = this.getAccountInfo();
+      if ('trigger' === this.type) {
+        next();
 
-        } else {
-          accountInfo.testDomain(val, function(err, ok) {
-            next(!err && ok);
-          });
-        }
-      },
-      msg : 'Domain Not Found'
+      } else {
+        accountInfo.testDomain(value, function(err, ok) {
+          next(err || !ok ? 'Domain Not Found' : false);
+        });
+      }
     }
-    ]
   },
+
   type: {
     type: String,
     renderable: true,
     writable: true,
-    validate : [
-    {
-      validator : function(val, next) {
-        if (CFG.server.smtp_bips) {
-          next( /^(smtp|http|trigger)$/i.test(val) );
-        } else {
-          next( /^(http|trigger)$/i.test(val) );
-        }
-      },
-      msg : 'Unexpected Bip Type'
-    }
-    ],
+    validate : function(value, next) {
+      var msg = 'Unknown Bip Type';
+      if (CFG.server.smtp_bips) {
+        next( /^(smtp|http|trigger)$/i.test(value) ? false : msg);
+      } else {
+        next( /^(http|trigger)$/i.test(value) ? fasle : msg );
+      }
+    },
+
     set : function(type) {
       // empty name? then generate one
       if (undefined == this.name || this.name == '') {
@@ -299,30 +287,29 @@ Bip.entitySchema = {
       if ('smtp' === type) {
         this.name = this.name.replace(/\s/g, '-');
         this.name = this.name.replace(/[^a-zA-Z0-9-_.]/g, '');
+
       } else if ('http' === type) {
         this.name = this.name.replace(/[^a-zA-Z0-9-_.\s()!*+,;\[\]@]/g, '');
       }
       return type;
     }
   },
+
   config: {
     type: Object,
     renderable: true,
     writable: true,
     "default" : {},
-    validate : [{
-      validator : function(val, next) {
-        var ok = false,
+    validate : [
+      function(val, next) {
+        var err,
+          ok = false,
           self = this;
-
-        if (!val) {
-          next(ok);
-          return;
-        }
 
         // ------------------------------
         if (this.type == 'trigger') {
           ok = false;
+
           var cid = val.channel_id,
             accountInfo = this.getAccountInfo(),
             channel, podTokens, pod;
@@ -330,7 +317,7 @@ Bip.entitySchema = {
           if (app.helper.getRegUUID().test(cid)) {
             accountInfo.getChannel(cid, function(err, channel) {
               if (err || !channel) {
-                next(false);
+                next('Unknown Channel For Trigger Source ' + cid);
               } else {
 
                 podTokens = channel.action.split('.');
@@ -338,19 +325,21 @@ Bip.entitySchema = {
 
                 ok = channel && pod && pod.isTrigger(podTokens[1]);
 
-                next(ok);
+                next(ok ? false : 'Channel Is Not A Trigger ', + channel.action);
               }
             })
 
           } else {
             podTokens = cid.split('.');
+            ok = false;
 
             pod = this.getDao().pod(podTokens[0], accountInfo);
 
             if (pod) {
               ok = pod.isTrigger(podTokens[1])
             }
-            next(ok);
+
+            next(ok ? false : 'Not An Event Emitter ' + cid);
           }
 
         // ------------------------------
@@ -365,11 +354,11 @@ Bip.entitySchema = {
           }
         }
 
-        if (val.exports && app.helper.isArray(val.exports)) {
+        if (val.exports && app.validator('isArray')(val.exports)) {
           ok = true;
           for (var i = 0; i < val.exports.length; i++) {
             // @todo make sure inputs has been sanitized
-            ok = (val.exports[i] != '' && app.helper.isString(val.exports[i]));
+            ok = (val.exports[i] != '' && app.validator('isString')(val.exports[i]));
             if (!ok) {
               break;
             }
@@ -378,34 +367,29 @@ Bip.entitySchema = {
           ok = true;
         }
 
-        next(ok);
+        next(ok ? false : 'Invalid Config For Incoming Web Hook');
+
         // ------------------------------
       } else if (this.type == 'smtp') {
-        ok = true;
-        next(ok);
+        next();
       }
-
     },
-    msg : 'Bad Config'
-  },
-  {
-    validator : function(val, next) {
+    function(val, next) {
       if (this.type == 'http' && val.renderer) {
         this.getDao().validateRPC(
           val,
           this.getAccountInfo(),
           function(err, ok) {
-            next(!err && ok)
+            next(err || !ok ? ('RPC ' + val + ' Not Found') : false)
           }
         );
       } else {
-        next(true);
+        next();
       }
-    },
-    msg : 'Renderer RPC Not Found'
-  }
+    }
   ]
 },
+
 hub: {
   type: Object,
   renderable: true,
@@ -437,6 +421,7 @@ hub: {
       // parse
       for (var src in hub) {
         if (hub.hasOwnProperty(src)) {
+
           for (var cid in hub[src].transforms) {
             if (hub[src].transforms.hasOwnProperty(cid)) {
               for (var k in hub[src].transforms[cid]) {
@@ -444,12 +429,17 @@ hub: {
               }
             }
           }
+
+          if (hub[src].exports && app.validator('isObject')(hub[src].exports)) {
+            hub[src].exports = JSON.stringify(hub[src].exports);
+          }
+
         }
       }
 
       return hub;
     },
-    get : function(hub) {
+    customGetter : function(hub) {
       var newSrc, newCid;
 
       // normalize
@@ -470,18 +460,24 @@ hub: {
             if (newCid !== cid) {
               delete hub[newSrc].transforms[cid];
             }
-
           }
+
+          if (hub[newSrc].exports && !app.validator('isObject')(hub[newSrc].exports)) {
+            try {
+              hub[newSrc].exports = JSON.parse(hub[newSrc].exports);
+            } catch (e) {
+              hub[newSrc].exports = {};
+            }
+          }
+
         }
       }
 
       return hub;
     },
+
     validate : [
-    {
-      // not a very good validator, but will do for know.
-      // @todo ensure edge > vertex > edge doesn't exist
-      validator : function(hub, next) {
+      function detectLoop(hub, next) {
         var numEdges, edges = {}, edge, loop = false;
         for (key in hub) {
           edges[key] = 1;
@@ -505,220 +501,148 @@ hub: {
           }
         }
 
-        next(!loop);
+        next(loop ? 'Loop Detected' : false);
       },
-      msg : "Loop Detected"
-    },
 
-    {
-      // disabled
-    	validator : function(val, next) {
-        next(true);
-        return;
-        /*
-        var ok = false,
-          pod,
-          accountInfo = this.getAccountInfo(),
-          userChannels = accountInfo.user.channels,
-          numEdges,
-          transforms,
-          hasRenderer = this.config.renderer && undefined !== this.config.renderer.channel_id;
-
-        // check channels + transforms make sense
-        if (undefined != val.source) {
-          for (var cid in val) {
-            if (val.hasOwnProperty(cid)) {
-
-              numEdges = val[cid].edges.length;
-              if (numEdges > 0) {
-                for (var e = 0; e < numEdges; e++) {
-                  ok = false;
-                  if (!app.helper.getRegUUID().test(val[cid].edges[e])) {
-
-                    var pointerDetails=val[cid].edges[e].split(".");
-
-                    if ( pointerDetails.length >= 2 ){
-                      pod = this.getDao().pod(pointerDetails[0], accountInfo);
-
-                      if ( pod ) {
-
-                        if ( pod.getAction(pointerDetails[1]) ){
-                          ok=true;
-
-                        } else {
-
-                          ok=false;
-                          break;
-                        }
-
-                      } else {
-                        ok=false;
-                        break;
-                      }
-                    }
-                  } else if (userChannels.get(cid)) {
-                    ok = true;
-
-                  } else {
-                    ok=false;
-                    break;
-                  }
-                }
-              }
-
-              if (!ok && hasRenderer) {
-                ok = true;
-              }
-            }
-
-            if (!ok) {
-              break;
-            }
-
-          }
-        } else if (hasRenderer) {
-          ok = true;
-        }
-        next(ok);
-        */
-      },
-      msg : 'Invalid, Inactive or Missing Channel In Hub'
-    },
-
-    {
-      // ensure hub has a source edge
-      validator : function(hub, next) {
+      function ensureSource(hub, next) {
         var hasRenderer = this.config.renderer &&
         (
           undefined !== this.config.renderer.channel_id ||
           undefined !== this.config.renderer.pod
-          );
+          ),
+        ok = hub.source && hub.source.edges.length > 0 || hasRenderer;
 
-        next(hub.source && hub.source.edges.length > 0 || hasRenderer);
-      },
-      msg : "Hub Cannot Be Empty"
-    },
+        next(ok ? false : 'Hub Cannot Be Empty');
+      }
     ]
-        },
-        note: {
-          type: String,
-          renderable: true,
-          writable: true,
-          "default" : '',
-          /*
-          validate : [{
-            'validator' : BipModel.validators.max_text,
-            'msg' : "1024 characters max"
-          }]
-          */
-        },
-        end_life: {
-          type: Object,
-          renderable: true,
-          writable: true,
-          set : endLifeParse,
-          validate : [{
-            validator : function(val, next) {
-              next(
-                (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
-                ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
-                0 !== new Date(Date.parse(val.time)).getTime()
-                );
-            },
-            msg : 'Bad Expiry Structure'
-          },
-          {
-            validator : function(val, next) {
-              next(val.action && /^(pause|delete)$/i.test(val.action) );
-            },
-            msg : 'Expected "pause" or "delete"'
-          }
-          ]
-        },
-        paused: {
-          type: Boolean,
-          renderable: true,
-          writable: true,
-          'default' : false,
-          set : function(newValue) {
-            return newValue;
-    /*
-            if (false === this.paused && newValue) {
-                Bip.getDao().pauseBip(this, null, newValue, null);
-            }
-            return newValue;
-            */
-          },
-          /*
-          validate : [{
-            'validator' : BipModel.validators.bool_any,
-            'msg' : 'Expected 1,0,true,false'
-          }]
-          */
-        },
-        schedule: {
-          type: Object,
-          renderable: true,
-          writable: true,
-          default : {},
-          set : setSchedule
-        },
-        binder: {
-          type: Array,
-          renderable: true,
-          writable: true
-        },
-        icon : {
-          type: String,
-          renderable: true,
-          writable: true,
-          "default" : ""
-        },
-        app_id : {
-          type: String,
-          renderable: true,
-          writable: true,
-          "default" : ""
-        },
-        owner_id : {
-          type: String,
-          index: true,
-          renderable: false,
-          writable: false
-        },
-        created : {
-          type: Number,
-          renderable: true,
-          writable: false
-        },
-        _imp_actual : {
-          type : Number,
-          renderable : true,
-          writable : false,
-          "default" : 0
-        },
-        _last_run : {
-          type : Number,
-          renderable : true,
-          writable : false,
-          "default" : 0,
-          get : function(value) {
-            if (value) {
-              var now = app.moment.utc();
-              return app.moment.duration(now.diff(value)).humanize() + ' ago';
-            } else {
-              return '';
-            }
-          },
-          getLastRun : function(value) {
-            if (value) {
-             var now = app.moment.utc();
-             return value;
-           } else {
-             return '';
-           }
-         }
-       },
+  },
+
+
+  // descriptive note
+  note: {
+    type: String,
+    renderable: true,
+    writable: true,
+    "default" : '',
+    validate : function(val, next) {
+      next(app.validator('max_text_1k')(val) ? '1024 Characters Max' : false);
+    }
+  },
+
+  // bip end life
+  end_life: {
+    type: Object,
+    renderable: true,
+    writable: true,
+    set : endLifeParse,
+    validate : [
+      function(val, next) {
+        var expOk = (parseFloat(val.imp) == parseInt(val.imp)) && !isNaN(val.imp) &&
+          ((parseFloat(val.time) == parseInt(val.time)) && !isNaN(val.time)) ||
+          0 !== new Date(Date.parse(val.time)).getTime();
+
+        next(
+          expOK ? false : 'Bad Expiry Structure'
+          );
+      },
+
+      function(val, next) {
+        next(
+          !(val.action && /^(pause|delete)$/i.test(val.action))
+          ? 'Expected "pause" or "delete"'
+          : false
+        );
+      }
+    ]
+  },
+
+  paused: {
+    type: Boolean,
+    renderable: true,
+    writable: true,
+    'default' : false,
+    set : function(newValue) {
+      return !!newValue;
+    },
+    validate : function(value, next) {
+      next(
+        app.validator('boolish')(value)
+        ? false
+        : 'Expected "true" or "false" Boolean'
+      );
+    }
+  },
+
+  schedule: {
+    type: Object,
+    renderable: true,
+    writable: true,
+    default : {},
+    set : setSchedule
+  },
+
+  binder: {
+    type: Array,
+    renderable: true,
+    writable: true
+  },
+
+  icon : {
+    type: String,
+    renderable: true,
+    writable: true,
+    "default" : ""
+  },
+
+  app_id : {
+    type: String,
+    renderable: true,
+    writable: true,
+    "default" : ""
+  },
+
+  owner_id : {
+    type: String,
+    index: true,
+    renderable: false,
+    writable: false
+  },
+
+  created : {
+    type: Number,
+    renderable: true,
+    writable: false
+  },
+
+  _imp_actual : {
+    type : Number,
+    renderable : true,
+    writable : false,
+    "default" : 0
+  },
+
+  _last_run : {
+    type : Number,
+    renderable : true,
+    writable : false,
+    "default" : 0,
+    get : function(value) {
+      if (value) {
+        var now = app.moment.utc();
+        return app.moment.duration(now.diff(value)).humanize() + ' ago';
+      } else {
+        return '';
+      }
+    },
+    getLastRun : function(value) {
+      if (value) {
+        var now = app.moment.utc();
+        return value;
+      } else {
+        return '';
+      }
+    }
+  },
   exports : { // user timezone
     type : Object,
     renderable : true,
@@ -737,6 +661,7 @@ hub: {
     renderable : true,
     writable : false
   },
+
   _errors : {
     type : Boolean,
     renderable : false,
@@ -875,7 +800,7 @@ Bip.exports = {
   }
 }
 
-if (CFG.server.smtp_bips) {
+if (GLOBAL.CFG.server.smtp_bips) {
   Bip.exports.smtp = {
     title : 'Incoming Email',
     type : 'object',
@@ -994,7 +919,7 @@ Bip._createChannelIndex = function() {
     }
   }
 
-  if (this.config && 'http' === this.type && app.helper.isObject(this.config.renderer)
+  if (this.config && 'http' === this.type && app.validator('isObject')(this.config.renderer)
     && this.config.renderer.channel_id
     && this.config.renderer.renderer) {
     channels.push(this.config.renderer.channel_id);
@@ -1159,7 +1084,6 @@ Bip.preRemove = function(id, accountInfo, next) {
       self._dao.removeBipDupTracking(id, function(err) {
         next(err, 'bip', self);
 
-
         accountInfo.bip = self;
 
         self._postRemoveChannels(accountInfo);
@@ -1199,7 +1123,7 @@ Bip._postSaveChannels = function(accountInfo, isNew) {
   for (var i = 0; i < this._channel_idx.length; i++) {
     self._dao.getChannel(
       this._channel_idx[i],
-      accountInfo,
+      accountInfo.getId(),
       function(err, channel) {
         // only call postSave for action pointers
         if (!err && channel && !app.helper.getRegUUID().test(channel.id)) {
@@ -1207,7 +1131,7 @@ Bip._postSaveChannels = function(accountInfo, isNew) {
             accountInfo,
             function(err) {
               if (err) {
-                err = app.helper.isObject(err) ? JSON.stringify(err) : err;
+                err = app.validator('isObject')(err) ? JSON.stringify(err) : err;
                 // if channel has propgated an error, then add it to this bips error log
                 app.bastion.createJob(DEFS.JOB_BIP_ACTIVITY, {
                   owner_id : self.owner_id,

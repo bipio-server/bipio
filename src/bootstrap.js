@@ -3,7 +3,7 @@
  * The Bipio API Server.  Application Bootstrap
  *
  * @author Michael Pearson <github@m.bip.io>
- * Copyright (c) 2010-2014 Michael Pearson https://github.com/mjpearson
+ * Copyright (c) 2014-2016 wot.io inc http://wot.io
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,34 +20,35 @@
  *
  */
 
-var path = require('path'),
+var
+  app = {
+    workerId : ':PID:' + process.pid
+  },
+  path = require('path'),
   getopt = require('posix-getopt'),
   option,
-  parser = new getopt.BasicParser('f:(forks)', process.argv);
+  parser = new getopt.BasicParser('f:(forks)', process.argv),
+  util        = require('util'),
+  underscore  = require('underscore'),
+  winston     = require('winston'),
+  helper      = require('./lib/helper'),
+  validator   = require('./lib/validators'),
+  defs        = require('../config/defs'),
+  envConfig   = require('config'),
+  cluster     = require('cluster'),
+  os          = require('os'),
+  Q           = require('q'),
+  moment      = require('moment-timezone'),
+  ipaddr = require('ipaddr.js');
+
+// heapdump = require('heapdump');
+
+require('ssl-root-cas/latest').inject();
 
 process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname + '/../config');
 process.env.MONGOOSE_DISABLE_STABILITY_WARNING = true;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // just for twilio :|
 
-// includes
-var app = {
-  workerId : ':PID:' + process.pid
-},
-//sugar       = require('sugar'),
-util        = require('util'),
-underscore  = require('underscore'),
-winston     = require('winston'),
-helper      = require('./lib/helper'),
-defs        = require('../config/defs'),
-envConfig   = require('config'),
-cluster     = require('cluster'),
-os          = require('os'),
-Q           = require('q'),
-moment      = require('moment-timezone'),
-ipaddr = require('ipaddr.js');
-// heapdump = require('heapdump');
-
-require('ssl-root-cas/latest').inject();
 
 // globals
 GLOBAL.app = app;
@@ -65,6 +66,7 @@ while ((option = parser.getopt()) !== undefined) {
 
 // attach general helpers to the app
 app.helper = helper;
+app.validator = validator;
 app._ = underscore;
 app.Q = Q;
 app.moment = moment;
@@ -192,7 +194,7 @@ app.logmessage = function(message, loglevel, skip) {
       console.trace(message);
     }
 
-    var obj = helper.isObject(message);
+    var obj = app.validator('isObject')(message);
     if (!obj) {
       if (message && message.trim) {
         message = message.trim();
@@ -224,7 +226,7 @@ app.winstonLog = function(message, loglevel) {
     var err = new Error(message);
     meta["stack"]  = err.stack;
   }
-  var obj = helper.isObject(message);
+  var obj = app.validator('isObject')(message);
   if (!obj) {
      if (message && message.trim) {
        message = message.trim();
@@ -264,7 +266,6 @@ process.addListener('uncaughtException', function (err, stack) {
   }
 
 });
-
 
 if (!GLOBAL.CFG.server.public_interfaces && !process.HEADLESS) {
   GLOBAL.CFG.server.public_interfaces = [];

@@ -53,14 +53,13 @@
  *
  */
 var uuid        = require('node-uuid'),
-  MongoClient = require('mongodb').MongoClient,
-  mongoose    = require('mongoose'), // @todo deprecate
+  mongoose    = require('mongoose'),
   helper      = require('../lib/helper'),
   extend = require('extend'),
   time        = require('time'),
   events = require('events'),
   eventEmitter = new events.EventEmitter(),
-  mongoOpen = false;
+  mongooseOpen = false;
 
 /**
  * Mongoose DAO Constructor
@@ -81,30 +80,28 @@ function DaoMongo(config, log, next) {
     keepAlive: 1
   };
 
-  if (!mongoOpen) {
+  //mongoose.set('debug', true);
+
+  mongoose.connection.on('error', function(err) {
+    log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
+    log(err, 'error');
+    if (/missing hostname/i.test(err.message)) {
+      log('Exiting...', 'error');
+      process.exit(0);
+    } else {
+      self.emit('error', err);
+    }
+  });
+
+  mongoose.connection.on('open', function() {
+    log('DAO:MONGODB:Connected');
+    self.emit('ready', self);
+    mongooseOpen = true;
+  });
+
+  if (!mongooseOpen) {
     try {
-      MongoClient.connect(
-        config.dbMongo.connect,
-        function(err, db) {
-          if (err) {
-            log('MONGODB:UNCONNECTABLE:' + config.dbMongo.connect, 'error');
-            log(err, 'error');
-            if (/missing hostname/i.test(err.message)) {
-              log('Exiting...', 'error');
-              process.exit(0);
-            } else {
-              self.emit('error', err);
-            }
-          } else {
-            log('DAO:MONGODB:Connected');
-            self._connection = db;
-
-            self.emit('ready', self);
-            mongoOpen = true;
-
-          }
-        }
-      );
+      mongoose.connect(config.dbMongo.connect, options);
     } catch (e) {
     }
   }
@@ -113,11 +110,7 @@ function DaoMongo(config, log, next) {
 DaoMongo.prototype.__proto__ = events.EventEmitter.prototype;
 
 DaoMongo.prototype.getConnection = function() {
-  return this._connection;
-}
-
-DaoMongo.prototype._mongoPath = function(path) {
-  return this.getConnection().collection(path + 's');
+  return mongoose.connection;
 }
 
 /**
@@ -140,43 +133,6 @@ DaoMongo.prototype.errorMap = function(error) {
   return ret;
 }
 
-/**
- * Returns a collection of model_name => public/private/readonly filters
- */
- /*
-DaoMongo.prototype.getModelPublicFilters = function() {
-  var filters = {};
-  for (key in this.models) {
-    filters[key] = {
-      // 'public': this.models[key]['class'].publicProps
-      'read': this.models[key]['class'].getRenderablePropsArray(),
-      'write' : this.models[key]['class'].getWritablePropsArray()
-    }
-  }
-  return filters;
-};
-*/
-
-DaoMongo.prototype.getModelReadableProps = function(modelName) {
-//  var modelPublicFilters = this.models[modelName]['class'].getRenderablePropsArray();
-
-  var modelPublicFilters = [];
-
-  modelPublicFilters.push('_repr');
-  modelPublicFilters.push('_links');
-  modelPublicFilters.push('_href');
-  modelPublicFilters.push('status');
-  modelPublicFilters.push('message');
-  modelPublicFilters.push('code');
-  modelPublicFilters.push('errors');
-
-  return modelPublicFilters;
-}
-
-DaoMongo.prototype.getModelWritableProps = function(modelName) {
-  return this.models[modelName]['class'].getWritablePropsArray();
-}
-
 DaoMongo.prototype.hasModel = function(modelName) {
   return undefined !== this.models[modelName];
 }
@@ -197,8 +153,7 @@ DaoMongo.prototype.getModelClass = function(modelName) {
  * @param modelClass model prototype
  */
 DaoMongo.prototype.registerModelClass = function(modelClass, reRegister) {
-
-  var modelName = modelClass.entityName, validators, numValidators;
+  var modelName = modelClass.getEntityName(), validators, numValidators;
   var container = this.models;
 
   // Already registered? then skip
@@ -212,7 +167,7 @@ DaoMongo.prototype.registerModelClass = function(modelClass, reRegister) {
   container[modelName]['class'] = modelClass;
 
   // initialize static prototype
-  //modelClass.staticInit(this);
+  modelClass.staticInit(this);
 
   // tell the model some things about the server environment
   modelClass.bindServerMeta({
@@ -220,7 +175,7 @@ DaoMongo.prototype.registerModelClass = function(modelClass, reRegister) {
   });
 
   //
-  var model = this.modelFactory(modelName);
+  var model = this.modelFactory(modelClass.getEntityName());
 
   // swap out 'object' types for mixed.  This lets us separate mongoose
   // from our actual models
@@ -296,7 +251,11 @@ DaoMongo.prototype.getObjectIdFilter = function(fromModel, accountInfo) {
   return filter;
 }
 
-DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInfo, tainted) {
+/*
+ * Casts an object into a named model class
+ *
+ */
+DaoMongo.prototype.modelFactory = function(modelName, properties, accountInfo, tainted) {
   var schema, propArgs;
 
   writable = true;
@@ -305,14 +264,14 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
     tainted = false;
   }
 
-  if (undefined != initProperties) {
+  if (undefined != properties) {
     schema = this.models[modelName]['class'].getEntitySchema();
     propArgs = {};
     for (var attr in schema) {
       propArgs[attr] = {
         enumerable: true,
         writable : true,
-        value : initProperties[attr]
+        value : properties[attr]
       };
 
       if (!(tainted && !schema[attr].writable) ) {
@@ -321,11 +280,11 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
         // see bip.js model, hub getter
         var getter = schema[attr].customGetter;
 
-        if (getter && initProperties[attr]) {
-          propArgs[attr].value = getter(initProperties[attr]);
+        if (getter && properties[attr]) {
+          propArgs[attr].value = getter(properties[attr]);
 
         } else {
-          propArgs[attr].value = initProperties[attr];
+          propArgs[attr].value = properties[attr];
         }
       }
     }
@@ -338,15 +297,15 @@ DaoMongo.prototype.modelFactory = function(modelName, initProperties, accountInf
     }
 
   } else {
-    initProperties = {};
+    properties = {};
   }
 
-  //var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
-  var model = new this.models[modelName]['class'](this, propArgs, accountInfo)
+  var model = Object.create(this.models[modelName]['class'], propArgs ).init(accountInfo);
+  //var model = new this.models[modelName]['class'](this, propArgs, accountInfo)
 
   this.models[modelName]['class'].constructor.apply(model);
   if (!tainted || (tainted && undefined !== accountInfo)) {
-    model.populate(initProperties, accountInfo);
+    model.populate(properties, accountInfo);
   }
 
   if (accountInfo) {
@@ -381,11 +340,10 @@ DaoMongo.prototype.errorParse = function(err, responseData) {
 
 DaoMongo.prototype.toMongoModel = function(srcModel) {
   var modelName = srcModel.getEntityName(),
-  MongooseModel = mongoose.model(modelName),
-  mongoModel = new MongooseModel(srcModel),
-  schema = this.models[modelName]['class'].getEntitySchema();
-
-  var model = helper.copyProperties(srcModel, mongoModel, true);
+    MongooseModel = mongoose.model(modelName),
+    mongoModel = new MongooseModel(srcModel),
+    schema = this.models[modelName]['class'].getEntitySchema(),
+    model = helper.copyProperties(srcModel, mongoModel, true);
 
   // mongoose doesn't look to apply defaults prior to validation??
   for (var key in schema) {
@@ -420,13 +378,15 @@ DaoMongo.prototype.toMongoModel = function(srcModel) {
  * @param function callback
  * @param Object account info
  */
-DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
+ DaoMongo.prototype.create = function(model, next, accountInfo) {
   var self = this, resp;
-  var nowTime = helper.nowUTCSeconds();
 
   if (model) {
     model[ model.getEntityIndex() ] = uuid();
-    if ( !model[ model.getEntityCreated() ] ) model[ model.getEntityCreated() ] = nowTime;
+
+    if ( !model[ model.getEntityCreated() ] ) {
+      model[ model.getEntityCreated() ] = helper.nowUTCSeconds();
+    }
 
     model.preSave(accountInfo, function(err, model) {
       if (err) {
@@ -434,16 +394,20 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
         return;
       }
 
-      var mongoModel = self.toMongoModel(model);
-
-  	  mongoModel.validate(function (err) {
-
-    		if (err) {
+      model.validate(function(err) {
+        if (err) {
           next(err, model.getEntityName(), err, 500);
           return;
-    		}
+        }
 
-    		mongoModel.save(function(err) {
+        // cast to mongo collection
+        var mongoModel = self.toMongoModel(model);
+        mongoModel.save(function(err, mongoStruct) {
+
+          delete model;
+
+          model = self.modelFactory(model.getEntityName(), mongoStruct);
+
           if (err) {
             self._log(err, 'error');
             if (next) {
@@ -463,29 +427,21 @@ DaoMongo.prototype.create = function(model, next, accountInfo, daoPostSave) {
             }
             return null;
           }
-          // populate from mongo model into our model, and build a representation
-          model.populate(mongoModel, accountInfo);
-          model.postSave(accountInfo, function(err, modelName, retModel, code) {
+
+          model.postSave(accountInfo, function(err, modelName, finalModel, code) {
             if (err) {
-              self.remove(modelName, retModel.id, accountInfo, function() {
+              self.remove(modelName, finalModel.id, accountInfo, function() {
                 if (next) {
-                  next(err, modelName, retModel, code );
+                  next(err, modelName, finalModel, code );
                 }
               });
             } else if (next) {
               next(
                 err,
                 modelName,
-                self.modelFactory(model.getEntityName(), retModel, accountInfo),
+                self.modelFactory(model.getEntityName(), finalModel, accountInfo),
                 code
               );
-            }
-
-            // depending on the model, we can inject post-saves which are
-            // outside the model's scope, such as notifications, or other
-            // types of bindings.
-            if (daoPostSave) {
-              daoPostSave(err, modelName, retModel, code );
             }
           }, true);
 
@@ -563,9 +519,7 @@ DaoMongo.prototype._update = function(modelName, filter, props, accountInfo, nex
       return model;
     });
   });
-
 };
-
 
 DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
   var self = this,
@@ -605,6 +559,7 @@ DaoMongo.prototype.update = function(modelName, id, props, next, accountInfo) {
         // create a model and then cast it back to plain'ol/JSON
         // so that setter middleware is applied :|
         var cleanModel = mongoModel.toJSON();
+
         delete cleanModel._id;
         self._update(modelName, self.getObjectIdFilter(mongoModel, accountInfo), cleanModel, accountInfo, next);
       }
@@ -636,9 +591,9 @@ DaoMongo.prototype.get = function(model, modelId, accountInfo, next) {
   var filter = {};
 
   if(!app.helper.getRegUUID().test(modelId)) {
-    filter.name = modelId;
+	  filter.name = modelId;
   } else {
-    filter.id = modelId;
+	  filter.id = modelId;
   }
 
   if (accountInfo) {
@@ -763,7 +718,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
     'alphabetical' : 'name'
   }
 
-  var model = this._mongoPath(modelName),
+  var model = mongoose.model(modelName),
     m = this.modelFactory(modelName);
 
   var query = model.find( mongoFilter.owner_id ? mongoFilter : null ),
@@ -774,15 +729,13 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
   if (undefined != filter) {
     var q;
     for (key in filter) {
-      if (app.helper.isObject(filter[key])) {
+      if (app.validator('isObject')(filter[key])) {
         q = {};
         q[key] = filter[key];
         query = query.find(q);
         countQuery = countQuery.find(q);
 
       } else {
-        //query = query.where(key).regex(new RegExp(filter[key], 'i'));
-        //countQuery = countQuery.where(key).regex(new RegExp(filter[key], 'i'));
         query = query.where(key).equals(filter[key]);
         countQuery = countQuery.where(key).equals(filter[key]);
       }
@@ -801,10 +754,7 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         query = query.limit(page_size).skip( (page - 1)  * page_size );
       }
 
-      if (app.helper.isArray(orderBy)
-        && /asc|desc/.test(orderBy[1])
-        && m.getEntitySchema().hasOwnProperty(orderBy[0])) {
-
+      if (app.validator('isArray')(orderBy) && /asc|desc/.test(orderBy[1]) && m.testProperty(orderBy[0])) {
         var s = {};
         s[orderBy[0]] = orderBy[1];
         query = query.sort(s);
@@ -815,48 +765,31 @@ DaoMongo.prototype.list = function(modelName, accountInfo, page_size, page, orde
         query = query.sort(s);
       }
 
-      query.exec(function (err, results) {
-
-        var model,
-          modelPublicFilter = self.getModelReadableProps(modelName);
+      query.exec(function anonQuery(err, results) {
 
         if (err) {
           self._log('Error: list(): ' + err);
           if (callback) {
             callback(false, err);
           }
+
         } else {
-          // convert to models
-          var modelStruct, realResult = [], publicModel, publicAttribute;
-
-          for (key in results) {
-
-            model = self.modelFactory(modelName, results[key], accountInfo);
-
-            modelStruct = model.toObj();
-
-            publicModel = {};
-            for (var i = 0; i < modelPublicFilter.length; i++) {
-              publicAttribute = modelPublicFilter[i];
-              if (undefined != modelStruct[publicAttribute]) {
-                publicModel[publicAttribute] = modelStruct[publicAttribute];
-              }
-            }
-            realResult.push(publicModel);
-          }
-
           var resultStruct = {
             'page' : page,
             'page_size' : page_size,
             'num_pages' : page_size ? (Math.ceil( count / page_size )) : 1,
             'order_by' : orderBy,
             'total' : count,
-            'data' : realResult
+            'data' : []
           }
 
-          if (callback) {
-            callback(false, modelName, resultStruct );
+          for (var i = 0; i < results.length; i++) {
+            resultStruct.data.push(
+              self.modelFactory(modelName, results[i], accountInfo).toObj()
+            );
           }
+
+          callback(false, modelName, resultStruct );
         }
       });
     }
@@ -1009,7 +942,7 @@ DaoMongo.prototype.updateColumn = function(modelName, filter, props, next) {
   // cast to mongoose model
   var MongoModel = mongoose.model(model.getEntityName());
 
-  if (helper.isObject(filter)) {
+  if (app.validator('isObject')(filter)) {
     updateFilter = filter;
   } else {
     updateFilter = {};
@@ -1076,7 +1009,7 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
     setProperties = {},
     value;
 
-  if (app.helper.isObject(id)) {
+  if (app.validator('isObject')(id)) {
     updateFilter = id;
   } else {
     updateFilter[model.getEntityIndex()] = id;
@@ -1084,11 +1017,10 @@ DaoMongo.prototype.updateProperties = function(modelName, id, props, next) {
 
   // cast to mongoose model
   var mongoModel = this.toMongoModel(model);
-
   for (var k in props) {
     if (props.hasOwnProperty(k)) {
       val = mongoModel.getValue(k);
-      if (app.helper.isObject(val) && Object.keys(val).length === 0) {
+      if (app.validator('isObject')(val) && Object.keys(val).length === 0) {
         mongoModel[k] = undefined;
       }
       setProperties[k] = val;

@@ -138,14 +138,13 @@ Channel.entitySchema = {
     type: String,
     renderable: true,
     writable: true,
-    /*
     validate : [
-    {
+/*    {
       validator : BipModel.validators.max_text,
       msg : "Text is too long, 1kb max"
     }
+*/
     ]
-    */
   },
   icon : {
     type: String,
@@ -267,7 +266,7 @@ Channel._transform = function(adjacentExports, transforms) {
       resolvedImports[key] = matchMap[mapKeys[0]];
     } else {
       app._.each(matchMap, function(value, key) {
-        var dataStruct = app.helper.isObject(value) || app.helper.isArray(value),
+        var dataStruct = app.validator('isObject')(value) || app.validator('isArray')(value),
           repl = new RegExp(app.helper.escapeRegExp(key), 'g');
 
         try {
@@ -442,12 +441,8 @@ Channel.postSave = function(accountInfo, next, isNew) {
     return;
   }
 
-  this.accountInfo = undefined;
-  //accountInfo.user.channels.set(this);
-
   // channels behave a little differently, they can have postponed availability
   // after creation, which the pod actions themselves might want to dictate.
-
   if (authType && 'none' !== authType) {
     self._dao.getPodAuthTokens(accountInfo.user.id, Channel.pods[podName], function(err, authStruct) {
       if (err) {

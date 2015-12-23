@@ -65,7 +65,7 @@ function Dao(config, log, next) {
 
   this.models = { };
   for (var key in modelSrc) {
-    this.registerModelClass(modelSrc[key] );
+    this.registerModelClass(modelSrc[key]);
   }
 }
 
@@ -598,7 +598,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
   regUUID = helper.getRegUUID(),
   cMatch;
 
-  bip.accountInfo.getChannels(function(err, channels) {
+  bip.getAccountInfo().getChannels(function(err, channels) {
     function channelTranslate(src) {
       // skip source in manifest
       if (src !== 'source') {
@@ -679,8 +679,8 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
       hub : derivedHub,
       manifest : Object.keys(manifest),
       owner_id : bip.owner_id,
-      owner_name : bip.accountInfo.user.name,
-      user_name : bip.accountInfo.user.username,
+      owner_name : bip.getAccountInfo().getName(),
+      user_name : bip.getAccountInfo().getUserName(),
       schedule : bip.schedule,
       slug : bip.slug
     };
@@ -691,16 +691,16 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
     self.find(
       'bip_share',
       {
-        owner_id : bip.accountInfo.user.id,
+        owner_id : bip.getAccountInfo().getId(),
         bip_id : bip.id
       },
       function(err, result) {
         if (err) {
           cb(self.errorParse(err), null, null, self.errorMap(err) );
         } else {
-          var model = self.modelFactory(modelName, bipShare, bip.accountInfo);
+          var model = self.modelFactory(modelName, bipShare, bip.getAccountInfo());
           if (!result) {
-            self.create(model, cb, bip.accountInfo);
+            self.create(model, cb, bip.getAccountInfo());
 
             var jobPacket = {
               owner_id : bip.owner_id,
@@ -715,7 +715,7 @@ Dao.prototype.shareBip = function(bip, triggerConfig, cb) {
             } );
 
           } else {
-            self.update(modelName, result.id, bipShare , cb, bip.accountInfo);
+            self.update(modelName, result.id, bipShare , cb, bip.getAccountInfo());
           }
         }
       });
@@ -757,9 +757,7 @@ Dao.prototype.unshareBip = function(id, accountInfo, cb) {
 }
 
 Dao.prototype.listShares = function(page, pageSize, orderBy, listBy, next) {
-  var pageSize = pageSize || 10,
-    page = page || 1,
-    orderBy = orderBy || 'recent',
+  var orderBy = orderBy || 'recent',
     filter = {};
 
   if (listBy) {
@@ -1100,11 +1098,12 @@ Dao.prototype.bipError = function(id, errState, next) {
   );
 }
 
-Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next, force) {
+Dao.prototype.triggerBip = function(bip, accountInfo, isSocket, next, force, dryRun) {
     var self = this,
       payload = {
         bip : bip,
-        socketTrigger : isSocket
+        socketTrigger : isSocket,
+        dryRun : dryRun || false
       };
 
     // update runtime
@@ -1193,7 +1192,9 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
                             app._.clone(bipResult)._doc,
                             accountInfo,
                             isSocket,
-                            next
+                            next,
+                            force,
+                            dryRun
                           );
 
                           numProcessed++;
@@ -1220,7 +1221,7 @@ Dao.prototype.triggerAll = function(next, filterExtra, isSocket, force, dryRun) 
         })(results[i]);
       }
     } else {
-	    next(false, 'No Bips'); // @todo maybe when we have users we can set this as an error! ^_^
+	    next(false, 'No Bips');
     }
   });
 }
@@ -1439,7 +1440,7 @@ Dao.prototype.pod = function(podName, accountInfo) {
 // validate a renderer struct for a given user
 Dao.prototype.validateRPC = function(struct, accountInfo, next) {
   var self = this,
-    ok = app.helper.isObject(struct.renderer)
+    ok = app.validator('isObject')(struct.renderer)
       && (struct.renderer.channel_id || struct.renderer.pod)
       && struct.renderer.renderer;
 
@@ -1537,12 +1538,16 @@ Dao.prototype.updateChannelIcon = function(channel, URL) {
 /*
  *
  */
-Dao.prototype.getChannel = function(id, accountInfo, next, configOverride) {
+Dao.prototype.getChannel = function(id, ownerId, next, configOverride) {
+  var pod,
+    self = this;
+
   if (app.helper.regUUID.test(id) ) {
     this.find(
       'channel',
       {
-        id : id
+        id : id,
+        owner_id : ownerId
       },
       function(err, result) {
         if (err) {
@@ -1559,14 +1564,24 @@ Dao.prototype.getChannel = function(id, accountInfo, next, configOverride) {
     );
   } else {
     var tokens = id.split('.'),
+      result;
+
+    pod = self.pod(tokens[0]);
+
+    if (pod && pod.getAction(tokens[1])) {
+
       result = {
         'id' : id,
         'action' : tokens[0] + '.' + tokens[1],
-        'owner_id' : accountInfo.user.id,
+        'owner_id' : ownerId,
         'config': configOverride ? configOverride : {}
       };
 
-    next(false, result);
+      next(false, result);
+
+    } else {
+      next('NO SUCH POD');
+    }
   }
 }
 
@@ -1612,7 +1627,6 @@ Dao.prototype.getPodAuthTokens = function(owner_id, pod, next) {
         }
       }
     });
-
 }
 
 Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
@@ -1631,7 +1645,7 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
       if (subdomain && key != subdomain) {
         continue;
       }
-      resp[key] = pods[key].describe(accountInfo);
+      resp[key] = JSON.parse(JSON.stringify(pods[key].describe(accountInfo)));
 
       // prep the oAuthChecks array for a parallel datasource check
       if (resp[key].auth.strategy && resp[key].auth.strategy != 'none' && accountInfo) {
@@ -1641,7 +1655,7 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
               return pods[podName].authStatus( accountInfo.getId(), cb );
             }
           }(key) // self exec
-          );
+        );
       }
     }
 
@@ -1654,8 +1668,12 @@ Dao.prototype.describe = function(model, subdomain, next, accountInfo) {
             authType = results[idx][1],
             result = results[idx][2];
 
-            if (null !== result && resp[podName]) {
+            if (result && resp[podName]) {
               resp[podName].auth.status = 'accepted';
+
+              if (result.repr) {
+                resp[podName].auth._repr = result.repr;
+              }
             }
           }
           next(false, null, resp);
@@ -2003,12 +2021,47 @@ DaoMongo.prototype.runMigrations = function(newVersion, targetConfig, next) {
           } else {
             next('Nothing To Do');
           }
-
-
         }
     }
   });
 }
 
+/*
+ * applies read/write property filter to model, mutates model
+ */
+function applyFilter(func, modelClass, modelStruct) {
+  _.each(modelStruct, function(value, key) {
+    if (!modelClass[func](key)) {
+      delete modelStruct[key];
+    }
+  });
+}
+
+/**
+ * takes a result JSON struct and filters out whatever is not in a public
+ * filter for the supplied model. for mode.  mode is 'read' or 'write'
+ */
+DaoMongo.prototype.filterModel = function(mode, modelName, struct) {
+  var func = 'read' === mode ? 'isReadable' : 'isWritable',
+    result = {},
+    context = struct,
+    modelClass = this.getModelClass(modelName);
+
+  // if it looks like a collection, then filter into the collection
+  if (undefined != struct.data) {
+
+    context = struct.data;
+
+    modelLen = context.length;
+
+    // filter every model in the collection
+    for (var i = 0; i < modelLen; i++) {
+      applyFilter(func, modelClass, context[i])
+    }
+
+  } else {
+    applyFilter(func, modelClass, context);
+  }
+}
 
 module.exports = Dao;

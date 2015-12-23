@@ -22,7 +22,6 @@
  */
 var bcrypt = require('bcrypt'),
   baseConverter = require('base-converter'),
-  //cronParser = require('cron-parser'),
   crypto = require('crypto'),
   djs = require('datejs'),
   dns = require('dns'),
@@ -39,31 +38,11 @@ var bcrypt = require('bcrypt'),
   validator = require('validator'),
   uuid = require('node-uuid'),
   url = require('url'),
-  _ = require('lodash'),
+  _ = require('underscore'),
   htmlEncode = require('htmlencode').htmlEncode,
   Q = require('q');
 
 var helper = {
-
-  isObject: function(src) {
-    return (this.getType(src) == '[object Object]');
-  },
-
-  isArray: function(src) {
-    return (this.getType(src) == '[object Array]');
-  },
-
-  isDate : function(src) {
-    return (this.getType(src) == '[object Date]');
-  },
-
-  isString : function(src) {
-    return (this.getType(src) == '[object String]');
-  },
-
-  isFunction : function(src) {
-    return (this.getType(src) == '[object Function]');
-  },
 
   getType: function(src) {
     return Object.prototype.toString.call( src );
@@ -113,14 +92,14 @@ var helper = {
      */
   pasteurize: function(src, noEscape) {
     var attrLen, newKey;
-    if (this.isArray(src)) {
+    if (app.validator('isArray')(src)) {
       var attrLen = src.length;
       for (var i = 0; i < attrLen; i++) {
         src[i] = this.pasteurize(src[i], noEscape);
       }
-    } else if (this.isString(src)) {
+    } else if (_.isString(src)) {
       src = this._scrub(src, noEscape);
-    } else if (this.isObject(src)) {
+    } else if (_.isObject(src)) {
       var newSrc = {};
       for (key in src) {
         newKey = this._scrub(key);
@@ -138,14 +117,15 @@ var helper = {
 
   naturalize : function(src) {
     var attrLen, newKey;
-    if (this.isArray(src)) {
+    if (app.validator('isArray')(src)) {
       var attrLen = src.length;
       for (var i = 0; i < attrLen; i++) {
         src[i] = this.naturalize(src[i]);
       }
-    } else if (this.isString(src)) {
+    } else if (app.validator('isString')(src)) {
       src = validator.sanitize(src).entityDecode();
-    } else if (this.isObject(src)) {
+
+    } else if (app.validator('isObject')) {
       var newSrc = {};
       for (key in src) {
         newKey = validator.sanitize(key).entityDecode();
@@ -173,7 +153,7 @@ var helper = {
     for (var k in obj) {
       if (includePrototype || obj.hasOwnProperty(k)) {
         var prop = obj[k];
-        if (prop && this.isObject(prop)) {
+        if (prop && _.isObject(prop)) {
           this.flattenObject(prop, delimiter, includePrototype, container, key + k + delimiter);
         }
         else {
@@ -234,13 +214,13 @@ var helper = {
     dstIsEmpty = false;
 
     // skip undefined properties
-    if (this.isArray(dst[propName]) && (dst[propName].length == 0) ) {
+    if (app.validator('isArray')(dst[propName]) && (dst[propName].length == 0) ) {
       dstIsEmpty = true;
     } else if (dst[propName] == undefined) {
       dstIsEmpty = true;
     }
 
-    if (helper.isObject(src)) {
+    if (_.isObject(src)) {
       srcActual = src[ propName ];
     } else {
       srcActual = src;
@@ -253,7 +233,7 @@ var helper = {
       return dst;
     }
 
-    if( helper.isObject( srcActual ) ) {
+    if( _.isObject( srcActual ) ) {
 
       objProp = Object.create({});
 
@@ -262,7 +242,7 @@ var helper = {
       }
       dst[ propName ] = objProp;
 
-    } else if( helper.isArray( srcActual ) ) {
+    } else if( app.validator('isArray')( srcActual ) ) {
 
       if (undefined  == dst[propName] ||  overrideDst) {
         dst[propName] = [];
@@ -282,7 +262,7 @@ var helper = {
       if (undefined != src[propName]) {
 
         dst[ propName ] = srcActual;
-      } else if (!helper.isObject(src) && !helper.isArray(src)) {
+      } else if (!app.validator('isObject')(src) && !app.validator('isArray')(src)) {
         dst[ propName ] = srcActual;
       }
     }
@@ -360,10 +340,10 @@ var helper = {
   },
 
   tzDiff : function(tz) {
-    var localTz = app.moment().utc().tz(CFG.timezone).utcOffset(),
+    var utcTZ = app.moment().utc().tz('UTC').utcOffset(),
       tzTz = app.moment().utc().tz(tz).utcOffset();
 
-    return (tzTz - localTz) * 60;
+    return (tzTz - utcTZ) * 60;
   },
 
   // @return string yyyymmdd UTC
@@ -586,7 +566,7 @@ var helper = {
   },
 
   deriveObject : function(input) {
-    if (!app.helper.isObject(input)) {
+    if (!app._.isObject(input)) {
       input = JSON.parse(input);
     }
     return input;

@@ -84,7 +84,7 @@ SMTP Bips are available out of the box with a Haraka plugin.  Configs under [bip
 
 ### Visual Tools
 
-The bip.io server is a light weight headless API server and ships without a User Interface (UI).  The official UI can be found on the [bip.io](https://bip.io) hosted platform.  It's completely free.
+The bip.io server is a light weight headless API server and ships without a User Interface (UI).  The official UI can be found on the [bip.io](https://bip.io) hosted platform.  It's completely free, will run on all desktops and most tablets.
 
 [![ScreenShot](https://bip.io/static/img/docs/vimeo_overlay.png)](https://vimeo.com/147186752)
 
