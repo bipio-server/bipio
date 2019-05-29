@@ -1,3 +1,4 @@
+# **NOTICE:** This repository has been **DEPRECATED**. Do not use.
 <a href="https://bip.io"><img align="left" width="200" src="https://bip.io/static/img/bipiologo_color.svg"/></a>
 <br/>
 =========
