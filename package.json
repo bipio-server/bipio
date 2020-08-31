@@ -94,7 +94,7 @@
     "time": ">=0.9.2",
     "tldtools": ">=0.0.6",
     "underscore": ">=1.5.2",
-    "validator": "1.5.1",
+    "validator": "13.1.1",
     "winston": "1.0.0"
   },
   "devDependencies": {
